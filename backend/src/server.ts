@@ -11,6 +11,7 @@ import { createAlumniIndexes } from "./modules/alumni/alumni.index.js";
 import { connectDatabase } from "./config/database.js";
 import { authenticate} from "./middlewares/auth.middlewares.js";
 import { requireRole } from "./middlewares/role.middlewares.js";
+import { createTrackingIndexes } from "./modules/tracking/tracking.respository.js";
 import alumniRoutes from "./modules/alumni/alumni.routes.js";
 import userRoutes from "./modules/users/user.routes.js";
 import trackingRoutes from "./modules/tracking/tracking.routes.js";
@@ -66,7 +67,8 @@ async function startServer() {
     await createDosenIndexes();
     await createProjectIndexes();
     await createPartnerIndexes();
-
+    await createTrackingIndexes();
+    
     app.listen(PORT, () => {
       console.log(`🚀 RAMS API running on http://localhost:${PORT}`);
     });
