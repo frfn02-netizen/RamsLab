@@ -15,6 +15,9 @@ import { createTrackingIndexes } from "./modules/tracking/tracking.respository.j
 import alumniRoutes from "./modules/alumni/alumni.routes.js";
 import userRoutes from "./modules/users/user.routes.js";
 import trackingRoutes from "./modules/tracking/tracking.routes.js";
+import dosenRoutes from "./modules/dosen/dosen.routes.js";
+import projectRoutes from "./modules/projects/project.routes.js";
+import partnerRoutes from "./modules/partners/partner.routes.js";
 
 dotenv.config();
 
@@ -35,6 +38,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/alumni", alumniRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/tracking", trackingRoutes);
+app.use("/api/dosen", dosenRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/partners", partnerRoutes);
 
 app.get("/api/admin/test", authenticate, requireRole("ADMIN"),
 (_req, res) => {
