@@ -14,6 +14,11 @@ import {
   getUniversityPartnerController,
   getUniversityPartnerListController,
   updateUniversityPartnerController,
+  createIndustrialPartnerController,
+  deleteIndustrialPartnerController,
+  getIndustrialPartnerController,
+  getIndustrialPartnerListController,
+  updateIndustrialPartnerController,
 } from "./partner.controller.js";
 
 const router = Router();
@@ -67,6 +72,56 @@ router.delete(
   authenticate,
   requireRole("ADMIN"),
   deleteUniversityPartnerController
+);
+
+// ========================================
+// ADMIN + DOSEN
+// ========================================
+
+router.get(
+  "/industrial",
+  authenticate,
+  requireRole(
+    "ADMIN",
+    "DOSEN"
+  ),
+  getIndustrialPartnerListController
+);
+
+router.get(
+  "/industrial/:id",
+  authenticate,
+  requireRole(
+    "ADMIN",
+    "DOSEN"
+  ),
+  getIndustrialPartnerController
+);
+
+
+// ========================================
+// ADMIN
+// ========================================
+
+router.post(
+  "/industrial",
+  authenticate,
+  requireRole("ADMIN"),
+  createIndustrialPartnerController
+);
+
+router.patch(
+  "/industrial/:id",
+  authenticate,
+  requireRole("ADMIN"),
+  updateIndustrialPartnerController
+);
+
+router.delete(
+  "/industrial/:id",
+  authenticate,
+  requireRole("ADMIN"),
+  deleteIndustrialPartnerController
 );
 
 

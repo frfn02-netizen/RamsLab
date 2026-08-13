@@ -227,3 +227,9 @@ export async function deleteProject(
 
   return result.deletedCount === 1;
 }
+export async function countProjects(): Promise<number> {
+  const collection =
+    getProjectsCollection();
+
+  return collection.countDocuments();
+}

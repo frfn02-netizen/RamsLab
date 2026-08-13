@@ -124,3 +124,8 @@ export async function findAlumniList(
     total,
   };
 }
+export async function countAlumni(): Promise<number> {
+  const collection = getAlumniCollection();
+
+  return collection.countDocuments();
+}

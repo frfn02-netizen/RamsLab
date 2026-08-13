@@ -31,3 +31,8 @@ export async function findUserById(
     _id: new ObjectId(id),
   } as Partial<User>);
 }
+export async function countUsers(): Promise<number> {
+  const collection = getUsersCollection();
+
+  return collection.countDocuments();
+}

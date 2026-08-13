@@ -219,3 +219,9 @@ export async function deleteDosen(
 
   return result.deletedCount === 1;
 }
+export async function countDosen(): Promise<number> {
+  const collection =
+    getDosenCollection();
+
+  return collection.countDocuments();
+}

@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./modules/auth/auth.routes.js";
 import cookieParser from "cookie-parser";
+import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import { createPartnerIndexes } from "./modules/partners/partner.index.js";
 import { createProjectIndexes } from "./modules/projects/project.index.js";
 import { createDosenIndexes } from "./modules/dosen/dosen.index.js";
@@ -18,6 +19,7 @@ import trackingRoutes from "./modules/tracking/tracking.routes.js";
 import dosenRoutes from "./modules/dosen/dosen.routes.js";
 import projectRoutes from "./modules/projects/project.routes.js";
 import partnerRoutes from "./modules/partners/partner.routes.js";
+import publicRoutes from "./modules/public/public.routes.js"; 
 
 dotenv.config();
 
@@ -41,6 +43,9 @@ app.use("/api/tracking", trackingRoutes);
 app.use("/api/dosen", dosenRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/partners", partnerRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/public", publicRoutes);
+
 
 app.get("/api/admin/test", authenticate, requireRole("ADMIN"),
 (_req, res) => {

@@ -1,9 +1,11 @@
 import jwt from "jsonwebtoken";
+import type { SignOptions } from "jsonwebtoken";
+import type { JwtPayload,} from "./auth.types.js";
 
-import type { JwtPayload } from "./auth.types.js";
 
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
+  const secret =
+    process.env.JWT_SECRET;
 
   if (!secret) {
     throw new Error(
@@ -14,22 +16,43 @@ function getJwtSecret(): string {
   return secret;
 }
 
+
+function getJwtExpiresIn(): SignOptions["expiresIn"] {
+  return (
+    process.env.JWT_EXPIRES_IN ??
+    "1d"
+  ) as SignOptions["expiresIn"];
+}
+
+
 export function generateAccessToken(
   payload: JwtPayload
 ): string {
-  const secret = getJwtSecret();
+  const secret =
+    getJwtSecret();
 
-  return jwt.sign(payload, secret, {
-    expiresIn: "1d",
-  });
+  return jwt.sign(
+    payload,
+    secret,
+    {
+      expiresIn:
+        getJwtExpiresIn(),
+    }
+  );
 }
+
 
 export function verifyAccessToken(
   token: string
 ): JwtPayload {
-  const secret = getJwtSecret();
+  const secret =
+    getJwtSecret();
 
-  const decoded = jwt.verify(token, secret);
+  const decoded =
+    jwt.verify(
+      token,
+      secret
+    );
 
   if (
     typeof decoded !== "object" ||
@@ -37,7 +60,9 @@ export function verifyAccessToken(
     typeof decoded.userId !== "string" ||
     typeof decoded.role !== "string"
   ) {
-    throw new Error("Invalid JWT payload");
+    throw new Error(
+      "Invalid JWT payload"
+    );
   }
 
   return decoded as unknown as JwtPayload;

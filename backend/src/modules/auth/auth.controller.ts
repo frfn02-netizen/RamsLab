@@ -1,15 +1,7 @@
-import type {
-  Request,
-  Response,
-} from "express";
+import type { Request, Response } from "express";
 
-import {
-  loginSchema,
-} from "./auth.schema.js";
-
-import {
-  login,
-} from "./auth.service.js";
+import { loginSchema } from "./auth.schema.js";
+import { login } from "./auth.service.js";
 
 const COOKIE_NAME = "rams_access_token";
 
@@ -29,9 +21,12 @@ export async function loginController(
       result.token,
       {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure:
+          process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 24 * 60 * 60 * 1000,
+        path: "/",
+        maxAge:
+          24 * 60 * 60 * 1000,
       }
     );
 
@@ -58,8 +53,10 @@ export function logoutController(
     COOKIE_NAME,
     {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure:
+        process.env.NODE_ENV === "production",
       sameSite: "lax",
+      path: "/",
     }
   );
 

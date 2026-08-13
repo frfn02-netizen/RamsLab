@@ -251,3 +251,19 @@ export async function deletePartner(
 
   return result.deletedCount === 1;
 }
+
+export async function countPartners(
+  type?: Partner["type"]
+): Promise<number> {
+
+  const collection =
+    getPartnersCollection();
+
+  if (type) {
+    return collection.countDocuments({
+      type,
+    });
+  }
+
+  return collection.countDocuments();
+}
