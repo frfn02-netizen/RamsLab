@@ -4,6 +4,11 @@ export async function createPartnerIndexes() {
   const collection = getPartnersCollection();
 
   await collection.createIndex(
+    { type: 1, published: 1, name: 1 },
+    { name: "partners_public_listing_index" },
+  );
+
+  await collection.createIndex(
     { name: 1 },
     {
       name: "partners_name_index",

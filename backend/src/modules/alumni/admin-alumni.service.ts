@@ -46,6 +46,7 @@ export async function createAdminAlumni(
     passwordHash,
     role: USER_ROLES.ALUMNI,
     isActive: true,
+    tokenVersion: 0,
     lastLoginAt: null,
     createdAt: now,
     updatedAt: now,

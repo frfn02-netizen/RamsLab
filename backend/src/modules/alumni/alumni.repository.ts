@@ -6,6 +6,7 @@ import {
 import { getDatabase } from "../../config/database.js";
 
 import type { Alumni } from "./alumni.types.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 const ALUMNI_COLLECTION = "alumni";
 
@@ -72,31 +73,31 @@ export async function findAlumniList(
   const filter: Record<string, unknown> = {};
 
   if (search?.trim()) {
-    const keyword =
-      search.trim();
+    const keyword = search.trim().slice(0, SECURITY_LIMITS.maxSearchLength);
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     filter.$or = [
       {
         fullName: {
-          $regex: keyword,
+          $regex: escapedKeyword,
           $options: "i",
         },
       },
       {
         nim: {
-          $regex: keyword,
+          $regex: escapedKeyword,
           $options: "i",
         },
       },
       {
         program: {
-          $regex: keyword,
+          $regex: escapedKeyword,
           $options: "i",
         },
       },
       {
         currentCompany: {
-          $regex: keyword,
+          $regex: escapedKeyword,
           $options: "i",
         },
       },

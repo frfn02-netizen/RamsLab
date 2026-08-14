@@ -2,6 +2,7 @@ import type { Request, Response, } from "express";
 import { ObjectId, } from "mongodb";
 import { createProjectSchema, updateProjectSchema, } from "./project.schema.js";
 import { createProject, deleteProject, findAllProjects, findProjectById, findProjectBySlug, updateProject, } from "./project.repository.js";
+import { PROJECT_CATEGORY } from "./project.types.js";
 
 // ========================================
 // GET ALL PROJECTS
@@ -20,6 +21,16 @@ export async function getProjectListController(
 
     let parsedYear: number | undefined;
 
+    if (category !== undefined && (
+      typeof category !== "string" ||
+      !Object.values(PROJECT_CATEGORY).includes(category as typeof PROJECT_CATEGORY[keyof typeof PROJECT_CATEGORY])
+    )) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category",
+      });
+    }
+
     if (year !== undefined) {
       if (
         typeof year !== "string" ||
@@ -32,6 +43,12 @@ export async function getProjectListController(
       }
 
       parsedYear = Number(year);
+      if (parsedYear < 1900 || parsedYear > 2100) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid year",
+        });
+      }
     }
 
     let publishedOnly: boolean | undefined;
@@ -129,6 +146,13 @@ export async function getProjectBySlugController(
   try {
 
     const slug = req.params.slug as string;
+
+    if (slug.length > 100 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid project slug",
+      });
+    }
 
     const project =
       await findProjectBySlug(slug);

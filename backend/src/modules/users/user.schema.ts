@@ -10,7 +10,8 @@ export const createUserSchema = z.object({
 
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters"),
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password is too long"),
 
   role: z.enum([
     USER_ROLES.ALUMNI,
@@ -34,6 +35,11 @@ export const updateUserSchema = z.object({
   isActive: z
     .boolean()
     .optional(),
+});
+
+export const createManagedAccountSchema = z.object({
+  email: createUserSchema.shape.email,
+  password: createUserSchema.shape.password,
 });
 
 export type CreateUserInput =

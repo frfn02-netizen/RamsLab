@@ -36,3 +36,14 @@ export async function countUsers(): Promise<number> {
 
   return collection.countDocuments();
 }
+
+export async function incrementUserTokenVersion(id: string): Promise<boolean> {
+  if (!ObjectId.isValid(id)) return false;
+
+  const result = await getUsersCollection().updateOne(
+    { _id: new ObjectId(id) },
+    { $inc: { tokenVersion: 1 }, $set: { updatedAt: new Date() } },
+  );
+
+  return result.modifiedCount === 1;
+}

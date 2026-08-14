@@ -56,6 +56,12 @@ export async function getPublicProjectController(
 ) {
   try {
     const slug = req.params.slug as string;
+    if (slug.length > 100 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
     const project =
       await findProjectBySlug(slug);
 

@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import { createDosenSchema, updateDosenSchema} from './dosen.schema.js';
 import { createDosen, deleteDosen, findAllDosen, findDosenByEmployeeId, findDosenById, updateDosen } from './dosen.repository.js';
+import { findUserById } from '../users/user.repository.js';
 
 // ========================================
 // GET ALL DOSEN
@@ -144,6 +145,14 @@ export async function createDosenController(
       createDosenSchema.parse(
         req.body
       );
+
+    const user = await findUserById(input.userId);
+    if (!user || !user.isActive || user.role !== "DOSEN") {
+      return res.status(400).json({
+        success: false,
+        message: "userId must reference an active DOSEN account",
+      });
+    }
 
     const dosen =
       await createDosen(input);

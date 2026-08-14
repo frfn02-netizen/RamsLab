@@ -20,6 +20,9 @@ export interface User {
 
   isActive: boolean;
 
+  /** Incremented to revoke all previously issued access tokens. */
+  tokenVersion?: number;
+
   lastLoginAt: Date | null;
 
   createdAt: Date;

@@ -2,9 +2,15 @@ import { ObjectId } from "mongodb";
 import { getAlumniCollection, findAlumniById, findAlumniByNim, findAlumniByUserId, findAlumniList} from "./alumni.repository.js";
 import { getUsersCollection, } from "../users/user.repository.js";
 import { USER_ROLES, } from "../users/user.types.js";
-import { createAlumniSchema, updateAlumniSchema, 
-    type CreateAlumniInput,
-    type UpdateAlumniInput,} from "./alumni.schema.js";
+import {
+  createAlumniSchema,
+  updateAlumniSchema,
+  updateMyAlumniSchema,
+  type CreateAlumniInput,
+  type UpdateAlumniInput,
+  type UpdateMyAlumniInput,
+} from "./alumni.schema.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 export async function createAlumni(
   input: CreateAlumniInput
@@ -171,16 +177,14 @@ export async function updateAlumni(
 
 export async function updateMyAlumni(
   userId: string,
-  input: UpdateAlumniInput
+  input: UpdateMyAlumniInput
 ) {
   if (!ObjectId.isValid(userId)) {
-    throw new Error(
-      "Invalid user ID"
-    );
+    throw new Error("Invalid user ID");
   }
 
   const data =
-    updateAlumniSchema.parse(input);
+    updateMyAlumniSchema.parse(input);
 
   const alumniCollection =
     getAlumniCollection();
@@ -203,6 +207,7 @@ export async function updateMyAlumni(
     new ObjectId(userId)
   );
 }
+
 export async function getAlumniList(
   page: number,
   limit: number,
@@ -211,11 +216,7 @@ export async function getAlumniList(
   const safePage =
     Math.max(1, page);
 
-  const safeLimit =
-    Math.min(
-      Math.max(1, limit),
-      100
-    );
+  const safeLimit = Math.min(Math.max(1, limit), SECURITY_LIMITS.maxPageSize);
 
   const result =
     await findAlumniList({

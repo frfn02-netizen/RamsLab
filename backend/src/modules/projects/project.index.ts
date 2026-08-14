@@ -4,6 +4,11 @@ export async function createProjectIndexes() {
   const collection = getProjectsCollection();
 
   await collection.createIndex(
+    { published: 1, year: -1, title: 1 },
+    { name: "projects_public_listing_index" },
+  );
+
+  await collection.createIndex(
     { slug: 1 },
     {
       unique: true,

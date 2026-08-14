@@ -2,6 +2,7 @@ import { Collection, ObjectId, } from "mongodb";
 import { getDatabase,} from "../../config/database.js";
 import type { Dosen, } from "./dosen.types.js";
 import type { CreateDosenInput, UpdateDosenInput, } from "./dosen.schema.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 const DOSEN_COLLECTION = "dosen";
 
@@ -92,6 +93,7 @@ export async function findAllDosen(
     .sort({
       fullName: 1,
     })
+    .limit(SECURITY_LIMITS.maxListResults)
     .toArray();
 }
 

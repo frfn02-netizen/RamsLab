@@ -2,8 +2,10 @@ import type { Request, Response } from "express";
 
 import { loginSchema } from "./auth.schema.js";
 import { login } from "./auth.service.js";
+import { verifyAccessToken } from "./auth.utils.js";
+import { incrementUserTokenVersion } from "../users/user.repository.js";
+import { AUTH_COOKIE_NAME, createCsrfToken, isProduction } from "../../config/security.js";
 
-const COOKIE_NAME = "rams_access_token";
 
 export async function loginController(
   req: Request,
@@ -17,48 +19,65 @@ export async function loginController(
       await login(input);
 
     res.cookie(
-      COOKIE_NAME,
+      AUTH_COOKIE_NAME,
       result.token,
       {
         httpOnly: true,
-        secure:
-          process.env.NODE_ENV === "production",
+        secure: isProduction(),
         sameSite: "lax",
         path: "/",
         maxAge:
           24 * 60 * 60 * 1000,
       }
     );
+    res.cookie("rams_csrf_token", createCsrfToken(), {
+      httpOnly: false,
+      secure: isProduction(),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
     return res.json({
       success: true,
       user: result.user,
     });
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Authentication failed",
+      message: "Invalid email or password",
     });
   }
 }
 
-export function logoutController(
-  _req: Request,
+export async function logoutController(
+  req: Request,
   res: Response
 ) {
+  const token = req.cookies?.[AUTH_COOKIE_NAME];
+  if (typeof token === "string") {
+    try {
+      const payload = verifyAccessToken(token);
+      await incrementUserTokenVersion(payload.userId);
+    } catch {
+      // Logout is deliberately idempotent and never reveals token state.
+    }
+  }
+
   res.clearCookie(
-    COOKIE_NAME,
+    AUTH_COOKIE_NAME,
     {
       httpOnly: true,
-      secure:
-        process.env.NODE_ENV === "production",
+      secure: isProduction(),
       sameSite: "lax",
       path: "/",
     }
   );
+  res.clearCookie("rams_csrf_token", {
+    secure: isProduction(),
+    sameSite: "lax",
+    path: "/",
+  });
 
   return res.json({
     success: true,

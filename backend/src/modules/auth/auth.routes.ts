@@ -1,9 +1,25 @@
 import { Router } from "express";
 import { loginController, logoutController } from "./auth.controller.js";
+import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 const router = Router();
 
-router.post("/login", loginController);
+router.post(
+  "/login",
+  createRateLimiter({
+    windowMs: SECURITY_LIMITS.loginWindowMs,
+    max: SECURITY_LIMITS.maxLoginAttemptsPerIp,
+    message: "Too many login attempts from this address",
+  }),
+  createRateLimiter({
+    windowMs: SECURITY_LIMITS.loginWindowMs,
+    max: SECURITY_LIMITS.maxLoginAttempts,
+    message: "Too many login attempts",
+    keyGenerator: (req) => `${req.ip ?? "unknown"}:${typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "unknown"}`,
+  }),
+  loginController,
+);
 router.post("/logout", logoutController);
 
 export default router;

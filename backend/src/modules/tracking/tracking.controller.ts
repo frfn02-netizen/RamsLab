@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { findTrackingByAlumniId, findTrackingById, createTracking, updateTracking, deleteTracking, } from "./tracking.respository";
 import { createTrackingSchema, updateTrackingSchema, } from "./tracking.schema.js";
+import { findAlumniById } from "../alumni/alumni.repository.js";
 
 export async function getTrackingByAlumniId(
   req: Request,
@@ -14,6 +15,13 @@ export async function getTrackingByAlumniId(
       return res.status(400).json({
         success: false,
         message: "Invalid alumni ID",
+      });
+    }
+
+    if (!(await findAlumniById(alumniId))) {
+      return res.status(404).json({
+        success: false,
+        message: "Alumni not found",
       });
     }
 
@@ -82,6 +90,13 @@ export async function createAlumniTracking(
       return res.status(400).json({
         success: false,
         message: "Invalid alumni ID",
+      });
+    }
+
+    if (!(await findAlumniById(alumniId))) {
+      return res.status(404).json({
+        success: false,
+        message: "Alumni not found",
       });
     }
 

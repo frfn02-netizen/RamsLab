@@ -10,17 +10,20 @@ export const createAdminAlumniSchema = z.object({
 
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters"),
+    .min(8, "Password must be at least 8 characters")
+    .max(128),
 
   fullName: z
     .string()
     .trim()
-    .min(2, "Full name is required"),
+    .min(2, "Full name is required")
+    .max(200),
 
   nim: z
     .string()
     .trim()
-    .min(1, "NIM is required"),
+    .min(1, "NIM is required")
+    .max(50),
 
   graduationYear: z
     .number()
@@ -31,7 +34,8 @@ export const createAdminAlumniSchema = z.object({
   program: z
     .string()
     .trim()
-    .min(1, "Program is required"),
+    .min(1, "Program is required")
+    .max(200),
 
   phone: z
     .string()

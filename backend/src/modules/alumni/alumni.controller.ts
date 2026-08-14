@@ -13,6 +13,7 @@ import {
 } from "./alumni.service.js";
 
 import { createAdminAlumni } from "./admin-alumni.service.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 export async function createAlumniController(
   req: Request,
@@ -26,13 +27,10 @@ export async function createAlumniController(
       success: true,
       data: alumni,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to create alumni",
+      message: "Failed to create alumni",
     });
   }
 }
@@ -49,13 +47,10 @@ export async function createAdminAlumniController(
       success: true,
       data: result,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to create alumni",
+      message: "Failed to create alumni",
     });
   }
 }
@@ -90,13 +85,10 @@ export async function getAlumniController(
       success: true,
       data: alumni,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to get alumni",
+      message: "Failed to get alumni",
     });
   }
 }
@@ -130,13 +122,10 @@ export async function getMyAlumniController(
       success: true,
       data: alumni,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to get profile",
+      message: "Failed to get profile",
     });
   }
 }
@@ -171,13 +160,10 @@ export async function updateMyAlumniController(
       success: true,
       data: alumni,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to update profile",
+      message: "Failed to update profile",
     });
   }
 }
@@ -215,13 +201,10 @@ export async function updateAlumniController(
       success: true,
       data: alumni,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to update alumni",
+      message: "Failed to update alumni",
     });
   }
 }
@@ -266,6 +249,13 @@ export async function getAlumniListController(
       });
     }
 
+    if (page > SECURITY_LIMITS.maxPageNumber) {
+      return res.status(400).json({
+        success: false,
+        message: `Page must not exceed ${SECURITY_LIMITS.maxPageNumber}`,
+      });
+    }
+
     if (
       !Number.isInteger(limit) ||
       limit < 1
@@ -274,6 +264,20 @@ export async function getAlumniListController(
         success: false,
         message:
           "Limit must be a positive integer",
+      });
+    }
+
+    if (limit > SECURITY_LIMITS.maxPageSize) {
+      return res.status(400).json({
+        success: false,
+        message: `Limit must not exceed ${SECURITY_LIMITS.maxPageSize}`,
+      });
+    }
+
+    if (typeof searchParam === "string" && searchParam.length > SECURITY_LIMITS.maxSearchLength) {
+      return res.status(400).json({
+        success: false,
+        message: `Search must not exceed ${SECURITY_LIMITS.maxSearchLength} characters`,
       });
     }
 
@@ -290,13 +294,10 @@ export async function getAlumniListController(
       success: true,
       ...result,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to get alumni list",
+      message: "Failed to get alumni list",
     });
   }
 }

@@ -18,6 +18,7 @@ import type {
 import {
   PARTNER_TYPE,
 } from "./partner.types.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 
 const PARTNERS_COLLECTION =
@@ -90,6 +91,7 @@ export async function findAllPartners(
     .sort({
       name: 1,
     })
+    .limit(SECURITY_LIMITS.maxListResults)
     .toArray();
 }
 

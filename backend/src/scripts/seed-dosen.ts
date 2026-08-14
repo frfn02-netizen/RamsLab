@@ -24,11 +24,11 @@ async function seedDosen() {
     const users =
       getUsersCollection();
 
-    const email =
-      "dosen.testing@rams.test";
-
-    const password =
-      "DosenTest123!";
+    const email = process.env.SEED_DOSEN_EMAIL?.trim().toLowerCase();
+    const password = process.env.SEED_DOSEN_PASSWORD;
+    if (!email || !password || password.length < 12) {
+      throw new Error("SEED_DOSEN_EMAIL and a 12+ character SEED_DOSEN_PASSWORD are required");
+    }
 
     const existingDosen =
       await users.findOne({
@@ -53,6 +53,7 @@ async function seedDosen() {
       passwordHash,
       role: USER_ROLES.DOSEN,
       isActive: true,
+      tokenVersion: 0,
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -62,13 +63,7 @@ async function seedDosen() {
       "✅ Dosen user created"
     );
 
-    console.log(
-      `📧 Email: ${email}`
-    );
-
-    console.log(
-      `🔑 Password: ${password}`
-    );
+    console.log("Dosen account created");
 
   } catch (error) {
     console.error(

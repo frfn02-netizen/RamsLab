@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 
 import {
   findUserByEmail,
+  getUsersCollection,
 } from "../users/user.repository.js";
 
 import {
@@ -41,7 +42,15 @@ export async function login(
     generateAccessToken({
       userId: user._id!.toString(),
       role: user.role,
+      tokenVersion: user.tokenVersion ?? 0,
     });
+
+  if (user._id) {
+    await getUsersCollection().updateOne(
+      { _id: user._id },
+      { $set: { lastLoginAt: new Date() } },
+    );
+  }
 
   return {
     token,

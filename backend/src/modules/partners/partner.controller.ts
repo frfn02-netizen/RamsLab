@@ -8,7 +8,7 @@ import {
 } from "mongodb";
 
 import {
-  createPartnerSchema,
+  createPartnerDetailsSchema,
   updatePartnerSchema,
 } from "./partner.schema.js";
 
@@ -108,11 +108,8 @@ export async function createUniversityPartnerController(
   res: Response
 ) {
   try {
-    const input =
-      createPartnerSchema.parse({
-        ...req.body,
-        type: PARTNER_TYPE.UNIVERSITY,
-      });
+    const parsed = createPartnerDetailsSchema.parse(req.body);
+    const input = { ...parsed, type: PARTNER_TYPE.UNIVERSITY };
 
     const partner =
       await createPartner(input);
@@ -183,10 +180,7 @@ export async function updateUniversityPartnerController(
     const partner =
       await updatePartner(
         id,
-        {
-          ...input,
-          type: PARTNER_TYPE.UNIVERSITY,
-        }
+        input
       );
 
     if (!partner) {
@@ -360,11 +354,8 @@ export async function createIndustrialPartnerController(
   res: Response
 ) {
   try {
-    const input =
-      createPartnerSchema.parse({
-        ...req.body,
-        type: PARTNER_TYPE.INDUSTRIAL,
-      });
+    const parsed = createPartnerDetailsSchema.parse(req.body);
+    const input = { ...parsed, type: PARTNER_TYPE.INDUSTRIAL };
 
     const partner =
       await createPartner(input);
@@ -434,10 +425,7 @@ export async function updateIndustrialPartnerController(
     const partner =
       await updatePartner(
         id,
-        {
-          ...input,
-          type: PARTNER_TYPE.INDUSTRIAL,
-        }
+        input
       );
 
     if (!partner) {

@@ -12,8 +12,11 @@ async function seedAdmin() {
 
     const users = getUsersCollection();
 
-    const email = "admin@rams-its.id";
-    const password = "masukkanpasswordyangvalid";
+    const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+    const password = process.env.SEED_ADMIN_PASSWORD;
+    if (!email || !password || password.length < 12) {
+      throw new Error("SEED_ADMIN_EMAIL and a 12+ character SEED_ADMIN_PASSWORD are required");
+    }
 
     const existingAdmin = await users.findOne({
       email,
@@ -34,14 +37,14 @@ async function seedAdmin() {
       passwordHash,
       role: USER_ROLES.ADMIN,
       isActive: true,
+      tokenVersion: 0,
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     console.log("✅ Admin created");
-    console.log(`📧 Email: ${email}`);
-    console.log(`🔑 Password: ${password}`);
+    console.log("Admin account created");
   } catch (error) {
     console.error(
       "❌ Failed to seed admin:",

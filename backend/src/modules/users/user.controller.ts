@@ -1,39 +1,24 @@
 import type { Request,Response, } from "express";
 import { createAlumniUser, createDosenUser } from "./user.service.js";
+import { createManagedAccountSchema } from "./user.schema.js";
 
 export async function createAlumniUserController(
   req: Request,
   res: Response
 ) {
   try {
-    const {
-      email,
-      password,
-    } = req.body;
-
-    if (
-      typeof email !== "string" ||
-      typeof password !== "string"
-    ) {
+    const parsed = createManagedAccountSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        message:
-          "Email and password are required",
-      });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Password must be at least 8 characters",
+        message: "Validation failed",
       });
     }
 
     const user =
       await createAlumniUser({
-        email,
-        password,
+        email: parsed.data.email,
+        password: parsed.data.password,
       });
 
     return res.status(201).json({
@@ -41,12 +26,10 @@ export async function createAlumniUserController(
       data: user,
     });
   } catch (error) {
-    return res.status(400).json({
+    const duplicate = typeof error === "object" && error !== null && "code" in error && error.code === 11000;
+    return res.status(duplicate ? 409 : 500).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to create alumni account",
+      message: duplicate ? "Email is already registered" : "Failed to create alumni account",
     });
   }
 }
@@ -55,34 +38,18 @@ export async function createDosenUserController(
   res: Response
 ) {
   try {
-    const {
-      email,
-      password,
-    } = req.body;
-
-    if (
-      typeof email !== "string" ||
-      typeof password !== "string"
-    ) {
+    const parsed = createManagedAccountSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        message:
-          "Email and password are required",
-      });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Password must be at least 8 characters",
+        message: "Validation failed",
       });
     }
 
     const user =
       await createDosenUser({
-        email,
-        password,
+        email: parsed.data.email,
+        password: parsed.data.password,
       });
 
     return res.status(201).json({
@@ -90,12 +57,10 @@ export async function createDosenUserController(
       data: user,
     });
   } catch (error) {
-    return res.status(400).json({
+    const duplicate = typeof error === "object" && error !== null && "code" in error && error.code === 11000;
+    return res.status(duplicate ? 409 : 500).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to create dosen account",
+      message: duplicate ? "Email is already registered" : "Failed to create dosen account",
     });
   }
 }

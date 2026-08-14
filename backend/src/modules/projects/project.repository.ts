@@ -2,6 +2,7 @@ import { Collection, ObjectId, } from "mongodb";
 import { getDatabase, } from "../../config/database.js";
 import type { Project, } from "./project.types.js";
 import type { CreateProjectInput, UpdateProjectInput,} from "./project.schema.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 const PROJECTS_COLLECTION =
   "projects";
@@ -87,6 +88,7 @@ export async function findAllProjects(
       year: -1,
       title: 1,
     })
+    .limit(SECURITY_LIMITS.maxListResults)
     .toArray();
 }
 

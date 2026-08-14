@@ -2,6 +2,7 @@ import { Collection, ObjectId, } from "mongodb";
 import { getDatabase, } from "../../config/database.js";
 import type { AlumniTracking, } from "./tracking.types.js";
 import type { CreateTrackingInput, UpdateTrackingInput, } from "./tracking.schema.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 const TRACKING_COLLECTION = "alumni_tracking";
 
@@ -24,6 +25,7 @@ export async function findTrackingByAlumniId(
     .sort({
       startDate: -1,
     })
+    .limit(SECURITY_LIMITS.maxListResults)
     .toArray();
 }
 

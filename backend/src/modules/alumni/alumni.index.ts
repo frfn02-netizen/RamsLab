@@ -12,6 +12,11 @@ export async function createAlumniIndexes() {
   );
 
   await collection.createIndex(
+    { createdAt: -1 },
+    { name: "alumni_created_at_index" },
+  );
+
+  await collection.createIndex(
     { nim: 1 },
     {
       unique: true,

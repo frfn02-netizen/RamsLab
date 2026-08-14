@@ -6,8 +6,15 @@ import {
   getPublicProjectsController,
   getPublicUniversityPartnersController,
 } from "./public.controller.js";
+import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
+import { SECURITY_LIMITS } from "../../config/security.js";
 
 const router = Router();
+router.use(createRateLimiter({
+  windowMs: SECURITY_LIMITS.apiWindowMs,
+  max: SECURITY_LIMITS.maxPublicRequests,
+  message: "Too many public API requests",
+}));
 
 
 // ========================================
