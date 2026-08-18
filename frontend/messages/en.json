@@ -1,0 +1,237 @@
+{
+  "brand": {
+    "laboratory": "RAMS Laboratory",
+    "short": "RAMS LAB",
+    "technicalLine": "Reliability · Safety · Marine Systems",
+    "ais": "AIS-ITS",
+    "pui": "PUI-KEKAL",
+    "institution": "Institut Teknologi Sepuluh Nopember"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "research": "Research",
+    "projects": "Projects",
+    "partners": "Partners",
+    "team": "Team",
+    "contact": "Contact"
+  },
+  "a11y": { "openMenu": "Open navigation", "closeMenu": "Close navigation", "menu": "Menu", "home": "RAMS Laboratory home", "technicalVisual": "Portrait of Prof. Ketut, RAMS Laboratory head", "skipToContent": "Skip to content", "primaryNav": "Primary navigation", "mobileNav": "Mobile navigation" },
+  "language": { "label": "Language", "english": "English", "indonesian": "Bahasa Indonesia", "shortEnglish": "EN", "shortIndonesian": "ID" },
+  "common": { "readMore": "Read more", "explore": "Explore", "viewProject": "View project", "allProjects": "All projects", "visitWebsite": "Visit website", "academic": "Academic", "industrial": "Industrial", "publishedRecords": "Published records", "loading": "Loading", "requestUnavailable": "Request unavailable", "tryAgain": "Try again", "noPublishedRecords": "No published records", "syncing": "Syncing", "record": "record", "records": "records", "researchArea": "research area", "nextConversation": "Next conversation", "research": "Research", "project": "Project", "projects": "Projects", "status": "Status", "category": "Category", "year": "Year", "technicalDetails": "Technical details", "planning": "Planning", "ongoing": "Ongoing", "completed": "Completed", "researchCategory": "Research", "consultingCategory": "Consulting", "developmentCategory": "Development", "otherCategory": "Other", "recordUpper": "RECORD", "recordsUpper": "RECORDS" },
+  "home": {
+    "eyebrow": "RAMS Laboratory",
+    "headline": "Reliability, safety & marine systems research.",
+    "description": "We study the systems behind safe, dependable maritime and industrial operations—from risk assessment and AIS monitoring to maintenance, reliability, and simulation.",
+    "primaryCta": "Explore our research",
+    "secondaryCta": "About the laboratory",
+    "location": "Surabaya",
+    "established": "Research lab",
+    "maritime": "Systems focus",
+    "stats": { "establishedValue": "EST. 1997", "establishedLabel": "Laboratory reference", "areasValue": "06", "areasLabel": "Core research areas", "systemsValue": "AIS / RAMS", "systemsLabel": "Marine systems lens", "institutionValue": "ITS", "institutionLabel": "Institutional home" },
+    "aboutEyebrow": "The laboratory",
+    "aboutTitle": "Engineering confidence into complex systems.",
+    "aboutDescription": "RAMS Laboratory brings together research and industrial consulting in reliability, availability, maintainability, safety, maritime traffic, and marine engineering.",
+    "aboutLink": "Read our profile",
+    "callout": { "profile": "System profile", "affiliation": "Affiliation", "affiliationValue": "Institut Teknologi Sepuluh Nopember (ITS)", "lens": "Research lens", "lensValue": "Reliability, safety, marine systems, and industrial risk", "collaboration": "Collaboration", "collaborationValue": "Academic, research, and industrial partners", "location": "Location", "locationValue": "Gedung WA · Kampus ITS Sukolilo · Surabaya" },
+    "researchEyebrow": "Research areas",
+    "researchTitle": "Methods for decisions that matter.",
+    "researchDescription": "Six connected areas frame the laboratory’s work across maritime, offshore, and industrial systems.",
+    "researchLink": "View all research",
+    "partnersEyebrow": "Partners & projects",
+    "partnersTitle": "Connected to applied work.",
+    "partnersDescription": "Published partner and project records are sourced from the RAMS Platform API.",
+    "partnersLink": "Explore partners", "partnersError": "Published partner records are temporarily unavailable.", "partnersEmpty": "Published partner records will appear here when available.",
+    "systemsEyebrow": "A systems view",
+    "systemsTitle": "From evidence to action.",
+    "systemsDescription": "Our work is grounded in practical questions: what can fail, what follows, how can risk be reduced, and how should a system be maintained over time?",
+    "focus": { "reliability": "Reliability & availability", "risk": "Risk & safety", "marine": "Marine systems", "ais": "AIS monitoring", "maintenance": "Maintenance management", "simulation": "Simulation & modeling" },
+    "ctaTitle": "Have a reliability, safety, or marine systems challenge?",
+    "ctaDescription": "Talk with the laboratory about a research, reliability, safety, or marine systems challenge.",
+    "ecosystemTitle": "Part of the ITS Research Ecosystem",
+    "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember"
+  },
+  "about": {
+    "heroEyebrow": "About the laboratory", "heroTitle": "A research laboratory for dependable systems.", "heroDescription": "RAMS Laboratory works at the intersection of marine engineering, industrial reliability, safety, maintenance, and maritime systems.",
+    "profileEyebrow": "Laboratory profile", "profileTitle": "Where engineering questions become structured evidence.", "profileP1": "RAMS—Reliability, Availability, Maintainability & Safety—supports research and industrial consulting for systems where performance, risk, and lifecycle decisions are closely connected.", "profileP2": "Its marine and offshore perspective is complemented by methods that travel across industries: risk assessment, reliability modeling, maintenance strategy, simulation, and data-informed decision support.",
+    "callout": { "institution": "Institution", "institutionValue": "Institut Teknologi Sepuluh Nopember (ITS)", "laboratory": "Laboratory", "laboratoryValue": "RAMS Laboratory", "established": "Established", "establishedValue": "1997", "base": "Base", "baseValue": "Gedung WA, Kampus ITS Sukolilo, Surabaya" },
+    "visionEyebrow": "Vision & mission", "visionTitle": "Useful research for safer, more available systems.", "visionDescription": "The laboratory’s direction is expressed through applied research, multidisciplinary collaboration, and engineering work that helps organizations understand and improve complex assets.", "visionLabel": "Vision", "visionText": "To advance dependable marine and industrial systems through rigorous research and practical collaboration.", "missionLabel": "Mission", "missionText": "To develop methods, models, and engineering insight for reliability, safety, maintainability, and system performance.",
+    "timelineEyebrow": "Laboratory timeline", "timelineTitle": "A practice built over time.", "timelineDescription": "A concise view of the laboratory’s source-supported history and direction.",
+    "ecosystemEyebrow": "Institutional connection", "ecosystemTitle": "RAMS Laboratory × AIS-ITS.", "ecosystemDescription": "The public identity brings together RAMS Laboratory’s reliability and safety work with the blue maritime systems direction of AIS-ITS.", "ecosystemLink": "See collaboration network", "ctaTitle": "Build the next dependable system with us."
+  },
+  "timeline": { "foundation": { "year": "1997", "label": "Foundation", "text": "RAMS Laboratory is established as a research home for reliability, availability, maintainability, and safety studies." }, "collaboration": { "year": "2000s", "label": "Collaboration", "text": "Research expands through academic and international collaboration around marine and offshore systems." }, "recognition": { "year": "2010", "label": "Recognition", "text": "Research and professorship activities strengthen the laboratory’s role in applied reliability and safety work." }, "industry": { "year": "2010s", "label": "Industry", "text": "Industrial consulting and project-based studies connect laboratory methods with operational decisions." }, "today": { "year": "Today", "label": "Multidisciplinary", "text": "RAMS Laboratory continues to combine marine engineering, reliability, safety, maintenance, AIS, and simulation." } },
+  "research": {
+    "heroEyebrow": "Research & methods",
+    "heroTitle": "Research that turns complex systems into better decisions.",
+    "heroDescription": "RAMS research connects technical models with the operational questions faced by marine, offshore, and industrial organizations.",
+    "heroCta": "Explore research areas",
+    "heroImageAlt": "Marine systems research",
+    "methodology": "Methodology",
+    "applications": "Applications / study cases",
+    "areaLabel": "research area",
+    "indexEyebrow": "Research index",
+    "indexTitle": "Our Research Areas",
+    "indexDescription": "Six connected areas frame the laboratory's work across maritime, offshore, and industrial systems.",
+    "areas": {
+      "RISK": {
+        "title": "Risk Assessment & Safety",
+        "description": "Structured analysis of hazards, consequences, and safeguards for marine and industrial systems.",
+        "applications": "HAZID · HAZOP · SAFETY CASES"
+      },
+      "AIS": {
+        "title": "Automatic Identification System",
+        "description": "Maritime traffic intelligence using AIS data to understand movement, patterns, and operational exposure.",
+        "applications": "TRAFFIC · MONITORING · MARITIME DATA"
+      },
+      "RAM": {
+        "title": "Marine System Reliability & Availability",
+        "description": "Reliability and availability models that make complex marine assets easier to operate, maintain, and improve.",
+        "applications": "FMEA · FTA · RELIABILITY BLOCKS"
+      },
+      "RCM": {
+        "title": "Maintenance Management",
+        "description": "Maintenance strategies grounded in failure behavior, criticality, and the realities of industrial operations.",
+        "applications": "RCM · FMEA · ASSET STRATEGY"
+      },
+      "DESIGN": {
+        "title": "Optimum Design of Industrial Facility",
+        "description": "Engineering studies that connect facility layout, performance, risk, and lifecycle considerations.",
+        "applications": "LAYOUT · LIFECYCLE · OPTIMIZATION"
+      },
+      "SIM": {
+        "title": "Simulation & Modeling",
+        "description": "Models and simulations for testing system behavior, capacity, and decision alternatives before implementation.",
+        "applications": "DISCRETE EVENT · SYSTEMS · SCENARIOS"
+      }
+    },
+    "methods": {
+      "RISK": [
+        "Hazard identification and risk assessment",
+        "Safety analysis and consequence mapping",
+        "Operational safeguards and decision support"
+      ],
+      "AIS": [
+        "AIS data preparation and spatial analysis",
+        "Maritime traffic patterns and monitoring",
+        "Operational exposure and route insight"
+      ],
+      "RAM": [
+        "FMEA, FTA, and reliability block modeling",
+        "Availability and maintainability analysis",
+        "Lifecycle performance evaluation"
+      ],
+      "RCM": [
+        "Failure-mode and criticality analysis",
+        "Preventive and condition-based strategies",
+        "Maintenance planning and optimization"
+      ],
+      "DESIGN": [
+        "Facility layout and system configuration",
+        "Lifecycle and performance trade-offs",
+        "Industrial design decision support"
+      ],
+      "SIM": [
+        "System behavior and capacity models",
+        "Scenario comparison and sensitivity analysis",
+        "Simulation-informed operations planning"
+      ]
+    },
+    "processEyebrow": "How we research",
+    "processTitle": "From engineering questions to better decisions.",
+    "processDescription": "Every research area follows the same engineering logic: understand the system, analyse the evidence, model the behavior, and support the decision.",
+    "process": {
+      "understand": {
+        "title": "Understand",
+        "text": "Hazard identification, failure behavior, and the operational context of the system."
+      },
+      "analyse": {
+        "title": "Analyse",
+        "text": "Data preparation, spatial analysis, criticality, and consequence mapping."
+      },
+      "model": {
+        "title": "Model",
+        "text": "FMEA, FTA, reliability blocks, and simulation models of system behavior."
+      },
+      "decide": {
+        "title": "Decide",
+        "text": "Decision support, maintenance planning, and scenario-informed operations."
+      }
+    },
+    "applicationText": "Marine and offshore systems, industrial facilities, maritime traffic, operational safety, asset performance, and engineering decision support.",
+    "contextEyebrow": "Research in context",
+    "contextTitle": "Research grounded in real systems.",
+    "contextItems": {
+      "marine": "Marine systems",
+      "offshore": "Offshore operations",
+      "traffic": "Maritime traffic",
+      "industrial": "Industrial systems",
+      "maintenance": "Maintenance",
+      "safety": "Safety"
+    },
+    "featuredEyebrow": "Featured projects",
+    "featuredTitle": "Featured Projects",
+    "featuredDescription": "Selected research and engineering projects from RAMS Laboratory.",
+    "industryEyebrow": "Research & industry",
+    "industryTitle": "From research to engineering decisions.",
+    "industryDescription": "RAMS methods connect directly to operational practice: reliability, safety, maintenance, and risk inform how marine and industrial systems are designed, operated, and maintained.",
+    "industryPoints": {
+      "reliability": "Reliability and availability models inform asset operations.",
+      "safety": "Risk and safety analysis supports safeguard decisions.",
+      "maintenance": "Maintenance strategies follow failure behavior and criticality.",
+      "decision": "Simulation and decision support guide operations planning."
+    },
+    "ctaTitle": "Better decisions start with better understanding.",
+    "ctaText": "Explore the research, methods, and projects behind RAMS Laboratory.",
+    "ctaPrimary": "View projects",
+    "ctaSecondary": "About RAMS Laboratory",
+    "contextImageAlt": "Vessel & ship systems"
+  },
+  "projects": { "heroEyebrow": "Published work", "heroTitle": "Projects with an operational edge.", "heroDescription": "Explore public research, consulting, and development projects published through the RAMS Platform.", "register": "Project register", "sorted": "Published records · sorted by year", "noTitle": "No projects published", "noDescription": "There are no public project records available right now.", "loading": "Loading published projects", "detailDescription": "Project description", "metadata": "Project metadata", "partnerNote": "Partner relationships are represented by platform IDs in the current public project contract; partner names are not fabricated here.", "relatedEyebrow": "Continue exploring", "relatedTitle": "Related projects", "notFound": "The requested project could not be found.", "error": "The project record is temporarily unavailable.", "technicalDetails": "Technical details", "slug": "Project slug" },
+  "partners": { "heroEyebrow": "Collaboration network", "heroTitle": "Research is a connected practice.", "heroDescription": "RAMS works across academic and industrial contexts. Explore the published organizations connected with the laboratory.", "academic": "Academic", "academicTitle": "University partners", "academicDescription": "Academic institutions and research collaborations connected to RAMS.", "industry": "Industry", "industryTitle": "Industrial partners", "industryDescription": "Organizations connected to applied project and consulting work.", "directory": "Published records", "selected": "Selected network", "loading": "Loading partners", "universityEyebrow": "Academic network", "universityTitle": "University partners.", "universityDescription": "Academic institutions connected to RAMS research and collaboration.", "industrialEyebrow": "Industry network", "industrialTitle": "Industrial partners.", "industrialDescription": "Industrial organizations connected to RAMS project and consulting work.", "publishedFromApi": "Published records from the RAMS public API.", "noUniversity": "No university partners published", "noIndustrial": "No industrial partners published", "noDescription": "There are no public partner records available in this category right now.", "academicLabel": "Academic", "industrialLabel": "Industrial", "directoryNote": "Published partner records will appear here when available.", "universityDirectory": "University directory", "industrialDirectory": "Industrial directory" },
+  "team": { "heroEyebrow": "People & expertise", "heroTitle": "A multidisciplinary research team.", "heroDescription": "RAMS Laboratory brings together laboratory leadership, lecturers, researchers, and engineering collaborators around dependable systems.", "headEyebrow": "Laboratory head", "headName": "Prof. Ketut", "headPhotoAlt": "Prof. Ketut, RAMS Laboratory head", "leadership": "Laboratory leadership", "alignment": "Prof. Ketut is presented here as the laboratory head. Additional staff records remain aligned with verified platform data.", "notExposed": "Additional public profile details not currently exposed by API", "staffEyebrow": "Research staff", "staffTitle": "Expertise that crosses disciplines.", "staffDescription": "From reliability engineering and safety analysis to AIS, maintenance, marine systems, and simulation, the team works across technical and operational boundaries.", "directoryNote": "Directory note", "directoryText": "Individual staff records are managed inside the authenticated platform. A public staff endpoint is not currently mounted, so this page intentionally avoids inventing additional names or titles.", "ask": "Ask about the team", "ctaTitle": "Start a conversation with the laboratory." },
+  "contact": {
+    "heroEyebrow": "Contact",
+    "heroTitle": "Get in touch.",
+    "heroDescription": "For research collaboration, industrial consulting, or questions about the laboratory, reach out through the channels below.",
+    "homeEyebrow": "GET IN TOUCH",
+    "homeTitle": "Let's talk about your next engineering challenge.",
+    "homeDescription": "Research collaboration, engineering projects, technical discussions, and marine systems inquiries.",
+    "contactEyebrow": "Laboratory contact",
+    "contactTitle": "Contact Information",
+    "address": "Address",
+    "email": "Email",
+    "social": "Social",
+    "socialText": "Instagram · RAMS Laboratory",
+    "emailHint": "Prefer email? Include your institution, the system or topic you are exploring, and the kind of collaboration you have in mind.",
+    "researchLink": "Review research areas",
+    "laboratory": "Laboratory",
+    "sendMessage": "Send message",
+    "collaborationTitle": "Research & Collaboration",
+    "collaborationText": "RAMS Laboratory is open to research collaboration, engineering projects, technical discussions, and industry collaboration.",
+    "collaborationCta": "Discuss a collaboration",
+    "formEyebrow": "Start a conversation",
+    "formTitle": "Tell us what you are working on.",
+    "formDescription": "This form is prepared for the future contact API. It currently validates locally and does not send a message.",
+    "name": "Name",
+    "institution": "Institution / Company",
+    "topic": "Topic",
+    "message": "Message",
+    "selectTopic": "Select a topic",
+    "validate": "Validate inquiry",
+    "requiredError": "Please complete the required fields before continuing.",
+    "ready": "Your details are ready to share.",
+    "notWired": "Submission is not yet connected to a backend endpoint. Please email the laboratory directly for now.",
+    "edit": "Edit form",
+    "topics": {
+      "risk": "Risk Assessment & Safety",
+      "ais": "AIS Monitoring",
+      "reliability": "Reliability & Availability",
+      "maintenance": "Maintenance Management",
+      "design": "Facility Design",
+      "collaboration": "Research Collaboration",
+      "other": "Other"
+    }
+  },
+  "footer": { "description": "Research and engineering for reliability, safety, maintainability, and marine systems.", "navigate": "Navigate", "ecosystem": "Our ecosystem", "contact": "Contact", "findUs": "Find us", "instagram": "Instagram · RAMS Laboratory", "copyright": "RAMS Laboratory", "institution": "Institut Teknologi Sepuluh Nopember · Surabaya", "address1": "Gedung WA", "address2": "Kampus ITS Sukolilo", "address3": "Surabaya 60111", "address4": "Indonesia" },
+  "visual": { "profile": "Profile", "headName": "Prof. Ketut", "headRole": "Laboratory head", "affiliation": "Institut Teknologi Sepuluh Nopember" }
+}

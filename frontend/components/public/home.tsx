@@ -1,0 +1,250 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { getPublicProjects } from "@/lib/api/modules";
+import type { Project } from "@/types/modules";
+import PublicContainer from "./public-container";
+import ProjectCard from "./project-card";
+import ContactForm from "./contact-form";
+import RevealOnScroll from "./reveal-on-scroll";
+import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
+
+type ContactIconKind = "location" | "email" | "laboratory";
+
+function ContactIcon({ kind }: { kind: ContactIconKind }) {
+  const paths = {
+    location: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
+    email: <><rect x="3" y="5" width="18" height="14" rx="1.5" /><path d="m4 7 8 6 8-6" /></>,
+    laboratory: <><path d="M9 3v6l-5.5 9.5A1 1 0 0 0 4.4 20h15.2a1 1 0 0 0 .9-1.5L15 9V3" /><path d="M7 3h10M8 14h8" /></>,
+  }[kind];
+
+  return <svg aria-hidden="true" className="homepage-contact-icon h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{paths}</svg>;
+}
+
+export default function PublicHome() {
+  const t = useTranslations("home");
+  const contact = useTranslations("contact");
+  const brand = useTranslations("brand");
+  const projectsT = useTranslations("projects");
+  const footer = useTranslations("footer");
+  const common = useTranslations("common");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState(false);
+
+  useEffect(() => {
+    getPublicProjects().then((items) => setProjects(items.slice(0, 3))).catch(() => setProjectsError(true)).finally(() => setProjectsLoading(false));
+  }, []);
+
+  return <>
+    {/* HERO */}
+    <section className="relative flex min-h-[75vh] items-center justify-start bg-[var(--navy)] text-white">
+      <Image src="/assets/upscalemedia-transformed.jpeg" alt={t("headline")} fill priority sizes="100vw" className="object-cover" />
+      <div className="absolute inset-0 bg-[var(--navy)]/50" />
+      <PublicContainer className="relative z-10 w-full">
+        <div className="hero-entrance max-w-3xl">
+          <p className="font-display font-bold uppercase tracking-widest text-[var(--rams-red)]">{brand("laboratory")}</p>
+          <h1 className="mt-4 font-display text-5xl font-bold leading-tight tracking-tight text-white sm:text-7xl">{t("headline")}</h1>
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/90">{t("description")}</p>
+          <div className="mt-10 flex gap-4">
+            <Link href="/research" className="bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]">{t("primaryCta")} →</Link>
+            <Link href="/about" className="border border-white/50 px-8 py-3 text-sm font-semibold text-white transition hover:bg-white/10">{t("secondaryCta")} →</Link>
+          </div>
+        </div>
+      </PublicContainer>
+    </section>
+
+    {/* PRINCIPLES */}
+    <section className="bg-white py-20">
+      <PublicContainer>
+        <RevealOnScroll className="rams-principles grid grid-cols-1 border-t border-b border-[var(--border)] sm:grid-cols-2 lg:grid-cols-4" stagger={120}>
+          {[
+            { letter: "R", title: "Reliability", desc: "Modeling and predicting system behavior" },
+            { letter: "A", title: "Availability", desc: "Ensuring systems are ready when needed" },
+            { letter: "M", title: "Maintainability", desc: "Optimizing maintenance strategies" },
+            { letter: "S", title: "Safety", desc: "Reducing risks in complex environments" },
+          ].map((item, i) => (
+              <div key={item.letter} className={`rams-item relative p-8 ${i < 3 ? "lg:border-r lg:border-[var(--border)]" : ""}`}>
+              <span aria-hidden="true" className="rams-accent" />
+              <span className="rams-letter font-display text-4xl font-bold text-[var(--rams-red)]">
+                {item.letter}
+              </span>
+              <h3 className="rams-title mt-4 font-bold text-[var(--navy)]">{item.title}</h3>
+              <p className="mt-2 text-sm text-[var(--gray)]">{item.desc}</p>
+            </div>
+          ))}
+        </RevealOnScroll>
+      </PublicContainer>
+    </section>
+
+    {/* ECOSYSTEM */}
+    <section className="bg-[var(--background-light)] py-20">
+      <PublicContainer>
+        <RevealOnScroll className="text-center">
+          <h2 className="font-display text-2xl font-bold text-[var(--navy)]">{t("ecosystemTitle")}</h2>
+        </RevealOnScroll>
+        <RevealOnScroll className="mt-12 grid grid-cols-1 border-y border-[var(--border)] sm:grid-cols-3" stagger={120}>
+          <div className="ecosystem-reveal-item">
+            <div className="ecosystem-block group px-6 py-8 text-center sm:px-8 lg:px-12">
+              <div className="ecosystem-logo-stage">
+                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2">
+                  <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="128px" className="object-contain" />
+                </div>
+              </div>
+              <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">{brand("laboratory")}</p>
+              <p className="mt-2 text-xs text-[var(--gray)]">{brand("technicalLine")}</p>
+            </div>
+          </div>
+          <div className="ecosystem-reveal-item">
+            <div className="ecosystem-block group border-[var(--border)] px-6 py-8 text-center sm:border-l sm:px-8 lg:px-12">
+              <div className="ecosystem-logo-stage">
+                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2">
+                  <Image src="/assets/ais-its-logo.png" alt={brand("ais")} fill sizes="256px" className="object-contain" />
+                </div>
+              </div>
+              <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">{brand("ais")}</p>
+              <p className="mt-2 whitespace-pre-line text-xs leading-5 text-[var(--gray)]">{t("ecosystemAisDescription")}</p>
+            </div>
+          </div>
+          <div className="ecosystem-reveal-item">
+            <div className="ecosystem-block group border-[var(--border)] px-6 py-8 text-center sm:border-l sm:px-8 lg:px-12">
+              <div className="ecosystem-logo-stage">
+                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2">
+                  <Image src="/assets/pui-kekal-logo.png" alt={brand("pui")} fill sizes="320px" className="object-contain" />
+                </div>
+              </div>
+              <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">{brand("pui")}</p>
+            </div>
+          </div>
+        </RevealOnScroll>
+      </PublicContainer>
+    </section>
+
+    {/* RESEARCH AREAS */}
+    <section className="bg-white py-20">
+      <PublicContainer>
+        <RevealOnScroll className="flex items-end justify-between">
+          <div className="max-w-2xl">
+            <h2 className="font-display text-4xl font-bold text-[var(--navy)]">Our Research Areas</h2>
+            <p className="mt-4 text-lg text-[var(--gray)]">Focused research for safer and more reliable systems.</p>
+          </div>
+          <Link href="/research" className="text-sm font-semibold text-[var(--rams-red)]">View all research →</Link>
+        </RevealOnScroll>
+        <RevealOnScroll className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4" stagger={100}>
+          {[
+            { img: "/assets/offshore.jpg", title: "Offshore & Marine Facilities" },
+            { img: "/assets/vessel.jpg", title: "Vessel & Ship Systems" },
+            { img: "/assets/port.jpg", title: "Port & Maritime Operations" },
+            { img: "/assets/marine-infrastructure.jpg", title: "Marine Infrastructure" },
+          ].map((item) => (
+            <div key={item.title} className="public-card-interaction group border border-[var(--border)] bg-white p-1 hover:border-[var(--rams-red)]">
+              <div className="relative h-48 w-full overflow-hidden"><Image src={item.img} alt={item.title} fill className="public-image-zoom object-cover" /></div>
+              <div className="p-6">
+                <h3 className="public-card-title font-bold text-[var(--navy)]">{item.title}</h3>
+                <Link href="/research" className="public-card-arrow mt-4 inline-block text-sm font-semibold text-[var(--rams-red)]">Learn more →</Link>
+              </div>
+            </div>
+          ))}
+        </RevealOnScroll>
+      </PublicContainer>
+    </section>
+
+    {/* PROJECTS */}
+    <section className="border-t border-[var(--border)] bg-[var(--background-light)] py-20">
+      <PublicContainer>
+        <RevealOnScroll className="flex items-end justify-between">
+            <h2 className="font-display text-4xl font-bold text-[var(--navy)]">Featured Projects</h2>
+            <Link href="/projects" className="text-sm font-semibold text-[var(--rams-red)]">{common("allProjects")} →</Link>
+        </RevealOnScroll>
+        <div className="mt-12">
+            {projectsLoading ? <PublicLoading label={projectsT("loading")} /> : projectsError ? <PublicError message={projectsT("error")} /> : projects.length === 0 ? <PublicEmpty title={projectsT("noTitle")} description={projectsT("noDescription")} /> : <RevealOnScroll className="grid gap-8 lg:grid-cols-3" stagger={100}>{projects.map((project) => <ProjectCard key={project._id} project={project} />)}</RevealOnScroll>}
+        </div>
+      </PublicContainer>
+    </section>
+
+    {/* CTA */}
+    <section className="bg-[var(--navy)] py-20 text-white">
+      <PublicContainer>
+        <RevealOnScroll className="text-center">
+            <h2 className="font-display text-4xl font-bold">Let&apos;s build safer, more<br/>reliable marine systems.</h2>
+            <p className="mt-6 text-lg text-white/80">Research collaboration, industrial projects,<br/>and engineering partnerships.</p>
+            <Link href="/contact" className="mt-10 inline-block bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]">Discuss a collaboration →</Link>
+        </RevealOnScroll>
+        </PublicContainer>
+    </section>
+
+    {/* CONTACT */}
+    <section className="bg-[var(--background-light)] py-20 sm:py-24">
+      <PublicContainer>
+        <RevealOnScroll className="max-w-3xl">
+          <p className="eyebrow text-[var(--rams-red)]">{contact("homeEyebrow")}</p>
+          <h2 className="mt-4 max-w-2xl font-display text-4xl font-bold leading-tight tracking-[-0.03em] text-[var(--navy)] sm:text-5xl">{contact("homeTitle")}</h2>
+          <p className="mt-5 max-w-2xl text-lg leading-7 text-[var(--gray)]">{contact("homeDescription")}</p>
+        </RevealOnScroll>
+
+        <div className="mt-12 grid items-stretch gap-8 lg:grid-cols-[3fr_2fr] lg:gap-10">
+          <RevealOnScroll className="h-full">
+            <ContactForm className="homepage-contact-form h-full" />
+          </RevealOnScroll>
+
+          <aside className="grid content-start gap-6">
+            <RevealOnScroll className="h-full" delay={120}>
+              <div className="homepage-contact-info h-full border border-[#D3DBE2] bg-white">
+                <div className="border-b border-[#D3DBE2] px-6 py-6 sm:px-8">
+                  <p className="eyebrow text-[var(--rams-red)]">{contact("contactEyebrow")}</p>
+                  <h3 className="mt-3 font-display text-2xl font-bold text-[var(--navy)]">{contact("contactTitle")}</h3>
+                  <span className="mt-4 block h-0.5 w-10 bg-[var(--rams-red)]" aria-hidden="true" />
+                </div>
+                <div className="divide-y divide-[#D3DBE2]">
+                  <div className="homepage-contact-info-row flex gap-4 px-6 py-5 sm:px-8">
+                    <ContactIcon kind="location" />
+                    <div>
+                      <p className="eyebrow">{contact("address")}</p>
+                      <address className="homepage-contact-value mt-2 text-sm not-italic leading-6 text-[var(--gray)]">
+                        {footer("address1")}<br />
+                        {footer("address2")}<br />
+                        {footer("address3")}<br />
+                        {footer("address4")}
+                      </address>
+                    </div>
+                  </div>
+                  <div className="homepage-contact-info-row flex gap-4 px-6 py-5 sm:px-8">
+                    <ContactIcon kind="email" />
+                    <div>
+                      <p className="eyebrow">{contact("email")}</p>
+                      <a href="mailto:jtsp@its.ac.id" className="homepage-contact-value mt-2 block text-sm font-semibold text-[var(--rams-red)] transition-colors duration-200 hover:text-[var(--rams-red-dark)]">jtsp@its.ac.id</a>
+                    </div>
+                  </div>
+                  <div className="homepage-contact-info-row flex gap-4 px-6 py-5 sm:px-8">
+                    <ContactIcon kind="laboratory" />
+                    <div>
+                      <p className="eyebrow">{contact("laboratory")}</p>
+                      <p className="homepage-contact-value mt-2 text-sm leading-6 text-[var(--gray)]">
+                        {brand("laboratory")}<br />
+                        {brand("institution")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={220}>
+              <div className="homepage-contact-collaboration bg-[var(--navy)] p-6 text-white sm:p-8">
+                <h3 className="font-display text-xl font-bold">{contact("collaborationTitle")}</h3>
+                <span className="mt-3 block h-0.5 w-10 bg-[var(--rams-red)]" aria-hidden="true" />
+                <p className="mt-4 text-sm leading-6 text-white/70">{contact("collaborationText")}</p>
+                <Link href="#contact-form" className="mt-6 inline-flex items-center bg-[var(--rams-red)] px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[var(--rams-red-dark)]">
+                  {contact("collaborationCta")} <span className="ml-2" aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </RevealOnScroll>
+          </aside>
+        </div>
+      </PublicContainer>
+    </section>
+  </>;
+}

@@ -1,0 +1,184 @@
+{
+  "brand": { "laboratory": "Laboratorium RAMS", "short": "RAMS LAB", "technicalLine": "Keandalan · Keselamatan · Sistem Maritim", "ais": "AIS-ITS", "pui": "PUI-KEKAL", "institution": "Institut Teknologi Sepuluh Nopember" },
+  "nav": { "home": "Beranda", "about": "Tentang", "research": "Riset", "projects": "Proyek", "partners": "Mitra", "team": "Tim", "contact": "Kontak" },
+  "a11y": { "openMenu": "Buka navigasi", "closeMenu": "Tutup navigasi", "menu": "Menu", "home": "Beranda Laboratorium RAMS", "technicalVisual": "Foto Prof. Ketut, kepala Laboratorium RAMS", "skipToContent": "Lewati ke konten", "primaryNav": "Navigasi utama", "mobileNav": "Navigasi seluler" },
+  "language": { "label": "Bahasa", "english": "English", "indonesian": "Bahasa Indonesia", "shortEnglish": "EN", "shortIndonesian": "ID" },
+  "common": { "readMore": "Baca selengkapnya", "explore": "Jelajahi", "viewProject": "Lihat proyek", "allProjects": "Semua proyek", "visitWebsite": "Kunjungi situs", "academic": "Akademik", "industrial": "Industri", "publishedRecords": "Rekaman terbit", "loading": "Memuat", "requestUnavailable": "Permintaan tidak tersedia", "tryAgain": "Coba lagi", "noPublishedRecords": "Belum ada rekaman terbit", "syncing": "Sinkronisasi", "record": "rekaman", "records": "rekaman", "researchArea": "bidang riset", "nextConversation": "Percakapan berikutnya", "research": "Riset", "project": "Proyek", "projects": "Proyek", "status": "Status", "category": "Kategori", "year": "Tahun", "technicalDetails": "Detail teknis", "planning": "Perencanaan", "ongoing": "Berjalan", "completed": "Selesai", "researchCategory": "Riset", "consultingCategory": "Konsultasi", "developmentCategory": "Pengembangan", "otherCategory": "Lainnya", "recordUpper": "REKAMAN", "recordsUpper": "REKAMAN" },
+  "home": { "eyebrow": "Laboratorium RAMS", "headline": "Riset keandalan, keselamatan & sistem maritim.", "description": "Kami mempelajari sistem di balik operasi maritim dan industri yang aman dan andal—mulai dari asesmen risiko dan pemantauan AIS hingga pemeliharaan, keandalan, dan simulasi.", "primaryCta": "Jelajahi riset kami", "secondaryCta": "Tentang laboratorium", "location": "Surabaya", "established": "Laboratorium riset", "maritime": "Fokus sistem", "stats": { "establishedValue": "SEJAK 1997", "establishedLabel": "Referensi laboratorium", "areasValue": "06", "areasLabel": "Bidang riset utama", "systemsValue": "AIS / RAMS", "systemsLabel": "Perspektif sistem maritim", "institutionValue": "ITS", "institutionLabel": "Institusi" }, "aboutEyebrow": "Laboratorium", "aboutTitle": "Membangun keyakinan rekayasa untuk sistem yang kompleks.", "aboutDescription": "Laboratorium RAMS memadukan riset dan konsultasi industri dalam keandalan, ketersediaan, kemudahan pemeliharaan, keselamatan, lalu lintas maritim, dan rekayasa kelautan.", "aboutLink": "Baca profil kami", "callout": { "profile": "Profil sistem", "affiliation": "Afiliasi", "affiliationValue": "Institut Teknologi Sepuluh Nopember (ITS)", "lens": "Perspektif riset", "lensValue": "Keandalan, keselamatan, sistem maritim, dan risiko industri", "collaboration": "Kolaborasi", "collaborationValue": "Mitra akademik, riset, dan industri", "location": "Lokasi", "locationValue": "Gedung WA · Kampus ITS Sukolilo · Surabaya" }, "researchEyebrow": "Bidang riset", "researchTitle": "Metode untuk keputusan yang berarti.", "researchDescription": "Enam bidang yang saling terhubung membingkai pekerjaan laboratorium pada sistem maritim, lepas pantai, dan industri.", "researchLink": "Lihat semua riset", "partnersEyebrow": "Mitra & proyek", "partnersTitle": "Terhubung dengan pekerjaan terapan.", "partnersDescription": "Rekaman mitra dan proyek terbit bersumber dari API RAMS Platform.", "partnersLink": "Jelajahi mitra", "partnersError": "Rekaman mitra terbit sementara tidak tersedia.", "partnersEmpty": "Rekaman mitra terbit akan muncul di sini jika tersedia.", "systemsEyebrow": "Perspektif sistem", "systemsTitle": "Dari bukti menjadi aksi.", "systemsDescription": "Pekerjaan kami berangkat dari pertanyaan praktis: apa yang dapat gagal, apa akibatnya, bagaimana risiko dikurangi, dan bagaimana sistem dipelihara sepanjang waktu?", "focus": { "reliability": "Keandalan & ketersediaan", "risk": "Risiko & keselamatan", "marine": "Sistem maritim", "ais": "Pemantauan AIS", "maintenance": "Manajemen pemeliharaan", "simulation": "Simulasi & pemodelan" }, "ctaTitle": "Memiliki tantangan keandalan, keselamatan, atau sistem maritim?", "ctaDescription": "Diskusikan tantangan riset, keandalan, keselamatan, atau sistem maritim bersama laboratorium.", "ecosystemTitle": "Bagian dari Ekosistem Riset ITS", "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember" },
+  "about": { "heroEyebrow": "Tentang laboratorium", "heroTitle": "Laboratorium riset untuk sistem yang andal.", "heroDescription": "Laboratorium RAMS bekerja di persimpangan rekayasa kelautan, keandalan industri, keselamatan, pemeliharaan, dan sistem maritim.", "profileEyebrow": "Profil laboratorium", "profileTitle": "Tempat pertanyaan rekayasa menjadi bukti yang terstruktur.", "profileP1": "RAMS—Reliability, Availability, Maintainability & Safety—mendukung riset dan konsultasi industri untuk sistem yang kinerja, risiko, dan keputusan siklus hidupnya saling terhubung.", "profileP2": "Perspektif kelautan dan lepas pantainya dilengkapi metode lintas industri: asesmen risiko, pemodelan keandalan, strategi pemeliharaan, simulasi, dan dukungan keputusan berbasis data.", "callout": { "institution": "Institusi", "institutionValue": "Institut Teknologi Sepuluh Nopember (ITS)", "laboratory": "Laboratorium", "laboratoryValue": "Laboratorium RAMS", "established": "Berdiri", "establishedValue": "1997", "base": "Basis", "baseValue": "Gedung WA, Kampus ITS Sukolilo, Surabaya" }, "visionEyebrow": "Visi & misi", "visionTitle": "Riset yang berguna untuk sistem yang lebih aman dan tersedia.", "visionDescription": "Arah laboratorium diwujudkan melalui riset terapan, kolaborasi multidisiplin, dan pekerjaan rekayasa yang membantu organisasi memahami serta meningkatkan aset kompleks.", "visionLabel": "Visi", "visionText": "Memajukan sistem maritim dan industri yang andal melalui riset yang ketat dan kolaborasi praktis.", "missionLabel": "Misi", "missionText": "Mengembangkan metode, model, dan wawasan rekayasa untuk keandalan, keselamatan, kemudahan pemeliharaan, dan kinerja sistem.", "timelineEyebrow": "Linimasa laboratorium", "timelineTitle": "Praktik yang dibangun dari waktu ke waktu.", "timelineDescription": "Ringkasan sejarah dan arah laboratorium berdasarkan sumber yang tersedia.", "ecosystemEyebrow": "Koneksi institusional", "ecosystemTitle": "Laboratorium RAMS × AIS-ITS.", "ecosystemDescription": "Identitas publik ini memadukan karya keandalan dan keselamatan Laboratorium RAMS dengan arah sistem maritim AIS-ITS.", "ecosystemLink": "Lihat jejaring kolaborasi", "ctaTitle": "Bangun sistem andal berikutnya bersama kami." },
+  "timeline": { "foundation": { "year": "1997", "label": "Pendirian", "text": "Laboratorium RAMS berdiri sebagai rumah riset untuk kajian keandalan, ketersediaan, kemudahan pemeliharaan, dan keselamatan." }, "collaboration": { "year": "2000-an", "label": "Kolaborasi", "text": "Riset berkembang melalui kolaborasi akademik dan internasional seputar sistem kelautan dan lepas pantai." }, "recognition": { "year": "2010", "label": "Pengakuan", "text": "Kegiatan riset dan profesor memperkuat peran laboratorium dalam pekerjaan keandalan dan keselamatan terapan." }, "industry": { "year": "2010-an", "label": "Industri", "text": "Konsultasi industri dan kajian berbasis proyek menghubungkan metode laboratorium dengan keputusan operasional." }, "today": { "year": "Kini", "label": "Multidisiplin", "text": "Laboratorium RAMS terus memadukan rekayasa kelautan, keandalan, keselamatan, pemeliharaan, AIS, dan simulasi." } },
+  "research": {
+    "heroEyebrow": "Riset & metode",
+    "heroTitle": "Riset yang mengubah sistem kompleks menjadi keputusan yang lebih baik.",
+    "heroDescription": "Riset RAMS menghubungkan model teknis dengan pertanyaan operasional yang dihadapi organisasi maritim, lepas pantai, dan industri.",
+    "heroCta": "Jelajahi bidang riset",
+    "heroImageAlt": "Riset sistem maritim",
+    "methodology": "Metodologi",
+    "applications": "Aplikasi / studi kasus",
+    "areaLabel": "bidang riset",
+    "indexEyebrow": "Indeks riset",
+    "indexTitle": "Bidang Riset Kami",
+    "indexDescription": "Enam bidang yang saling terhubung membingkai pekerjaan laboratorium pada sistem maritim, lepas pantai, dan industri.",
+    "areas": {
+      "RISK": {
+        "title": "Asesmen Risiko & Keselamatan",
+        "description": "Analisis terstruktur atas bahaya, konsekuensi, dan pengaman untuk sistem kelautan dan industri.",
+        "applications": "HAZID · HAZOP · SAFETY CASES"
+      },
+      "AIS": {
+        "title": "Automatic Identification System",
+        "description": "Intelijen lalu lintas maritim menggunakan data AIS untuk memahami pergerakan, pola, dan paparan operasional.",
+        "applications": "LALU LINTAS · PEMANTAUAN · DATA MARITIM"
+      },
+      "RAM": {
+        "title": "Keandalan & Ketersediaan Sistem Maritim",
+        "description": "Model keandalan dan ketersediaan yang membantu aset maritim kompleks dioperasikan, dipelihara, dan ditingkatkan.",
+        "applications": "FMEA · FTA · BLOK KEANDALAN"
+      },
+      "RCM": {
+        "title": "Manajemen Pemeliharaan",
+        "description": "Strategi pemeliharaan yang berlandaskan perilaku kegagalan, kekritisan, dan realitas operasi industri.",
+        "applications": "RCM · FMEA · STRATEGI ASET"
+      },
+      "DESIGN": {
+        "title": "Desain Optimum Fasilitas Industri",
+        "description": "Kajian rekayasa yang menghubungkan tata letak fasilitas, kinerja, risiko, dan pertimbangan siklus hidup.",
+        "applications": "TATA LETAK · SIKLUS HIDUP · OPTIMASI"
+      },
+      "SIM": {
+        "title": "Simulasi & Pemodelan",
+        "description": "Model dan simulasi untuk menguji perilaku sistem, kapasitas, dan alternatif keputusan sebelum diterapkan.",
+        "applications": "PERISTIWA DISKRIT · SISTEM · SKENARIO"
+      }
+    },
+    "methods": {
+      "RISK": [
+        "Identifikasi bahaya dan asesmen risiko",
+        "Analisis keselamatan dan pemetaan konsekuensi",
+        "Pengaman operasional dan dukungan keputusan"
+      ],
+      "AIS": [
+        "Penyiapan dan analisis spasial data AIS",
+        "Pola lalu lintas dan pemantauan maritim",
+        "Paparan operasional dan wawasan rute"
+      ],
+      "RAM": [
+        "Pemodelan FMEA, FTA, dan blok keandalan",
+        "Analisis ketersediaan dan kemudahan pemeliharaan",
+        "Evaluasi kinerja siklus hidup"
+      ],
+      "RCM": [
+        "Analisis moda kegagalan dan kekritisan",
+        "Strategi preventif dan berbasis kondisi",
+        "Perencanaan dan optimasi pemeliharaan"
+      ],
+      "DESIGN": [
+        "Tata letak fasilitas dan konfigurasi sistem",
+        "Trade-off siklus hidup dan kinerja",
+        "Dukungan keputusan desain industri"
+      ],
+      "SIM": [
+        "Model perilaku dan kapasitas sistem",
+        "Perbandingan skenario dan analisis sensitivitas",
+        "Perencanaan operasi berbasis simulasi"
+      ]
+    },
+    "processEyebrow": "Cara kami meneliti",
+    "processTitle": "Dari pertanyaan rekayasa menuju keputusan yang lebih baik.",
+    "processDescription": "Setiap bidang riset mengikuti logika rekayasa yang sama: memahami sistem, menganalisis bukti, memodelkan perilaku, dan mendukung keputusan.",
+    "process": {
+      "understand": {
+        "title": "Memahami",
+        "text": "Identifikasi bahaya, perilaku kegagalan, dan konteks operasional sistem."
+      },
+      "analyse": {
+        "title": "Menganalisis",
+        "text": "Penyiapan data, analisis spasial, kekritisan, dan pemetaan konsekuensi."
+      },
+      "model": {
+        "title": "Memodelkan",
+        "text": "Pemodelan FMEA, FTA, blok keandalan, dan simulasi perilaku sistem."
+      },
+      "decide": {
+        "title": "Memutuskan",
+        "text": "Dukungan keputusan, perencanaan pemeliharaan, dan operasi berbasis skenario."
+      }
+    },
+    "applicationText": "Sistem kelautan dan lepas pantai, fasilitas industri, lalu lintas maritim, keselamatan operasional, kinerja aset, dan dukungan keputusan rekayasa.",
+    "contextEyebrow": "Riset dalam konteks",
+    "contextTitle": "Riset yang berpijak pada sistem nyata.",
+    "contextItems": {
+      "marine": "Sistem maritim",
+      "offshore": "Operasi lepas pantai",
+      "traffic": "Lalu lintas maritim",
+      "industrial": "Sistem industri",
+      "maintenance": "Pemeliharaan",
+      "safety": "Keselamatan"
+    },
+    "featuredEyebrow": "Proyek unggulan",
+    "featuredTitle": "Proyek Unggulan",
+    "featuredDescription": "Proyek riset dan rekayasa terpilih dari Laboratorium RAMS.",
+    "industryEyebrow": "Riset & industri",
+    "industryTitle": "Dari riset menuju keputusan rekayasa.",
+    "industryDescription": "Metode RAMS terhubung langsung dengan praktik operasional: keandalan, keselamatan, pemeliharaan, dan risiko membantu sistem maritim dan industri dirancang, dioperasikan, serta dipelihara.",
+    "industryPoints": {
+      "reliability": "Model keandalan dan ketersediaan mendukung operasi aset.",
+      "safety": "Analisis risiko dan keselamatan menopang keputusan pengaman.",
+      "maintenance": "Strategi pemeliharaan mengikuti perilaku kegagalan dan kekritisan.",
+      "decision": "Simulasi dan dukungan keputusan memandu perencanaan operasi."
+    },
+    "ctaTitle": "Keputusan yang lebih baik dimulai dari pemahaman yang lebih baik.",
+    "ctaText": "Jelajahi riset, metode, dan proyek di balik Laboratorium RAMS.",
+    "ctaPrimary": "Lihat proyek",
+    "ctaSecondary": "Tentang Laboratorium RAMS",
+    "contextImageAlt": "Kapal & sistem kapal"
+  },
+  "projects": { "heroEyebrow": "Pekerjaan terbit", "heroTitle": "Proyek dengan sisi operasional.", "heroDescription": "Jelajahi proyek riset, konsultasi, dan pengembangan publik yang diterbitkan melalui RAMS Platform.", "register": "Register proyek", "sorted": "Rekaman terbit · diurutkan berdasarkan tahun", "noTitle": "Belum ada proyek terbit", "noDescription": "Belum ada rekaman proyek publik yang tersedia saat ini.", "loading": "Memuat proyek terbit", "detailDescription": "Deskripsi proyek", "metadata": "Metadata proyek", "partnerNote": "Relasi mitra direpresentasikan sebagai ID platform dalam kontrak publik saat ini; nama mitra tidak dibuat-buat.", "relatedEyebrow": "Jelajahi lebih lanjut", "relatedTitle": "Proyek terkait", "notFound": "Proyek yang diminta tidak ditemukan.", "error": "Rekaman proyek sementara tidak tersedia.", "technicalDetails": "Detail teknis", "slug": "Slug proyek" },
+  "partners": { "heroEyebrow": "Jejaring kolaborasi", "heroTitle": "Riset adalah praktik yang terhubung.", "heroDescription": "RAMS bekerja dalam konteks akademik dan industri. Jelajahi organisasi terbit yang terhubung dengan laboratorium.", "academic": "Akademik", "academicTitle": "Mitra universitas", "academicDescription": "Institusi akademik dan kolaborasi riset yang terhubung dengan RAMS.", "industry": "Industri", "industryTitle": "Mitra industri", "industryDescription": "Organisasi yang terhubung dengan proyek dan pekerjaan konsultasi terapan.", "directory": "Rekaman terbit", "selected": "Jejaring terpilih", "loading": "Memuat mitra", "universityEyebrow": "Jejaring akademik", "universityTitle": "Mitra universitas.", "universityDescription": "Institusi akademik yang terhubung dengan riset dan kolaborasi RAMS.", "industrialEyebrow": "Jejaring industri", "industrialTitle": "Mitra industri.", "industrialDescription": "Organisasi industri yang terhubung dengan proyek dan konsultasi RAMS.", "publishedFromApi": "Rekaman terbit dari API publik RAMS.", "noUniversity": "Belum ada mitra universitas terbit", "noIndustrial": "Belum ada mitra industri terbit", "noDescription": "Belum ada rekaman mitra publik dalam kategori ini.", "academicLabel": "Akademik", "industrialLabel": "Industri", "directoryNote": "Rekaman mitra terbit akan muncul di sini jika tersedia.", "universityDirectory": "Direktori universitas", "industrialDirectory": "Direktori industri" },
+  "team": { "heroEyebrow": "Orang & keahlian", "heroTitle": "Tim riset multidisiplin.", "heroDescription": "Laboratorium RAMS mempertemukan pimpinan laboratorium, dosen, peneliti, dan kolaborator rekayasa di sekitar sistem yang andal.", "headEyebrow": "Kepala laboratorium", "headName": "Prof. Ketut", "headPhotoAlt": "Prof. Ketut, kepala Laboratorium RAMS", "leadership": "Kepemimpinan laboratorium", "alignment": "Prof. Ketut ditampilkan sebagai kepala laboratorium. Rekaman staf tambahan tetap diselaraskan dengan data platform yang terverifikasi.", "notExposed": "Detail profil publik tambahan belum tersedia melalui API", "staffEyebrow": "Staf riset", "staffTitle": "Keahlian yang melintasi disiplin.", "staffDescription": "Dari rekayasa keandalan dan analisis keselamatan hingga AIS, pemeliharaan, sistem kelautan, dan simulasi, tim bekerja melampaui batas teknis dan operasional.", "directoryNote": "Catatan direktori", "directoryText": "Rekaman staf individu dikelola di platform terautentikasi. Endpoint staf publik belum tersedia, sehingga halaman ini tidak mengarang nama atau jabatan tambahan.", "ask": "Tanyakan tentang tim", "ctaTitle": "Mulai percakapan dengan laboratorium." },
+  "contact": {
+    "heroEyebrow": "Kontak",
+    "heroTitle": "Hubungi kami.",
+    "heroDescription": "Untuk kolaborasi riset, konsultasi industri, atau pertanyaan tentang laboratorium, hubungi kami melalui kanal berikut.",
+    "homeEyebrow": "HUBUNGI KAMI",
+    "homeTitle": "Mari bicarakan tantangan rekayasa Anda berikutnya.",
+    "homeDescription": "Kolaborasi riset, proyek rekayasa, diskusi teknis, dan kebutuhan sistem maritim.",
+    "contactEyebrow": "Kontak laboratorium",
+    "contactTitle": "Informasi Kontak",
+    "address": "Alamat",
+    "email": "Email",
+    "social": "Sosial",
+    "socialText": "Instagram · Laboratorium RAMS",
+    "emailHint": "Lebih suka email? Sertakan institusi, sistem atau topik yang sedang Anda kaji, serta bentuk kolaborasi yang diharapkan.",
+    "researchLink": "Tinjau bidang riset",
+    "laboratory": "Laboratorium",
+    "sendMessage": "Kirim pesan",
+    "collaborationTitle": "Riset & Kolaborasi",
+    "collaborationText": "Laboratorium RAMS terbuka untuk kolaborasi riset, proyek rekayasa, diskusi teknis, dan kolaborasi industri.",
+    "collaborationCta": "Diskusikan kolaborasi",
+    "formEyebrow": "Mulai percakapan",
+    "formTitle": "Ceritakan hal yang sedang Anda kerjakan.",
+    "formDescription": "Formulir ini disiapkan untuk API kontak di masa mendatang. Saat ini formulir hanya memvalidasi data secara lokal dan tidak mengirim pesan.",
+    "name": "Nama",
+    "institution": "Institusi / Perusahaan",
+    "topic": "Topik",
+    "message": "Pesan",
+    "selectTopic": "Pilih topik",
+    "validate": "Validasi pertanyaan",
+    "requiredError": "Lengkapi kolom wajib sebelum melanjutkan.",
+    "ready": "Data Anda siap dibagikan.",
+    "notWired": "Pengiriman belum terhubung ke endpoint backend. Untuk saat ini, silakan kirim email langsung ke laboratorium.",
+    "edit": "Edit formulir",
+    "topics": {
+      "risk": "Asesmen Risiko & Keselamatan",
+      "ais": "Pemantauan AIS",
+      "reliability": "Keandalan & Ketersediaan",
+      "maintenance": "Manajemen Pemeliharaan",
+      "design": "Desain Fasilitas",
+      "collaboration": "Kolaborasi Riset",
+      "other": "Lainnya"
+    }
+  },
+  "footer": { "description": "Riset dan rekayasa untuk keandalan, keselamatan, kemudahan pemeliharaan, dan sistem maritim.", "navigate": "Navigasi", "ecosystem": "Ekosistem kami", "contact": "Kontak", "findUs": "Temukan kami", "instagram": "Instagram · Laboratorium RAMS", "copyright": "Laboratorium RAMS", "institution": "Institut Teknologi Sepuluh Nopember · Surabaya", "address1": "Gedung WA", "address2": "Kampus ITS Sukolilo", "address3": "Surabaya 60111", "address4": "Indonesia" },
+  "visual": { "profile": "Profil", "headName": "Prof. Ketut", "headRole": "Kepala laboratorium", "affiliation": "Institut Teknologi Sepuluh Nopember" }
+}
