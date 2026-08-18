@@ -5,7 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
 
-const navigation = [["Dashboard", "/dashboard"], ["Alumni", "/dashboard/alumni"], ["Dosen", "/dashboard/dosen"], ["Projects", "/dashboard/projects"], ["Partners", "/dashboard/partners"], ["Tracking", "/dashboard/tracking"]] as const;
+const navigationGroups = [
+  { label: "Overview", items: [["Dashboard", "/dashboard"]] },
+  { label: "Content", items: [["Homepage", "/dashboard/content/homepage"], ["About", "/dashboard/content/about"], ["Contact", "/dashboard/content/contact"], ["Footer", "/dashboard/content/footer"]] },
+  { label: "Research & Work", items: [["Research Areas", "/dashboard/research"], ["Projects", "/dashboard/projects"]] },
+  { label: "People", items: [["Dosen", "/dashboard/dosen"], ["Alumni", "/dashboard/alumni"]] },
+  { label: "Ecosystem", items: [["Partners", "/dashboard/partners"]] },
+  { label: "System", items: [["Tracking", "/dashboard/tracking"]] },
+] as const;
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -27,10 +34,10 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 p-4" aria-label="Dashboard navigation">
-        {navigation.map(([label, href]) => {
+        {navigationGroups.map((group) => <div key={group.label} className="space-y-1"><p className="px-3 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-white/35 first:pt-0">{group.label}</p>{group.items.map(([label, href]) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return <Link key={href} href={href} className={`block border-l-2 px-3 py-2.5 text-sm font-semibold transition ${active ? "border-[var(--rams-red)] bg-white/10 text-white" : "border-transparent text-white/60 hover:bg-white/5 hover:text-white"}`}>{label}</Link>;
-        })}
+        })}</div>)}
       </nav>
 
       <div className="border-t border-white/10 px-6 py-4 text-xs text-white/45">Signed in as <span className="font-semibold text-white/70">{user?.role}</span></div>

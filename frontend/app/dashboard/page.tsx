@@ -215,6 +215,33 @@ export default function DashboardPage() {
             }
             accent="red"
           />
+
+          <StatCard
+            label="Research Areas"
+            value={stats?.researchAreas ?? 0}
+            accent="red"
+          />
+
+          <StatCard
+            label="Published Research"
+            value={stats?.publishedResearchAreas ?? 0}
+            accent="blue"
+          />
+
+          <StatCard
+            label="Unpublished Research"
+            value={stats?.unpublishedResearchAreas ?? 0}
+            accent="navy"
+          />
+        </div>
+
+        <div className="mt-6 rounded-md border border-[#D9E2EA] bg-white p-6 shadow-[0_8px_24px_rgba(16,38,61,0.04)]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--rams-gray)]">CMS activity</p>
+          <p className="mt-3 text-sm text-[var(--rams-gray)]">
+            {stats?.latestSiteContentUpdatedAt
+              ? `Last site content update: ${stats.latestSiteContentKey ?? "content"} · ${new Date(stats.latestSiteContentUpdatedAt).toLocaleString()}`
+              : "No site content updates recorded yet."}
+          </p>
         </div>
 
         {isLoading && (

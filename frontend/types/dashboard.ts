@@ -5,4 +5,9 @@ export interface DashboardStats {
   projects: number;
   universityPartners: number;
   industrialPartners: number;
+  researchAreas: number;
+  publishedResearchAreas: number;
+  unpublishedResearchAreas: number;
+  latestSiteContentUpdatedAt: string | null;
+  latestSiteContentKey: "homepage" | "about" | "contact" | "footer" | null;
 }

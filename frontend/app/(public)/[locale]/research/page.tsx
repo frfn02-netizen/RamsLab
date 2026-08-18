@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import PublicContainer from "@/components/public/public-container";
 import FeaturedProjects from "@/components/public/featured-projects";
-import { researchAreaCodes } from "@/components/public/content";
 import { localizedMetadata } from "@/lib/i18n/metadata";
 import type { Locale } from "@/i18n/routing";
 import RevealOnScroll from "@/components/public/reveal-on-scroll";
+import { getPublicResearch } from "@/lib/api/modules";
+import type { PublicResearchArea } from "@/types/modules";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -16,9 +18,24 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return localizedMetadata({ locale: locale as Locale, title: t("heroTitle"), description: t("heroDescription"), path: "/research" });
 }
 
-export default function ResearchPage() {
-  const t = useTranslations("research");
-  const brand = useTranslations("brand");
+export default async function ResearchPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: requestedLocale } = await params;
+  const locale = requestedLocale === "id" ? "id" : "en";
+  const t = await getTranslations({ locale, namespace: "research" });
+  const brand = await getTranslations({ locale, namespace: "brand" });
+  let researchAreas: PublicResearchArea[] = [];
+  let researchUnavailable = false;
+  try {
+    researchAreas = await getPublicResearch();
+  } catch {
+    researchUnavailable = true;
+  }
+  const localized = (area: PublicResearchArea) => ({
+    title: area.title[locale],
+    description: area.description[locale],
+    methods: area.methods[locale],
+    applications: area.applications[locale],
+  });
 
   return (
     <>
@@ -56,28 +73,31 @@ export default function ResearchPage() {
             <p className="mt-4 text-lg text-[var(--gray)]">{t("indexDescription")}</p>
           </RevealOnScroll>
           <RevealOnScroll className="mt-14" stagger={90}>
-          <ol className="reveal-stagger-list border-t border-[var(--border)]">
-            {researchAreaCodes.map((code, index) => (
-              <li key={code} className="border-b border-[var(--border)] transition hover:bg-white">
-                <Link href={`#${code.toLowerCase()}`} className="group grid gap-3 py-8 sm:grid-cols-[5.5rem_1fr_auto] sm:items-baseline sm:gap-8 sm:py-10">
+          {researchUnavailable ? <div className="border border-red-200 bg-red-50 p-7"><p className="eyebrow text-[var(--rams-red)]">{t("apiUnavailable")}</p><p className="mt-3 text-sm leading-6 text-red-950">{t("apiError")}</p></div> : researchAreas.length === 0 ? <div className="border border-dashed border-[var(--border)] bg-white p-9 text-center"><p className="eyebrow text-[var(--ais-blue)]">{t("emptyLabel")}</p><h2 className="mt-3 font-display text-xl font-semibold text-[var(--navy)]">{t("emptyTitle")}</h2><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">{t("emptyDescription")}</p></div> : <ol className="reveal-stagger-list border-t border-[var(--border)]">
+            {researchAreas.map((area, index) => {
+              const content = localized(area);
+              return (
+              <li key={area.code} className="border-b border-[var(--border)] transition hover:bg-white">
+                <Link href={`#${area.code.toLowerCase()}`} className="group grid gap-3 py-8 sm:grid-cols-[5.5rem_1fr_auto] sm:items-baseline sm:gap-8 sm:py-10">
                   <span className="font-display text-5xl font-bold tracking-tight text-[var(--rams-red)] transition group-hover:text-[var(--rams-red-dark)]">
                     0{index + 1}
                   </span>
                   <span>
                     <span className="block font-display text-2xl font-bold text-[var(--navy)] transition group-hover:text-[var(--rams-red)]">
-                      {t(`areas.${code}.title`)}
+                      {content.title}
                     </span>
                     <span className="mt-3 block max-w-2xl text-sm leading-6 text-[var(--gray)]">
-                      {t(`areas.${code}.description`)}
+                      {content.description}
                     </span>
                   </span>
                   <span className="hidden text-sm font-semibold text-[var(--gray)] transition group-hover:text-[var(--rams-red)] sm:block" aria-hidden="true">
-                    Details →
+                    {t("details")} →
                   </span>
                 </Link>
               </li>
-            ))}
-          </ol>
+              );
+            })}
+          </ol>}
           </RevealOnScroll>
         </PublicContainer>
       </section>
@@ -86,39 +106,40 @@ export default function ResearchPage() {
       <section className="bg-white py-20 sm:py-28">
         <PublicContainer>
           <RevealOnScroll stagger={90}>
-          {researchAreaCodes.map((code, index) => (
-            <article key={code} id={code.toLowerCase()} className="scroll-mt-20 grid gap-10 border-t border-[var(--border)] py-16 lg:grid-cols-2 lg:gap-20 lg:py-20">
+          {researchAreas.map((area, index) => {
+            const content = localized(area);
+            return <article key={area.code} id={area.code.toLowerCase()} className="scroll-mt-20 grid gap-10 border-t border-[var(--border)] py-16 lg:grid-cols-2 lg:gap-20 lg:py-20">
               <div>
                 <p className="flex items-baseline gap-3">
                   <span className="font-display text-xl font-bold text-[var(--rams-red)]">0{index + 1}</span>
                   <span className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[var(--gray)]">
-                    {code} — {t("areaLabel")}
+                    {area.code} — {t("areaLabel")}
                   </span>
                 </p>
                 <h2 className="mt-5 font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-[var(--navy)] sm:text-4xl">
-                  {t(`areas.${code}.title`)}
+                  {content.title}
                 </h2>
-                <p className="mt-6 max-w-xl text-lg leading-relaxed text-[var(--gray)]">{t(`areas.${code}.description`)}</p>
+                <p className="mt-6 max-w-xl text-lg leading-relaxed text-[var(--gray)]">{content.description}</p>
               </div>
               <div className="lg:border-l lg:border-[var(--border)] lg:pl-12">
                 <div>
                   <p className="eyebrow">{t("methodology")}</p>
                   <ul className="mt-6 space-y-4">
-                    {[0, 1, 2].map((method) => (
+                    {content.methods.map((method) => (
                       <li key={method} className="flex items-start gap-3">
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-[var(--rams-red)]" aria-hidden="true" />
-                        <span className="text-sm leading-6 text-[var(--navy)]">{t(`methods.${code}.${method}`)}</span>
+                        <span className="text-sm leading-6 text-[var(--navy)]">{method}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="mt-10 border-t border-[var(--border)] pt-8">
                   <p className="eyebrow">{t("applications")}</p>
-                  <p className="mt-4 font-display text-lg font-semibold tracking-wide text-[var(--navy)]">{t(`areas.${code}.applications`)}</p>
+                  <p className="mt-4 font-display text-lg font-semibold tracking-wide text-[var(--navy)]">{content.applications}</p>
                 </div>
               </div>
-            </article>
-          ))}
+            </article>;
+          })}
           </RevealOnScroll>
         </PublicContainer>
       </section>

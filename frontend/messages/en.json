@@ -69,73 +69,15 @@
     "methodology": "Methodology",
     "applications": "Applications / study cases",
     "areaLabel": "research area",
+    "details": "Details",
+    "apiUnavailable": "Research unavailable",
+    "apiError": "Research areas are temporarily unavailable.",
+    "emptyLabel": "No published research",
+    "emptyTitle": "No research areas published",
+    "emptyDescription": "Published research areas will appear here when they are available.",
     "indexEyebrow": "Research index",
     "indexTitle": "Our Research Areas",
     "indexDescription": "Six connected areas frame the laboratory's work across maritime, offshore, and industrial systems.",
-    "areas": {
-      "RISK": {
-        "title": "Risk Assessment & Safety",
-        "description": "Structured analysis of hazards, consequences, and safeguards for marine and industrial systems.",
-        "applications": "HAZID · HAZOP · SAFETY CASES"
-      },
-      "AIS": {
-        "title": "Automatic Identification System",
-        "description": "Maritime traffic intelligence using AIS data to understand movement, patterns, and operational exposure.",
-        "applications": "TRAFFIC · MONITORING · MARITIME DATA"
-      },
-      "RAM": {
-        "title": "Marine System Reliability & Availability",
-        "description": "Reliability and availability models that make complex marine assets easier to operate, maintain, and improve.",
-        "applications": "FMEA · FTA · RELIABILITY BLOCKS"
-      },
-      "RCM": {
-        "title": "Maintenance Management",
-        "description": "Maintenance strategies grounded in failure behavior, criticality, and the realities of industrial operations.",
-        "applications": "RCM · FMEA · ASSET STRATEGY"
-      },
-      "DESIGN": {
-        "title": "Optimum Design of Industrial Facility",
-        "description": "Engineering studies that connect facility layout, performance, risk, and lifecycle considerations.",
-        "applications": "LAYOUT · LIFECYCLE · OPTIMIZATION"
-      },
-      "SIM": {
-        "title": "Simulation & Modeling",
-        "description": "Models and simulations for testing system behavior, capacity, and decision alternatives before implementation.",
-        "applications": "DISCRETE EVENT · SYSTEMS · SCENARIOS"
-      }
-    },
-    "methods": {
-      "RISK": [
-        "Hazard identification and risk assessment",
-        "Safety analysis and consequence mapping",
-        "Operational safeguards and decision support"
-      ],
-      "AIS": [
-        "AIS data preparation and spatial analysis",
-        "Maritime traffic patterns and monitoring",
-        "Operational exposure and route insight"
-      ],
-      "RAM": [
-        "FMEA, FTA, and reliability block modeling",
-        "Availability and management analysis",
-        "Lifecycle performance evaluation"
-      ],
-      "RCM": [
-        "Failure-mode and criticality analysis",
-        "Preventive and condition-based strategies",
-        "Maintenance planning and optimization"
-      ],
-      "DESIGN": [
-        "Facility layout and system configuration",
-        "Lifecycle and performance trade-offs",
-        "Industrial design decision support"
-      ],
-      "SIM": [
-        "System behavior and capacity models",
-        "Scenario comparison and sensitivity analysis",
-        "Simulation-informed operations planning"
-      ]
-    },
     "processEyebrow": "How we research",
     "processTitle": "From engineering questions to better decisions.",
     "processDescription": "Every research area follows the same engineering logic: understand the system, analyse the evidence, model the behavior, and support the decision.",

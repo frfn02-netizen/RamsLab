@@ -4,6 +4,8 @@ import { countProjects } from "../projects/project.repository.js";
 import { countUsers } from "../users/user.repository.js";
 import { countPartners } from "../partners/partner.repository.js";
 import {PARTNER_TYPE} from "../partners/partner.types.js";
+import { countResearchAreas } from "../research/research.repository.js";
+import { findLatestSiteContent } from "../site-content/site-content.repository.js";
 
 export async function getDashboardStats() {
   const [
@@ -13,6 +15,9 @@ export async function getDashboardStats() {
     projects,
     universityPartners,
     industrialPartners,
+    researchAreas,
+    publishedResearchAreas,
+    latestSiteContent,
   ] = await Promise.all([
     countUsers(),
     countAlumni(),
@@ -24,6 +29,9 @@ export async function getDashboardStats() {
     countPartners(
       PARTNER_TYPE.INDUSTRIAL
     ),
+    countResearchAreas(),
+    countResearchAreas({ publishedOnly: true }),
+    findLatestSiteContent(),
   ]);
 
   return {
@@ -33,5 +41,10 @@ export async function getDashboardStats() {
     projects,
     universityPartners,
     industrialPartners,
+    researchAreas,
+    publishedResearchAreas,
+    unpublishedResearchAreas: researchAreas - publishedResearchAreas,
+    latestSiteContentUpdatedAt: latestSiteContent?.updatedAt ?? null,
+    latestSiteContentKey: latestSiteContent?.key ?? null,
   };
 }

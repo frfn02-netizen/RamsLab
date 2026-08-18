@@ -12,6 +12,8 @@ import projectRoutes from "./modules/projects/project.routes.js";
 import partnerRoutes from "./modules/partners/partner.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import publicRoutes from "./modules/public/public.routes.js";
+import researchRoutes from "./modules/research/research.routes.js";
+import siteContentRoutes from "./modules/site-content/site-content.routes.js";
 import { authenticate } from "./middlewares/auth.middlewares.js";
 import { requireRole } from "./middlewares/role.middlewares.js";
 import { getAllowedOrigins, isProduction, SECURITY_LIMITS, validateProductionSecurityConfiguration } from "./config/security.js";
@@ -51,7 +53,7 @@ app.use(
       return callback(null, false);
     },
     credentials: true,
-    methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "X-CSRF-Token"],
   })
 );
@@ -76,6 +78,8 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/partners", partnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/admin/research", researchRoutes);
+app.use("/api/admin/site-content", siteContentRoutes);
 
 app.get(
 "/api/admin/test",

@@ -16,73 +16,15 @@
     "methodology": "Metodologi",
     "applications": "Aplikasi / studi kasus",
     "areaLabel": "bidang riset",
+    "details": "Detail",
+    "apiUnavailable": "Riset tidak tersedia",
+    "apiError": "Bidang riset sementara tidak tersedia.",
+    "emptyLabel": "Belum ada riset terbit",
+    "emptyTitle": "Belum ada bidang riset terbit",
+    "emptyDescription": "Bidang riset terbit akan muncul di sini jika tersedia.",
     "indexEyebrow": "Indeks riset",
     "indexTitle": "Bidang Riset Kami",
     "indexDescription": "Enam bidang yang saling terhubung membingkai pekerjaan laboratorium pada sistem maritim, lepas pantai, dan industri.",
-    "areas": {
-      "RISK": {
-        "title": "Asesmen Risiko & Keselamatan",
-        "description": "Analisis terstruktur atas bahaya, konsekuensi, dan pengaman untuk sistem kelautan dan industri.",
-        "applications": "HAZID · HAZOP · SAFETY CASES"
-      },
-      "AIS": {
-        "title": "Automatic Identification System",
-        "description": "Intelijen lalu lintas maritim menggunakan data AIS untuk memahami pergerakan, pola, dan paparan operasional.",
-        "applications": "LALU LINTAS · PEMANTAUAN · DATA MARITIM"
-      },
-      "RAM": {
-        "title": "Keandalan & Ketersediaan Sistem Maritim",
-        "description": "Model keandalan dan ketersediaan yang membantu aset maritim kompleks dioperasikan, dipelihara, dan ditingkatkan.",
-        "applications": "FMEA · FTA · BLOK KEANDALAN"
-      },
-      "RCM": {
-        "title": "Manajemen Pemeliharaan",
-        "description": "Strategi pemeliharaan yang berlandaskan perilaku kegagalan, kekritisan, dan realitas operasi industri.",
-        "applications": "RCM · FMEA · STRATEGI ASET"
-      },
-      "DESIGN": {
-        "title": "Desain Optimum Fasilitas Industri",
-        "description": "Kajian rekayasa yang menghubungkan tata letak fasilitas, kinerja, risiko, dan pertimbangan siklus hidup.",
-        "applications": "TATA LETAK · SIKLUS HIDUP · OPTIMASI"
-      },
-      "SIM": {
-        "title": "Simulasi & Pemodelan",
-        "description": "Model dan simulasi untuk menguji perilaku sistem, kapasitas, dan alternatif keputusan sebelum diterapkan.",
-        "applications": "PERISTIWA DISKRIT · SISTEM · SKENARIO"
-      }
-    },
-    "methods": {
-      "RISK": [
-        "Identifikasi bahaya dan asesmen risiko",
-        "Analisis keselamatan dan pemetaan konsekuensi",
-        "Pengaman operasional dan dukungan keputusan"
-      ],
-      "AIS": [
-        "Penyiapan dan analisis spasial data AIS",
-        "Pola lalu lintas dan pemantauan maritim",
-        "Paparan operasional dan wawasan rute"
-      ],
-      "RAM": [
-        "Pemodelan FMEA, FTA, dan blok keandalan",
-        "Analisis ketersediaan dan kemudahan pemeliharaan",
-        "Evaluasi kinerja siklus hidup"
-      ],
-      "RCM": [
-        "Analisis moda kegagalan dan kekritisan",
-        "Strategi preventif dan berbasis kondisi",
-        "Perencanaan dan optimasi pemeliharaan"
-      ],
-      "DESIGN": [
-        "Tata letak fasilitas dan konfigurasi sistem",
-        "Trade-off siklus hidup dan kinerja",
-        "Dukungan keputusan desain industri"
-      ],
-      "SIM": [
-        "Model perilaku dan kapasitas sistem",
-        "Perbandingan skenario dan analisis sensitivitas",
-        "Perencanaan operasi berbasis simulasi"
-      ]
-    },
     "processEyebrow": "Cara kami meneliti",
     "processTitle": "Dari pertanyaan rekayasa menuju keputusan yang lebih baik.",
     "processDescription": "Setiap bidang riset mengikuti logika rekayasa yang sama: memahami sistem, menganalisis bukti, memodelkan perilaku, dan mendukung keputusan.",

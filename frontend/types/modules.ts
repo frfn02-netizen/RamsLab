@@ -75,3 +75,29 @@ export interface AlumniTracking {
 }
 export type TrackingInput = Omit<AlumniTracking, "_id" | "alumniId" | "createdAt" | "updatedAt">;
 export type TrackingUpdateInput = Partial<TrackingInput>;
+
+export interface ResearchAreaText {
+  en: string;
+  id: string;
+}
+
+export interface ResearchArea {
+  _id: string;
+  code: string;
+  slug: string;
+  title: ResearchAreaText;
+  description: ResearchAreaText;
+  methods: { en: [string, string, string]; id: [string, string, string] };
+  applications: ResearchAreaText;
+  image?: string;
+  order: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export type ResearchAreaInput = Omit<ResearchArea, "_id" | "createdAt" | "updatedAt">;
+export type ResearchAreaUpdateInput = Partial<ResearchAreaInput>;
+
+export type PublicResearchArea = Omit<ResearchArea, "_id" | "createdAt" | "updatedAt" | "updatedBy">;

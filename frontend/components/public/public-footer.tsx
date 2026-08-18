@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { getPublicSiteContent } from "@/lib/api/modules";
+import type { FooterContent } from "@/types/site-content";
 import LanguageSwitcher from "./language-switcher";
 import PublicContainer from "./public-container";
 
@@ -8,10 +13,16 @@ const navigation = ["about", "research", "projects", "partners", "team", "contac
 const hrefs = { about: "/about", research: "/research", projects: "/projects", partners: "/partners", team: "/team", contact: "/contact" } as const;
 
 export default function PublicFooter() {
+  const locale = useLocale() === "id" ? "id" : "en";
   const t = useTranslations("footer");
   const nav = useTranslations("nav");
   const brand = useTranslations("brand");
   const language = useTranslations("language");
+  const common = useTranslations("common");
+  const [content, setContent] = useState<FooterContent | null>(null);
+  const [error, setError] = useState(false);
+  useEffect(() => { getPublicSiteContent("footer").then(setContent).catch(() => setError(true)); }, []);
+  const localized = (value: { en: string; id: string }) => value[locale];
 
   return <footer className="bg-[var(--navy)] text-white">
     <PublicContainer className="py-14 sm:py-16">
@@ -26,7 +37,7 @@ export default function PublicFooter() {
               <p className="mt-2 text-xs leading-5 text-white/65">{brand("technicalLine")}</p>
             </div>
           </div>
-          <p className="mt-6 max-w-xs text-sm leading-7 text-white/70">{t("description")}</p>
+          <p className="mt-6 max-w-xs text-sm leading-7 text-white/70">{content ? localized(content.description) : error ? common("requestUnavailable") : common("loading")}</p>
         </div>
 
         <div>
@@ -39,9 +50,9 @@ export default function PublicFooter() {
         <div>
           <p className="text-sm font-semibold text-white">{t("contact")}</p>
           <div className="mt-5 grid gap-4 text-sm text-white/65">
-            <a href="mailto:jtsp@its.ac.id" className="w-fit transition-colors duration-200 hover:text-[var(--rams-red)]">jtsp@its.ac.id</a>
-            <span>{t("instagram")}</span>
-            <address className="not-italic leading-7">{t("address1")}<br />{t("address2")}<br />{t("address3")}<br />{t("address4")}</address>
+            {content ? <a href={`mailto:${localized(content.email)}`} className="w-fit transition-colors duration-200 hover:text-[var(--rams-red)]">{localized(content.email)}</a> : <span>{error ? common("requestUnavailable") : common("loading")}</span>}
+            <span>{content ? localized(content.socialText) : error ? common("requestUnavailable") : common("loading")}</span>
+            <address className="not-italic leading-7">{content ? content.addressLines.map((line) => <span key={line.en} className="block">{localized(line)}</span>) : error ? common("requestUnavailable") : common("loading")}</address>
             <div className="flex items-center gap-3">
               <span>{language("label")}</span>
               <span className="bg-white px-2 py-1"><LanguageSwitcher /></span>
@@ -75,8 +86,8 @@ export default function PublicFooter() {
       </section>
 
       <div className="mt-14 flex flex-col gap-3 border-t border-white/15 pt-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
-        <span>© {new Date().getFullYear()} {t("copyright")}</span>
-        <span>{t("institution")}</span>
+        <span>© {new Date().getFullYear()} {content ? localized(content.copyright) : ""}</span>
+        <span>{content ? localized(content.institution) : ""}</span>
       </div>
     </PublicContainer>
   </footer>;
