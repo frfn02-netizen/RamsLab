@@ -64,7 +64,7 @@ export default function PublicHome() {
           {[
             { letter: "R", title: "Reliability", desc: "Modeling and predicting system behavior" },
             { letter: "A", title: "Availability", desc: "Ensuring systems are ready when needed" },
-            { letter: "M", title: "Maintainability", desc: "Optimizing maintenance strategies" },
+            { letter: "M", title: "Management", desc: "Optimizing Management strategies" },
             { letter: "S", title: "Safety", desc: "Reducing risks in complex environments" },
           ].map((item, i) => (
               <div key={item.letter} className={`rams-item relative p-8 ${i < 3 ? "lg:border-r lg:border-[var(--border)]" : ""}`}>
@@ -101,8 +101,8 @@ export default function PublicHome() {
           <div className="ecosystem-reveal-item">
             <div className="ecosystem-block group border-[var(--border)] px-6 py-8 text-center sm:border-l sm:px-8 lg:px-12">
               <div className="ecosystem-logo-stage">
-                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2">
-                  <Image src="/assets/ais-its-logo.png" alt={brand("ais")} fill sizes="256px" className="object-contain" />
+                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2">
+                  <Image src="/assets/logo ais part2.png" alt={brand("ais")} fill sizes="256px" className="object-contain" />
                 </div>
               </div>
               <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">{brand("ais")}</p>
@@ -112,8 +112,8 @@ export default function PublicHome() {
           <div className="ecosystem-reveal-item">
             <div className="ecosystem-block group border-[var(--border)] px-6 py-8 text-center sm:border-l sm:px-8 lg:px-12">
               <div className="ecosystem-logo-stage">
-                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2">
-                  <Image src="/assets/pui-kekal-logo.png" alt={brand("pui")} fill sizes="320px" className="object-contain" />
+                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2">
+                  <Image src="/assets/logo pu-kekal part2.png" alt={brand("pui")} fill sizes="320px" className="object-contain" />
                 </div>
               </div>
               <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">{brand("pui")}</p>

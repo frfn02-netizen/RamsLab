@@ -30,7 +30,7 @@ export default function Header() {
         <span className="hidden h-8 w-px bg-[#D9E2EA] sm:block" aria-hidden="true" />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-[var(--rams-charcoal)]">Management console</p>
-          <p className="hidden truncate text-xs text-[var(--rams-gray)] sm:block">Research and academic management</p>
+          <p className="hidden truncate text-xs text-[var(--rams-gray)] sm:block">Research and academic Management</p>
         </div>
       </div>
 

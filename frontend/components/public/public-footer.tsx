@@ -15,10 +15,10 @@ export default function PublicFooter() {
 
   return <footer className="bg-[var(--navy)] text-white">
     <PublicContainer className="py-14 sm:py-16">
-      <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1.15fr]">
+      <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1.15fr]">
         <div>
           <div className="flex items-center gap-4">
-            <div className="relative h-20 w-24 shrink-0 bg-white p-2">
+            <div className="relative h-20 w-24 shrink-0">
               <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="96px" className="object-contain" priority />
             </div>
             <div>
@@ -37,36 +37,6 @@ export default function PublicFooter() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-white">{t("ecosystem")}</p>
-          <div className="mt-5 grid gap-4 text-sm text-white/75">
-            <div className="flex items-center gap-3">
-              <div className="public-logo-interaction relative h-14 w-20 shrink-0 overflow-hidden bg-white">
-                <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2">
-                  <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="64px" className="object-contain" />
-                </div>
-              </div>
-              <span>{brand("laboratory")}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="public-logo-interaction relative h-14 w-20 shrink-0 overflow-hidden bg-white">
-                <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2">
-                  <Image src="/assets/ais-its-logo.png" alt={brand("ais")} fill sizes="128px" className="object-contain" />
-                </div>
-              </div>
-              <span>{brand("ais")}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="public-logo-interaction relative h-14 w-20 shrink-0 overflow-hidden bg-white">
-                <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2">
-                  <Image src="/assets/pui-kekal-logo.png" alt={brand("pui")} fill sizes="128px" className="object-contain" />
-                </div>
-              </div>
-              <span>{brand("pui")}</span>
-            </div>
-          </div>
-        </div>
-
-        <div>
           <p className="text-sm font-semibold text-white">{t("contact")}</p>
           <div className="mt-5 grid gap-4 text-sm text-white/65">
             <a href="mailto:jtsp@its.ac.id" className="w-fit transition-colors duration-200 hover:text-[var(--rams-red)]">jtsp@its.ac.id</a>
@@ -79,6 +49,30 @@ export default function PublicFooter() {
           </div>
         </div>
       </div>
+
+      <section className="mt-14 border-t border-white/15 pt-8" aria-labelledby="footer-ecosystem-title">
+        <p id="footer-ecosystem-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-white">{t("ecosystem")}</p>
+        <div className="mt-5 grid grid-cols-1 gap-5 text-sm text-white/75 sm:grid-cols-3 sm:divide-x sm:divide-white/15">
+          <div className="public-logo-interaction flex min-w-0 flex-col items-center gap-2 text-center sm:justify-center sm:pr-5">
+            <div className="relative h-32 w-32 shrink-0">
+              <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="128px" className="object-contain" />
+            </div>
+            <span className="leading-5">{brand("laboratory")}</span>
+          </div>
+          <div className="public-logo-interaction flex min-w-0 flex-col items-center gap-2 text-center sm:justify-center sm:px-5">
+            <div className="relative h-32 w-32 shrink-0">
+              <Image src="/assets/logo ais part2.png" alt={brand("ais")} fill sizes="128px" className="object-contain" />
+            </div>
+            <span className="leading-5">{brand("ais")}</span>
+          </div>
+          <div className="public-logo-interaction flex min-w-0 flex-col items-center gap-2 text-center sm:justify-center sm:pl-5">
+            <div className="relative h-32 w-32 shrink-0">
+              <Image src="/assets/logo pu-kekal part2.png" alt={brand("pui")} fill sizes="128px" className="object-contain" />
+            </div>
+            <span className="leading-5">{brand("pui")}</span>
+          </div>
+        </div>
+      </section>
 
       <div className="mt-14 flex flex-col gap-3 border-t border-white/15 pt-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
         <span>© {new Date().getFullYear()} {t("copyright")}</span>

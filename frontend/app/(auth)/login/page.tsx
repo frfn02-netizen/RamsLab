@@ -54,7 +54,7 @@ function LoginContent() {
 
             <div className="mt-16 max-w-xl sm:mt-24">
               <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-red-200">Institutional access</p>
-              <h2 className="mt-5 max-w-lg font-display text-4xl font-semibold leading-tight tracking-[-0.04em] sm:text-5xl">Research and engineering for reliability, safety, maintainability, and marine systems.</h2>
+              <h2 className="mt-5 max-w-lg font-display text-4xl font-semibold leading-tight tracking-[-0.04em] sm:text-5xl">Research and engineering for reliability, safety, Management, and marine systems.</h2>
               <span className="mt-7 block h-0.5 w-12 bg-[var(--rams-red)]" aria-hidden="true" />
               <p className="mt-6 max-w-md text-sm leading-7 text-white/70">Institut Teknologi Sepuluh Nopember</p>
             </div>

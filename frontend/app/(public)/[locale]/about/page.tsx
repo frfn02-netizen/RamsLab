@@ -45,7 +45,7 @@ export default function AboutPage() {
             {[
               { letter: "R", title: "Reliability", desc: "Systems should perform consistently and dependably." },
               { letter: "A", title: "Availability", desc: "Systems should be ready when they are needed." },
-              { letter: "M", title: "Maintainability", desc: "Systems should be practical to inspect, repair, and keep operational." },
+              { letter: "M", title: "Management", desc: "Systems should be practical to inspect, repair, and keep operational." },
               { letter: "S", title: "Safety", desc: "Systems should protect people, assets, and the environment." },
             ].map((item, i) => (
               <div key={item.letter} className={`public-card-interaction p-8 ${i < 3 ? "lg:border-r border-[var(--border)]" : ""}`}>
@@ -114,9 +114,12 @@ export default function AboutPage() {
         <PublicContainer>
           <RevealOnScroll className="text-center"><h2 className="font-display text-2xl font-bold text-[var(--navy)]">Part of the ITS Research Ecosystem</h2></RevealOnScroll>
           <RevealOnScroll className="mt-12 flex flex-wrap items-center justify-center gap-12" stagger={120}>
-            <div className="public-logo-interaction relative h-16 w-24"><Image src="/assets/rams-logo.png" alt="RAMS" fill className="object-contain" /></div>
-            <div className="public-logo-interaction relative h-20 w-32"><Image src="/assets/ais-its-logo.png" alt="AIS-ITS" fill className="object-contain" /></div>
-            <div className="public-logo-interaction relative h-20 w-32"><Image src="/assets/pui-kekal-logo.png" alt="PUI-KEKAL" fill className="object-contain" /></div>
+            <div className="public-logo-interaction group relative h-16 w-24">
+              <Image src="/assets/rams-logo.png" alt="RAMS" fill className="public-image-zoom object-contain" /></div>
+            <div className="public-logo-interaction group relative h-16 w-24">
+              <Image src="/assets/logo ais part2.png" alt="AIS-ITS" fill className="public-image-zoom object-contain" /></div>
+            <div className="public-logo-interaction group relative h-16 w-32">
+              <Image src="/assets/logo pu-kekal part2.png" alt="PUI-KEKAL" fill className="public-image-zoom object-contain" /></div>
           </RevealOnScroll>
         </PublicContainer>
       </section>

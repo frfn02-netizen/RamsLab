@@ -23,7 +23,7 @@ export default function Sidebar() {
             <span className="mt-1 block text-[0.65rem] uppercase tracking-[0.15em] text-white/45">Admin portal</span>
           </span>
         </Link>
-        <p className="mt-6 border-l-2 border-[var(--rams-red)] pl-3 text-xs leading-5 text-white/55">Research and academic management</p>
+        <p className="mt-6 border-l-2 border-[var(--rams-red)] pl-3 text-xs leading-5 text-white/55">Research and academic Management</p>
       </div>
 
       <nav className="flex-1 space-y-1 p-4" aria-label="Dashboard navigation">

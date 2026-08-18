@@ -6,6 +6,7 @@ export const getDosenList = () => apiRequest<Dosen[]>("/dosen");
 export const getDosenById = (id: string) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`);
 export const createDosen = (input: DosenInput) => apiRequest<Dosen>("/dosen", { method: "POST", body: JSON.stringify(input) });
 export const updateDosen = (id: string, input: DosenUpdateInput) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
+export const uploadDosenPhoto = (id: string, file: File) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}/photo`, { method: "POST", body: file, headers: { "Content-Type": file.type }, timeoutMs: 30000 });
 export const deleteDosen = async (id: string) => { await apiRequestWithMeta(`/dosen/${encodeURIComponent(id)}`, { method: "DELETE" }); };
 export const createDosenAccount = (input: { email: string; password: string }) => apiRequest<ManagedAccount>("/users/dosen", { method: "POST", body: JSON.stringify(input) });
 
