@@ -1,7 +1,7 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { authenticate, } from "../../middlewares/auth.middlewares.js";
 import { requireRole, } from "../../middlewares/role.middlewares.js";
-import { createDosenController, deleteDosenController, getDosenByEmployeeIdController, getDosenController, getDosenListController, updateDosenController, } from "./dosen.controller.js";
+import { createDosenController, deleteDosenController, getDosenByEmployeeIdController, getDosenController, getDosenListController, updateDosenController, uploadDosenPhotoController, } from "./dosen.controller.js";
 
 const router = Router();
 
@@ -56,6 +56,14 @@ router.patch(
   authenticate,
   requireRole("ADMIN"),
   updateDosenController
+);
+
+router.post(
+  "/:id/photo",
+  authenticate,
+  requireRole("ADMIN"),
+  express.raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: "3mb" }),
+  uploadDosenPhotoController,
 );
 
 router.delete(

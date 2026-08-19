@@ -8,7 +8,7 @@ import { useAuth } from "@/components/providers/auth-providers";
 const navigationGroups = [
   { label: "Overview", items: [["Dashboard", "/dashboard"]] },
   { label: "Content", items: [["Homepage", "/dashboard/content/homepage"], ["About", "/dashboard/content/about"], ["Contact", "/dashboard/content/contact"], ["Footer", "/dashboard/content/footer"]] },
-  { label: "Research & Work", items: [["Research Areas", "/dashboard/research"], ["Projects", "/dashboard/projects"]] },
+  { label: "Research & Work", items: [["Research Areas", "/dashboard/research"], ["Publications", "/dashboard/publications"], ["Projects", "/dashboard/projects"]] },
   { label: "People", items: [["Dosen", "/dashboard/dosen"], ["Alumni", "/dashboard/alumni"]] },
   { label: "Ecosystem", items: [["Partners", "/dashboard/partners"]] },
   { label: "System", items: [["Tracking", "/dashboard/tracking"]] },

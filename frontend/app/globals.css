@@ -111,6 +111,41 @@ body {
   transition-delay: var(--reveal-delay, 0ms);
 }
 
+@media (min-width: 1024px) {
+  .publications-scroll-track {
+    min-height: calc(100vh - 80px + var(--publication-stream-travel, 0px));
+  }
+
+  .publications-sticky-viewport {
+    position: sticky;
+    top: 80px;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) and (min-width: 1024px) {
+  .publications-scroll-track {
+    min-height: 0;
+  }
+
+  .publications-sticky-viewport {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .publications-sticky-grid {
+    height: auto;
+  }
+
+  .publications-stream-viewport {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+}
+
 .reveal-on-scroll.is-visible {
   opacity: 1;
   transform: translateY(0);

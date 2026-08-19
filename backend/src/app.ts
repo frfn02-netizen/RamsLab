@@ -14,12 +14,14 @@ import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import publicRoutes from "./modules/public/public.routes.js";
 import researchRoutes from "./modules/research/research.routes.js";
 import siteContentRoutes from "./modules/site-content/site-content.routes.js";
+import publicationRoutes from "./modules/publications/publication.routes.js";
 import { authenticate } from "./middlewares/auth.middlewares.js";
 import { requireRole } from "./middlewares/role.middlewares.js";
 import { getAllowedOrigins, isProduction, SECURITY_LIMITS, validateProductionSecurityConfiguration } from "./config/security.js";
 import { createRateLimiter } from "./middlewares/rate-limit.middleware.js";
 import { verifyStateChangingOrigin } from "./middlewares/request-security.middleware.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
+import { getDosenPhotoDirectory } from "./modules/dosen/dosen-photo.js";
 
 const app = express();
 
@@ -61,6 +63,7 @@ app.use(
 app.use(express.json({ limit: SECURITY_LIMITS.jsonBodyBytes }));
 app.use(cookieParser());
 app.use(verifyStateChangingOrigin);
+app.use("/uploads/dosen", express.static(getDosenPhotoDirectory(), { maxAge: "1d", immutable: true }));
 app.use(
   "/api",
   createRateLimiter({
@@ -75,6 +78,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/tracking", trackingRoutes);
 app.use("/api/dosen", dosenRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/publications", publicationRoutes);
 app.use("/api/partners", partnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/public", publicRoutes);

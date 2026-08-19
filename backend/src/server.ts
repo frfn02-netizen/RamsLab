@@ -9,6 +9,7 @@ import { createPartnerIndexes, } from "./modules/partners/partner.index.js";
 import { createTrackingIndexes, } from "./modules/tracking/tracking.respository.js";
 import { createResearchAreaIndexes } from "./modules/research/research.index.js";
 import { createSiteContentIndexes } from "./modules/site-content/site-content.index.js";
+import { createPublicationIndexes } from "./modules/publications/publication.index.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ async function startServer() {
     await createTrackingIndexes();
     await createResearchAreaIndexes();
     await createSiteContentIndexes();
+    await createPublicationIndexes();
 
     app.listen(PORT, () => {
       console.log(

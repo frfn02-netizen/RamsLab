@@ -1,5 +1,5 @@
 import { apiRequest, apiRequestWithMeta } from "./client";
-import type { Dosen, DosenInput, DosenUpdateInput, Partner, PartnerInput, PartnerType, PartnerUpdateInput, Project, ProjectInput, ProjectUpdateInput, AlumniTracking, TrackingInput, TrackingUpdateInput, PublicResearchArea, ResearchArea, ResearchAreaInput, ResearchAreaUpdateInput } from "@/types/modules";
+import type { Dosen, DosenInput, DosenUpdateInput, Partner, PartnerInput, PartnerType, PartnerUpdateInput, Project, ProjectInput, ProjectUpdateInput, Publication, PublicationInput, PublicationUpdateInput, AlumniTracking, TrackingInput, TrackingUpdateInput, PublicResearchArea, ResearchArea, ResearchAreaInput, ResearchAreaUpdateInput } from "@/types/modules";
 import type { ManagedAccount } from "@/types/auth";
 import type { SiteContentAdminEnvelope, SiteContentKey, SiteContentMap } from "@/types/site-content";
 
@@ -23,6 +23,23 @@ export const getProjectBySlug = (slug: string) => apiRequest<Project>(`/projects
 export const createProject = (input: ProjectInput) => apiRequest<Project>("/projects", { method: "POST", body: JSON.stringify(input) });
 export const updateProject = (id: string, input: ProjectUpdateInput) => apiRequest<Project>(`/projects/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
 export const deleteProject = async (id: string) => { await apiRequestWithMeta(`/projects/${encodeURIComponent(id)}`, { method: "DELETE" }); };
+
+export type PublicationQuery = { search?: string; year?: number; topic?: string[]; method?: string[]; sort?: "newest" | "oldest"; page?: number; limit?: number };
+export const getPublications = (params: PublicationQuery = {}) => {
+  const query = new URLSearchParams();
+  if (params.search) query.set("search", params.search);
+  if (params.year) query.set("year", String(params.year));
+  params.topic?.forEach((value) => query.append("topic", value));
+  params.method?.forEach((value) => query.append("method", value));
+  if (params.sort) query.set("sort", params.sort);
+  if (params.page) query.set("page", String(params.page));
+  if (params.limit) query.set("limit", String(params.limit));
+  return apiRequest<Publication[]>(`/publications${query.size ? `?${query}` : ""}`);
+};
+export const getPublication = (id: string) => apiRequest<Publication>(`/publications/${encodeURIComponent(id)}`);
+export const createPublication = (input: PublicationInput) => apiRequest<Publication>("/publications", { method: "POST", body: JSON.stringify(input) });
+export const updatePublication = (id: string, input: PublicationUpdateInput) => apiRequest<Publication>(`/publications/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
+export const deletePublication = async (id: string) => { await apiRequestWithMeta(`/publications/${encodeURIComponent(id)}`, { method: "DELETE" }); };
 
 export const getPartners = (type: PartnerType) => apiRequest<Partner[]>(`/partners/${type.toLowerCase()}`);
 export const getPartnerById = (type: PartnerType, id: string) => apiRequest<Partner>(`/partners/${type.toLowerCase()}/${encodeURIComponent(id)}`);

@@ -3,6 +3,9 @@ import { ObjectId } from 'mongodb';
 import { createDosenSchema, updateDosenSchema} from './dosen.schema.js';
 import { createDosen, deleteDosen, findAllDosen, findDosenByEmployeeId, findDosenById, updateDosen } from './dosen.repository.js';
 import { findUserById } from '../users/user.repository.js';
+import { getDosenPhotoUrl, removeDosenPhoto, saveDosenPhoto } from './dosen-photo.js';
+
+const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
 // ========================================
 // GET ALL DOSEN
@@ -93,6 +96,46 @@ export async function getDosenController(
       success: false,
       message: "Failed to fetch dosen",
     });
+  }
+}
+
+export async function uploadDosenPhotoController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const id = req.params.id as string;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid dosen ID" });
+    }
+
+    const dosen = await findDosenById(id);
+    if (!dosen) {
+      return res.status(404).json({ success: false, message: "Dosen not found" });
+    }
+
+    const photo = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    if (photo.length === 0) {
+      return res.status(400).json({ success: false, message: "Photo is required" });
+    }
+    if (photo.length > MAX_PHOTO_BYTES) {
+      return res.status(413).json({ success: false, message: "Photo must be 3 MB or smaller" });
+    }
+
+    const filename = await saveDosenPhoto(photo);
+    const updated = await updateDosen(id, { photo: getDosenPhotoUrl(req, filename) });
+    if (!updated) {
+      await removeDosenPhoto(filename);
+      return res.status(404).json({ success: false, message: "Dosen not found" });
+    }
+
+    await removeDosenPhoto(dosen.photo);
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unsupported image format") {
+      return res.status(415).json({ success: false, message: "Only JPG, PNG, and WebP photos are supported" });
+    }
+    return res.status(500).json({ success: false, message: "Failed to upload dosen photo" });
   }
 }
 
@@ -279,6 +322,7 @@ export async function deleteDosenController(
       });
     }
 
+    const existing = await findDosenById(id);
     const deleted =
       await deleteDosen(id);
 
@@ -288,6 +332,8 @@ export async function deleteDosenController(
         message: "Dosen not found",
       });
     }
+
+    await removeDosenPhoto(existing?.photo);
 
     return res.json({
       success: true,

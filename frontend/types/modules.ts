@@ -20,6 +20,26 @@ export interface Project {
 export type ProjectInput = Omit<Project, "_id" | "createdAt" | "updatedAt">;
 export type ProjectUpdateInput = Partial<ProjectInput>;
 
+export interface Publication {
+  _id: string;
+  title: string;
+  authors: string[];
+  publicationType: string;
+  year: number;
+  journal: string;
+  doi: string | null;
+  pdfUrl: string | null;
+  topics: string[];
+  methods: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const PUBLICATION_TYPES = ["Article", "Review", "Conference Paper", "Book Chapter", "Proceedings", "Editorial", "Other"] as const;
+
+export type PublicationInput = Omit<Publication, "_id" | "createdAt" | "updatedAt">;
+export type PublicationUpdateInput = Partial<PublicationInput>;
+
 export type PartnerType = "UNIVERSITY" | "INDUSTRIAL";
 export interface Partner {
   _id: string;

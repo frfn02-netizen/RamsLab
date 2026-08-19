@@ -8,7 +8,7 @@ import { useAuth } from "@/components/providers/auth-providers";
 const navigation = [
   ["Dashboard", "/dashboard"],
   ["Homepage", "/dashboard/content/homepage"],
-  ["About", "/dashboard/content/about"],
+  ["Publications", "/dashboard/content/publications"],
   ["Contact", "/dashboard/content/contact"],
   ["Footer", "/dashboard/content/footer"],
   ["Research Areas", "/dashboard/research"],

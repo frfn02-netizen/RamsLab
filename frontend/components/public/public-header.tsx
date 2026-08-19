@@ -6,9 +6,17 @@ import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import LanguageSwitcher from "./language-switcher";
 
-const links = [["about", "/about"], ["research", "/research"], ["projects", "/projects"], ["partners", "/partners"], ["team", "/team"]] as const;
+const links = [
+  ["people", "/team"],
+  ["research", "/research"],
+  ["publications", "/publications"],
+  ["news", null],
+  ["participate", "/contact"],
+  ["partners", "/partners"],
+] as const;
 
 function isActive(pathname: string, href: string) {
+  if (href === "/publications") return pathname.startsWith("/publications");
   if (href === "/projects") return pathname.startsWith("/projects");
   if (href === "/partners") return pathname.startsWith("/partners");
   return pathname === href;
@@ -32,20 +40,30 @@ export default function PublicHeader() {
       </Link>
 
       <nav className="hidden items-center gap-6 lg:flex" aria-label={a11y("primaryNav")}>
-        {links.map(([key, href]) => <Link key={href} href={href} className={`text-sm font-medium transition ${isActive(pathname, href) ? "text-[var(--rams-red)]" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}>{t(key)}</Link>)}
+        {links.map(([key, href]) => href ? <Link key={key} href={href} className={`text-sm font-medium transition ${isActive(pathname, href) ? "text-[var(--rams-red)]" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}>{t(key)}</Link> : <span key={key} aria-disabled="true" className="text-sm font-medium text-[var(--gray)]">{t(key)}</span>)}
         <div className="flex items-center gap-1 border-l border-[var(--border)] pl-4">
           <LanguageSwitcher />
         </div>
-        <Link href="/contact" className="bg-[var(--navy)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--rams-red)]">{t("contact")}</Link>
       </nav>
 
       <div className="flex items-center lg:hidden">
-        <button type="button" aria-label={open ? a11y("closeMenu") : a11y("openMenu")} onClick={() => setOpen((value) => !value)}>
+        <button type="button" aria-expanded={open} aria-controls="mobile-public-navigation" aria-label={open ? a11y("closeMenu") : a11y("openMenu")} onClick={() => setOpen((value) => !value)}>
           <span className="sr-only">{a11y("menu")}</span>
-          {/* Mobile menu icon */}
+          <span className="flex h-6 w-6 flex-col justify-center gap-1" aria-hidden="true">
+            <span className="h-px w-6 bg-[var(--charcoal)]" />
+            <span className="h-px w-6 bg-[var(--charcoal)]" />
+            <span className="h-px w-6 bg-[var(--charcoal)]" />
+          </span>
         </button>
       </div>
     </div>
+    {open && <nav id="mobile-public-navigation" className="border-t border-[var(--border)] bg-white px-5 py-4 sm:px-8 lg:hidden" aria-label={a11y("mobileNav")}>
+      <div className="grid gap-3">
+        {links.map(([key, href]) => href ? <Link key={key} href={href} onClick={() => setOpen(false)} className={`text-sm font-medium transition ${isActive(pathname, href) ? "text-[var(--rams-red)]" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}>{t(key)}</Link> : <span key={key} aria-disabled="true" className="text-sm font-medium text-[var(--gray)]">{t(key)}</span>)}
+      </div>
+      <div className="mt-4 border-t border-[var(--border)] pt-4">
+        <LanguageSwitcher />
+      </div>
+    </nav>}
   </header>;
 }
-

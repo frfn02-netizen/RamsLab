@@ -12,6 +12,7 @@
     "seed:admin": "tsx src/scripts/seed-admin.ts",
     "seed:dosen": "tsx src/scripts/seed-dosen.ts",
     "seed:research": "tsx src/scripts/seed-research.ts",
+    "seed:publications": "tsx src/scripts/seed-publications.ts",
     "seed:site-content": "tsx src/scripts/seed-site-content.ts"
   },
   "keywords": [],

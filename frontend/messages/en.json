@@ -10,7 +10,11 @@
   "nav": {
     "home": "Home",
     "about": "About",
+    "people": "People",
     "research": "Research",
+    "publications": "Publications",
+    "news": "News",
+    "participate": "Participate",
     "projects": "Projects",
     "partners": "Partners",
     "team": "Team",
@@ -128,6 +132,38 @@
     "ctaSecondary": "About RAMS Laboratory",
     "contextImageAlt": "Vessel & ship systems"
   },
+  "publications": {
+    "heroEyebrow": "Research archive",
+    "heroTitle": "Publications",
+    "heroDescription": "Explore RAMS public research and project records through a focused academic archive.",
+    "search": "Search",
+    "searchPlaceholder": "Search publications, authors, topics...",
+    "year": "YEAR",
+    "allYears": "All Years",
+    "topic": "TOPIC",
+    "method": "METHOD",
+    "sort": "Sort",
+    "newestFirst": "Newest first",
+    "oldestFirst": "Oldest first",
+    "resultCount": "{count, plural, =0 {0 Publications} =1 {1 Publication} other {# Publications}}",
+    "filterPublications": "Filter publications",
+    "clearAll": "Clear all filters",
+    "apply": "Apply",
+    "closeFilters": "Close filters",
+    "noOptions": "No options available",
+    "sourceProject": "RAMS public record",
+    "publicationRecord": "Publication record",
+    "authorsUnavailable": "Author metadata not available",
+    "venueUnavailable": "Venue metadata not available",
+    "viewPublication": "VIEW PUBLICATION",
+    "viewPdf": "VIEW PDF",
+    "doiLabel": "DOI: {doi}",
+    "emptyEyebrow": "No matching records",
+    "emptyTitle": "No publications found",
+    "emptyDescription": "Try adjusting your search or filters.",
+    "loading": "Loading publications",
+    "error": "Publication records are temporarily unavailable."
+  },
   "projects": { "heroEyebrow": "Published work", "heroTitle": "Projects with an operational edge.", "heroDescription": "Explore public research, consulting, and development projects published through the RAMS Platform.", "register": "Project register", "sorted": "Published records · sorted by year", "noTitle": "No projects published", "noDescription": "There are no public project records available right now.", "loading": "Loading published projects", "detailDescription": "Project description", "metadata": "Project metadata", "partnerNote": "Partner relationships are represented by platform IDs in the current public project contract; partner names are not fabricated here.", "relatedEyebrow": "Continue exploring", "relatedTitle": "Related projects", "notFound": "The requested project could not be found.", "error": "The project record is temporarily unavailable.", "technicalDetails": "Technical details", "slug": "Project slug" },
   "partners": { "heroEyebrow": "Collaboration network", "heroTitle": "Research is a connected practice.", "heroDescription": "RAMS works across academic and industrial contexts. Explore the published organizations connected with the laboratory.", "academic": "Academic", "academicTitle": "University partners", "academicDescription": "Academic institutions and research collaborations connected to RAMS.", "industry": "Industry", "industryTitle": "Industrial partners", "industryDescription": "Organizations connected to applied project and consulting work.", "directory": "Published records", "selected": "Selected network", "loading": "Loading partners", "universityEyebrow": "Academic network", "universityTitle": "University partners.", "universityDescription": "Academic institutions connected to RAMS research and collaboration.", "industrialEyebrow": "Industry network", "industrialTitle": "Industrial partners.", "industrialDescription": "Industrial organizations connected to RAMS project and consulting work.", "publishedFromApi": "Published records from the RAMS public API.", "noUniversity": "No university partners published", "noIndustrial": "No industrial partners published", "noDescription": "There are no public partner records available in this category right now.", "academicLabel": "Academic", "industrialLabel": "Industrial", "directoryNote": "Published partner records will appear here when available.", "universityDirectory": "University directory", "industrialDirectory": "Industrial directory" },
   "team": { "heroEyebrow": "People & expertise", "heroTitle": "A multidisciplinary research team.", "heroDescription": "RAMS Laboratory brings together laboratory leadership, lecturers, researchers, and engineering collaborators around dependable systems.", "headEyebrow": "LABORATORY HEAD", "headName": "Prof. Ketut", "headPhotoAlt": "Prof. Ketut, RAMS Laboratory head", "leadership": "Laboratory leadership", "expertise": "Research interests & expertise", "existingHeadNote": "Profile details are shown when provided by the platform.", "roleFallback": "Role not listed", "profileLink": "View profile", "staffEyebrow": "RESEARCHERS & FACULTY", "staffTitle": "Researchers & Faculty", "staffDescription": "RAMS brings together lecturers, researchers, and technical expertise across reliability, safety, maintenance, maritime systems, AIS, and simulation.", "loading": "Loading team profiles", "error": "Team profiles are temporarily unavailable.", "emptyTitle": "No public team profiles", "emptyDescription": "Public lecturer and researcher profiles will appear here when available.", "ctaTitle": "Start a conversation with the laboratory." },
@@ -175,5 +211,6 @@
     }
   },
   "footer": { "description": "Research and engineering for reliability, safety, management, and marine systems.", "navigate": "Navigate", "ecosystem": "Our ecosystem", "contact": "Contact", "findUs": "Find us", "instagram": "Instagram · RAMS Laboratory", "copyright": "RAMS Laboratory", "institution": "Institut Teknologi Sepuluh Nopember · Surabaya", "address1": "Gedung WA", "address2": "Kampus ITS Sukolilo", "address3": "Surabaya 60111", "address4": "Indonesia" },
-  "visual": { "profile": "Profile", "headName": "Prof. Ketut", "headRole": "Laboratory head", "affiliation": "Institut Teknologi Sepuluh Nopember" }
+  "visual": { "profile": "Profile", "headName": "Prof. Ketut", "headRole": "Laboratory head", "affiliation": "Institut Teknologi Sepuluh Nopember" },
+  "adminPublications": { "title": "Publications", "description": "Manage publication records used by the public RAMS Publications page.", "add": "Add publication", "edit": "Edit publication", "save": "Save publication", "search": "Search publications", "noPublications": "No publications yet", "noResults": "No publications found", "loading": "Loading publications", "titleField": "Title", "authors": "Authors", "year": "Year", "journal": "Journal", "doi": "DOI", "pdfUrl": "PDF URL", "topics": "Topics", "methods": "Methods", "addAuthor": "Add author", "addTopic": "Add topic", "addMethod": "Add method", "cancel": "Cancel", "delete": "Delete", "deleting": "Deleting…", "saving": "Saving…", "permission": "Only administrators can manage publications." }
 }
