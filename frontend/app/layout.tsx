@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-providers";
 
@@ -22,6 +23,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={locale}>
       <body>
         <AuthProvider>{children}</AuthProvider>
+        <SpeedInsights/>
       </body>
     </html>
   );
