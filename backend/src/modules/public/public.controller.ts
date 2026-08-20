@@ -16,6 +16,37 @@ import {
   findUniversityPartners,
   findIndustrialPartners,
 } from "../partners/partner.repository.js";
+import { findAllDosen } from "../dosen/dosen.repository.js";
+import { findPublicAlumni } from "../alumni/alumni.repository.js";
+import { toPublicAlumniProfile, toPublicDosenProfile } from "./public-profile.js";
+
+export async function getPublicPeopleController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const [dosen, alumni] = await Promise.all([
+      findAllDosen({ publicOnly: true }),
+      findPublicAlumni(),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        DOSEN: dosen.map((member) => toPublicDosenProfile(req, member)),
+        // The current schema has no student collection yet. Keep the
+        // presentation category available without inventing records.
+        MAHASISWA: [],
+        ALUMNI: alumni.map((member) => toPublicAlumniProfile(req, member)),
+      },
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public people",
+    });
+  }
+}
 
 
 // ========================================

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { Request } from "express";
+import { getPublicApiOrigin } from "../public/public-profile.js";
 
 const PHOTO_DIRECTORY = path.resolve(process.cwd(), "uploads", "dosen");
 
@@ -42,7 +43,5 @@ export async function removeDosenPhoto(photo?: string) {
 }
 
 export function getDosenPhotoUrl(req: Request, filename: string) {
-  const configuredOrigin = process.env.PUBLIC_API_URL?.replace(/\/$/, "");
-  const origin = configuredOrigin ?? `${req.protocol}://${req.get("host")}`;
-  return `${origin}/uploads/dosen/${filename}`;
+  return `${getPublicApiOrigin(req)}/uploads/dosen/${filename}`;
 }

@@ -21,8 +21,15 @@ function SocialIcon({ kind }: { kind: string }) {
   return <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.2 3.5A2.7 2.7 0 1 1 5.2 8.9a2.7 2.7 0 0 1 0-5.4ZM2.8 10.8h4.8v10.4H2.8V10.8Zm7.6 0h4.6v1.4h.1c.6-1 1.8-1.9 3.8-1.9 4 0 4.7 2.6 4.7 6v4.9h-4.8v-4.4c0-1.1 0-2.6-1.6-2.6s-1.8 1.2-1.8 2.5v4.5h-4.9V10.8Z" /></svg>;
 }
 
-const navigation = ["about", "research", "projects", "partners", "team", "contact"] as const;
-const hrefs = { about: "/about", research: "/research", projects: "/projects", partners: "/partners", team: "/team", contact: "/contact" } as const;
+const navigation = [
+  ["people", "/team"],
+  ["about", "/about"],
+  ["research", "/research"],
+  ["publications", "/publications"],
+  ["projects", "/projects"],
+  ["partners", "/partners"],
+  ["participate", "/contact"],
+] as const;
 
 export default function PublicFooter() {
   const locale = useLocale() === "id" ? "id" : "en";
@@ -36,74 +43,90 @@ export default function PublicFooter() {
   useEffect(() => { getPublicSiteContent("footer").then(setContent).catch(() => setError(true)); }, []);
   const localized = (value: { en: string; id: string }) => value[locale];
 
-  return <footer className="bg-[var(--navy)] text-white">
-    <PublicContainer className="py-14 sm:py-16">
-      <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1.15fr]">
-        <div>
+  const fallbackDescription = t("description");
+  const footerDescription = content ? localized(content.description) : error ? common("requestUnavailable") : common("loading");
+  const footerCopyright = content ? localized(content.copyright) : t("copyright");
+  const footerInstitution = content ? localized(content.institution) : brand("institution");
+
+  return <footer className="rams-footer relative overflow-hidden bg-[var(--navy)] text-white">
+    <div className="rams-footer-grid pointer-events-none absolute inset-0" aria-hidden="true" />
+    <PublicContainer className="relative py-16 sm:py-20 lg:py-24">
+      <section className="rams-footer-closing border-b border-white/15 pb-14 sm:pb-16" aria-labelledby="footer-closing-title">
+        <div className="flex items-center gap-4">
+          <span className="h-px w-10 bg-[var(--rams-red)]" aria-hidden="true" />
+          <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-white/55">{brand("laboratory")}</p>
+        </div>
+        <h2 id="footer-closing-title" className="mt-7 max-w-4xl font-display text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-5xl lg:text-6xl">
+          {fallbackDescription}
+        </h2>
+      </section>
+
+      <section className="grid gap-12 border-b border-white/15 py-14 sm:py-16 md:grid-cols-2 lg:grid-cols-[1.35fr_0.9fr_1fr] lg:gap-16" aria-label={t("navigate")}>
+        <div className="max-w-sm">
           <div className="flex items-center gap-4">
-            <div className="relative h-20 w-24 shrink-0">
-              <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="96px" className="object-contain" />
+            <div className="relative h-16 w-16 shrink-0 sm:h-[4.5rem] sm:w-[4.5rem]">
+              <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="72px" className="object-contain" />
             </div>
             <div>
-              <p className="font-display text-lg font-semibold text-white">{brand("laboratory")}</p>
-              <p className="mt-2 text-xs leading-5 text-white/65">{brand("technicalLine")}</p>
+              <p className="font-display text-xl font-semibold tracking-[-0.02em] text-white">{brand("laboratory")}</p>
+              <p className="mt-2 text-xs leading-5 text-white/55">{brand("technicalLine")}</p>
             </div>
           </div>
-          <p className="mt-6 max-w-xs text-sm leading-7 text-white/70">{content ? localized(content.description) : error ? common("requestUnavailable") : common("loading")}</p>
+          <span className="mt-7 block h-px w-12 bg-[var(--rams-red)]" aria-hidden="true" />
+          <p className="mt-6 text-sm leading-7 text-white/65">{footerDescription}</p>
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-white">{t("navigate")}</p>
-          <nav className="mt-5 grid gap-3 text-sm text-white/65" aria-label={t("navigate")}>
-            {navigation.map((key) => <Link key={key} href={hrefs[key]} className="w-fit transition-colors duration-200 hover:text-[var(--rams-red)]">{nav(key)}</Link>)}
+          <p className="rams-footer-label">{t("navigate")}</p>
+          <nav className="mt-5 grid grid-cols-2 gap-x-5 gap-y-3 text-sm" aria-label={t("navigate")}>
+            {navigation.map(([key, href]) => <Link key={href} href={href} className="rams-footer-link w-fit">{nav(key)}</Link>)}
           </nav>
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-white">{t("contact")}</p>
+          <p className="rams-footer-label">{t("contact")}</p>
           <div className="mt-5 grid gap-4 text-sm text-white/65">
-            {content ? <a href={`mailto:${localized(content.email)}`} className="w-fit transition-colors duration-200 hover:text-[var(--rams-red)]">{localized(content.email)}</a> : <span>{error ? common("requestUnavailable") : common("loading")}</span>}
-            <span>{content ? localized(content.socialText) : error ? common("requestUnavailable") : common("loading")}</span>
-            <address className="not-italic leading-7">{content ? content.addressLines.map((line) => <span key={line.en} className="block">{localized(line)}</span>) : error ? common("requestUnavailable") : common("loading")}</address>
-            <div className="flex items-center gap-3">
-            <span>{language("label")}</span>
-              <span className="bg-white px-2 py-1"><LanguageSwitcher /></span>
+            {content ? <a href={`mailto:${localized(content.email)}`} className="rams-footer-link w-fit font-medium">{localized(content.email)}</a> : <span>{footerDescription}</span>}
+            <address className="not-italic leading-7">
+              {content ? content.addressLines.map((line) => <span key={line.en} className="block">{localized(line)}</span>) : error ? common("requestUnavailable") : common("loading")}
+            </address>
+            {content && <p className="max-w-xs leading-6 text-white/45">{localized(content.socialText)}</p>}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <span className="text-xs uppercase tracking-[0.12em] text-white/45">{t("findUs")}</span>
+              {socialLinks.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} className="rams-footer-social"><SocialIcon kind={link.kind} /></a>)}
             </div>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <span>{t("findUs")}</span>
-              {socialLinks.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} className="grid h-10 w-10 place-items-center rounded-full border border-white/25 text-white transition-colors duration-200 hover:border-[var(--rams-red)] hover:bg-[var(--rams-red)]"><SocialIcon kind={link.kind} /></a>)}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section className="mt-14 border-t border-white/15 pt-8" aria-labelledby="footer-ecosystem-title">
-        <p id="footer-ecosystem-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-white">{t("ecosystem")}</p>
-        <div className="mt-5 grid grid-cols-1 gap-5 text-sm text-white/75 sm:grid-cols-3 sm:divide-x sm:divide-white/15">
-          <div className="public-logo-interaction flex min-w-0 flex-col items-center gap-2 text-center sm:justify-center sm:pr-5">
-            <div className="relative h-32 w-32 shrink-0">
-              <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="128px" className="object-contain" />
-            </div>
-            <span className="leading-5">{brand("laboratory")}</span>
-          </div>
-          <div className="public-logo-interaction flex min-w-0 flex-col items-center gap-2 text-center sm:justify-center sm:px-5">
-            <div className="relative h-32 w-32 shrink-0">
-              <Image src="/assets/logo ais part2.png" alt={brand("ais")} fill sizes="128px" className="object-contain" />
-            </div>
-            <span className="leading-5">{brand("ais")}</span>
-          </div>
-          <div className="public-logo-interaction flex min-w-0 flex-col items-center gap-2 text-center sm:justify-center sm:pl-5">
-            <div className="relative h-32 w-32 shrink-0">
-              <Image src="/assets/logo pu-kekal part2.png" alt={brand("pui")} fill sizes="128px" className="object-contain" />
-            </div>
-            <span className="leading-5">{brand("pui")}</span>
           </div>
         </div>
       </section>
 
-      <div className="mt-14 flex flex-col gap-3 border-t border-white/15 pt-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
-        <span>© {new Date().getFullYear()} {content ? localized(content.copyright) : ""}</span>
-        <span>{content ? localized(content.institution) : ""}</span>
+      <section className="rams-footer-ecosystem border-b border-white/15 py-10 sm:py-12" aria-labelledby="footer-ecosystem-title">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <p id="footer-ecosystem-title" className="rams-footer-label">{t("ecosystem")}</p>
+          <p className="max-w-sm text-xs leading-5 text-white/40 sm:text-right">{brand("institution")}</p>
+        </div>
+        <div className="mt-7 grid grid-cols-1 divide-y divide-white/15 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <div className="rams-footer-ecosystem-item flex items-center gap-4 py-4 sm:py-2 sm:pr-6">
+            <div className="relative h-12 w-12 shrink-0"><Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="48px" className="object-contain" /></div>
+            <span className="text-sm leading-5 text-white/75">{brand("laboratory")}</span>
+          </div>
+          <div className="rams-footer-ecosystem-item flex items-center gap-4 py-4 sm:px-6 sm:py-2">
+            <div className="relative h-10 w-16 shrink-0"><Image src="/assets/logo ais part2.png" alt={brand("ais")} fill sizes="64px" className="object-contain" /></div>
+            <span className="text-sm leading-5 text-white/75">{brand("ais")}</span>
+          </div>
+          <div className="rams-footer-ecosystem-item flex items-center gap-4 py-4 sm:py-2 sm:pl-6">
+            <div className="relative h-10 w-20 shrink-0"><Image src="/assets/logo pu-kekal part2.png" alt={brand("pui")} fill sizes="80px" className="object-contain" /></div>
+            <span className="text-sm leading-5 text-white/75">{brand("pui")}</span>
+          </div>
+        </div>
+      </section>
+
+      <div className="flex flex-col gap-4 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between lg:grid lg:grid-cols-[1fr_auto_1fr]">
+        <span>© {new Date().getFullYear()} {footerCopyright}</span>
+        <span className="lg:text-center">{footerInstitution}</span>
+        <div className="flex items-center gap-3 lg:justify-self-end">
+          <span>{language("label")}</span>
+          <span className="border border-white/20 bg-white px-2 py-1 text-[var(--charcoal)]"><LanguageSwitcher /></span>
+        </div>
       </div>
     </PublicContainer>
   </footer>;

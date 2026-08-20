@@ -4,6 +4,7 @@ import { createDosenSchema, updateDosenSchema} from './dosen.schema.js';
 import { createDosen, deleteDosen, findAllDosen, findDosenByEmployeeId, findDosenById, updateDosen } from './dosen.repository.js';
 import { findUserById } from '../users/user.repository.js';
 import { getDosenPhotoUrl, removeDosenPhoto, saveDosenPhoto } from './dosen-photo.js';
+import { toPublicDosenProfile } from '../public/public-profile.js';
 
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
@@ -21,7 +22,7 @@ export async function getDosenListController(
 
     return res.json({
       success: true,
-      data: dosen,
+      data: dosen.map((member) => toPublicDosenProfile(_req, member)),
     });
   } catch {
     return res.status(500).json({

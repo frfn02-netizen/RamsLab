@@ -49,6 +49,15 @@ export async function findAlumniByNim(
     nim,
   });
 }
+
+export async function findPublicAlumni(): Promise<Alumni[]> {
+  return getAlumniCollection()
+    .find({ isPublic: true })
+    .sort({ fullName: 1 })
+    .limit(SECURITY_LIMITS.maxListResults)
+    .toArray();
+}
+
 export interface AlumniListParams {
   page: number;
   limit: number;

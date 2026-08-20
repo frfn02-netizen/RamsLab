@@ -20,9 +20,11 @@ export default function LanguageSwitcher() {
   }
 
   return <div className="flex items-center text-xs font-semibold">
-    <button type="button" onClick={() => switchLocale("en")} className={`px-1 ${locale === "en" ? "text-[var(--rams-red)]" : "text-[var(--charcoal)]"}`}>EN</button>
+    <button type="button" onClick={() => switchLocale("en")} 
+            className={`px-1 ${locale === "en" ? "text-[var(--rams-red)]" : "text-[var(--charcoal)]"}`}>EN</button>
     <span className="text-[var(--border)]">/</span>
-    <button type="button" onClick={() => switchLocale("id")} className={`px-1 ${locale === "id" ? "text-[var(--rams-red)]" : "text-[var(--charcoal)]"}`}>ID</button>
+    <button type="button" onClick={() => switchLocale("id")} 
+          className={`px-1 ${locale === "id" ? "text-[var(--rams-red)]" : "text-[var(--charcoal)]"}`}>ID</button>
   </div>;
 }
 

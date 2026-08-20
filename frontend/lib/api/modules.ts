@@ -2,9 +2,11 @@ import { apiRequest, apiRequestWithMeta } from "./client";
 import type { Dosen, DosenInput, DosenUpdateInput, Partner, PartnerInput, PartnerType, PartnerUpdateInput, Project, ProjectInput, ProjectUpdateInput, Publication, PublicationInput, PublicationUpdateInput, AlumniTracking, TrackingInput, TrackingUpdateInput, PublicResearchArea, ResearchArea, ResearchAreaInput, ResearchAreaUpdateInput } from "@/types/modules";
 import type { ManagedAccount } from "@/types/auth";
 import type { SiteContentAdminEnvelope, SiteContentKey, SiteContentMap } from "@/types/site-content";
+import type { PublicPeopleResponse, PublicPerson } from "@/types/people";
 
 export const getDosenList = () => apiRequest<Dosen[]>("/dosen");
-export const getPublicDosenList = () => apiRequest<Dosen[]>("/public/dosen");
+export const getPublicDosenList = () => apiRequest<PublicPerson[]>("/public/dosen");
+export const getPublicPeopleList = () => apiRequest<PublicPeopleResponse>("/public/people");
 export const getDosenById = (id: string) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`);
 export const createDosen = (input: DosenInput) => apiRequest<Dosen>("/dosen", { method: "POST", body: JSON.stringify(input) });
 export const updateDosen = (id: string, input: DosenUpdateInput) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });

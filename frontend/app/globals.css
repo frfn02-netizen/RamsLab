@@ -118,6 +118,83 @@ body {
   }
 }
 
+/* RAMS institutional footer. */
+.rams-footer {
+  --footer-border: rgba(255, 255, 255, 0.15);
+}
+
+.rams-footer-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-position: center top;
+  background-size: 42px 42px;
+  opacity: 0.38;
+}
+
+.rams-footer-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.rams-footer-link {
+  position: relative;
+  color: rgba(255, 255, 255, 0.72);
+  transition: color 180ms ease;
+}
+
+.rams-footer-link:hover {
+  color: #fff;
+}
+
+.rams-footer-link:focus-visible,
+.rams-footer-social:focus-visible {
+  outline: 2px solid var(--rams-red);
+  outline-offset: 4px;
+}
+
+.rams-footer-social {
+  display: grid;
+  height: 2.25rem;
+  width: 2.25rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.78);
+  transition:
+    border-color 180ms ease,
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.rams-footer-social svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+.rams-footer-social:hover {
+  border-color: var(--rams-red);
+  background-color: var(--rams-red);
+  color: #fff;
+}
+
+.rams-footer-ecosystem-item {
+  min-width: 0;
+}
+
+.rams-footer-ecosystem-item .relative {
+  filter: saturate(0.82);
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rams-footer-link,
+  .rams-footer-social { transition: none; }
+}
+
 /* Shared public motion system. */
 .reveal-on-scroll {
   opacity: 0;
