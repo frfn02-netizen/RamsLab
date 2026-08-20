@@ -4,6 +4,7 @@ export const USER_ROLES = {
   ALUMNI: "ALUMNI",
   DOSEN: "DOSEN",
   ADMIN: "ADMIN",
+  PUBLICATION_EDITOR: "PUBLICATION_EDITOR",
 } as const;
 
 export type UserRole =

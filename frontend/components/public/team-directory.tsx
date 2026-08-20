@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { getDosenList } from "@/lib/api/modules";
+import { getPublicDosenList } from "@/lib/api/modules";
 import type { Dosen } from "@/types/modules";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
 import PublicContainer from "./public-container";
@@ -117,12 +117,12 @@ export default function TeamDirectory() {
   const load = useCallback(() => {
     setLoading(true);
     setError(false);
-    getDosenList().then((records) => setMembers(records.filter((record) => record.isPublic))).catch(() => setError(true)).finally(() => setLoading(false));
+    getPublicDosenList().then((records) => setMembers(records.filter((record) => record.isPublic))).catch(() => setError(true)).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    getDosenList()
+    getPublicDosenList()
       .then((records) => { if (!cancelled) setMembers(records.filter((record) => record.isPublic)); })
       .catch(() => { if (!cancelled) setError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });

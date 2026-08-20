@@ -31,6 +31,10 @@ export interface Publication {
   pdfUrl: string | null;
   topics: string[];
   methods: string[];
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  createdByEmail?: string | null;
+  updatedByEmail?: string | null;
   createdAt: string;
   updatedAt: string;
 }

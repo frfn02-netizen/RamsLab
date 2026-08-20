@@ -3,12 +3,13 @@ import { getDatabase } from "../../config/database.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 import type { CreatePublicationInput, UpdatePublicationInput } from "./publication.schema.js";
 import type { Publication } from "./publication.types.js";
+import type { JwtPayload } from "../auth/auth.types.js";
 
 const PUBLICATIONS_COLLECTION = "publications";
 export const DEFAULT_PUBLICATION_TYPE = "Article";
 
 export class PublicationConflictError extends Error {
-  constructor(message = "A publication with the same DOI or title and year already exists") {
+  constructor(message = "A publication with the same DOI or normalized title and year already exists") {
     super(message);
     this.name = "PublicationConflictError";
   }
@@ -29,17 +30,21 @@ export function normalizeDoi(doi?: string | null) {
 function duplicateFilter(publication: { doi?: string | null; normalizedTitle: string; year: number }, excludeId?: string) {
   const filter: Record<string, unknown> = publication.doi
     ? { doi: publication.doi }
-    : { normalizedTitle: publication.normalizedTitle, year: publication.year, doi: null };
+    : { normalizedTitle: publication.normalizedTitle, year: publication.year };
   if (excludeId && ObjectId.isValid(excludeId)) filter._id = { $ne: new ObjectId(excludeId) };
   return filter;
 }
 
 async function ensureNoDuplicate(publication: { doi?: string | null; normalizedTitle: string; year: number }, excludeId?: string) {
   const duplicate = await getPublicationsCollection().findOne(duplicateFilter(publication, excludeId), { projection: { _id: 1 } });
-  if (duplicate) throw new PublicationConflictError();
+  if (duplicate) {
+    throw new PublicationConflictError(publication.doi
+      ? "A publication with the same DOI already exists"
+      : "A publication with the same normalized title and year already exists");
+  }
 }
 
-function toDocument(input: Partial<CreatePublicationInput>, existing?: Publication): Publication {
+function toDocument(input: Partial<CreatePublicationInput>, actor: JwtPayload, existing?: Publication): Publication {
   const now = new Date();
   const has = (key: keyof CreatePublicationInput) => Object.prototype.hasOwnProperty.call(input, key);
   return {
@@ -53,6 +58,8 @@ function toDocument(input: Partial<CreatePublicationInput>, existing?: Publicati
     pdfUrl: has("pdfUrl") ? input.pdfUrl || null : existing?.pdfUrl ?? null,
     topics: input.topics ?? existing?.topics ?? [],
     methods: input.methods ?? existing?.methods ?? [],
+    createdBy: existing ? existing.createdBy ?? null : new ObjectId(actor.userId),
+    updatedBy: existing ? new ObjectId(actor.userId) : null,
     normalizedTitle: normalizePublicationTitle(input.title ?? existing?.title ?? ""),
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
@@ -89,25 +96,35 @@ export async function findPublicationById(id: string): Promise<Publication | nul
   return getPublicationsCollection().findOne({ _id: new ObjectId(id) });
 }
 
-export async function createPublication(input: CreatePublicationInput): Promise<Publication> {
-  const document = toDocument(input);
+export async function createPublication(input: CreatePublicationInput, actor: JwtPayload): Promise<Publication> {
+  const document = toDocument(input, actor);
   await ensureNoDuplicate(document);
   const result = await getPublicationsCollection().insertOne(document);
   return { ...document, _id: result.insertedId };
 }
 
-export async function updatePublication(id: string, input: UpdatePublicationInput): Promise<Publication | null> {
+export function canModifyPublication(publication: Publication, actor: JwtPayload) {
+  return actor.role === "ADMIN" || publication.createdBy?.toString() === actor.userId;
+}
+
+function actorFilter(id: string, actor: JwtPayload) {
+  const filter: Record<string, unknown> = { _id: new ObjectId(id) };
+  if (actor.role !== "ADMIN") filter.createdBy = new ObjectId(actor.userId);
+  return filter;
+}
+
+export async function updatePublication(id: string, input: UpdatePublicationInput, actor: JwtPayload): Promise<Publication | null> {
   if (!ObjectId.isValid(id)) return null;
   const existing = await findPublicationById(id);
   if (!existing) return null;
-  const next = toDocument(input, existing);
+  const next = toDocument(input, actor, existing);
   await ensureNoDuplicate(next, id);
   const { _id: _ignoredId, ...updateData } = next;
-  return getPublicationsCollection().findOneAndUpdate({ _id: new ObjectId(id) }, { $set: updateData }, { returnDocument: "after" });
+  return getPublicationsCollection().findOneAndUpdate(actorFilter(id, actor), { $set: updateData }, { returnDocument: "after" });
 }
 
-export async function deletePublication(id: string): Promise<boolean> {
+export async function deletePublication(id: string, actor: JwtPayload): Promise<boolean> {
   if (!ObjectId.isValid(id)) return false;
-  const result = await getPublicationsCollection().deleteOne({ _id: new ObjectId(id) });
+  const result = await getPublicationsCollection().deleteOne(actorFilter(id, actor));
   return result.deletedCount === 1;
 }

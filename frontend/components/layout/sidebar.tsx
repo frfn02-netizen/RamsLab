@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
+import { hasPermission } from "@/lib/authz";
 
 const navigationGroups = [
   { label: "Overview", items: [["Dashboard", "/dashboard"]] },
@@ -34,7 +35,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 p-4" aria-label="Dashboard navigation">
-        {navigationGroups.map((group) => <div key={group.label} className="space-y-1"><p className="px-3 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-white/35 first:pt-0">{group.label}</p>{group.items.map(([label, href]) => {
+        {navigationGroups.map((group) => <div key={group.label} className="space-y-1">{group.items.filter(([, href]) => href === "/dashboard" ? hasPermission(user?.role, "dashboard.read") : href === "/dashboard/publications" ? hasPermission(user?.role, "publication.read") : user?.role === "ADMIN" || user?.role === "DOSEN").length > 0 && <p className="px-3 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-white/35 first:pt-0">{group.label}</p>}{group.items.filter(([, href]) => href === "/dashboard" ? hasPermission(user?.role, "dashboard.read") : href === "/dashboard/publications" ? hasPermission(user?.role, "publication.read") : user?.role === "ADMIN" || user?.role === "DOSEN").map(([label, href]) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return <Link key={href} href={href} className={`block border-l-2 px-3 py-2.5 text-sm font-semibold transition ${active ? "border-[var(--rams-red)] bg-white/10 text-white" : "border-transparent text-white/60 hover:bg-white/5 hover:text-white"}`}>{label}</Link>;
         })}</div>)}

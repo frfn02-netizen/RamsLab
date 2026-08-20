@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "./auth-providers";
+import { canAccessDashboardPath } from "@/lib/authz";
 
 export default function DashboardGuard({ children }: { children: ReactNode }) {
   const { user, status } = useAuth();
@@ -14,6 +15,8 @@ export default function DashboardGuard({ children }: { children: ReactNode }) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     } else if (status === "authenticated" && user?.role === "ALUMNI") {
       router.replace("/profile");
+    } else if (status === "authenticated" && user && !canAccessDashboardPath(user.role, pathname)) {
+      router.replace("/dashboard/publications");
     }
   }, [pathname, router, status, user]);
 

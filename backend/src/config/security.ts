@@ -19,7 +19,7 @@ export const SECURITY_LIMITS = {
   maxDashboardRequests: 30,
 } as const;
 
-export function isProduction(): boolean {
+export function isProduction() {
   return process.env.NODE_ENV === "production";
 }
 

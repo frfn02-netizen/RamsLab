@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/lib/api/dashboard";
 import { ApiError } from "@/lib/api/errors";
 import { useAuth } from "@/components/providers/auth-providers";
+import { LinkButton } from "@/components/ui";
 import type { DashboardStats } from "@/types/dashboard";
 
 type StatCardProps = {
@@ -128,6 +129,19 @@ export default function DashboardPage() {
           <p className="text-sm font-medium text-red-700">
             Authentication required.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.role === "PUBLICATION_EDITOR") {
+    return (
+      <div className="dashboard-page p-5 sm:p-7 lg:p-9">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">Overview</p>
+          <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-[var(--rams-charcoal)]">Dashboard</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--rams-gray)]">Use the Publications workspace to add Scopus and other publication records to the RAMS website.</p>
+          <div className="mt-8"><LinkButton href="/dashboard/publications">Open publications</LinkButton></div>
         </div>
       </div>
     );

@@ -9,6 +9,18 @@ import type { FooterContent } from "@/types/site-content";
 import LanguageSwitcher from "./language-switcher";
 import PublicContainer from "./public-container";
 
+const socialLinks = [
+  { label: "LinkedIn", href: process.env.NEXT_PUBLIC_RAMS_LINKEDIN_URL ?? "https://www.linkedin.com/company/lab-rams", kind: "linkedin" },
+  { label: "Instagram", href: process.env.NEXT_PUBLIC_RAMS_INSTAGRAM_URL, kind: "instagram" },
+  { label: "YouTube", href: process.env.NEXT_PUBLIC_RAMS_YOUTUBE_URL, kind: "youtube" },
+].filter((link): link is { label: string; href: string; kind: string } => Boolean(link.href));
+
+function SocialIcon({ kind }: { kind: string }) {
+  if (kind === "instagram") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>;
+  if (kind === "youtube") return <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 7.1a2.8 2.8 0 0 0-2-2C17.8 4.6 12 4.6 12 4.6s-5.8 0-7.6.5a2.8 2.8 0 0 0-2 2C2 8.9 2 12 2 12s0 3.1.4 4.9a2.8 2.8 0 0 0 2 2c1.8.5 7.6.5 7.6.5s5.8 0 7.6-.5a2.8 2.8 0 0 0 2-2c.4-1.8.4-4.9.4-4.9s0-3.1-.4-4.9ZM10 15.5v-7l6 3.5-6 3.5Z" /></svg>;
+  return <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.2 3.5A2.7 2.7 0 1 1 5.2 8.9a2.7 2.7 0 0 1 0-5.4ZM2.8 10.8h4.8v10.4H2.8V10.8Zm7.6 0h4.6v1.4h.1c.6-1 1.8-1.9 3.8-1.9 4 0 4.7 2.6 4.7 6v4.9h-4.8v-4.4c0-1.1 0-2.6-1.6-2.6s-1.8 1.2-1.8 2.5v4.5h-4.9V10.8Z" /></svg>;
+}
+
 const navigation = ["about", "research", "projects", "partners", "team", "contact"] as const;
 const hrefs = { about: "/about", research: "/research", projects: "/projects", partners: "/partners", team: "/team", contact: "/contact" } as const;
 
@@ -54,8 +66,12 @@ export default function PublicFooter() {
             <span>{content ? localized(content.socialText) : error ? common("requestUnavailable") : common("loading")}</span>
             <address className="not-italic leading-7">{content ? content.addressLines.map((line) => <span key={line.en} className="block">{localized(line)}</span>) : error ? common("requestUnavailable") : common("loading")}</address>
             <div className="flex items-center gap-3">
-              <span>{language("label")}</span>
+            <span>{language("label")}</span>
               <span className="bg-white px-2 py-1"><LanguageSwitcher /></span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span>{t("findUs")}</span>
+              {socialLinks.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} className="grid h-10 w-10 place-items-center rounded-full border border-white/25 text-white transition-colors duration-200 hover:border-[var(--rams-red)] hover:bg-[var(--rams-red)]"><SocialIcon kind={link.kind} /></a>)}
             </div>
           </div>
         </div>

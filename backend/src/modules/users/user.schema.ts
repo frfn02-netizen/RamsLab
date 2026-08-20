@@ -17,6 +17,7 @@ export const createUserSchema = z.object({
     USER_ROLES.ALUMNI,
     USER_ROLES.DOSEN,
     USER_ROLES.ADMIN,
+    USER_ROLES.PUBLICATION_EDITOR,
   ]),
 
   isActive: z

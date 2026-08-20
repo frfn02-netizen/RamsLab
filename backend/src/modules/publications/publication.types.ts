@@ -11,6 +11,8 @@ export interface Publication {
   pdfUrl: string | null;
   topics: string[];
   methods: string[];
+  createdBy?: ObjectId | null;
+  updatedBy?: ObjectId | null;
   normalizedTitle: string;
   createdAt: Date;
   updatedAt: Date;

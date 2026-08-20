@@ -144,6 +144,15 @@ describe("Dosen API", () => {
   });
 
 
+  it("should expose public dosen without authentication", async () => {
+    const response = await request(app).get("/api/public/dosen");
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.some((dosen: any) => dosen.employeeId === TEST_EMPLOYEE_ID)).toBe(true);
+  });
+
+
   it("should get dosen by id", async () => {
     const response =
       await request(app)

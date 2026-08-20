@@ -4,6 +4,7 @@ import type { ManagedAccount } from "@/types/auth";
 import type { SiteContentAdminEnvelope, SiteContentKey, SiteContentMap } from "@/types/site-content";
 
 export const getDosenList = () => apiRequest<Dosen[]>("/dosen");
+export const getPublicDosenList = () => apiRequest<Dosen[]>("/public/dosen");
 export const getDosenById = (id: string) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`);
 export const createDosen = (input: DosenInput) => apiRequest<Dosen>("/dosen", { method: "POST", body: JSON.stringify(input) });
 export const updateDosen = (id: string, input: DosenUpdateInput) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });

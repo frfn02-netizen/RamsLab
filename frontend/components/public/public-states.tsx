@@ -1,8 +1,9 @@
 import { useTranslations } from "next-intl";
+import { MaritimeShip } from "./maritime-motion";
 
 export function PublicLoading({ label }: { label?: string }) {
   const common = useTranslations("common");
-  return <div className="border border-[var(--border)] bg-white p-8 text-center" role="status"><span className="mx-auto mb-4 block h-5 w-5 animate-spin border-2 border-[var(--border)] border-t-[var(--ais-blue)]" aria-hidden="true" /><p className="text-sm text-[var(--gray)]">{label ?? common("loading")}…</p></div>;
+  return <div className="border border-[var(--border)] bg-white p-8 text-center" role="status"><div className="maritime-loader mx-auto mb-4"><MaritimeShip className="h-12 w-24" /></div><p className="text-sm text-[var(--gray)]">{label ?? common("loading")}…</p></div>;
 }
 
 export function PublicError({ message, onRetry }: { message: string; onRetry?: () => void }) {

@@ -3,11 +3,12 @@ import request from "supertest";
 import app from "../src/app.js";
 import { connectDatabase } from "../src/config/database.js";
 import { getPublicationsCollection } from "../src/modules/publications/publication.repository.js";
-import { ensureTestUsers, signTestToken, TEST_ADMIN_USER_ID, TEST_DOSEN_USER_ID } from "./auth-fixture.js";
+import { ensureTestUsers, signTestToken, TEST_ADMIN_USER_ID, TEST_DOSEN_USER_ID, TEST_PUBLICATION_EDITOR_USER_ID } from "./auth-fixture.js";
 
 const titlePrefix = "Vitest Publication";
 let adminToken: string;
 let dosenToken: string;
+let editorToken: string;
 let publicationId: string;
 
 const publication = {
@@ -29,6 +30,7 @@ beforeAll(async () => {
   await getPublicationsCollection().deleteMany({ title: { $regex: `^${titlePrefix}` } });
   adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
   dosenToken = signTestToken(TEST_DOSEN_USER_ID, "DOSEN");
+  editorToken = signTestToken(TEST_PUBLICATION_EDITOR_USER_ID, "PUBLICATION_EDITOR");
 });
 
 afterAll(async () => {
@@ -99,5 +101,36 @@ describe("Publications API", () => {
     const deleted = await request(app).delete(`/api/publications/${publicationId}`).set("Cookie", `rams_access_token=${adminToken}`).send();
     expect(deleted.status).toBe(200);
     expect((await request(app).get(`/api/publications/${publicationId}`)).status).toBe(404);
+  });
+
+  it("allows an editor to create and manage only their own publication", async () => {
+    const created = await request(app).post("/api/publications").set("Cookie", `rams_access_token=${editorToken}`).send({
+      ...publication,
+      title: `${titlePrefix} editor-owned`,
+      doi: null,
+      pdfUrl: null,
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.createdBy).toBe(TEST_PUBLICATION_EDITOR_USER_ID);
+    expect(created.body.data.updatedBy).toBeNull();
+    const editorPublicationId = created.body.data._id;
+
+    const ownUpdate = await request(app).patch(`/api/publications/${editorPublicationId}`).set("Cookie", `rams_access_token=${editorToken}`).send({ title: `${titlePrefix} editor-owned updated` });
+    expect(ownUpdate.status).toBe(200);
+    expect(ownUpdate.body.data.updatedBy).toBe(TEST_PUBLICATION_EDITOR_USER_ID);
+
+    const otherUpdate = await request(app).patch(`/api/publications/${editorPublicationId}`).set("Cookie", `rams_access_token=${dosenToken}`).send({ title: `${titlePrefix} denied` });
+    expect(otherUpdate.status).toBe(403);
+
+    expect((await request(app).get("/api/alumni").set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(403);
+    expect((await request(app).get("/api/dosen").set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(403);
+    expect((await request(app).get("/api/projects").set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(403);
+    expect((await request(app).get("/api/admin/research").set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(403);
+    expect((await request(app).get("/api/partners/university").set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(403);
+    expect((await request(app).get("/api/tracking/00000000000000000000a001").set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(403);
+    expect((await request(app).post("/api/users/dosen").set("Cookie", `rams_access_token=${editorToken}`).send({ email: "blocked@test.local", password: "not-a-real-password" })).status).toBe(403);
+    expect((await request(app).get("/api/admin/test").set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(403);
+
+    expect((await request(app).delete(`/api/publications/${editorPublicationId}`).set("Cookie", `rams_access_token=${editorToken}`)).status).toBe(200);
   });
 });

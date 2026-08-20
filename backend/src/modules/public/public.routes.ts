@@ -6,6 +6,7 @@ import {
   getPublicProjectsController,
   getPublicUniversityPartnersController,
 } from "./public.controller.js";
+import { getPublicDosenController } from "../dosen/dosen.controller.js";
 import { getPublicResearchAreasController } from "../research/research.controller.js";
 import { getPublicSiteContentController } from "../site-content/site-content.controller.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
@@ -51,6 +52,11 @@ router.get(
 router.get(
   "/research",
   getPublicResearchAreasController
+);
+
+router.get(
+  "/dosen",
+  getPublicDosenController
 );
 
 router.get(

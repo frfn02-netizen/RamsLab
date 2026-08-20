@@ -1,5 +1,4 @@
-@import "tailwindcss";
-
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -30,8 +29,8 @@
   --color-background: var(--background);
   --color-background-light: var(--background-light);
   --color-border: var(--border);
-  --font-sans: var(--font-plex-sans), sans-serif;
-  --font-display: var(--font-space-grotesk), sans-serif;
+  --font-sans: var(--font-plex-sans), "IBM Plex Sans", sans-serif;
+  --font-display: var(--font-space-grotesk), "Space Grotesk", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -50,6 +49,25 @@ body {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.maritime-loader {
+  width: 6rem;
+  overflow: hidden;
+}
+
+.maritime-ship {
+  display: block;
+  animation: maritime-ship-sail 2.4s ease-in-out infinite;
+}
+
+@keyframes maritime-ship-sail {
+  0%, 100% { transform: translate3d(-0.35rem, 0, 0) rotate(-1deg); }
+  50% { transform: translate3d(0.35rem, -0.25rem, 0) rotate(1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maritime-ship { animation: none; }
 }
 
 /* Dashboard-only brand tokens and interactions. */

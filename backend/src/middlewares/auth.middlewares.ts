@@ -74,3 +74,34 @@ export async function authenticate(
     });
   }
 }
+
+export async function optionallyAuthenticate(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  const token = req.cookies?.[AUTH_COOKIE_NAME];
+  if (!token) return next();
+
+  try {
+    const payload = verifyAccessToken(token);
+    if (!ObjectId.isValid(payload.userId)) return next();
+    const user = await findUserById(payload.userId);
+    if (
+      user?.isActive &&
+      user.role === payload.role &&
+      (user.tokenVersion ?? 0) === payload.tokenVersion &&
+      Object.values(USER_ROLES).includes(user.role)
+    ) {
+      req.user = {
+        userId: user._id!.toString(),
+        role: user.role,
+        tokenVersion: user.tokenVersion ?? 0,
+      };
+    }
+  } catch {
+    // Public publication reads remain public when a stale cookie is present.
+  }
+
+  return next();
+}
