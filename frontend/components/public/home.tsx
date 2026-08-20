@@ -57,7 +57,7 @@ export default function PublicHome() {
   return <>
     {/* HERO */}
     <section className="relative flex min-h-[75vh] items-center justify-start bg-[var(--navy)] text-white">
-      <Image src="/assets/upscalemedia-transformed.jpeg" alt={content ? localized(content.hero.headline) : common("requestUnavailable")} fill priority sizes="100vw" className="object-cover" />
+      <Image src="/assets/hero.webp" alt={content ? localized(content.hero.headline) : common("requestUnavailable")} fill priority sizes="100vw" className="object-cover" />
       <div className="absolute inset-0 bg-[var(--navy)]/50" />
       <PublicContainer className="relative z-10 w-full">
         {contentLoading ? <PublicLoading label={common("loading")} /> : contentError || !content ? <PublicError message={common("requestUnavailable")} /> : <div className="hero-entrance max-w-3xl">

@@ -42,7 +42,7 @@ export default function PublicFooter() {
         <div>
           <div className="flex items-center gap-4">
             <div className="relative h-20 w-24 shrink-0">
-              <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="96px" className="object-contain" priority />
+              <Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="96px" className="object-contain" />
             </div>
             <div>
               <p className="font-display text-lg font-semibold text-white">{brand("laboratory")}</p>

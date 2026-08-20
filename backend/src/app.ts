@@ -81,7 +81,19 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/publications", publicationRoutes);
 app.use("/api/partners", partnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/public", publicRoutes);
+app.use(
+  "/api/public",
+  (_req, res, next) => {
+    // Public reads are safe to reuse briefly at the browser/CDN edge. This
+    // keeps repeat visits from waking the API and MongoDB for every section.
+    res.setHeader(
+      "Cache-Control",
+      "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+    );
+    next();
+  },
+  publicRoutes,
+);
 app.use("/api/admin/research", researchRoutes);
 app.use("/api/admin/site-content", siteContentRoutes);
 

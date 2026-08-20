@@ -13,14 +13,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  try {
-    const content = await getPublicSiteContent("contact");
-    const language = locale === "id" ? "id" : "en";
-    return localizedMetadata({ locale: locale as Locale, path: "/contact", title: content.hero.title[language], description: content.hero.description[language] });
-  } catch {
-    const t = await getTranslations({ locale, namespace: "contact" });
-    return localizedMetadata({ locale: locale as Locale, path: "/contact", title: t("heroTitle"), description: t("heroDescription") });
-  }
+  const t = await getTranslations({ locale, namespace: "contact" });
+  return localizedMetadata({ locale: locale as Locale, path: "/contact", title: t("heroTitle"), description: t("heroDescription") });
 }
 
 export default async function ContactPage({ params }: { params: Promise<{ locale: string }> }) {

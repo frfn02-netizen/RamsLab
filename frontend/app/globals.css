@@ -1,10 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --font-space-grotesk: "Space Grotesk";
-  --font-plex-sans: "IBM Plex Sans";
-  --font-plex-mono: "IBM Plex Mono";
+  --font-space-grotesk: "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-plex-sans: "Segoe UI", Arial, sans-serif;
+  --font-plex-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --rams-red: #B5121B;
   --rams-red-dark: #8F0E15;
   --ais-blue: #0067B1;
