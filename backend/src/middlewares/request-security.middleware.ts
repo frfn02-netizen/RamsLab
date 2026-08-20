@@ -23,7 +23,11 @@ export function verifyStateChangingOrigin(
     });
   }
 
-  if (origin && req.cookies?.rams_access_token) {
+  // Login must be able to replace an expired/stale session. Origin validation
+  // still applies, but requiring the old CSRF token here would prevent users
+  // from recovering from a mismatched cookie pair.
+  const isLoginRequest = req.method === "POST" && req.path === "/api/auth/login";
+  if (origin && req.cookies?.rams_access_token && !isLoginRequest) {
     const csrfCookie = req.cookies?.rams_csrf_token;
     const csrfHeader = req.get("x-csrf-token");
     if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {

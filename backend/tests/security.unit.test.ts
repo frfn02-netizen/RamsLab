@@ -106,6 +106,23 @@ describe("security regressions", () => {
     expect(response.headers["set-cookie"]?.some((cookie: string) => cookie.includes("rams_access_token=;"))).toBe(true);
   });
 
+  it("allows login to replace a stale access and CSRF cookie pair", async () => {
+    const response = await request(app)
+      .post("/api/auth/login")
+      .set("Origin", "http://localhost:3000")
+      .set("Cookie", [
+        "rams_access_token=stale-token",
+        "rams_csrf_token=old-csrf-token",
+      ])
+      .send({
+        email: "stale-session-reset@example.test",
+        password: "incorrect-password",
+      });
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe("Invalid email or password");
+  });
+
   it("rate-limits repeated login attempts", async () => {
     const responses = [];
     for (let attempt = 0; attempt < 11; attempt += 1) {
