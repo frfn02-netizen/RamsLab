@@ -9,6 +9,7 @@ import { createPublication, getPublication, updatePublication } from "@/lib/api/
 import { getUserFacingError } from "@/lib/api/errors";
 import { canManagePublication, hasPermission } from "@/lib/authz";
 import { PUBLICATION_TYPES, type Publication } from "@/types/modules";
+import SuccessToast from "./success-toast";
 
 type FormState = { title: string; authors: string[]; publicationType: string; year: string; journal: string; doi: string; pdfUrl: string; topics: string[]; methods: string[] };
 type FormErrors = Partial<Record<"title" | "authors" | "publicationType" | "year" | "journal" | "pdfUrl", string>>;
@@ -37,6 +38,7 @@ export default function PublicationForm({ id }: { id?: string }) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [audit, setAudit] = useState<Publication | null>(null);
   const [canEditRecord, setCanEditRecord] = useState(true);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -77,7 +79,13 @@ export default function PublicationForm({ id }: { id?: string }) {
     const input = { title: form.title.trim(), authors: form.authors.map((author) => author.trim()).filter(Boolean), publicationType: form.publicationType.trim(), year: Number(form.year), journal: form.journal.trim(), doi: form.doi.trim() || null, pdfUrl: form.pdfUrl.trim() || null, topics: form.topics, methods: form.methods };
     try {
       const saved = editing ? await updatePublication(id as string, input) : await createPublication(input);
-      router.push(editing ? `/dashboard/publications/${saved._id}/edit` : "/dashboard/publications?saved=1");
+      if (editing) {
+        setForm(fromPublication(saved));
+        setAudit(saved);
+        setSuccessMessage("Publication updated successfully.");
+      } else {
+        router.push("/dashboard/publications?saved=1");
+      }
     } catch (reason) { setError(getUserFacingError(reason)); }
     finally { setSaving(false); }
   }
@@ -91,7 +99,7 @@ export default function PublicationForm({ id }: { id?: string }) {
   if (editing && audit && !canEditRecord) return <div className="p-5 sm:p-7 lg:p-9"><div className="mx-auto max-w-3xl"><ErrorState message="You can only edit publications you created." /></div></div>;
   if (loading) return <div className="p-5 sm:p-7 lg:p-9"><div className="mx-auto max-w-3xl"><Card><LoadingState label="Loading publication" /></Card></div></div>;
 
-  return <div className="p-5 sm:p-7 lg:p-9"><div className="mx-auto max-w-4xl space-y-7">
+  return <div className="p-5 sm:p-7 lg:p-9">{successMessage && <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />}<div className="mx-auto max-w-4xl space-y-7">
     <Link href="/dashboard/publications" className="text-sm font-bold text-[var(--rams-red)]">← Publications</Link>
     <PageHeader eyebrow="Research" title={editing ? "Edit publication" : "Add publication"} description="Publication records are shared by the admin and public Publications pages." />
     {audit && <PublicationAudit publication={audit} />}
