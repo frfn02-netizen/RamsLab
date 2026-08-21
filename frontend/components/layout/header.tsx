@@ -14,6 +14,7 @@ const navigation = [
   ["Research Areas", "/dashboard/research"],
   ["Projects", "/dashboard/projects"],
   ["Dosen", "/dashboard/dosen"],
+  ["Students", "/dashboard/students"],
   ["Alumni", "/dashboard/alumni"],
   ["Partners", "/dashboard/partners"],
   ["Tracking", "/dashboard/tracking"],

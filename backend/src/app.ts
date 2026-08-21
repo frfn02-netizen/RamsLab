@@ -15,6 +15,7 @@ import publicRoutes from "./modules/public/public.routes.js";
 import researchRoutes from "./modules/research/research.routes.js";
 import siteContentRoutes from "./modules/site-content/site-content.routes.js";
 import publicationRoutes from "./modules/publications/publication.routes.js";
+import studentRoutes from "./modules/students/student.routes.js";
 import { authenticate } from "./middlewares/auth.middlewares.js";
 import { requireRole } from "./middlewares/role.middlewares.js";
 import { getAllowedOrigins, isProduction, SECURITY_LIMITS, validateProductionSecurityConfiguration } from "./config/security.js";
@@ -79,6 +80,7 @@ app.use("/api/tracking", trackingRoutes);
 app.use("/api/dosen", dosenRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/publications", publicationRoutes);
+app.use("/api/students", studentRoutes);
 app.use("/api/partners", partnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use(

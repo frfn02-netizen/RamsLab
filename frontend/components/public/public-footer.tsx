@@ -28,6 +28,7 @@ const navigation = [
   ["publications", "/publications"],
   ["projects", "/projects"],
   ["partners", "/partners"],
+  ["alumni", "/alumni"],
   ["participate", "/contact"],
 ] as const;
 

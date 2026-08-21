@@ -2,6 +2,7 @@ import type { Request } from "express";
 
 import type { Alumni } from "../alumni/alumni.types.js";
 import type { Dosen } from "../dosen/dosen.types.js";
+import type { Student } from "../students/student.types.js";
 
 function isLocalHost(hostname: string) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
@@ -93,5 +94,19 @@ export function toPublicAlumniProfile(req: Request, member: Alumni) {
     bio: member.bio,
     linkedin: publicLinkedInUrl(member.linkedin),
     graduationYear: member.graduationYear,
+  };
+}
+
+export function toPublicStudentProfile(req: Request, member: Student) {
+  return {
+    id: member._id?.toString() ?? "",
+    category: member.studentType === "PHD_STUDENT" ? "MAHASISWA" as const : "UNDERGRADUATE" as const,
+    fullName: member.fullName,
+    title: member.program,
+    position: undefined,
+    specialization: member.specialization,
+    photo: publicPhotoUrl(req, member.photo),
+    bio: member.bio,
+    linkedin: publicLinkedInUrl(member.linkedin),
   };
 }

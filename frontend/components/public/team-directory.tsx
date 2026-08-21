@@ -12,10 +12,10 @@ import RevealOnScroll from "./reveal-on-scroll";
 const categoryLabels: Record<PeopleCategory, string> = {
   DOSEN: "OUR LAB MEMBERS",
   MAHASISWA: "PH.D. STUDENTS",
-  ALUMNI: "UNDERGRADUATE STUDENTS",
+  UNDERGRADUATE: "UNDERGRADUATE STUDENTS",
 };
 
-const categoryOrder: PeopleCategory[] = ["DOSEN", "MAHASISWA", "ALUMNI"];
+const categoryOrder: PeopleCategory[] = ["DOSEN", "MAHASISWA", "UNDERGRADUATE"];
 
 function isLaboratoryHead(member: PublicPerson) {
   const role = [member.title, member.position].filter(Boolean).join(" ").toLowerCase();
@@ -31,7 +31,7 @@ function getInitials(name: string) {
     .join("");
 }
 
-function ProfilePhoto({ name, photo, sizes }: { name: string; photo?: string; sizes: string }) {
+export function ProfilePhoto({ name, photo, sizes }: { name: string; photo?: string; sizes: string }) {
   const [imageFailed, setImageFailed] = useState(false);
 
   return (
@@ -47,13 +47,13 @@ function ProfilePhoto({ name, photo, sizes }: { name: string; photo?: string; si
   );
 }
 
-function RoleLine({ member, fallback }: { member: PublicPerson; fallback: string }) {
+export function RoleLine({ member, fallback }: { member: PublicPerson; fallback: string }) {
   const role = [member.title, member.position].filter(Boolean).join(" · ");
   const year = member.graduationYear ? ` · ${member.graduationYear}` : "";
   return <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-[var(--rams-red)]">{role ? `${role}${year}` : fallback}</p>;
 }
 
-function ProfileLinks({ member, label }: { member: PublicPerson; label: string }) {
+export function ProfileLinks({ member, label }: { member: PublicPerson; label: string }) {
   return (
     <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--border)] pt-4 text-sm font-semibold">
       {member.linkedin && <a href={member.linkedin} target="_blank" rel="noreferrer" className="public-card-arrow text-[var(--rams-red)]">{label} <span aria-hidden="true">→</span></a>}
@@ -94,7 +94,7 @@ function ExistingHeadProfile({ profileNote, roleLabel, expertiseLabel, name, pho
   );
 }
 
-function MemberCard({ member, profileLabel, roleFallback }: { member: PublicPerson; profileLabel: string; roleFallback: string }) {
+export function MemberCard({ member, profileLabel, roleFallback }: { member: PublicPerson; profileLabel: string; roleFallback: string }) {
   return (
     <article className="public-card-interaction group flex h-full flex-col border border-[var(--border)] bg-white p-4 hover:border-[var(--ais-blue)] sm:p-5">
       <div className="overflow-hidden"><ProfilePhoto name={member.fullName} photo={member.photo} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" /></div>
@@ -114,7 +114,7 @@ function searchableText(member: PublicPerson) {
 
 export default function TeamDirectory() {
   const t = useTranslations("team");
-  const [people, setPeople] = useState<PublicPeopleResponse>({ DOSEN: [], MAHASISWA: [], ALUMNI: [] });
+  const [people, setPeople] = useState<PublicPeopleResponse>({ DOSEN: [], MAHASISWA: [], UNDERGRADUATE: [] });
   const [activeCategory, setActiveCategory] = useState<PeopleCategory>("DOSEN");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);

@@ -81,6 +81,23 @@ export interface Dosen {
 export type DosenInput = Omit<Dosen, "_id" | "createdAt" | "updatedAt">;
 export type DosenUpdateInput = Partial<Omit<DosenInput, "userId">>;
 
+export type StudentType = "PHD_STUDENT" | "UNDERGRADUATE_STUDENT";
+export interface Student {
+  _id: string;
+  fullName: string;
+  studentType: StudentType;
+  program?: string;
+  specialization: string[];
+  photo?: string;
+  bio?: string;
+  linkedin?: string;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+export type StudentInput = Omit<Student, "_id" | "createdAt" | "updatedAt">;
+export type StudentUpdateInput = Partial<StudentInput>;
+
 export type TrackingType = "GRADUATION" | "EMPLOYMENT" | "PROMOTION" | "EDUCATION" | "ENTREPRENEURSHIP" | "JOB_SEEKING" | "OTHER";
 export interface AlumniTracking {
   _id: string;

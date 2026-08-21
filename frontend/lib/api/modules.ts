@@ -1,18 +1,24 @@
 import { apiRequest, apiRequestWithMeta } from "./client";
-import type { Dosen, DosenInput, DosenUpdateInput, Partner, PartnerInput, PartnerType, PartnerUpdateInput, Project, ProjectInput, ProjectUpdateInput, Publication, PublicationInput, PublicationUpdateInput, AlumniTracking, TrackingInput, TrackingUpdateInput, PublicResearchArea, ResearchArea, ResearchAreaInput, ResearchAreaUpdateInput } from "@/types/modules";
+import type { Dosen, DosenInput, DosenUpdateInput, Partner, PartnerInput, PartnerType, PartnerUpdateInput, Project, ProjectInput, ProjectUpdateInput, Publication, PublicationInput, PublicationUpdateInput, AlumniTracking, TrackingInput, TrackingUpdateInput, PublicResearchArea, ResearchArea, ResearchAreaInput, ResearchAreaUpdateInput, Student, StudentInput, StudentUpdateInput } from "@/types/modules";
 import type { ManagedAccount } from "@/types/auth";
 import type { SiteContentAdminEnvelope, SiteContentKey, SiteContentMap } from "@/types/site-content";
-import type { PublicPeopleResponse, PublicPerson } from "@/types/people";
+import type { PublicAlumniResponse, PublicPeopleResponse, PublicPerson } from "@/types/people";
 
 export const getDosenList = () => apiRequest<Dosen[]>("/dosen");
 export const getPublicDosenList = () => apiRequest<PublicPerson[]>("/public/dosen");
 export const getPublicPeopleList = () => apiRequest<PublicPeopleResponse>("/public/people");
+export const getPublicAlumniList = () => apiRequest<PublicAlumniResponse>("/public/alumni");
 export const getDosenById = (id: string) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`);
 export const createDosen = (input: DosenInput) => apiRequest<Dosen>("/dosen", { method: "POST", body: JSON.stringify(input) });
 export const updateDosen = (id: string, input: DosenUpdateInput) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
 export const uploadDosenPhoto = (id: string, file: File) => apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}/photo`, { method: "POST", body: file, headers: { "Content-Type": file.type }, timeoutMs: 30000 });
 export const deleteDosen = async (id: string) => { await apiRequestWithMeta(`/dosen/${encodeURIComponent(id)}`, { method: "DELETE" }); };
 export const createDosenAccount = (input: { email: string; password: string }) => apiRequest<ManagedAccount>("/users/dosen", { method: "POST", body: JSON.stringify(input) });
+export const getStudentList = () => apiRequest<Student[]>("/students");
+export const getStudentById = (id: string) => apiRequest<Student>(`/students/${encodeURIComponent(id)}`);
+export const createStudent = (input: StudentInput) => apiRequest<Student>("/students", { method: "POST", body: JSON.stringify(input) });
+export const updateStudent = (id: string, input: StudentUpdateInput) => apiRequest<Student>(`/students/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
+export const deleteStudent = async (id: string) => { await apiRequestWithMeta(`/students/${encodeURIComponent(id)}`, { method: "DELETE" }); };
 
 export const getProjects = (params?: { category?: string; year?: number; published?: boolean }) => {
   const query = new URLSearchParams();

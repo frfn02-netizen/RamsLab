@@ -18,16 +18,17 @@ import {
 } from "../partners/partner.repository.js";
 import { findAllDosen } from "../dosen/dosen.repository.js";
 import { findPublicAlumni } from "../alumni/alumni.repository.js";
-import { toPublicAlumniProfile, toPublicDosenProfile } from "./public-profile.js";
+import { findAllStudents } from "../students/student.repository.js";
+import { toPublicAlumniProfile, toPublicDosenProfile, toPublicStudentProfile } from "./public-profile.js";
 
 export async function getPublicPeopleController(
   req: Request,
   res: Response,
 ) {
   try {
-    const [dosen, alumni] = await Promise.all([
+    const [dosen, students] = await Promise.all([
       findAllDosen({ publicOnly: true }),
-      findPublicAlumni(),
+      findAllStudents({ publicOnly: true }),
     ]);
 
     return res.json({
@@ -35,15 +36,34 @@ export async function getPublicPeopleController(
       data: {
         DOSEN: dosen.map((member) => toPublicDosenProfile(req, member)),
         // The current schema has no student collection yet. Keep the
-        // presentation category available without inventing records.
-        MAHASISWA: [],
-        ALUMNI: alumni.map((member) => toPublicAlumniProfile(req, member)),
+        // active student categories available without inventing records.
+        MAHASISWA: students.filter((student) => student.studentType === "PHD_STUDENT").map((student) => toPublicStudentProfile(req, student)),
+        UNDERGRADUATE: students.filter((student) => student.studentType === "UNDERGRADUATE_STUDENT").map((student) => toPublicStudentProfile(req, student)),
       },
     });
   } catch {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch public people",
+    });
+  }
+}
+
+export async function getPublicAlumniController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const alumni = await findPublicAlumni();
+
+    return res.json({
+      success: true,
+      data: alumni.map((member) => toPublicAlumniProfile(req, member)),
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public alumni",
     });
   }
 }
