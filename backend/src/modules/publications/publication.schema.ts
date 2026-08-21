@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isSafeHttpUrl } from "../../lib/url-security.js";
 
 const currentYear = new Date().getFullYear();
 const publicationYear = z.number().int().min(1900).max(currentYear + 1);
@@ -14,7 +15,7 @@ export const createPublicationSchema = z.object({
   year: publicationYear,
   journal: text("Journal is required", 300),
   doi: optionalText(255),
-  pdfUrl: z.string().trim().url("PDF URL must be a valid URL").max(1000).nullable().optional().transform((value) => value || null),
+  pdfUrl: z.string().trim().url("PDF URL must be a valid URL").refine(isSafeHttpUrl, "PDF URL must use HTTP or HTTPS").max(1000).nullable().optional().transform((value) => value || null),
   topics: list,
   methods: list,
 });

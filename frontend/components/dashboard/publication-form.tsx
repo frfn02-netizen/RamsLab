@@ -77,7 +77,7 @@ export default function PublicationForm({ id }: { id?: string }) {
     const input = { title: form.title.trim(), authors: form.authors.map((author) => author.trim()).filter(Boolean), publicationType: form.publicationType.trim(), year: Number(form.year), journal: form.journal.trim(), doi: form.doi.trim() || null, pdfUrl: form.pdfUrl.trim() || null, topics: form.topics, methods: form.methods };
     try {
       const saved = editing ? await updatePublication(id as string, input) : await createPublication(input);
-      router.push(`/dashboard/publications/${saved._id}/edit`);
+      router.push(editing ? `/dashboard/publications/${saved._id}/edit` : "/dashboard/publications?saved=1");
     } catch (reason) { setError(getUserFacingError(reason)); }
     finally { setSaving(false); }
   }

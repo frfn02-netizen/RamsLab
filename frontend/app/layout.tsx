@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: { default: "RAMS Laboratory", template: "%s | RAMS Laboratory" },
   description: "Reliability, safety, and marine systems research at ITS Surabaya.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  icons: {
+    icon: "/assets/rams-logo.png",
+    apple: "/assets/rams-logo.png",
+  },
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",

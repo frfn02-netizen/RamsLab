@@ -3,6 +3,7 @@ import { ApiError, type ApiErrorDetails } from "./errors";
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api").replace(/\/$/, "");
 const CSRF_COOKIE = "rams_csrf_token";
 const CSRF_STORAGE_KEY = "rams_csrf_token";
+const CSRF_SHARED_STORAGE_KEY = "rams_csrf_token_shared";
 const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
 export type ApiResponse<T> = {
@@ -35,15 +36,35 @@ function getCookie(name: string) {
 
 function getStoredCsrfToken() {
   if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem(CSRF_STORAGE_KEY);
+  try {
+    // localStorage keeps separate tabs aligned when one tab refreshes the
+    // API-issued CSRF cookie. sessionStorage remains the fallback for privacy
+    // modes where shared storage is unavailable.
+    return window.localStorage.getItem(CSRF_SHARED_STORAGE_KEY)
+      ?? window.sessionStorage.getItem(CSRF_STORAGE_KEY);
+  } catch {
+    return window.sessionStorage.getItem(CSRF_STORAGE_KEY);
+  }
 }
 
 export function setCsrfToken(token: string) {
-  if (typeof window !== "undefined") window.sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+  try {
+    window.localStorage.setItem(CSRF_SHARED_STORAGE_KEY, token);
+  } catch {
+    // sessionStorage is sufficient when shared storage is blocked.
+  }
 }
 
 export function clearCsrfToken() {
-  if (typeof window !== "undefined") window.sessionStorage.removeItem(CSRF_STORAGE_KEY);
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(CSRF_STORAGE_KEY);
+  try {
+    window.localStorage.removeItem(CSRF_SHARED_STORAGE_KEY);
+  } catch {
+    // Nothing else to clear when shared storage is blocked.
+  }
 }
 
 function getCsrfToken() {
@@ -72,7 +93,29 @@ async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
   }
 }
 
-async function requestEnvelope<T>(path: string, options: ApiRequestOptions = {}) {
+async function refreshCsrfTokenForRetry(timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${API_URL}/auth/csrf`, {
+      method: "GET",
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+    const body = await parseResponse<{ csrfToken: string }>(response);
+    if (response.status === 401) unauthorizedHandler?.();
+    if (!response.ok || !body.csrfToken) return false;
+    setCsrfToken(body.csrfToken);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function requestEnvelope<T>(path: string, options: ApiRequestOptions = {}, csrfRetried = false) {
   const { timeoutMs = 15000, ...fetchOptions } = options;
   const method = (fetchOptions.method ?? "GET").toUpperCase();
   const controller = new AbortController();
@@ -109,6 +152,15 @@ async function requestEnvelope<T>(path: string, options: ApiRequestOptions = {})
   }
 
   const body = await parseResponse<T>(response);
+  if (
+    response.status === 403
+    && body.message === "CSRF validation failed"
+    && MUTATION_METHODS.has(method)
+    && !csrfRetried
+    && await refreshCsrfTokenForRetry(timeoutMs)
+  ) {
+    return requestEnvelope<T>(path, options, true);
+  }
   if (!response.ok || body.success === false) {
     if (response.status === 401 && !path.startsWith("/auth/")) unauthorizedHandler?.();
     throw new ApiError(body.message ?? "Request failed", response.status, getErrorDetails(body.errors));

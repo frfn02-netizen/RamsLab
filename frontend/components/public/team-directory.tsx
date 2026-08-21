@@ -17,11 +17,6 @@ const categoryLabels: Record<PeopleCategory, string> = {
 
 const categoryOrder: PeopleCategory[] = ["DOSEN", "MAHASISWA", "UNDERGRADUATE"];
 
-function isLaboratoryHead(member: PublicPerson) {
-  const role = [member.title, member.position].filter(Boolean).join(" ").toLowerCase();
-  return /(head|ketua|kepala|director|coordinator|koordinator|leader)/.test(role);
-}
-
 function getInitials(name: string) {
   return name
     .split(/\s+/)
@@ -61,45 +56,12 @@ export function ProfileLinks({ member, label }: { member: PublicPerson; label: s
   );
 }
 
-function FeaturedApiProfile({ member, profileLabel, roleFallback, expertiseLabel }: { member: PublicPerson; profileLabel: string; roleFallback: string; expertiseLabel: string }) {
-  return (
-    <article className="public-card-interaction border border-[var(--border)] bg-white p-5 hover:border-[var(--ais-blue)] sm:p-7 lg:p-8">
-      <div className="grid gap-8 lg:grid-cols-[minmax(18rem,.9fr)_1.1fr] lg:items-start lg:gap-10">
-        <div className="group"><ProfilePhoto name={member.fullName} photo={member.photo} sizes="(max-width: 1024px) 100vw, 420px" /></div>
-        <div>
-          <h3 className="font-display text-3xl font-semibold tracking-[-0.045em] text-[var(--navy)] sm:text-4xl">{member.fullName}</h3>
-          <RoleLine member={member} fallback={roleFallback} />
-          {member.bio && <p className="mt-6 max-w-2xl whitespace-pre-wrap text-base leading-7 text-[var(--slate)]">{member.bio}</p>}
-          {member.specialization.length > 0 && <div className="mt-7 border-t border-[var(--border)] pt-5"><p className="eyebrow text-[var(--ais-blue)]">{expertiseLabel}</p><p className="mt-3 text-sm leading-6 text-[var(--navy)]">{member.specialization.join(" · ")}</p></div>}
-          <ProfileLinks member={member} label={profileLabel} />
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ExistingHeadProfile({ profileNote, roleLabel, expertiseLabel, name, photoAlt }: { profileNote: string; roleLabel: string; expertiseLabel: string; name: string; photoAlt: string }) {
-  return (
-    <article className="public-card-interaction border border-[var(--border)] bg-white p-5 hover:border-[var(--ais-blue)] sm:p-7 lg:p-8">
-      <div className="grid gap-8 lg:grid-cols-[minmax(18rem,.9fr)_1.1fr] lg:items-start lg:gap-10">
-        <div className="group"><div className="relative aspect-[4/3] overflow-hidden bg-[var(--navy)]"><Image src="/assets/prof-ketut.jpg" alt={photoAlt} fill sizes="(max-width: 1024px) 100vw, 420px" className="public-image-zoom object-cover object-[center_24%]" /></div></div>
-        <div>
-          <h3 className="font-display text-3xl font-semibold tracking-[-0.045em] text-[var(--navy)] sm:text-4xl">{name}</h3>
-          <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-[var(--rams-red)]">{roleLabel}</p>
-          <div className="mt-7 border-t border-[var(--border)] pt-5"><p className="eyebrow text-[var(--ais-blue)]">{expertiseLabel}</p></div>
-          <p className="mt-6 text-sm leading-6 text-[var(--gray)]">{profileNote}</p>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 export function MemberCard({ member, profileLabel, roleFallback }: { member: PublicPerson; profileLabel: string; roleFallback: string }) {
   return (
-    <article className="public-card-interaction group flex h-full flex-col border border-[var(--border)] bg-white p-4 hover:border-[var(--ais-blue)] sm:p-5">
-      <div className="overflow-hidden"><ProfilePhoto name={member.fullName} photo={member.photo} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" /></div>
+    <article className="group flex h-full min-w-0 flex-col">
+      <div className="overflow-hidden border border-[var(--border)] bg-white"><ProfilePhoto name={member.fullName} photo={member.photo} sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 25vw, 20vw" /></div>
       <div className="flex flex-1 flex-col pt-5">
-        <h3 className="public-card-title font-display text-xl font-semibold leading-tight text-[var(--navy)]">{member.fullName}</h3>
+        <h3 className="font-display min-h-[3.25rem] text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">{member.fullName}</h3>
         <RoleLine member={member} fallback={roleFallback} />
         {member.specialization.length > 0 && <p className="mt-5 text-sm leading-6 text-[var(--slate)]">{member.specialization.join(" · ")}</p>}
         {member.linkedin && <div className="mt-auto pt-5"><ProfileLinks member={member} label={profileLabel} /></div>}
@@ -141,8 +103,7 @@ export default function TeamDirectory() {
     if (!keyword) return people[activeCategory];
     return people[activeCategory].filter((member) => searchableText(member).includes(keyword));
   }, [activeCategory, people, search]);
-  const featured = useMemo(() => activeCategory === "DOSEN" ? filteredMembers.find(isLaboratoryHead) : undefined, [activeCategory, filteredMembers]);
-  const members = activeCategory === "DOSEN" ? filteredMembers.filter((member) => member.id !== featured?.id) : filteredMembers;
+  const members = filteredMembers;
 
   return (
     <section className="team-directory bg-[var(--paper)]">
@@ -164,19 +125,16 @@ export default function TeamDirectory() {
         </div>
 
         <div className="mt-10" aria-live="polite">
-          {loading ? <PublicLoading label={t("loading")} /> : error ? <PublicError message={t("error")} onRetry={load} /> : activeCategory === "DOSEN" && !search && <RevealOnScroll>
-            <p className="eyebrow text-[var(--ais-blue)]">{t("headEyebrow")}</p>
-            <div className="mt-6">{featured ? <FeaturedApiProfile member={featured} profileLabel={t("profileLink")} roleFallback={t("roleFallback")} expertiseLabel={t("expertise")} /> : <ExistingHeadProfile profileNote={t("existingHeadNote")} roleLabel={t("leadership")} expertiseLabel={t("expertise")} name={t("headName")} photoAlt={t("headPhotoAlt")} />}</div>
-          </RevealOnScroll>}
+          {loading ? <PublicLoading label={t("loading")} /> : error ? <PublicError message={t("error")} onRetry={load} /> : null}
 
           {!loading && !error && members.length > 0 && <div className={`${activeCategory === "DOSEN" && !search ? "mt-16 border-t border-[var(--border)] pt-12" : ""}`}>
             {activeCategory === "DOSEN" && !search && <p className="mb-8 text-sm leading-6 text-[var(--slate)]">{t("staffDescription")}</p>}
-            <RevealOnScroll className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" stagger={90}>
+            <RevealOnScroll className="grid gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" stagger={90}>
               {members.map((member) => <MemberCard key={member.id} member={member} profileLabel={t("profileLink")} roleFallback={t("roleFallback")} />)}
             </RevealOnScroll>
           </div>}
 
-          {!loading && !error && members.length === 0 && !(activeCategory === "DOSEN" && !search) && <PublicEmpty title="No profiles published" description="Profiles in this category will appear here when available." />}
+          {!loading && !error && members.length === 0 && <PublicEmpty title="No profiles published" description="Profiles in this category will appear here when available." />}
         </div>
       </PublicContainer>
     </section>

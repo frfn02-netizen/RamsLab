@@ -45,6 +45,11 @@ function publicPhotoUrl(req: Request, photo?: string) {
       return `${origin}/uploads/dosen/${dosenPhotoMatch[1]}`;
     }
 
+    const studentPhotoMatch = parsed.pathname.match(/^\/uploads\/students\/([a-f0-9-]+\.(?:jpg|png|webp))$/i);
+    if (studentPhotoMatch) {
+      return `${origin}/uploads/students/${studentPhotoMatch[1]}`;
+    }
+
     // External profile photos are allowed only over HTTPS.
     return parsed.protocol === "https:" ? parsed.toString() : undefined;
   } catch {

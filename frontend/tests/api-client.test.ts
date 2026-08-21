@@ -35,6 +35,20 @@ describe("API client", () => {
     expect((requestOptions.headers as Headers).get("X-CSRF-Token")).toBe("stored-csrf");
   });
 
+  it("refreshes the CSRF token and retries a failed mutation once", async () => {
+    setCsrfToken("stale-csrf");
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: false, message: "CSRF validation failed" }), { status: 403 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, csrfToken: "fresh-csrf" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: { created: true } }), { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiRequest("/publications", { method: "POST", body: JSON.stringify({ title: "Test" }) })).resolves.toEqual({ created: true });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toContain("/auth/csrf");
+    expect((fetchMock.mock.calls[2][1].headers as Headers).get("X-CSRF-Token")).toBe("fresh-csrf");
+  });
+
   it("parses safe server errors and notifies the auth layer on 401", async () => {
     const unauthorized = vi.fn();
     const removeHandler = onUnauthorized(unauthorized);

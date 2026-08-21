@@ -6,20 +6,29 @@ import { createPublication, DEFAULT_PUBLICATION_TYPE, deletePublication, findAll
 import { canModifyPublication } from "./publication.repository.js";
 import { findUserById } from "../users/user.repository.js";
 import type { Publication } from "./publication.types.js";
+import { safeHttpUrl } from "../../lib/url-security.js";
 
 async function serialize(publication: Publication, includeAudit = false) {
-  const { normalizedTitle: _normalizedTitle, ...response } = publication;
+  const { normalizedTitle: _normalizedTitle, createdBy, updatedBy, ...publicResponse } = publication;
   const audit = includeAudit ? await Promise.all([
-    response.createdBy ? findUserById(response.createdBy.toString()) : null,
-    response.updatedBy ? findUserById(response.updatedBy.toString()) : null,
+    createdBy ? findUserById(createdBy.toString()) : null,
+    updatedBy ? findUserById(updatedBy.toString()) : null,
   ]) : [null, null];
   return {
-    ...response,
-    createdBy: response.createdBy?.toString() ?? null,
-    updatedBy: response.updatedBy?.toString() ?? null,
-    ...(includeAudit ? { createdByEmail: audit[0]?.email ?? null, updatedByEmail: audit[1]?.email ?? null } : {}),
-    publicationType: response.publicationType ?? DEFAULT_PUBLICATION_TYPE,
+    ...publicResponse,
+    pdfUrl: safeHttpUrl(publicResponse.pdfUrl),
+    ...(includeAudit ? {
+      createdBy: createdBy?.toString() ?? null,
+      updatedBy: updatedBy?.toString() ?? null,
+      createdByEmail: audit[0]?.email ?? null,
+      updatedByEmail: audit[1]?.email ?? null,
+    } : {}),
+    publicationType: publicResponse.publicationType ?? DEFAULT_PUBLICATION_TYPE,
   };
+}
+
+function canViewPublicationAudit(req: Request) {
+  return req.user?.role === "ADMIN" || req.user?.role === "PUBLICATION_EDITOR";
 }
 
 function parseList(value: unknown) {
@@ -49,7 +58,7 @@ function parseQuery(req: Request) {
 export async function getPublicationListController(req: Request, res: Response) {
   try {
     const result = await findAllPublications(parseQuery(req));
-    return res.json({ success: true, data: await Promise.all(result.items.map((item) => serialize(item, Boolean(req.user)))), total: result.total, page: result.page, limit: result.limit });
+    return res.json({ success: true, data: await Promise.all(result.items.map((item) => serialize(item, canViewPublicationAudit(req)))), total: result.total, page: result.page, limit: result.limit });
   } catch (error: any) {
     if (error?.message?.startsWith("Invalid ") || error?.message === "Search query is too long") return res.status(400).json({ success: false, message: error.message });
     return res.status(500).json({ success: false, message: "Failed to fetch publications" });
@@ -62,7 +71,7 @@ export async function getPublicationController(req: Request, res: Response) {
   try {
     const publication = await findPublicationById(id);
     if (!publication) return res.status(404).json({ success: false, message: "Publication not found" });
-    return res.json({ success: true, data: await serialize(publication, Boolean(req.user)) });
+    return res.json({ success: true, data: await serialize(publication, canViewPublicationAudit(req)) });
   } catch {
     return res.status(500).json({ success: false, message: "Failed to fetch publication" });
   }

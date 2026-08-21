@@ -22,7 +22,10 @@ export async function getDosenListController(
 
     return res.json({
       success: true,
-      data: dosen.map((member) => toPublicDosenProfile(_req, member)),
+      // This is an authenticated internal directory. Keep the fields used by
+      // the dashboard (such as employeeId) here; public responses use the
+      // deliberately smaller serializer below.
+      data: dosen,
     });
   } catch {
     return res.status(500).json({
@@ -38,7 +41,7 @@ export async function getDosenListController(
 // ========================================
 
 export async function getPublicDosenController(
-  _req: Request,
+  req: Request,
   res: Response
 ) {
   try {
@@ -49,7 +52,7 @@ export async function getPublicDosenController(
 
     return res.json({
       success: true,
-      data: dosen,
+      data: dosen.map((member) => toPublicDosenProfile(req, member)),
     });
   } catch {
     return res.status(500).json({

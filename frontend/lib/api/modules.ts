@@ -18,6 +18,7 @@ export const getStudentList = () => apiRequest<Student[]>("/students");
 export const getStudentById = (id: string) => apiRequest<Student>(`/students/${encodeURIComponent(id)}`);
 export const createStudent = (input: StudentInput) => apiRequest<Student>("/students", { method: "POST", body: JSON.stringify(input) });
 export const updateStudent = (id: string, input: StudentUpdateInput) => apiRequest<Student>(`/students/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
+export const uploadStudentPhoto = (id: string, file: File) => apiRequest<Student>(`/students/${encodeURIComponent(id)}/photo`, { method: "POST", body: file, headers: { "Content-Type": file.type }, timeoutMs: 30000 });
 export const deleteStudent = async (id: string) => { await apiRequestWithMeta(`/students/${encodeURIComponent(id)}`, { method: "DELETE" }); };
 
 export const getProjects = (params?: { category?: string; year?: number; published?: boolean }) => {

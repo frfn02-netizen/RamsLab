@@ -12,6 +12,8 @@ import { updatePartnerSchema } from "../src/modules/partners/partner.schema.js";
 import { updateDosenSchema } from "../src/modules/dosen/dosen.schema.js";
 import { updateTrackingSchema } from "../src/modules/tracking/tracking.schema.js";
 import { updateAlumniSchema, updateMyAlumniSchema } from "../src/modules/alumni/alumni.schema.js";
+import { createPublicationSchema } from "../src/modules/publications/publication.schema.js";
+import { createPartnerSchema } from "../src/modules/partners/partner.schema.js";
 
 const secret = process.env.JWT_SECRET!;
 
@@ -63,6 +65,27 @@ describe("security regressions", () => {
       expect(parsed).not.toHaveProperty("updatedAt");
       expect(parsed).not.toHaveProperty("nim");
     }
+  });
+
+  it("rejects executable URL schemes in externally rendered links", () => {
+    const publication = {
+      title: "Safe publication test",
+      authors: ["Test author"],
+      publicationType: "Article",
+      year: 2026,
+      journal: "Test journal",
+      pdfUrl: "javascript:alert(1)",
+      topics: [],
+      methods: [],
+    };
+    expect(() => createPublicationSchema.parse(publication)).toThrow();
+
+    const partner = {
+      name: "Safe partner test",
+      type: "UNIVERSITY",
+      website: "data:text/html,<script>alert(1)</script>",
+    };
+    expect(() => createPartnerSchema.parse(partner)).toThrow();
   });
 
   it("rejects oversized JSON and malformed JSON without an internal error", async () => {

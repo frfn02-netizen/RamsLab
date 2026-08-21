@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { PARTNER_TYPE } from "./partner.types.js";
+import { isSafeHttpUrl } from "../../lib/url-security.js";
 
 export const createPartnerSchema = z.object({
   name: z
@@ -23,6 +24,7 @@ export const createPartnerSchema = z.object({
   website: z
     .string()
     .url()
+    .refine(isSafeHttpUrl, "Website URL must use HTTP or HTTPS")
     .optional(),
 
   country: z
@@ -51,7 +53,7 @@ export const createPartnerDetailsSchema = createPartnerSchema.omit({ type: true 
 export const updatePartnerSchema = z.object({
   name: z.string().trim().min(2).max(200).optional(),
   logo: z.string().trim().max(500).optional(),
-  website: z.string().url().optional(),
+  website: z.string().url().refine(isSafeHttpUrl, "Website URL must use HTTP or HTTPS").optional(),
   country: z.string().trim().max(100).optional(),
   description: z.string().trim().max(1000).optional(),
   isFeatured: z.boolean().optional(),

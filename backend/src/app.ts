@@ -23,6 +23,7 @@ import { createRateLimiter } from "./middlewares/rate-limit.middleware.js";
 import { verifyStateChangingOrigin } from "./middlewares/request-security.middleware.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 import { getDosenPhotoDirectory } from "./modules/dosen/dosen-photo.js";
+import { getStudentPhotoDirectory } from "./modules/students/student-photo.js";
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use(express.json({ limit: SECURITY_LIMITS.jsonBodyBytes }));
 app.use(cookieParser());
 app.use(verifyStateChangingOrigin);
 app.use("/uploads/dosen", express.static(getDosenPhotoDirectory(), { maxAge: "1d", immutable: true }));
+app.use("/uploads/students", express.static(getStudentPhotoDirectory(), { maxAge: "1d", immutable: true }));
 app.use(
   "/api",
   createRateLimiter({

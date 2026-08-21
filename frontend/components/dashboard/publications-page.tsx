@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
 import { Button, Card, EmptyState, ErrorState, LinkButton, LoadingState, PageHeader, inputClass } from "@/components/ui";
@@ -10,12 +11,15 @@ import { canManagePublication, hasPermission } from "@/lib/authz";
 import type { Publication } from "@/types/modules";
 
 export default function PublicationsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const showSavedNotice = searchParams.get("saved") === "1";
 
   const load = useCallback(async (value = search) => {
     setLoading(true);
@@ -29,6 +33,11 @@ export default function PublicationsPage() {
     const timer = window.setTimeout(() => void load(), 250);
     return () => window.clearTimeout(timer);
   }, [load]);
+
+  useEffect(() => {
+    if (!showSavedNotice) return;
+    router.replace("/dashboard/publications", { scroll: false });
+  }, [router, showSavedNotice]);
 
   async function remove(publication: Publication) {
     if (!window.confirm(`Delete “${publication.title}”? This action cannot be undone.`)) return;
@@ -49,6 +58,7 @@ export default function PublicationsPage() {
           className="sr-only">Search publications</label><input id="admin-publication-search" type="search" 
           className={inputClass} placeholder="Search publications, authors, topics…" value={search} onChange={(event) => setSearch(event.target.value)} /></Card>
     {error && <ErrorState message={error} onRetry={() => void load()} />}
+    {showSavedNotice && <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" role="status">Publication saved successfully.</div>}
     {loading ? <Card><LoadingState label="Loading publications" /></Card> : publications.length === 0 ? <EmptyState
           title={search ? "No publications found" : "No publications yet"}
           description={search ? "Try another search." : "Create the first publication record for the public page."}

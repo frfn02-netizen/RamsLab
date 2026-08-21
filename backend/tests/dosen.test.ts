@@ -149,7 +149,11 @@ describe("Dosen API", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.data.some((dosen: any) => dosen.employeeId === TEST_EMPLOYEE_ID)).toBe(true);
+    expect(response.body.data.some((dosen: any) => dosen.fullName === "Vitest Dosen")).toBe(true);
+    expect(response.body.data[0]).not.toHaveProperty("userId");
+    expect(response.body.data[0]).not.toHaveProperty("email");
+    expect(response.body.data[0]).not.toHaveProperty("phone");
+    expect(response.body.data[0]).not.toHaveProperty("employeeId");
   });
 
 

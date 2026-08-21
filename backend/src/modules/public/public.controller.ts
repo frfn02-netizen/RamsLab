@@ -20,6 +20,16 @@ import { findAllDosen } from "../dosen/dosen.repository.js";
 import { findPublicAlumni } from "../alumni/alumni.repository.js";
 import { findAllStudents } from "../students/student.repository.js";
 import { toPublicAlumniProfile, toPublicDosenProfile, toPublicStudentProfile } from "./public-profile.js";
+import { safeHttpUrl } from "../../lib/url-security.js";
+
+function toPublicPartner(partner: Awaited<ReturnType<typeof findUniversityPartners>>[number]) {
+  return {
+    ...partner,
+    _id: partner._id?.toString(),
+    website: safeHttpUrl(partner.website),
+    logo: safeHttpUrl(partner.logo),
+  };
+}
 
 export async function getPublicPeopleController(
   req: Request,
@@ -156,7 +166,7 @@ export async function getPublicUniversityPartnersController(
 
     return res.json({
       success: true,
-      data: partners,
+      data: partners.map(toPublicPartner),
     });
   } catch {
     return res.status(500).json({
@@ -184,7 +194,7 @@ export async function getPublicIndustrialPartnersController(
 
     return res.json({
       success: true,
-      data: partners,
+      data: partners.map(toPublicPartner),
     });
   } catch {
     return res.status(500).json({

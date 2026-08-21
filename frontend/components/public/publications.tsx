@@ -10,6 +10,7 @@ import type { Publication } from "@/types/modules";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
 import { MaritimeShip } from "./maritime-motion";
+import { safeHttpUrl } from "@/lib/safe-url";
 
 type PublicationProject = Publication;
 
@@ -108,7 +109,7 @@ function PublicationFiltersPanel({
 }
 
 function PublicationCard({ project, t, active, staged = false }: { project: PublicationProject; t: (key: string) => string; active: boolean; staged?: boolean }) {
-  const publicationUrl = project.pdfUrl ?? (project.doi ? `https://doi.org/${project.doi}` : null);
+  const publicationUrl = safeHttpUrl(project.pdfUrl) ?? (project.doi ? `https://doi.org/${encodeURIComponent(project.doi)}` : null);
   const publicationLinkLabel = t("viewPublication");
 
   return <article className={`group border bg-white p-6 transition-[opacity,transform,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none sm:p-7 ${staged && !active ? "pointer-events-none translate-y-3 border-[var(--border)] opacity-0" : active ? "translate-y-0 border-[var(--rams-red)]/55 opacity-100 shadow-[0_10px_28px_rgba(11,32,56,0.07)]" : "translate-y-3 border-[var(--border)] opacity-70"} hover:-translate-y-0.5 hover:border-[var(--rams-red)]/55 hover:shadow-[0_10px_28px_rgba(11,32,56,0.07)]`}>
