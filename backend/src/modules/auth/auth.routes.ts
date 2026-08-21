@@ -1,9 +1,12 @@
 import { Router } from "express";
-import { loginController, logoutController } from "./auth.controller.js";
+import { csrfController, loginController, logoutController } from "./auth.controller.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
+import { authenticate } from "../../middlewares/auth.middlewares.js";
 
 const router = Router();
+
+router.get("/csrf", authenticate, csrfController);
 
 router.post(
   "/login",

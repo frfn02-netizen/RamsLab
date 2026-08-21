@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { apiRequest, onUnauthorized } from "@/lib/api/client";
+import { apiRequest, onUnauthorized, setCsrfToken } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 
 describe("API client", () => {
@@ -23,6 +23,16 @@ describe("API client", () => {
     expect(mutationOptions.credentials).toBe("include");
     expect((mutationOptions.headers as Headers).get("X-CSRF-Token")).toBe("test-csrf");
     expect((mutationOptions.headers as Headers).get("Content-Type")).toBe("application/json");
+  });
+
+  it("uses the stored CSRF token when the API cookie belongs to another origin", async () => {
+    setCsrfToken("stored-csrf");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true, data: { ok: true } }), { status: 200 })));
+
+    await apiRequest("/write", { method: "PUT", body: JSON.stringify({ value: 1 }) });
+
+    const requestOptions = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    expect((requestOptions.headers as Headers).get("X-CSRF-Token")).toBe("stored-csrf");
   });
 
   it("parses safe server errors and notifies the auth layer on 401", async () => {

@@ -10,6 +10,16 @@ import {
   isProduction,
 } from "../../config/security.js";
 
+function setCsrfCookie(res: Response, csrfToken: string) {
+  res.cookie("rams_csrf_token", csrfToken, {
+    httpOnly: false,
+    secure: isProduction(),
+    sameSite: isProduction() ? "none" : "lax",
+    path: "/",
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+}
+
 export async function loginController(
   req: Request,
   res: Response
@@ -26,17 +36,13 @@ export async function loginController(
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.cookie("rams_csrf_token", createCsrfToken(), {
-      httpOnly: false,
-      secure: isProduction(),
-      sameSite: isProduction() ? "none" : "lax",
-      path: "/",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    const csrfToken = createCsrfToken();
+    setCsrfCookie(res, csrfToken);
 
     return res.json({
       success: true,
       user: result.user,
+      csrfToken,
     });
   } catch {
     return res.status(401).json({
@@ -77,5 +83,15 @@ export async function logoutController(
   return res.json({
     success: true,
     message: "Logged out successfully",
+  });
+}
+
+export function csrfController(_req: Request, res: Response) {
+  const csrfToken = createCsrfToken();
+  setCsrfCookie(res, csrfToken);
+
+  return res.json({
+    success: true,
+    csrfToken,
   });
 }

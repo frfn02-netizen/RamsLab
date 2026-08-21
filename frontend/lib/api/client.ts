@@ -2,6 +2,7 @@ import { ApiError, type ApiErrorDetails } from "./errors";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api").replace(/\/$/, "");
 const CSRF_COOKIE = "rams_csrf_token";
+const CSRF_STORAGE_KEY = "rams_csrf_token";
 const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
 export type ApiResponse<T> = {
@@ -10,6 +11,7 @@ export type ApiResponse<T> = {
   data?: T;
   total?: number;
   user?: T;
+  csrfToken?: string;
   errors?: unknown;
 };
 
@@ -29,6 +31,23 @@ function getCookie(name: string) {
   const encodedName = `${encodeURIComponent(name)}=`;
   const cookie = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(encodedName));
   return cookie ? decodeURIComponent(cookie.slice(encodedName.length)) : null;
+}
+
+function getStoredCsrfToken() {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(CSRF_STORAGE_KEY);
+}
+
+export function setCsrfToken(token: string) {
+  if (typeof window !== "undefined") window.sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+}
+
+export function clearCsrfToken() {
+  if (typeof window !== "undefined") window.sessionStorage.removeItem(CSRF_STORAGE_KEY);
+}
+
+function getCsrfToken() {
+  return getStoredCsrfToken() ?? getCookie(CSRF_COOKIE);
 }
 
 function getErrorDetails(errors: unknown): ApiErrorDetails | undefined {
@@ -67,7 +86,7 @@ async function requestEnvelope<T>(path: string, options: ApiRequestOptions = {})
     headers.set("Content-Type", "application/json");
   }
   if (MUTATION_METHODS.has(method)) {
-    const csrf = getCookie(CSRF_COOKIE);
+    const csrf = getCsrfToken();
     if (csrf) headers.set("X-CSRF-Token", csrf);
   }
 
