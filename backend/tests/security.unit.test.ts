@@ -114,6 +114,12 @@ describe("security regressions", () => {
     expect(response.headers["access-control-allow-origin"]).toBeUndefined();
   });
 
+  it("allows public profile assets to load cross-site from the Vercel UI", async () => {
+    const response = await request(app).get("/uploads/dosen/nonexistent-profile.jpg");
+
+    expect(response.headers["cross-origin-resource-policy"]).toBe("cross-origin");
+  });
+
   it("allows the configured origin and clears authentication cookies on logout", async () => {
     const response = await request(app)
       .post("/api/auth/logout")

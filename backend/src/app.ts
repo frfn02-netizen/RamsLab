@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import type { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -65,8 +66,25 @@ app.use(
 app.use(express.json({ limit: SECURITY_LIMITS.jsonBodyBytes }));
 app.use(cookieParser());
 app.use(verifyStateChangingOrigin);
-app.use("/uploads/dosen", express.static(getDosenPhotoDirectory(), { maxAge: "1d", immutable: true }));
-app.use("/uploads/students", express.static(getStudentPhotoDirectory(), { maxAge: "1d", immutable: true }));
+
+function allowPublicAssetCrossOrigin(_req: Request, res: Response, next: NextFunction) {
+  // Profile photos are deliberately public and are served by Railway while
+  // the public UI is served by Vercel. Override Helmet's same-site default
+  // only for these static assets, not for the API as a whole.
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+}
+
+app.use(
+  "/uploads/dosen",
+  allowPublicAssetCrossOrigin,
+  express.static(getDosenPhotoDirectory(), { maxAge: "1d", immutable: true }),
+);
+app.use(
+  "/uploads/students",
+  allowPublicAssetCrossOrigin,
+  express.static(getStudentPhotoDirectory(), { maxAge: "1d", immutable: true }),
+);
 app.use(
   "/api",
   createRateLimiter({
