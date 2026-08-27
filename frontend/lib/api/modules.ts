@@ -35,7 +35,12 @@ export const updateProject = (id: string, input: ProjectUpdateInput) => apiReque
 export const deleteProject = async (id: string) => { await apiRequestWithMeta(`/projects/${encodeURIComponent(id)}`, { method: "DELETE" }); };
 
 export type PublicationQuery = { search?: string; year?: number; topic?: string[]; method?: string[]; sort?: "newest" | "oldest"; page?: number; limit?: number };
-export const getPublications = (params: PublicationQuery = {}) => {
+export type PublicationFacets = { years: number[]; topics: string[]; methods: string[] };
+export type PublicationListResponse = { data: Publication[]; total: number; page: number; limit: number; facets: PublicationFacets };
+
+const emptyPublicationFacets = (): PublicationFacets => ({ years: [], topics: [], methods: [] });
+
+function publicationQueryString(params: PublicationQuery = {}) {
   const query = new URLSearchParams();
   if (params.search) query.set("search", params.search);
   if (params.year) query.set("year", String(params.year));
@@ -44,7 +49,44 @@ export const getPublications = (params: PublicationQuery = {}) => {
   if (params.sort) query.set("sort", params.sort);
   if (params.page) query.set("page", String(params.page));
   if (params.limit) query.set("limit", String(params.limit));
-  return apiRequest<Publication[]>(`/publications${query.size ? `?${query}` : ""}`);
+  return query.toString();
+}
+
+function facetsFromResponse(value: unknown): PublicationFacets {
+  if (!value || typeof value !== "object") return emptyPublicationFacets();
+  const facets = value as Partial<Record<keyof PublicationFacets, unknown>>;
+  return {
+    years: Array.isArray(facets.years) ? facets.years.filter((year): year is number => typeof year === "number") : [],
+    topics: Array.isArray(facets.topics) ? facets.topics.filter((topic): topic is string => typeof topic === "string") : [],
+    methods: Array.isArray(facets.methods) ? facets.methods.filter((method): method is string => typeof method === "string") : [],
+  };
+}
+
+export const getPublications = (params: PublicationQuery = {}) => {
+  const query = publicationQueryString(params);
+  return apiRequest<Publication[]>(`/publications${query ? `?${query}` : ""}`);
+};
+export const getPublicationList = async (params: PublicationQuery = {}): Promise<PublicationListResponse> => {
+  const query = publicationQueryString(params);
+  const response = await apiRequestWithMeta<Publication[]>(`/publications${query ? `?${query}` : ""}`);
+  return {
+    data: response.data ?? [],
+    total: typeof response.total === "number" ? response.total : 0,
+    page: typeof response.page === "number" ? response.page : (params.page ?? 1),
+    limit: typeof response.limit === "number" ? response.limit : (params.limit ?? 100),
+    facets: facetsFromResponse(response.facets),
+  };
+};
+export const getPublicPublicationList = async (params: PublicationQuery = {}): Promise<PublicationListResponse> => {
+  const query = publicationQueryString(params);
+  const response = await apiRequestWithMeta<Publication[]>(`/public/publications${query ? `?${query}` : ""}`);
+  return {
+    data: response.data ?? [],
+    total: typeof response.total === "number" ? response.total : 0,
+    page: typeof response.page === "number" ? response.page : (params.page ?? 1),
+    limit: typeof response.limit === "number" ? response.limit : (params.limit ?? 100),
+    facets: facetsFromResponse(response.facets),
+  };
 };
 export const getPublication = (id: string) => apiRequest<Publication>(`/publications/${encodeURIComponent(id)}`);
 export const createPublication = (input: PublicationInput) => apiRequest<Publication>("/publications", { method: "POST", body: JSON.stringify(input) });
