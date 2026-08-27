@@ -247,9 +247,6 @@ export default function Publications() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const [records, setRecords] = useState<PublicationProject[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PUBLICATION_PAGE_SIZE);
   const [facets, setFacets] = useState<PublicationFacets>({ years: [], topics: [], methods: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -269,7 +266,6 @@ export default function Publications() {
     if (filters.search === searchUrlValue.current) return;
     searchUrlValue.current = filters.search;
     setSearchInput(filters.search);
-    setPage(1);
   }, [filters.search]);
 
   useEffect(() => {
@@ -284,13 +280,9 @@ export default function Publications() {
           topic: filters.topics,
           method: filters.methods,
           sort: filters.sort,
-          page,
-          limit: PUBLICATION_PAGE_SIZE,
         });
         if (!active) return;
         setRecords(response.data);
-        setTotal(response.total);
-        setPageSize(response.limit);
         setFacets(response.facets);
       } catch {
         if (active) setError(true);
@@ -300,18 +292,16 @@ export default function Publications() {
     }
     void loadPublications();
     return () => { active = false; };
-  }, [debouncedSearch, filters.methods, filters.sort, filters.topics, filters.year, page, reloadToken]);
+  }, [debouncedSearch, filters.methods, filters.sort, filters.topics, filters.year, reloadToken]);
 
   const updateFilters = (next: Partial<PublicationFilters>) => {
     const updated = { ...filters, search: searchInput, ...next };
-    setPage(1);
     const query = writeFilters(updated);
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
   const clearFilters = () => {
     setSearchInput("");
-    setPage(1);
     router.replace(pathname, { scroll: false });
   };
 
@@ -328,15 +318,10 @@ export default function Publications() {
     visibleRecords.forEach((record) => grouped.set(record.year, [...(grouped.get(record.year) ?? []), record]));
     return Array.from(grouped.entries()).sort(([a], [b]) => visibleFilters.sort === "newest" ? b - a : a - b);
   }, [visibleFilters.sort, visibleRecords]);
-  const publicationContentKey = `${page}:${visibleFilters.sort}:${visibleRecords.map((record) => record._id).join(",")}`;
+  const publicationContentKey = `${visibleFilters.sort}:${visibleRecords.map((record) => record._id).join(",")}`;
   const { activeIndex, streamOffset, streamTravel } = useStickyPublicationProgress(stickySectionRef, stickyViewportRef, streamViewportRef, streamRef, publicationContentKey, visibleRecords.length);
   const publicationScrollProgress = streamTravel > 0 ? Math.min(1, streamOffset / streamTravel) : 0;
   const stickyStyle = visibleRecords.length ? { "--publication-stream-travel": `${streamTravel}px` } as CSSProperties : undefined;
-  const totalPages = Math.ceil(total / pageSize);
-  const changePage = (nextPage: number) => {
-    setPage(nextPage);
-    stickySectionRef.current?.scrollIntoView({ block: "start" });
-  };
 
   return <section className="bg-[var(--background-light)]">
     <PublicContainer className="py-12 sm:py-16 lg:py-20">
@@ -361,9 +346,9 @@ export default function Publications() {
           </div>
 
           <label htmlFor="publication-search" className="sr-only">{t("search")}</label>
-          <input id="publication-search" type="search" value={searchInput} onChange={(event) => { setSearchInput(event.target.value); setPage(1); }} placeholder={t("searchPlaceholder")} className="mt-6 w-full border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--navy)] outline-none placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[var(--rams-red)]/15" />
+          <input id="publication-search" type="search" value={searchInput} onChange={(event) => { setSearchInput(event.target.value); }} placeholder={t("searchPlaceholder")} className="mt-6 w-full border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--navy)] outline-none placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[var(--rams-red)]/15" />
 
-          {loading && visibleRecords.length === 0 ? <div className="mt-8"><PublicLoading label={t("loading")} /></div> : error ? <div className="mt-8"><PublicError message={t("error")} onRetry={() => setReloadToken((value) => value + 1)} /></div> : visibleRecords.length === 0 ? <div className="mt-8 border border-dashed border-[var(--border)] bg-white p-10 text-center"><p className="eyebrow text-[var(--ais-blue)]">{t("emptyEyebrow")}</p><h2 className="mt-3 font-display text-2xl font-semibold text-[var(--navy)]">{t("emptyTitle")}</h2><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">{t("emptyDescription")}</p>{isActive(visibleFilters) && <button type="button" onClick={clearFilters} className="mt-6 text-sm font-semibold text-[var(--rams-red)] underline underline-offset-4">{t("clearAll")}</button>}</div> : <><PublicationTimeline groups={groups} t={t} activeIndex={activeIndex} streamViewportRef={streamViewportRef} streamRef={streamRef} streamOffset={streamOffset} scrollProgress={publicationScrollProgress} /><PublicationPagination page={page} totalPages={totalPages} disabled={loading} t={t} onPageChange={changePage} /></>}
+          {loading && visibleRecords.length === 0 ? <div className="mt-8"><PublicLoading label={t("loading")} /></div> : error ? <div className="mt-8"><PublicError message={t("error")} onRetry={() => setReloadToken((value) => value + 1)} /></div> : visibleRecords.length === 0 ? <div className="mt-8 border border-dashed border-[var(--border)] bg-white p-10 text-center"><p className="eyebrow text-[var(--ais-blue)]">{t("emptyEyebrow")}</p><h2 className="mt-3 font-display text-2xl font-semibold text-[var(--navy)]">{t("emptyTitle")}</h2><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">{t("emptyDescription")}</p>{isActive(visibleFilters) && <button type="button" onClick={clearFilters} className="mt-6 text-sm font-semibold text-[var(--rams-red)] underline underline-offset-4">{t("clearAll")}</button>}</div> : <PublicationTimeline groups={groups} t={t} activeIndex={activeIndex} streamViewportRef={streamViewportRef} streamRef={streamRef} streamOffset={streamOffset} scrollProgress={publicationScrollProgress} />}
         </main>
           </div>
         </div>
