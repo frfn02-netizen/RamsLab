@@ -11,9 +11,6 @@ export type ApiResponse<T> = {
   message?: string;
   data?: T;
   total?: number;
-  page?: number;
-  limit?: number;
-  facets?: unknown;
   user?: T;
   csrfToken?: string;
   errors?: unknown;
@@ -177,6 +174,6 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   return body.data;
 }
 
-export function apiRequestWithMeta<T>(path: string, options: ApiRequestOptions = {}): Promise<ApiResponse<T>> {
+export function apiRequestWithMeta<T>(path: string, options: ApiRequestOptions = {}) {
   return requestEnvelope<T>(path, options);
 }
