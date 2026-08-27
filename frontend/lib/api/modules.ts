@@ -1,4 +1,4 @@
-import { apiRequest, apiRequestWithMeta } from "./client";
+import { apiRequest, apiRequestWithMeta, type ApiResponse } from "./client";
 import type { Dosen, DosenInput, DosenUpdateInput, Partner, PartnerInput, PartnerType, PartnerUpdateInput, Project, ProjectInput, ProjectUpdateInput, Publication, PublicationInput, PublicationUpdateInput, AlumniTracking, TrackingInput, TrackingUpdateInput, PublicResearchArea, ResearchArea, ResearchAreaInput, ResearchAreaUpdateInput, Student, StudentInput, StudentUpdateInput } from "@/types/modules";
 import type { ManagedAccount } from "@/types/auth";
 import type { SiteContentAdminEnvelope, SiteContentKey, SiteContentMap } from "@/types/site-content";
@@ -80,12 +80,14 @@ export const getPublicationList = async (params: PublicationQuery = {}): Promise
 export const getPublicPublicationList = async (params: PublicationQuery = {}): Promise<PublicationListResponse> => {
   const query = publicationQueryString(params);
   const response = await apiRequestWithMeta<Publication[]>(`/public/publications${query ? `?${query}` : ""}`);
+  
+  const typedResponse = response as ApiResponse<Publication[]>;
   return {
-    data: response.data ?? [],
-    total: typeof response.total === "number" ? response.total : 0,
-    page: typeof response.page === "number" ? response.page : (params.page ?? 1),
-    limit: typeof response.limit === "number" ? response.limit : (params.limit ?? 100),
-    facets: facetsFromResponse(response.facets),
+    data: typedResponse.data ?? [],
+    total: typeof typedResponse.total === "number" ? typedResponse.total : 0,
+    page: typeof typedResponse.page === "number" ? typedResponse.page : (params.page ?? 1),
+    limit: typeof typedResponse.limit === "number" ? typedResponse.limit : (params.limit ?? 100),
+    facets: facetsFromResponse(typedResponse.facets),
   };
 };
 export const getPublication = (id: string) => apiRequest<Publication>(`/publications/${encodeURIComponent(id)}`);
