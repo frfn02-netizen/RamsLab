@@ -66,7 +66,11 @@ function toDocument(input: Partial<CreatePublicationInput>, actor: JwtPayload, e
   };
 }
 
-export async function findAllPublications(options?: { search?: string; year?: number; topics?: string[]; methods?: string[]; sort?: "newest" | "oldest"; page?: number; limit?: number }) {
+export async function countPublications() {
+  return getPublicationsCollection().countDocuments();
+}
+
+export async function findAllPublications(options?: { search?: string; year?: number; topics?: string[]; methods?: string[]; sort?: "newest" | "oldest"; page?: number; limit?: number; includeFacets?: boolean }) {
   const filter: Record<string, unknown> = {};
   const and: Record<string, unknown>[] = [];
   const search = options?.search?.trim();
@@ -88,7 +92,18 @@ export async function findAllPublications(options?: { search?: string; year?: nu
     collection.find(filter).sort({ year: sort, title: 1 }).skip((page - 1) * limit).limit(limit).toArray(),
     collection.countDocuments(filter),
   ]);
-  return { items, total, page, limit };
+  if (!options?.includeFacets) return { items, total, page, limit };
+
+  const [years, topics, methods] = await Promise.all([
+    collection.distinct("year", filter),
+    collection.distinct("topics", filter),
+    collection.distinct("methods", filter),
+  ]);
+  return { items, total, page, limit, facets: {
+    years: years.filter((value): value is number => typeof value === "number").sort((a, b) => b - a),
+    topics: topics.filter((value): value is string => typeof value === "string" && value.trim().length > 0).sort((a, b) => a.localeCompare(b)),
+    methods: methods.filter((value): value is string => typeof value === "string" && value.trim().length > 0).sort((a, b) => a.localeCompare(b)),
+  } };
 }
 
 export async function findPublicationById(id: string): Promise<Publication | null> {

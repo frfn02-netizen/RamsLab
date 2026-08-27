@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import app from "../src/app.js";
 import { connectDatabase } from "../src/config/database.js";
-import { getPublicationsCollection } from "../src/modules/publications/publication.repository.js";
+import { getPublicationsCollection, normalizePublicationTitle } from "../src/modules/publications/publication.repository.js";
 import { ensureTestUsers, signTestToken, TEST_ADMIN_USER_ID, TEST_DOSEN_USER_ID, TEST_PUBLICATION_EDITOR_USER_ID } from "./auth-fixture.js";
 
 const titlePrefix = "Vitest Publication";
@@ -75,6 +75,44 @@ describe("Publications API", () => {
     const response = await request(app).get("/api/publications").query({ search: "hydrodynamics", year: 2026, topic: ["Hydrodynamics", "Marine Systems"], method: "CFD", sort: "oldest" });
     expect(response.status).toBe(200);
     expect(response.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ _id: publicationId })]));
+  });
+
+  it("paginates public publications with a true total count", async () => {
+    const now = new Date();
+    const pageTitlePrefix = `${titlePrefix} public page`;
+    await getPublicationsCollection().deleteMany({ title: { $regex: `^${pageTitlePrefix}` } });
+    await getPublicationsCollection().insertMany(Array.from({ length: 105 }, (_, index) => {
+      const number = String(index + 1).padStart(3, "0");
+      const title = `${pageTitlePrefix} ${number}`;
+      return {
+        title,
+        authors: ["Pagination Author"],
+        publicationType: "Article",
+        year: 2026,
+        journal: "Pagination Journal",
+        doi: null,
+        pdfUrl: null,
+        topics: ["Pagination Topic"],
+        methods: ["Pagination Method"],
+        normalizedTitle: normalizePublicationTitle(title),
+        createdAt: now,
+        updatedAt: now,
+      };
+    }) as never[]);
+
+    const firstPage = await request(app).get("/api/public/publications").query({ search: pageTitlePrefix, page: 1, limit: 100 });
+    expect(firstPage.status).toBe(200);
+    expect(firstPage.body.data).toHaveLength(100);
+    expect(firstPage.body.total).toBe(105);
+    expect(firstPage.body.page).toBe(1);
+    expect(firstPage.body.limit).toBe(100);
+    expect(firstPage.body.facets).toMatchObject({ years: [2026], topics: ["Pagination Topic"], methods: ["Pagination Method"] });
+
+    const secondPage = await request(app).get("/api/public/publications").query({ search: pageTitlePrefix, page: 2, limit: 100 });
+    expect(secondPage.status).toBe(200);
+    expect(secondPage.body.data).toHaveLength(5);
+    expect(secondPage.body.total).toBe(105);
+    expect(secondPage.body.data[0].title).toBe(`${pageTitlePrefix} 101`);
   });
 
   it("prevents duplicate DOI and normalized title-year records", async () => {

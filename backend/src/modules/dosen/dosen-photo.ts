@@ -4,7 +4,7 @@ import path from "node:path";
 import type { Request } from "express";
 import { getPublicApiOrigin } from "../public/public-profile.js";
 
-const PHOTO_DIRECTORY = path.resolve(process.cwd(), "uploads", "dosen");
+const PHOTO_DIRECTORY = path.resolve(process.cwd(), "backend", "uploads", "dosen");
 
 export function getDosenPhotoDirectory() {
   return PHOTO_DIRECTORY;

@@ -3,6 +3,7 @@ import { countDosen } from "../dosen/dosen.repository.js";
 import { countProjects } from "../projects/project.repository.js";
 import { countUsers } from "../users/user.repository.js";
 import { countPartners } from "../partners/partner.repository.js";
+import { countPublications } from "../publications/publication.repository.js";
 import {PARTNER_TYPE} from "../partners/partner.types.js";
 import { countResearchAreas } from "../research/research.repository.js";
 import { findLatestSiteContent } from "../site-content/site-content.repository.js";
@@ -13,6 +14,7 @@ export async function getDashboardStats() {
     alumni,
     dosen,
     projects,
+    publications,
     universityPartners,
     industrialPartners,
     researchAreas,
@@ -23,6 +25,7 @@ export async function getDashboardStats() {
     countAlumni(),
     countDosen(),
     countProjects(),
+    countPublications(),
     countPartners(
       PARTNER_TYPE.UNIVERSITY
     ),
@@ -39,6 +42,7 @@ export async function getDashboardStats() {
     alumni,
     dosen,
     projects,
+    publications,
     universityPartners,
     industrialPartners,
     researchAreas,

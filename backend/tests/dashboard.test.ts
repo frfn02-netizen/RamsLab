@@ -91,6 +91,7 @@ describe("Dashboard API", () => {
       expect(typeof response.body.data.researchAreas).toBe("number");
       expect(typeof response.body.data.publishedResearchAreas).toBe("number");
       expect(typeof response.body.data.unpublishedResearchAreas).toBe("number");
+      expect(typeof response.body.data.publications).toBe("number");
       expect(response.body.data.latestSiteContentUpdatedAt === null || typeof response.body.data.latestSiteContentUpdatedAt === "string").toBe(true);
     }
   );

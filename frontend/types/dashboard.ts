@@ -3,6 +3,7 @@ export interface DashboardStats {
   alumni: number;
   dosen: number;
   projects: number;
+  publications: number;
   universityPartners: number;
   industrialPartners: number;
   researchAreas: number;

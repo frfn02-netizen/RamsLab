@@ -215,6 +215,12 @@ export default function DashboardPage() {
           />
 
           <StatCard
+            label="Publications"
+            value={stats?.publications ?? 0}
+            accent="navy"
+          />
+
+          <StatCard
             label="University Partners"
             value={
               stats?.universityPartners ?? 0

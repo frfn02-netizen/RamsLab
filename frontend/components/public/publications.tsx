@@ -2,9 +2,9 @@
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { useTranslations } from "next-intl";
-import { getPublications } from "@/lib/api/modules";
+import { getPublicPublicationList, type PublicationFacets } from "@/lib/api/modules";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { Publication } from "@/types/modules";
 import PublicContainer from "./public-container";
@@ -17,6 +17,7 @@ type PublicationProject = Publication;
 type SortOrder = "newest" | "oldest";
 type PublicationFilters = { search: string; year: string; topics: string[]; methods: string[]; sort: SortOrder };
 type QueryParams = { get(name: string): string | null; getAll(name: string): string[] };
+const PUBLICATION_PAGE_SIZE = 100;
 
 function readFilters(params: QueryParams): PublicationFilters {
   const sort = params.get("sort");
@@ -37,10 +38,6 @@ function writeFilters(filters: PublicationFilters) {
   filters.methods.forEach((method) => query.append("method", method));
   if (filters.sort === "oldest") query.set("sort", filters.sort);
   return query.toString();
-}
-
-function unique(values: string[]) {
-  return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b));
 }
 
 function slug(value: string) {
@@ -232,6 +229,17 @@ function PublicationTimeline({ groups, t, activeIndex, streamViewportRef, stream
   </>;
 }
 
+function PublicationPagination({ page, totalPages, disabled, t, onPageChange }: { page: number; totalPages: number; disabled: boolean; t: (key: string, values?: Record<string, number>) => string; onPageChange: (page: number) => void }) {
+  if (totalPages <= 1) return null;
+  return <nav className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-5" aria-label={t("pagination")}>
+    <p className="text-sm text-[var(--gray)]">{t("pageStatus", { page, totalPages })}</p>
+    <div className="flex gap-2">
+      <button type="button" disabled={disabled || page === 1} onClick={() => onPageChange(page - 1)} className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] disabled:cursor-not-allowed disabled:opacity-50">{t("previousPage")}</button>
+      <button type="button" disabled={disabled || page === totalPages} onClick={() => onPageChange(page + 1)} className="bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--rams-red)] disabled:cursor-not-allowed disabled:opacity-50">{t("nextPage")}</button>
+    </div>
+  </nav>;
+}
+
 export default function Publications() {
   const t = useTranslations("publications");
   const pathname = usePathname();
@@ -239,8 +247,13 @@ export default function Publications() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const [records, setRecords] = useState<PublicationProject[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PUBLICATION_PAGE_SIZE);
+  const [facets, setFacets] = useState<PublicationFacets>({ years: [], topics: [], methods: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const stickySectionRef = useRef<HTMLDivElement>(null);
   const stickyViewportRef = useRef<HTMLDivElement>(null);
@@ -256,61 +269,74 @@ export default function Publications() {
     if (filters.search === searchUrlValue.current) return;
     searchUrlValue.current = filters.search;
     setSearchInput(filters.search);
+    setPage(1);
   }, [filters.search]);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(false);
-    getPublications({ limit: 100 }).then((items) => setRecords(items)).catch(() => setError(true)).finally(() => setLoading(false));
-  }, []);
 
   useEffect(() => {
     let active = true;
-    getPublications({ limit: 100 }).then((items) => { if (active) setRecords(items); }).catch(() => { if (active) setError(true); }).finally(() => { if (active) setLoading(false); });
+    async function loadPublications() {
+      setLoading(true);
+      setError(false);
+      try {
+        const response = await getPublicPublicationList({
+          search: debouncedSearch.trim() || undefined,
+          year: filters.year ? Number(filters.year) : undefined,
+          topic: filters.topics,
+          method: filters.methods,
+          sort: filters.sort,
+          page,
+          limit: PUBLICATION_PAGE_SIZE,
+        });
+        if (!active) return;
+        setRecords(response.data);
+        setTotal(response.total);
+        setPageSize(response.limit);
+        setFacets(response.facets);
+      } catch {
+        if (active) setError(true);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void loadPublications();
     return () => { active = false; };
-  }, []);
+  }, [debouncedSearch, filters.methods, filters.sort, filters.topics, filters.year, page, reloadToken]);
 
   const updateFilters = (next: Partial<PublicationFilters>) => {
     const updated = { ...filters, search: searchInput, ...next };
+    setPage(1);
     const query = writeFilters(updated);
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
   const clearFilters = () => {
     setSearchInput("");
+    setPage(1);
     router.replace(pathname, { scroll: false });
   };
 
   const visibleFilters = useMemo(() => ({ ...filters, search: debouncedSearch }), [debouncedSearch, filters]);
 
-  const years = useMemo(() => unique(records.map((record) => String(record.year))).map(Number).sort((a, b) => b - a), [records]);
-  const topicOptions = useMemo(() => unique(records.flatMap((record) => record.topics)).map((value) => ({ value, label: value })), [records]);
-  const methodOptions = useMemo(() => unique(records.flatMap((record) => record.methods)), [records]);
+  const years = useMemo(() => facets.years, [facets.years]);
+  const topicOptions = useMemo(() => facets.topics.map((value) => ({ value, label: value })), [facets.topics]);
+  const methodOptions = useMemo(() => facets.methods, [facets.methods]);
 
-  const visibleRecords = useMemo(() => {
-    const query = visibleFilters.search.trim().toLowerCase();
-    return records.filter((record) => {
-      const searchable = [record.title, ...record.authors, record.journal, ...record.topics, ...record.methods, record.doi ?? ""].filter(Boolean).join(" ").toLowerCase();
-      const textMatch = !query || searchable.includes(query);
-      const yearMatch = !visibleFilters.year || String(record.year) === visibleFilters.year;
-      const topicMatch = !visibleFilters.topics.length || visibleFilters.topics.every((topic) => record.topics.includes(topic));
-      const methodMatch = !visibleFilters.methods.length || visibleFilters.methods.every((method) => record.methods.includes(method));
-      return textMatch && yearMatch && topicMatch && methodMatch;
-    }).sort((a, b) => {
-      const yearDifference = visibleFilters.sort === "newest" ? b.year - a.year : a.year - b.year;
-      return yearDifference || a.title.localeCompare(b.title);
-    });
-  }, [records, visibleFilters]);
+  const visibleRecords = records;
 
   const groups = useMemo(() => {
     const grouped = new Map<number, PublicationProject[]>();
     visibleRecords.forEach((record) => grouped.set(record.year, [...(grouped.get(record.year) ?? []), record]));
     return Array.from(grouped.entries()).sort(([a], [b]) => visibleFilters.sort === "newest" ? b - a : a - b);
   }, [visibleFilters.sort, visibleRecords]);
-  const publicationContentKey = `${visibleFilters.sort}:${visibleRecords.map((record) => record._id).join(",")}`;
+  const publicationContentKey = `${page}:${visibleFilters.sort}:${visibleRecords.map((record) => record._id).join(",")}`;
   const { activeIndex, streamOffset, streamTravel } = useStickyPublicationProgress(stickySectionRef, stickyViewportRef, streamViewportRef, streamRef, publicationContentKey, visibleRecords.length);
   const publicationScrollProgress = streamTravel > 0 ? Math.min(1, streamOffset / streamTravel) : 0;
   const stickyStyle = visibleRecords.length ? { "--publication-stream-travel": `${streamTravel}px` } as CSSProperties : undefined;
+  const totalPages = Math.ceil(total / pageSize);
+  const changePage = (nextPage: number) => {
+    setPage(nextPage);
+    stickySectionRef.current?.scrollIntoView({ block: "start" });
+  };
 
   return <section className="bg-[var(--background-light)]">
     <PublicContainer className="py-12 sm:py-16 lg:py-20">
@@ -329,16 +355,15 @@ export default function Publications() {
           <PublicationFiltersPanel filters={visibleFilters} years={years} topics={topicOptions} methods={methodOptions} t={t} onChange={updateFilters} onClear={clearFilters} prefix="desktop" />
         </aside>
 
-        <main className="mt-8 min-w-0 lg:mt-0 lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-          <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end sm:justify-between">
-            <p className="font-display text-xl font-semibold text-[var(--navy)]">{t("resultCount", { count: visibleRecords.length })}</p>
+        <main className="mt-8 min-w-0 lg:mt-0 lg:flex lg:h-full lg:min-h-[fit-content] lg:flex-col">
+          <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end sm:justify-end">
             <label className="flex items-center gap-3 text-sm text-[var(--gray)]">{t("sort")}<select value={filters.sort} onChange={(event) => updateFilters({ sort: event.target.value as SortOrder })} className="border-0 border-b border-[var(--border)] bg-transparent py-1 pl-1 pr-7 text-sm font-semibold text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"><option value="newest">{t("newestFirst")}</option><option value="oldest">{t("oldestFirst")}</option></select></label>
           </div>
 
           <label htmlFor="publication-search" className="sr-only">{t("search")}</label>
-          <input id="publication-search" type="search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={t("searchPlaceholder")} className="mt-6 w-full border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--navy)] outline-none placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[var(--rams-red)]/15" />
+          <input id="publication-search" type="search" value={searchInput} onChange={(event) => { setSearchInput(event.target.value); setPage(1); }} placeholder={t("searchPlaceholder")} className="mt-6 w-full border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--navy)] outline-none placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[var(--rams-red)]/15" />
 
-          {loading ? <div className="mt-8"><PublicLoading label={t("loading")} /></div> : error ? <div className="mt-8"><PublicError message={t("error")} onRetry={load} /></div> : visibleRecords.length === 0 ? <div className="mt-8 border border-dashed border-[var(--border)] bg-white p-10 text-center"><p className="eyebrow text-[var(--ais-blue)]">{t("emptyEyebrow")}</p><h2 className="mt-3 font-display text-2xl font-semibold text-[var(--navy)]">{t("emptyTitle")}</h2><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">{t("emptyDescription")}</p>{isActive(visibleFilters) && <button type="button" onClick={clearFilters} className="mt-6 text-sm font-semibold text-[var(--rams-red)] underline underline-offset-4">{t("clearAll")}</button>}</div> : <PublicationTimeline groups={groups} t={t} activeIndex={activeIndex} streamViewportRef={streamViewportRef} streamRef={streamRef} streamOffset={streamOffset} scrollProgress={publicationScrollProgress} />}
+          {loading && visibleRecords.length === 0 ? <div className="mt-8"><PublicLoading label={t("loading")} /></div> : error ? <div className="mt-8"><PublicError message={t("error")} onRetry={() => setReloadToken((value) => value + 1)} /></div> : visibleRecords.length === 0 ? <div className="mt-8 border border-dashed border-[var(--border)] bg-white p-10 text-center"><p className="eyebrow text-[var(--ais-blue)]">{t("emptyEyebrow")}</p><h2 className="mt-3 font-display text-2xl font-semibold text-[var(--navy)]">{t("emptyTitle")}</h2><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">{t("emptyDescription")}</p>{isActive(visibleFilters) && <button type="button" onClick={clearFilters} className="mt-6 text-sm font-semibold text-[var(--rams-red)] underline underline-offset-4">{t("clearAll")}</button>}</div> : <><PublicationTimeline groups={groups} t={t} activeIndex={activeIndex} streamViewportRef={streamViewportRef} streamRef={streamRef} streamOffset={streamOffset} scrollProgress={publicationScrollProgress} /><PublicationPagination page={page} totalPages={totalPages} disabled={loading} t={t} onPageChange={changePage} /></>}
         </main>
           </div>
         </div>

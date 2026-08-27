@@ -65,6 +65,16 @@ export async function getPublicationListController(req: Request, res: Response) 
   }
 }
 
+export async function getPublicPublicationListController(req: Request, res: Response) {
+  try {
+    const result = await findAllPublications({ ...parseQuery(req), includeFacets: true });
+    return res.json({ success: true, data: await Promise.all(result.items.map((item) => serialize(item, false))), total: result.total, page: result.page, limit: result.limit, facets: result.facets });
+  } catch (error: any) {
+    if (error?.message?.startsWith("Invalid ") || error?.message === "Search query is too long") return res.status(400).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: "Failed to fetch publications" });
+  }
+}
+
 export async function getPublicationController(req: Request, res: Response) {
   const id = req.params.id as string;
   if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: "Invalid publication ID" });
