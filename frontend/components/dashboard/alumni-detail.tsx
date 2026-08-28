@@ -6,6 +6,7 @@ import { useAuth } from "@/components/providers/auth-providers";
 import { Badge, Button, Card, ErrorState, Field, LoadingState, inputClass } from "@/components/ui";
 import { getAlumniById, updateAlumni } from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
+import { safeHttpUrl } from "@/lib/safe-url";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
 import type { AlumniTracking } from "@/types/modules";
 import { getTrackingByAlumniId } from "@/lib/api/modules";
@@ -26,7 +27,7 @@ export default function AlumniDetail({ id }: { id: string }) {
   useEffect(() => {
     let cancelled = false;
     async function loadProfile() {
-      try { const [profile, events] = await Promise.all([getAlumniById(id), getTrackingByAlumniId(id)]); if (!cancelled) { setAlumni(profile); setTracking(events); setForm({ fullName: profile.fullName, graduationYear: String(profile.graduationYear), program: profile.program, currentStatus: profile.currentStatus, phone: profile.phone ?? "", location: profile.location ?? "", currentCompany: profile.currentCompany ?? "", currentPosition: profile.currentPosition ?? "", linkedin: profile.linkedin ?? "", bio: profile.bio ?? "", isPublic: profile.isPublic }); } }
+      try { const [profile, events] = await Promise.all([getAlumniById(id), getTrackingByAlumniId(id)]); if (!cancelled) { const safeLinkedin = safeHttpUrl(profile.linkedin) ?? undefined; const safeProfile = { ...profile, linkedin: safeLinkedin }; setAlumni(safeProfile); setTracking(events); setForm({ fullName: profile.fullName, graduationYear: String(profile.graduationYear), program: profile.program, currentStatus: profile.currentStatus, phone: profile.phone ?? "", location: profile.location ?? "", currentCompany: profile.currentCompany ?? "", currentPosition: profile.currentPosition ?? "", linkedin: safeLinkedin ?? "", bio: profile.bio ?? "", isPublic: profile.isPublic }); } }
       catch (reason) { if (!cancelled) setError(getUserFacingError(reason)); }
     }
     void loadProfile();

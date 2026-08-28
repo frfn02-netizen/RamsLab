@@ -14,7 +14,7 @@ import RevealOnScroll from "./reveal-on-scroll";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
 
 type ContactIconKind = "location" | "email" | "laboratory";
-const researchImages = ["/assets/offshore.jpg", "/assets/vessel.jpg", "/assets/port.jpg", "/assets/marine-infrastructure.jpg"] as const;
+const researchImages = ["/assets/offshore.jpg", "/assets/vessel.jpeg", "/assets/port.jpeg", "/assets/upscalemedia-transformed.jpeg"] as const;
 
 function ContactIcon({ kind }: { kind: ContactIconKind }) {
   const paths = {
@@ -111,9 +111,9 @@ export default function PublicHome() {
           <div className="ecosystem-reveal-item">
             <div className="ecosystem-block group border-[var(--border)] px-6 py-8 text-center sm:border-l sm:px-8 lg:px-12">
               <div className="ecosystem-logo-stage">
-                <div className="ecosystem-logo absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2">
+                <a href="https://aisits.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label={brand("ais")} className="ecosystem-logo absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2">
                   <Image src="/assets/logo ais part2.png" alt={brand("ais")} fill sizes="256px" className="object-contain" />
-                </div>
+                </a>
               </div>
               <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">{brand("ais")}</p>
               <p className="mt-2 whitespace-pre-line text-xs leading-5 text-[var(--gray)]">{content ? localized(content.ecosystem.aisDescription) : ""}</p>

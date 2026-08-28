@@ -8,6 +8,7 @@ import { Badge, Button, Card, ErrorState, Field, LoadingState, inputClass } from
 import DosenPhotoField from "@/components/dashboard/dosen-photo-field";
 import { deleteDosen, getDosenById, updateDosen, uploadDosenPhoto } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import { safeHttpUrl } from "@/lib/safe-url";
 import type { Dosen } from "@/types/modules";
 
 export default function DosenDetail({ id }: { id: string }) {
@@ -21,7 +22,7 @@ export default function DosenDetail({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: "", employeeId: "", title: "", position: "", specialization: "", email: "", phone: "", bio: "", linkedin: "", isPublic: true });
 
-  useEffect(() => { let cancelled = false; getDosenById(id).then((result) => { if (!cancelled) { setDosen(result); setForm({ fullName: result.fullName, employeeId: result.employeeId ?? "", title: result.title ?? "", position: result.position ?? "", specialization: result.specialization.join(", "), email: result.email ?? "", phone: result.phone ?? "", bio: result.bio ?? "", linkedin: result.linkedin ?? "", isPublic: result.isPublic }); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }); return () => { cancelled = true; }; }, [id]);
+  useEffect(() => { let cancelled = false; getDosenById(id).then((result) => { if (!cancelled) { const safeLinkedin = safeHttpUrl(result.linkedin) ?? undefined; const safeResult = { ...result, linkedin: safeLinkedin }; setDosen(safeResult); setForm({ fullName: result.fullName, employeeId: result.employeeId ?? "", title: result.title ?? "", position: result.position ?? "", specialization: result.specialization.join(", "), email: result.email ?? "", phone: result.phone ?? "", bio: result.bio ?? "", linkedin: safeLinkedin ?? "", isPublic: result.isPublic }); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }); return () => { cancelled = true; }; }, [id]);
   const update = (key: string, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }));
 
   async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSaving(true); setError(null); try { const result = await updateDosen(id, { fullName: form.fullName, employeeId: form.employeeId || undefined, title: form.title || undefined, position: form.position || undefined, specialization: form.specialization.split(",").map((item) => item.trim()).filter(Boolean), email: form.email || undefined, phone: form.phone || undefined, bio: form.bio || undefined, linkedin: form.linkedin || undefined, isPublic: form.isPublic }); const saved = photoFile ? await uploadDosenPhoto(id, photoFile) : result; setDosen(saved); setPhotoFile(null); setEditing(false); } catch (reason) { setError(getUserFacingError(reason)); } finally { setSaving(false); } }

@@ -8,6 +8,7 @@ import { Badge, Button, Card, ErrorState, Field, LoadingState, inputClass } from
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
 import { deleteStudent, getStudentById, updateStudent, uploadStudentPhoto } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import { safeHttpUrl } from "@/lib/safe-url";
 import type { Student, StudentType } from "@/types/modules";
 
 const typeLabel = (type: StudentType) => type === "PHD_STUDENT" ? "Ph.D. Student" : "Undergraduate Student";
@@ -23,7 +24,7 @@ export default function StudentDetail({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: "", studentType: "PHD_STUDENT" as StudentType, program: "", specialization: "", bio: "", linkedin: "", isPublic: true });
 
-  useEffect(() => { let cancelled = false; getStudentById(id).then((result) => { if (!cancelled) { setStudent(result); setForm({ fullName: result.fullName, studentType: result.studentType, program: result.program ?? "", specialization: result.specialization.join(", "), bio: result.bio ?? "", linkedin: result.linkedin ?? "", isPublic: result.isPublic }); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }); return () => { cancelled = true; }; }, [id]);
+  useEffect(() => { let cancelled = false; getStudentById(id).then((result) => { if (!cancelled) { const safeLinkedin = safeHttpUrl(result.linkedin) ?? undefined; const safeResult = { ...result, linkedin: safeLinkedin }; setStudent(safeResult); setForm({ fullName: result.fullName, studentType: result.studentType, program: result.program ?? "", specialization: result.specialization.join(", "), bio: result.bio ?? "", linkedin: safeLinkedin ?? "", isPublic: result.isPublic }); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }); return () => { cancelled = true; }; }, [id]);
   const update = (key: string, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }));
 
   async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSaving(true); setError(null); try { const result = await updateStudent(id, { fullName: form.fullName, studentType: form.studentType, program: form.program || undefined, specialization: form.specialization.split(",").map((item) => item.trim()).filter(Boolean), bio: form.bio || undefined, linkedin: form.linkedin || undefined, isPublic: form.isPublic }); const saved = photoFile ? await uploadStudentPhoto(id, photoFile) : result; setStudent(saved); setPhotoFile(null); setEditing(false); } catch (reason) { setError(getUserFacingError(reason)); } finally { setSaving(false); } }

@@ -158,16 +158,20 @@ body {
 }
 
 .rams-footer-social {
+  position: relative;
   display: grid;
   height: 2.25rem;
   width: 2.25rem;
   place-items: center;
+  border-radius: 9999px;
+  background: #fff;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--navy);
   transition:
-    border-color 180ms ease,
-    color 180ms ease,
-    background-color 180ms ease;
+    border-color 200ms ease,
+    color 200ms ease,
+    background-color 200ms ease,
+    transform 200ms ease;
 }
 
 .rams-footer-social svg {
@@ -176,9 +180,57 @@ body {
 }
 
 .rams-footer-social:hover {
-  border-color: var(--rams-red);
-  background-color: var(--rams-red);
+  border-color: transparent;
   color: #fff;
+  transform: translateY(-2px);
+}
+
+.rams-footer-social--linkedin:hover {
+  background-color: #0A66C2;
+}
+
+.rams-footer-social--youtube:hover {
+  background-color: #FF0000;
+}
+
+.rams-footer-social--instagram:hover {
+  border-color: #d62976;
+  background: linear-gradient(135deg, #feda75 0%, #d62976 48%, #4f5bd5 100%);
+}
+
+.rams-footer-social-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.55rem);
+  left: 50%;
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.3rem;
+  background: #fff;
+  color: var(--navy);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0.35rem);
+  transition: opacity 180ms ease, transform 180ms ease;
+  white-space: nowrap;
+}
+
+.rams-footer-social-tooltip::after {
+  position: absolute;
+  bottom: -0.25rem;
+  left: 50%;
+  height: 0.5rem;
+  width: 0.5rem;
+  background: #fff;
+  content: "";
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.rams-footer-social:hover .rams-footer-social-tooltip,
+.rams-footer-social:focus-visible .rams-footer-social-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .rams-footer-ecosystem-item {
@@ -191,8 +243,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rams-footer-link,
-  .rams-footer-social { transition: none; }
+.rams-footer-link,
+  .rams-footer-social,
+  .rams-footer-social-tooltip { transition: none; }
 }
 
 /* Shared public motion system. */

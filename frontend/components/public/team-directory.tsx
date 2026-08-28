@@ -4,18 +4,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { getPublicPeopleList } from "@/lib/api/modules";
-import type { PeopleCategory, PublicPeopleResponse, PublicPerson } from "@/types/people";
+import type { PublicDirectoryCategory, PublicPeopleResponse, PublicPerson } from "@/types/people";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
 import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
 
-const categoryLabels: Record<PeopleCategory, string> = {
+const categoryLabels: Record<PublicDirectoryCategory, string> = {
   DOSEN: "OUR LAB MEMBERS",
   MAHASISWA: "PH.D. STUDENTS",
   UNDERGRADUATE: "UNDERGRADUATE STUDENTS",
+  ALUMNI: "ALUMNI",
 };
 
-const categoryOrder: PeopleCategory[] = ["DOSEN", "MAHASISWA", "UNDERGRADUATE"];
+const categoryOrder: PublicDirectoryCategory[] = ["DOSEN", "MAHASISWA", "UNDERGRADUATE", "ALUMNI"];
 
 function getInitials(name: string) {
   return name
@@ -63,6 +64,7 @@ export function MemberCard({ member, profileLabel, roleFallback }: { member: Pub
       <div className="flex flex-1 flex-col pt-5">
         <h3 className="font-display min-h-[3.25rem] text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">{member.fullName}</h3>
         <RoleLine member={member} fallback={roleFallback} />
+        {member.category === "ALUMNI" && <div className="mt-3 space-y-1 text-sm leading-6 text-[var(--slate)]"><p>{member.nim ? `NIM: ${member.nim}` : "NIM not provided"}</p>{member.location && <p>{member.location}</p>}</div>}
         {member.specialization.length > 0 && <p className="mt-5 text-sm leading-6 text-[var(--slate)]">{member.specialization.join(" · ")}</p>}
         {member.linkedin && <div className="mt-auto pt-5"><ProfileLinks member={member} label={profileLabel} /></div>}
       </div>
@@ -76,8 +78,8 @@ function searchableText(member: PublicPerson) {
 
 export default function TeamDirectory() {
   const t = useTranslations("team");
-  const [people, setPeople] = useState<PublicPeopleResponse>({ DOSEN: [], MAHASISWA: [], UNDERGRADUATE: [] });
-  const [activeCategory, setActiveCategory] = useState<PeopleCategory>("DOSEN");
+  const [people, setPeople] = useState<PublicPeopleResponse>({ DOSEN: [], MAHASISWA: [], UNDERGRADUATE: [], ALUMNI: [] });
+  const [activeCategory, setActiveCategory] = useState<PublicDirectoryCategory>("DOSEN");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

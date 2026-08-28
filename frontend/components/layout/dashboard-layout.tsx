@@ -11,13 +11,13 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   return (
-    <div className="dashboard-shell flex min-h-screen bg-[var(--rams-gray-light)] text-[var(--rams-charcoal)]">
+    <div className="dashboard-shell flex h-screen overflow-hidden bg-[var(--rams-gray-light)] text-[var(--rams-charcoal)]">
       <Sidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Header />
 
-        <main className="flex-1 overflow-auto">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           {children}
         </main>
       </div>

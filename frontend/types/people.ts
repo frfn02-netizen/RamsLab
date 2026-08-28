@@ -5,8 +5,10 @@ export interface PublicPerson {
   id: string;
   category: PublicDirectoryCategory;
   fullName: string;
+  nim?: string;
   title?: string;
   position?: string;
+  location?: string;
   specialization: string[];
   photo?: string;
   bio?: string;
@@ -18,6 +20,7 @@ export interface PublicPeopleResponse {
   DOSEN: PublicPerson[];
   MAHASISWA: PublicPerson[];
   UNDERGRADUATE: PublicPerson[];
+  ALUMNI: PublicPerson[];
 }
 
 export type PublicAlumniResponse = PublicPerson[];

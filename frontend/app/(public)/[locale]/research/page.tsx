@@ -54,7 +54,7 @@ export default async function ResearchPage({ params }: { params: Promise<{ local
           </div>
           <figure>
             <div className="relative aspect-[4/3] w-full overflow-hidden border border-[var(--border)] lg:aspect-[7/8]">
-              <Image src="/assets/research-marine.jpg" alt={t("heroImageAlt")} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+              <Image src="/assets/research-marine.jpeg" alt={t("heroImageAlt")} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
             </div>
             <figcaption className="flex items-baseline justify-between border border-t-0 border-[var(--border)] px-4 py-3 text-xs text-[var(--gray)]">
               <span>{brand("laboratory")}</span>
@@ -174,7 +174,7 @@ export default async function ResearchPage({ params }: { params: Promise<{ local
         <PublicContainer>
           <RevealOnScroll className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20" stagger={120}>
           <div className="relative h-[320px] w-full overflow-hidden border border-[var(--border)] sm:h-[440px]">
-            <Image src="/assets/vessel.jpg" alt={t("contextImageAlt")} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+            <Image src="/assets/vessel.jpeg" alt={t("contextImageAlt")} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
           </div>
           <div>
             <p className="eyebrow">{t("contextEyebrow")}</p>

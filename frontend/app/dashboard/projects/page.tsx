@@ -17,6 +17,7 @@ import {
 import { deleteProject, getProjects } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Project, ProjectCategory } from "@/types/modules";
+import DeleteButton from "@/components/dashboard/delete-button";
 
 const categories: Array<"ALL" | ProjectCategory> = [
   "ALL",
@@ -97,7 +98,7 @@ export default function ProjectsPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left">
                 <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
-                  <tr>{["Project", "Category", "Year", "Status", "Visibility", "Action"].map((heading) => <th key={heading} scope="col" className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">{heading}</th>)}</tr>
+                  <tr>{["Project", "Category", "Year", "Status", "Visibility", "Action"].map((heading) => <th key={heading} scope="col" className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] last:text-center">{heading}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-black/8">
                   {visibleProjects.map((project) => (
@@ -107,7 +108,7 @@ export default function ProjectsPage() {
                       <td className="px-5 py-4 text-sm">{project.year}</td>
                       <td className="px-5 py-4 text-sm">{label(project.status)}</td>
                       <td className="px-5 py-4"><Badge tone={project.published ? "green" : "neutral"}>{project.published ? "Published" : "Draft"}</Badge></td>
-                      <td className="px-5 py-4 text-right">{user?.role === "ADMIN" && <Button variant="danger" disabled={deletingId === project._id} onClick={() => void removeProject(project)}>{deletingId === project._id ? "Deleting…" : "Delete"}</Button>}</td>
+                      <td className="px-5 py-4 text-right"><div className="flex w-full items-center justify-center gap-3"><Link href={`/dashboard/projects/${project._id}`} className="text-sm font-bold text-[var(--rams-red)] hover:text-[var(--rams-red-dark)]">View</Link>{user?.role === "ADMIN" && <DeleteButton variant="danger" disabled={deletingId === project._id} onClick={() => void removeProject(project)}>{deletingId === project._id ? "Deleting…" : "Delete"}</DeleteButton>}</div></td>
                     </tr>
                   ))}
                 </tbody>

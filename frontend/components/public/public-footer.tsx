@@ -6,13 +6,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicSiteContent } from "@/lib/api/modules";
 import type { FooterContent } from "@/types/site-content";
-import LanguageSwitcher from "./language-switcher";
 import PublicContainer from "./public-container";
 
 const socialLinks = [
   { label: "LinkedIn", href: process.env.NEXT_PUBLIC_RAMS_LINKEDIN_URL ?? "https://www.linkedin.com/company/lab-rams", kind: "linkedin" },
-  { label: "Instagram", href: process.env.NEXT_PUBLIC_RAMS_INSTAGRAM_URL, kind: "instagram" },
-  { label: "YouTube", href: process.env.NEXT_PUBLIC_RAMS_YOUTUBE_URL, kind: "youtube" },
+  { label: "YouTube", href: process.env.NEXT_PUBLIC_RAMS_YOUTUBE_URL ?? "https://www.youtube.com/@RamsLaboratory-yt5jo", kind: "youtube" },
+  { label: "Instagram", href: process.env.NEXT_PUBLIC_RAMS_INSTAGRAM_URL ?? "https://www.instagram.com/rams_laboratory/", kind: "instagram" },
 ].filter((link): link is { label: string; href: string; kind: string } => Boolean(link.href));
 
 function SocialIcon({ kind }: { kind: string }) {
@@ -37,7 +36,6 @@ export default function PublicFooter() {
   const t = useTranslations("footer");
   const nav = useTranslations("nav");
   const brand = useTranslations("brand");
-  const language = useTranslations("language");
   const common = useTranslations("common");
   const [content, setContent] = useState<FooterContent | null>(null);
   const [error, setError] = useState(false);
@@ -94,40 +92,18 @@ export default function PublicFooter() {
             {content && <p className="max-w-xs leading-6 text-white/45">{localized(content.socialText)}</p>}
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <span className="text-xs uppercase tracking-[0.12em] text-white/45">{t("findUs")}</span>
-              {socialLinks.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} className="rams-footer-social"><SocialIcon kind={link.kind} /></a>)}
+              {socialLinks.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" aria-label={link.label} className={`rams-footer-social rams-footer-social--${link.kind} group`}>
+                <SocialIcon kind={link.kind} />
+                <span className="rams-footer-social-tooltip" aria-hidden="true">{link.label}</span>
+              </a>)}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rams-footer-ecosystem border-b border-white/15 py-10 sm:py-12" aria-labelledby="footer-ecosystem-title">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <p id="footer-ecosystem-title" className="rams-footer-label">{t("ecosystem")}</p>
-          <p className="max-w-sm text-xs leading-5 text-white/40 sm:text-right">{brand("institution")}</p>
-        </div>
-        <div className="mt-7 grid grid-cols-1 divide-y divide-white/15 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          <div className="rams-footer-ecosystem-item flex items-center gap-4 py-4 sm:py-2 sm:pr-6">
-            <div className="relative h-12 w-12 shrink-0"><Image src="/assets/rams-logo.png" alt={brand("laboratory")} fill sizes="48px" className="object-contain" /></div>
-            <span className="text-sm leading-5 text-white/75">{brand("laboratory")}</span>
-          </div>
-          <div className="rams-footer-ecosystem-item flex items-center gap-4 py-4 sm:px-6 sm:py-2">
-            <div className="relative h-10 w-16 shrink-0"><Image src="/assets/logo ais part2.png" alt={brand("ais")} fill sizes="64px" className="object-contain" /></div>
-            <span className="text-sm leading-5 text-white/75">{brand("ais")}</span>
-          </div>
-          <div className="rams-footer-ecosystem-item flex items-center gap-4 py-4 sm:py-2 sm:pl-6">
-            <div className="relative h-10 w-20 shrink-0"><Image src="/assets/logo pu-kekal part2.png" alt={brand("pui")} fill sizes="80px" className="object-contain" /></div>
-            <span className="text-sm leading-5 text-white/75">{brand("pui")}</span>
-          </div>
-        </div>
-      </section>
-
-      <div className="flex flex-col gap-4 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between lg:grid lg:grid-cols-[1fr_auto_1fr]">
+      <div className="flex flex-col gap-4 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
         <span>© {new Date().getFullYear()} {footerCopyright}</span>
         <span className="lg:text-center">{footerInstitution}</span>
-        <div className="flex items-center gap-3 lg:justify-self-end">
-          <span>{language("label")}</span>
-          <span className="border border-white/20 bg-white px-2 py-1 text-[var(--charcoal)]"><LanguageSwitcher /></span>
-        </div>
       </div>
     </PublicContainer>
   </footer>;
