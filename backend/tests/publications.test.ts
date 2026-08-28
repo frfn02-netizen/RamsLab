@@ -100,12 +100,12 @@ describe("Publications API", () => {
       };
     }) as never[]);
 
-    const firstPage = await request(app).get("/api/public/publications").query({ search: pageTitlePrefix, page: 1, limit: 100 });
+    const firstPage = await request(app).get("/api/public/publications").query({ search: pageTitlePrefix, page: 1, limit: 200 });
     expect(firstPage.status).toBe(200);
-    expect(firstPage.body.data).toHaveLength(100);
+    expect(firstPage.body.data).toHaveLength(105);
     expect(firstPage.body.total).toBe(105);
     expect(firstPage.body.page).toBe(1);
-    expect(firstPage.body.limit).toBe(100);
+    expect(firstPage.body.limit).toBe(200);
     expect(firstPage.body.facets).toMatchObject({ years: [2026], topics: ["Pagination Topic"], methods: ["Pagination Method"] });
 
     const secondPage = await request(app).get("/api/public/publications").query({ search: pageTitlePrefix, page: 2, limit: 100 });

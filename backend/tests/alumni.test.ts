@@ -414,6 +414,7 @@ describe("Alumni API", () => {
       "Updated Vitest Company"
     );
   });
+
 });
 
 it("should reject modification of immutable alumni fields", async () => {
@@ -504,4 +505,21 @@ it("should not allow alumni to modify immutable fields", async () => {
 
   expect(response.body.data.currentPosition)
     .toBe("Security Test Engineer");
+});
+
+it("should delete alumni as admin", async () => {
+  const response = await request(app)
+    .delete(`/api/alumni/${alumniId}`)
+    .set("Cookie", `rams_access_token=${adminToken}`);
+
+  expect(response.status).toBe(200);
+  expect(response.body.success).toBe(true);
+  expect(response.body.message).toBe("Alumni deleted successfully");
+
+  const deleted = await getAlumniCollection().findOne({ _id: new ObjectId(alumniId) });
+  expect(deleted).toBeNull();
+
+  const account = await getUsersCollection().findOne({ _id: new ObjectId(TEST_USER_ID) });
+  expect(account?.isActive).toBe(false);
+  expect(account?.tokenVersion).toBeGreaterThan(0);
 });

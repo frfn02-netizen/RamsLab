@@ -4,7 +4,7 @@ export const AUTH_COOKIE_NAME = "rams_access_token";
 
 export const SECURITY_LIMITS = {
   jsonBodyBytes: 1_048_576,
-  maxPageSize: 100,
+  maxPageSize: 200,
   maxPageNumber: 100_000,
   maxListResults: 500,
   maxSearchLength: 100,

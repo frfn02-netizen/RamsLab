@@ -77,9 +77,15 @@ describe("authentication security", () => {
     const me = await request(app).get("/api/auth/me").set("Cookie", accessCookie);
     expect(me.status).toBe(200);
 
-    const logout = await request(app)
+    const csrfRejected = await request(app)
       .post("/api/auth/logout")
       .set("Cookie", [accessCookie, csrfCookie]);
+    expect(csrfRejected.status).toBe(403);
+
+    const logout = await request(app)
+      .post("/api/auth/logout")
+      .set("Cookie", [accessCookie, csrfCookie])
+      .set("X-CSRF-Token", csrfCookie.split("=")[1] ?? "");
     expect(logout.status).toBe(200);
 
     const reused = await request(app).get("/api/auth/me").set("Cookie", accessCookie);

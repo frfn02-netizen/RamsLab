@@ -47,3 +47,18 @@ export async function incrementUserTokenVersion(id: string): Promise<boolean> {
 
   return result.modifiedCount === 1;
 }
+
+export async function deactivateUser(id: ObjectId): Promise<boolean> {
+  const result = await getUsersCollection().updateOne(
+    { _id: id },
+    {
+      $set: {
+        isActive: false,
+        updatedAt: new Date(),
+      },
+      $inc: { tokenVersion: 1 },
+    },
+  );
+
+  return result.matchedCount === 1;
+}

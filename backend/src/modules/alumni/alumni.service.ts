@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { getAlumniCollection, findAlumniById, findAlumniByNim, findAlumniByUserId, findAlumniList} from "./alumni.repository.js";
+import { deleteAlumni as deleteAlumniRecord, getAlumniCollection, findAlumniById, findAlumniByNim, findAlumniByUserId, findAlumniList} from "./alumni.repository.js";
 import { getUsersCollection, } from "../users/user.repository.js";
 import { USER_ROLES, } from "../users/user.types.js";
 import {
@@ -128,6 +128,11 @@ export async function getAlumniById(
   id: string
 ) {
   return findAlumniById(id);
+}
+
+export async function deleteAlumni(id: string) {
+  if (!ObjectId.isValid(id)) throw new Error("Invalid alumni ID");
+  return deleteAlumniRecord(id);
 }
 
 export async function getAlumniByUserId(

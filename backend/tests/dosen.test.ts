@@ -19,6 +19,7 @@ import {
 import {
   getDosenCollection,
 } from "../src/modules/dosen/dosen.repository.js";
+import { getUsersCollection } from "../src/modules/users/user.repository.js";
 import { ensureTestUsers, signTestToken, TEST_ADMIN_USER_ID, TEST_DOSEN_USER_ID } from "./auth-fixture.js";
 
 
@@ -320,5 +321,9 @@ describe("Dosen API", () => {
     expect(
       response.body.message
     ).toBe("Dosen deleted successfully");
+
+    const account = await getUsersCollection().findOne({ _id: new ObjectId(TEST_USER_ID) });
+    expect(account?.isActive).toBe(false);
+    expect(account?.tokenVersion).toBeGreaterThan(0);
   });
 });

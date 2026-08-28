@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isSafeLinkedInUrl } from "../../lib/url-security.js";
 
 export const createDosenSchema = z.object({
   userId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid user ID"),
@@ -58,6 +59,7 @@ export const createDosenSchema = z.object({
   linkedin: z
     .string()
     .url()
+    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
     .optional(),
 
   isPublic: z
@@ -76,7 +78,7 @@ export const updateDosenSchema =
     phone: z.string().trim().max(50).optional(),
     photo: z.string().trim().max(500).optional(),
     bio: z.string().trim().max(2000).optional(),
-    linkedin: z.string().url().optional(),
+    linkedin: z.string().url().refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain").optional(),
     isPublic: z.boolean().optional(),
   });
 

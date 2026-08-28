@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ALUMNI_STATUS } from "./alumni.types.js";
+import { isSafeLinkedInUrl } from "../../lib/url-security.js";
 
 export const createAdminAlumniSchema = z.object({
   email: z
@@ -68,6 +69,7 @@ export const createAdminAlumniSchema = z.object({
   linkedin: z
     .string()
     .url()
+    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
     .optional(),
 
   bio: z

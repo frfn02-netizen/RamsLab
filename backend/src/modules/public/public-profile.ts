@@ -92,7 +92,6 @@ export function toPublicAlumniProfile(req: Request, member: Alumni) {
     id: member._id?.toString() ?? member.userId.toString(),
     category: "ALUMNI" as const,
     fullName: member.fullName,
-    title: member.program,
     position: member.currentPosition,
     specialization: member.currentCompany ? [member.currentCompany] : [],
     photo: publicPhotoUrl(req, member.photo),

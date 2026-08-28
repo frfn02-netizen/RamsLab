@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import { createDosenSchema, updateDosenSchema} from './dosen.schema.js';
 import { createDosen, deleteDosen, findAllDosen, findDosenByEmployeeId, findDosenById, updateDosen } from './dosen.repository.js';
-import { findUserById } from '../users/user.repository.js';
+import { deactivateUser, findUserById } from '../users/user.repository.js';
 import { getDosenPhotoUrl, removeDosenPhoto, saveDosenPhoto } from './dosen-photo.js';
 import { toPublicDosenProfile } from '../public/public-profile.js';
 
@@ -327,6 +327,20 @@ export async function deleteDosenController(
     }
 
     const existing = await findDosenById(id);
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: "Dosen not found",
+      });
+    }
+
+    if (!await deactivateUser(existing.userId)) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to deactivate dosen account",
+      });
+    }
+
     const deleted =
       await deleteDosen(id);
 
@@ -337,7 +351,7 @@ export async function deleteDosenController(
       });
     }
 
-    await removeDosenPhoto(existing?.photo);
+    await removeDosenPhoto(existing.photo);
 
     return res.json({
       success: true,

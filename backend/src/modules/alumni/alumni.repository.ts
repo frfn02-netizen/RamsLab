@@ -139,3 +139,9 @@ export async function countAlumni(): Promise<number> {
 
   return collection.countDocuments();
 }
+
+export async function deleteAlumni(id: string): Promise<boolean> {
+  if (!ObjectId.isValid(id)) return false;
+  const result = await getAlumniCollection().deleteOne({ _id: new ObjectId(id) });
+  return result.deletedCount === 1;
+}

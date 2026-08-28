@@ -21,14 +21,6 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
 };
 
 export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
-  const isProduction = process.env.NODE_ENV === "production";
-  const logger = isProduction ? console.error : console.error;
-  logger("Unhandled request error", {
-    method: req.method,
-    path: req.path,
-    error,
-  });
-
   if (error && typeof error === "object" && "type" in error) {
     const type = (error as { type?: string }).type;
     if (type === "entity.too.large") {
@@ -38,6 +30,17 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
       return res.status(400).json({ success: false, message: "Malformed JSON body" });
     }
   }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  // Parser failures above are expected client errors, not server faults. Keep
+  // unexpected errors visible without flooding test and development output
+  // with their parser stack traces.
+  console.error("Unhandled request error", {
+    method: req.method,
+    path: req.path,
+    error,
+    ...(isProduction ? {} : { stack: error instanceof Error ? error.stack : undefined }),
+  });
 
   if (error instanceof ZodError) {
     return res.status(400).json({

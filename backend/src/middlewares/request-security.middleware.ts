@@ -27,7 +27,16 @@ export function verifyStateChangingOrigin(
   // still applies, but requiring the old CSRF token here would prevent users
   // from recovering from a mismatched cookie pair.
   const isLoginRequest = req.method === "POST" && req.path === "/api/auth/login";
-  if (origin && req.cookies?.rams_access_token && !isLoginRequest) {
+  // Requests from browsers carry an Origin header. A CSRF cookie also marks
+  // a session created by the login flow, so continue enforcing the
+  // double-submit check for those requests even when a non-browser client
+  // omits Origin. Direct API/test tokens without a CSRF cookie remain usable
+  // for backwards-compatible server-to-server access.
+  if (
+    req.cookies?.rams_access_token &&
+    (origin || req.cookies?.rams_csrf_token) &&
+    !isLoginRequest
+  ) {
     const csrfCookie = req.cookies?.rams_csrf_token;
     const csrfHeader = req.get("x-csrf-token");
     if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {

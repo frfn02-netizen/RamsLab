@@ -5,6 +5,7 @@ import type {
 
 import {
   createAlumni,
+  deleteAlumni,
   getAlumniById,
   getAlumniByUserId,
   updateAlumni,
@@ -14,6 +15,7 @@ import {
 
 import { createAdminAlumni } from "./admin-alumni.service.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
+import { deactivateUser } from "../users/user.repository.js";
 
 export async function createAlumniController(
   req: Request,
@@ -90,6 +92,26 @@ export async function getAlumniController(
       success: false,
       message: "Failed to get alumni",
     });
+  }
+}
+
+export async function deleteAlumniController(req: Request, res: Response) {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ success: false, message: "Alumni ID is required" });
+    const existing = await getAlumniById(id);
+    if (!existing) return res.status(404).json({ success: false, message: "Alumni not found" });
+    // Do not reveal another profile's existence to an alumni user. The route
+    // accepts ALUMNI so this boundary can return the same not-found response
+    // as a missing record instead of exposing an authorization distinction.
+    if (req.user?.role !== "ADMIN") {
+      return res.status(404).json({ success: false, message: "Alumni not found" });
+    }
+    if (!await deactivateUser(existing.userId)) return res.status(500).json({ success: false, message: "Failed to deactivate alumni account" });
+    if (!await deleteAlumni(id)) return res.status(404).json({ success: false, message: "Alumni not found" });
+    return res.json({ success: true, message: "Alumni deleted successfully" });
+  } catch {
+    return res.status(400).json({ success: false, message: "Failed to delete alumni" });
   }
 }
 

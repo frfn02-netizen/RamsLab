@@ -36,9 +36,10 @@ export async function getPublicPeopleController(
   res: Response,
 ) {
   try {
-    const [dosen, students] = await Promise.all([
+    const [dosen, students, alumni] = await Promise.all([
       findAllDosen({ publicOnly: true }),
       findAllStudents({ publicOnly: true }),
+      findPublicAlumni(),
     ]);
 
     return res.json({
@@ -49,6 +50,7 @@ export async function getPublicPeopleController(
         // active student categories available without inventing records.
         MAHASISWA: students.filter((student) => student.studentType === "PHD_STUDENT").map((student) => toPublicStudentProfile(req, student)),
         UNDERGRADUATE: students.filter((student) => student.studentType === "UNDERGRADUATE_STUDENT").map((student) => toPublicStudentProfile(req, student)),
+        ALUMNI: alumni.map((member) => toPublicAlumniProfile(req, member)),
       },
     });
   } catch {

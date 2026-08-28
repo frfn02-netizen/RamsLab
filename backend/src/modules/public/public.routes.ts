@@ -11,6 +11,7 @@ import {
 import { getPublicDosenController } from "../dosen/dosen.controller.js";
 import { getPublicResearchAreasController } from "../research/research.controller.js";
 import { getPublicSiteContentController } from "../site-content/site-content.controller.js";
+import { getPublicPublicationListController } from "../publications/publication.controller.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
@@ -64,6 +65,11 @@ router.get(
 router.get(
   "/people",
   getPublicPeopleController
+);
+
+router.get(
+  "/publications",
+  getPublicPublicationListController
 );
 
 router.get(

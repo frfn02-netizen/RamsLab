@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ALUMNI_STATUS } from "./alumni.types.js";
+import { isSafeLinkedInUrl } from "../../lib/url-security.js";
 
 const careerHistorySchema = z.object({
   company: z
@@ -135,6 +136,7 @@ export const createAlumniSchema = z.object({
   linkedin: z
     .string()
     .url()
+    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
     .optional(),
 
   bio: z
@@ -231,6 +233,7 @@ export const updateAlumniSchema = z.object({
   linkedin: z
     .string()
     .url()
+    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
     .optional(),
 
   bio: z
@@ -308,6 +311,7 @@ export const updateMyAlumniSchema = z.object({
   linkedin: z
     .string()
     .url()
+    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
     .optional(),
 
   bio: z

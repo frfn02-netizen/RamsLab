@@ -11,6 +11,7 @@ import {
 import {
   createAlumniController,
   createAdminAlumniController,
+  deleteAlumniController,
   getAlumniListController,
   getAlumniController,
   getMyAlumniController,
@@ -99,6 +100,8 @@ router.patch(
   requireRole("ADMIN"),
   updateAlumniController
 );
+
+router.delete("/:id", authenticate, requireRole("ADMIN", "ALUMNI"), deleteAlumniController);
 
 
 export default router;
