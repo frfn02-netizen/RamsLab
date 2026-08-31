@@ -1,7 +1,10 @@
-import { Router, } from "express";
-import { authenticate, } from "../../middlewares/auth.middlewares.js";
-import { requireRole, } from "../../middlewares/role.middlewares.js";
-import { createAlumniUserController, createDosenUserController } from "./user.controller.js";
+import { Router } from "express";
+import { authenticate } from "../../middlewares/auth.middlewares.js";
+import { requireRole } from "../../middlewares/role.middlewares.js";
+import {
+  createAlumniUserController,
+  createDosenUserController,
+} from "./user.controller.js";
 
 const router = Router();
 
@@ -9,14 +12,14 @@ router.post(
   "/alumni",
   authenticate,
   requireRole("ADMIN"),
-  createAlumniUserController
+  createAlumniUserController,
 );
 
 router.post(
   "/dosen",
   authenticate,
   requireRole("ADMIN"),
-  createDosenUserController
+  createDosenUserController,
 );
 
 export default router;

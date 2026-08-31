@@ -15,13 +15,23 @@ export default function DashboardGuard({ children }: { children: ReactNode }) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     } else if (status === "authenticated" && user?.role === "ALUMNI") {
       router.replace("/profile");
-    } else if (status === "authenticated" && user && !canAccessDashboardPath(user.role, pathname)) {
+    } else if (
+      status === "authenticated" &&
+      user &&
+      !canAccessDashboardPath(user.role, pathname)
+    ) {
       router.replace("/dashboard/publications");
     }
   }, [pathname, router, status, user]);
 
   if (status === "loading" || !user || user.role === "ALUMNI") {
-    return <div className="flex min-h-screen items-center justify-center bg-[var(--rams-gray-light)]"><p className="text-sm text-[var(--rams-gray)]" role="status">Checking your session…</p></div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--rams-gray-light)]">
+        <p className="text-sm text-[var(--rams-gray)]" role="status">
+          Checking your session…
+        </p>
+      </div>
+    );
   }
   return <>{children}</>;
 }

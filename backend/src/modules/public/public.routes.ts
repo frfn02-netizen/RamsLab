@@ -16,71 +16,40 @@ import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
 const router = Router();
-router.use(createRateLimiter({
-  windowMs: SECURITY_LIMITS.apiWindowMs,
-  max: SECURITY_LIMITS.maxPublicRequests,
-  message: "Too many public API requests",
-}));
-
+router.use(
+  createRateLimiter({
+    windowMs: SECURITY_LIMITS.apiWindowMs,
+    max: SECURITY_LIMITS.maxPublicRequests,
+    message: "Too many public API requests",
+  }),
+);
 
 // ========================================
 // PUBLIC PROJECTS
 // ========================================
 
-router.get(
-  "/projects",
-  getPublicProjectsController
-);
+router.get("/projects", getPublicProjectsController);
 
-router.get(
-  "/projects/:slug",
-  getPublicProjectController
-);
-
+router.get("/projects/:slug", getPublicProjectController);
 
 // ========================================
 // PUBLIC PARTNERS
 // ========================================
 
-router.get(
-  "/partners/university",
-  getPublicUniversityPartnersController
-);
+router.get("/partners/university", getPublicUniversityPartnersController);
 
-router.get(
-  "/partners/industrial",
-  getPublicIndustrialPartnersController
-);
+router.get("/partners/industrial", getPublicIndustrialPartnersController);
 
-router.get(
-  "/research",
-  getPublicResearchAreasController
-);
+router.get("/research", getPublicResearchAreasController);
 
-router.get(
-  "/dosen",
-  getPublicDosenController
-);
+router.get("/dosen", getPublicDosenController);
 
-router.get(
-  "/people",
-  getPublicPeopleController
-);
+router.get("/people", getPublicPeopleController);
 
-router.get(
-  "/publications",
-  getPublicPublicationListController
-);
+router.get("/publications", getPublicPublicationListController);
 
-router.get(
-  "/alumni",
-  getPublicAlumniController
-);
+router.get("/alumni", getPublicAlumniController);
 
-router.get(
-  "/site-content/:key",
-  getPublicSiteContentController
-);
-
+router.get("/site-content/:key", getPublicSiteContentController);
 
 export default router;

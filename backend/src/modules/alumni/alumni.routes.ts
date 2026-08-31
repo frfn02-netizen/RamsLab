@@ -1,12 +1,8 @@
 import { Router } from "express";
 
-import {
-  requireRole,
-} from "../../middlewares/role.middlewares.js";
+import { requireRole } from "../../middlewares/role.middlewares.js";
 
-import {
-  authenticate,
-} from "../../middlewares/auth.middlewares.js";
+import { authenticate } from "../../middlewares/auth.middlewares.js";
 
 import {
   createAlumniController,
@@ -21,25 +17,18 @@ import {
 
 const router = Router();
 
-
 // ========================================
 // ADMIN
 // ========================================
 
-router.post(
-  "/",
-  authenticate,
-  requireRole("ADMIN"),
-  createAlumniController
-);
+router.post("/", authenticate, requireRole("ADMIN"), createAlumniController);
 
 router.post(
   "/admin",
   authenticate,
   requireRole("ADMIN"),
-  createAdminAlumniController
+  createAdminAlumniController,
 );
-
 
 // ========================================
 // ADMIN + DOSEN
@@ -48,32 +37,22 @@ router.post(
 router.get(
   "/",
   authenticate,
-  requireRole(
-    "ADMIN",
-    "DOSEN"
-  ),
-  getAlumniListController
+  requireRole("ADMIN", "DOSEN"),
+  getAlumniListController,
 );
-
 
 // ========================================
 // ALUMNI
 // ========================================
 
-router.get(
-  "/me",
-  authenticate,
-  requireRole("ALUMNI"),
-  getMyAlumniController
-);
+router.get("/me", authenticate, requireRole("ALUMNI"), getMyAlumniController);
 
 router.patch(
   "/me",
   authenticate,
   requireRole("ALUMNI"),
-  updateMyAlumniController
+  updateMyAlumniController,
 );
-
 
 // ========================================
 // ADMIN + DOSEN
@@ -82,13 +61,9 @@ router.patch(
 router.get(
   "/:id",
   authenticate,
-  requireRole(
-    "ADMIN",
-    "DOSEN"
-  ),
-  getAlumniController
+  requireRole("ADMIN", "DOSEN"),
+  getAlumniController,
 );
-
 
 // ========================================
 // ADMIN
@@ -98,10 +73,14 @@ router.patch(
   "/:id",
   authenticate,
   requireRole("ADMIN"),
-  updateAlumniController
+  updateAlumniController,
 );
 
-router.delete("/:id", authenticate, requireRole("ADMIN", "ALUMNI"), deleteAlumniController);
-
+router.delete(
+  "/:id",
+  authenticate,
+  requireRole("ADMIN", "ALUMNI"),
+  deleteAlumniController,
+);
 
 export default router;

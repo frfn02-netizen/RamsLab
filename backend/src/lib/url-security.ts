@@ -12,9 +12,11 @@ export function isSafeLinkedInUrl(value: string): boolean {
 
   try {
     const hostname = new URL(value).hostname.toLowerCase();
-    return hostname === "linkedin.com"
-      || hostname.endsWith(".linkedin.com")
-      || hostname === "lnkd.in";
+    return (
+      hostname === "linkedin.com" ||
+      hostname.endsWith(".linkedin.com") ||
+      hostname === "lnkd.in"
+    );
   } catch {
     return false;
   }

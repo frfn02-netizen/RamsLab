@@ -2,7 +2,11 @@ import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import app from "../src/app.js";
 import { connectDatabase } from "../src/config/database.js";
-import { ensureTestUsers, signTestToken, TEST_ALUMNI_USER_ID } from "./auth-fixture.js";
+import {
+  ensureTestUsers,
+  signTestToken,
+  TEST_ALUMNI_USER_ID,
+} from "./auth-fixture.js";
 
 describe("horizontal authorization boundaries", () => {
   beforeAll(async () => {

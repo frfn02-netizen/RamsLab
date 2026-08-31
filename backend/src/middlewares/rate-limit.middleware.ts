@@ -32,15 +32,19 @@ export function createRateLimiter(options: RateLimiterOptions) {
 
     const key = options.keyGenerator?.(req) ?? req.ip ?? "unknown";
     const current = buckets.get(key);
-    const bucket = current && current.resetAt > now
-      ? current
-      : { count: 0, resetAt: now + options.windowMs };
+    const bucket =
+      current && current.resetAt > now
+        ? current
+        : { count: 0, resetAt: now + options.windowMs };
 
     bucket.count += 1;
     buckets.set(key, bucket);
 
     res.setHeader("RateLimit-Limit", options.max);
-    res.setHeader("RateLimit-Remaining", Math.max(0, options.max - bucket.count));
+    res.setHeader(
+      "RateLimit-Remaining",
+      Math.max(0, options.max - bucket.count),
+    );
     res.setHeader("RateLimit-Reset", Math.ceil(bucket.resetAt / 1000));
 
     if (bucket.count > options.max) {

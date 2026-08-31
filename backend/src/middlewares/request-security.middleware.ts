@@ -11,7 +11,7 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 export function verifyStateChangingOrigin(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   if (SAFE_METHODS.has(req.method)) return next();
 
@@ -26,7 +26,8 @@ export function verifyStateChangingOrigin(
   // Login must be able to replace an expired/stale session. Origin validation
   // still applies, but requiring the old CSRF token here would prevent users
   // from recovering from a mismatched cookie pair.
-  const isLoginRequest = req.method === "POST" && req.path === "/api/auth/login";
+  const isLoginRequest =
+    req.method === "POST" && req.path === "/api/auth/login";
   // Requests from browsers carry an Origin header. A CSRF cookie also marks
   // a session created by the login flow, so continue enforcing the
   // double-submit check for those requests even when a non-browser client

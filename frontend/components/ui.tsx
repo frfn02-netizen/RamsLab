@@ -1,14 +1,223 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export function PageHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) { return <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">{eyebrow ?? "RAMS Platform"}</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--rams-charcoal)]">{title}</h1>{description && <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--rams-gray)]">{description}</p>}</div>{action}</div>; }
-export function Button({ children, variant = "primary", className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" }) { const styles = { primary: "bg-[var(--rams-red)] text-white hover:bg-[var(--rams-red-dark)]", secondary: "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]", danger: "bg-red-700 text-white hover:bg-red-800" }; return <button {...props} className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]} ${className}`}>{children}</button>; }
-export function LinkButton({ children, href, variant = "primary" }: { children: ReactNode; href: string; variant?: "primary" | "secondary" }) { return <Link href={href} className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 ${variant === "primary" ? "bg-[var(--rams-red)] text-white hover:bg-[var(--rams-red-dark)]" : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"}`}>{children}</Link>; }
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) { return <section className={`border border-black/8 bg-white shadow-[0_8px_30px_rgba(31,35,40,0.05)] ${className}`}>{children}</section>; }
-export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "red" | "green" | "amber" }) { const tones = { neutral: "bg-[var(--rams-gray-light)] text-[var(--rams-charcoal)]", red: "bg-red-50 text-[var(--rams-red-dark)]", green: "bg-emerald-50 text-emerald-800", amber: "bg-amber-50 text-amber-800" }; return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>{children}</span>; }
-export function LoadingState({ label = "Loading" }: { label?: string }) { return <div className="flex items-center justify-center py-16 text-sm text-[var(--rams-gray)]" role="status"><span className="mr-3 h-4 w-4 animate-spin rounded-full border-2 border-[var(--rams-red)] border-t-transparent" />{label}…</div>; }
-export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) { return <div className="border border-red-200 bg-red-50 p-5" role="alert"><p className="text-sm font-semibold text-red-800">{message}</p>{onRetry && <Button className="mt-4" onClick={onRetry}>Try again</Button>}</div>; }
-export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) { return <div className="border border-dashed border-black/15 bg-white px-6 py-14 text-center"><h2 className="text-lg font-semibold text-[var(--rams-charcoal)]">{title}</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--rams-gray)]">{description}</p>{action && <div className="mt-5">{action}</div>}</div>; }
-export function Pagination({ page, totalPages, onPageChange, disabled }: { page: number; totalPages: number; onPageChange: (page: number) => void; disabled?: boolean }) { if (totalPages <= 1) return null; return <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/8 px-5 py-4"><p className="text-sm text-[var(--rams-gray)]">Page {page} of {totalPages}</p><div className="flex gap-2"><Button variant="secondary" disabled={disabled || page === 1} onClick={() => onPageChange(page - 1)}>Previous</Button><Button disabled={disabled || page === totalPages} onClick={() => onPageChange(page + 1)}>Next</Button></div></div>; }
-export function Field({ label, htmlFor, error, className = "", children }: { label: string; htmlFor?: string; error?: string; className?: string; children: ReactNode }) { return <div className={className}><label htmlFor={htmlFor} className="mb-2 block text-sm font-semibold text-[var(--rams-charcoal)]">{label}</label>{children}{error && <p className="mt-1 text-xs text-red-700">{error}</p>}</div>; }
-export const inputClass = "w-full rounded-md border border-black/15 bg-white px-3 py-2.5 text-sm text-[var(--rams-charcoal)] outline-none transition placeholder:text-[var(--rams-gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-red-100";
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
+          {eyebrow ?? "RAMS Platform"}
+        </p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--rams-charcoal)]">
+          {title}
+        </h1>
+        {description && (
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--rams-gray)]">
+            {description}
+          </p>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
+export function Button({
+  children,
+  variant = "primary",
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary" | "danger";
+}) {
+  const styles = {
+    primary: "bg-[var(--rams-red)] text-white hover:bg-[var(--rams-red-dark)]",
+    secondary:
+      "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]",
+    danger: "bg-red-700 text-white hover:bg-red-800",
+  };
+  return (
+    <button
+      {...props}
+      className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+export function LinkButton({
+  children,
+  href,
+  variant = "primary",
+}: {
+  children: ReactNode;
+  href: string;
+  variant?: "primary" | "secondary";
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 ${variant === "primary" ? "bg-[var(--rams-red)] text-white hover:bg-[var(--rams-red-dark)]" : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"}`}
+    >
+      {children}
+    </Link>
+  );
+}
+export function Card({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={`border border-black/8 bg-white shadow-[0_8px_30px_rgba(31,35,40,0.05)] ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+export function Badge({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "red" | "green" | "amber";
+}) {
+  const tones = {
+    neutral: "bg-[var(--rams-gray-light)] text-[var(--rams-charcoal)]",
+    red: "bg-red-50 text-[var(--rams-red-dark)]",
+    green: "bg-emerald-50 text-emerald-800",
+    amber: "bg-amber-50 text-amber-800",
+  };
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
+export function LoadingState({ label = "Loading" }: { label?: string }) {
+  return (
+    <div
+      className="flex items-center justify-center py-16 text-sm text-[var(--rams-gray)]"
+      role="status"
+    >
+      <span className="mr-3 h-4 w-4 animate-spin rounded-full border-2 border-[var(--rams-red)] border-t-transparent" />
+      {label}…
+    </div>
+  );
+}
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="border border-red-200 bg-red-50 p-5" role="alert">
+      <p className="text-sm font-semibold text-red-800">{message}</p>
+      {onRetry && (
+        <Button className="mt-4" onClick={onRetry}>
+          Try again
+        </Button>
+      )}
+    </div>
+  );
+}
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="border border-dashed border-black/15 bg-white px-6 py-14 text-center">
+      <h2 className="text-lg font-semibold text-[var(--rams-charcoal)]">
+        {title}
+      </h2>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--rams-gray)]">
+        {description}
+      </p>
+      {action && <div className="mt-5">{action}</div>}
+    </div>
+  );
+}
+export function Pagination({
+  page,
+  totalPages,
+  onPageChange,
+  disabled,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  disabled?: boolean;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/8 px-5 py-4">
+      <p className="text-sm text-[var(--rams-gray)]">
+        Page {page} of {totalPages}
+      </p>
+      <div className="flex gap-2">
+        <Button
+          variant="secondary"
+          disabled={disabled || page === 1}
+          onClick={() => onPageChange(page - 1)}
+        >
+          Previous
+        </Button>
+        <Button
+          disabled={disabled || page === totalPages}
+          onClick={() => onPageChange(page + 1)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
+export function Field({
+  label,
+  htmlFor,
+  error,
+  className = "",
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  error?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <label
+        htmlFor={htmlFor}
+        className="mb-2 block text-sm font-semibold text-[var(--rams-charcoal)]"
+      >
+        {label}
+      </label>
+      {children}
+      {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
+    </div>
+  );
+}
+export const inputClass =
+  "w-full rounded-md border border-black/15 bg-white px-3 py-2.5 text-sm text-[var(--rams-charcoal)] outline-none transition placeholder:text-[var(--rams-gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-red-100";

@@ -20,10 +20,7 @@ function setCsrfCookie(res: Response, csrfToken: string) {
   });
 }
 
-export async function loginController(
-  req: Request,
-  res: Response
-) {
+export async function loginController(req: Request, res: Response) {
   try {
     const input = loginSchema.parse(req.body);
     const result = await login(input);
@@ -52,10 +49,7 @@ export async function loginController(
   }
 }
 
-export async function logoutController(
-  req: Request,
-  res: Response
-) {
+export async function logoutController(req: Request, res: Response) {
   const token = req.cookies?.[AUTH_COOKIE_NAME];
 
   if (typeof token === "string") {

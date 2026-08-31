@@ -7,5 +7,46 @@ import TeamDirectory from "@/components/public/team-directory";
 import { localizedMetadata } from "@/lib/i18n/metadata";
 import type { Locale } from "@/i18n/routing";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> { const { locale } = await params; const t = await getTranslations({ locale, namespace: "team" }); return localizedMetadata({ locale: locale as Locale, title: t("heroTitle"), description: t("heroDescription"), path: "/team" }); }
-export default function TeamPage() { const t = useTranslations("team"); const home = useTranslations("home"); return <><PageHero eyebrow={t("heroEyebrow")} title={t("heroTitle")} description={t("heroDescription")} current={t("heroEyebrow")} /><TeamDirectory /><CtaSection title={t("ctaTitle")} description={home("ctaDescription")} primary={home("primaryCta")} secondary={home("researchLink")} /></>; }
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({
+    locale,
+    namespace: "team",
+  });
+
+  return localizedMetadata({
+    locale: locale as Locale,
+    title: t("heroTitle"),
+    description: t("heroDescription"),
+    path: "/team",
+  });
+}
+
+export default function TeamPage() {
+  const t = useTranslations("team");
+  const home = useTranslations("home");
+
+  return (
+    <>
+      <PageHero
+        eyebrow={t("heroEyebrow")}
+        title={t("heroTitle")}
+        description={t("heroDescription")}
+        current={t("heroEyebrow")}
+      />
+
+      <TeamDirectory />
+
+      <CtaSection
+        title={t("ctaTitle")}
+        description={home("ctaDescription")}
+        primary={home("primaryCta")}
+        secondary={home("researchLink")}
+      />
+    </>
+  );
+}

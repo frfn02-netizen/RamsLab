@@ -73,9 +73,7 @@ export default async function AboutPage({
       <section className="bg-white py-16 sm:py-24">
         <PublicContainer className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-20">
           <div className="hero-entrance">
-            <p className="eyebrow">
-              {localized(content.hero.eyebrow)}
-            </p>
+            <p className="eyebrow">{localized(content.hero.eyebrow)}</p>
 
             <h1 className="mt-4 font-display text-5xl font-bold leading-tight text-[var(--navy)]">
               {localized(content.hero.title)}
@@ -120,9 +118,7 @@ export default async function AboutPage({
               <div
                 key={item.key}
                 className={`public-card-interaction p-8 ${
-                  index < 3
-                    ? "lg:border-r border-[var(--border)]"
-                    : ""
+                  index < 3 ? "lg:border-r border-[var(--border)]" : ""
                 }`}
               >
                 <span className="font-display text-4xl font-bold text-[var(--rams-red)]">
@@ -191,10 +187,7 @@ export default async function AboutPage({
             stagger={100}
           >
             {content.researchFocus.items.map((area, index) => (
-              <div
-                key={area.en}
-                className="public-card-interaction flex gap-6"
-              >
+              <div key={area.en} className="public-card-interaction flex gap-6">
                 <span className="font-display text-2xl font-bold text-[var(--gray)]/50">
                   0{index + 1}
                 </span>
@@ -300,13 +293,8 @@ export default async function AboutPage({
             stagger={100}
           >
             {content.profile.items.map((item) => (
-              <div
-                key={item.label.en}
-                className="public-card-interaction"
-              >
-                <p className="eyebrow">
-                  {localized(item.label)}
-                </p>
+              <div key={item.label.en} className="public-card-interaction">
+                <p className="eyebrow">{localized(item.label)}</p>
 
                 <p className="mt-2 text-sm text-[var(--navy)]">
                   {localized(item.value)}

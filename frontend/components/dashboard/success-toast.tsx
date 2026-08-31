@@ -23,13 +23,27 @@ export default function SuccessToast({
       aria-live="polite"
     >
       <div className="shrink-0 text-lime-500" aria-hidden="true">
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
       </div>
       <div className="flex-1">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">Success!</p>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-white">
+          Success!
+        </p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {message}
+        </p>
       </div>
       <button
         type="button"
@@ -37,8 +51,18 @@ export default function SuccessToast({
         className="shrink-0 text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-lime-500/50 dark:hover:text-gray-300"
         aria-label="Dismiss success notification"
       >
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>

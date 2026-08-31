@@ -48,12 +48,18 @@ describe("authentication security", () => {
   });
 
   it("rejects inactive users", async () => {
-    await getUsersCollection().updateOne({ _id: USER_ID }, { $set: { isActive: false } });
+    await getUsersCollection().updateOne(
+      { _id: USER_ID },
+      { $set: { isActive: false } },
+    );
     const response = await request(app).post("/api/auth/login").send({
       email: EMAIL,
       password: PASSWORD,
     });
-    await getUsersCollection().updateOne({ _id: USER_ID }, { $set: { isActive: true } });
+    await getUsersCollection().updateOne(
+      { _id: USER_ID },
+      { $set: { isActive: true } },
+    );
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe("Invalid email or password");
@@ -67,14 +73,21 @@ describe("authentication security", () => {
 
     expect(login.status).toBe(200);
     const setCookies = (login.headers["set-cookie"] ?? []) as string[];
-    const accessSetCookie = setCookies.find((cookie) => cookie.startsWith("rams_access_token=")) ?? "";
+    const accessSetCookie =
+      setCookies.find((cookie) => cookie.startsWith("rams_access_token=")) ??
+      "";
     accessCookie = accessSetCookie.split(";")[0] ?? "";
-    csrfCookie = setCookies.find((cookie) => cookie.startsWith("rams_csrf_token="))?.split(";")[0] ?? "";
+    csrfCookie =
+      setCookies
+        .find((cookie) => cookie.startsWith("rams_csrf_token="))
+        ?.split(";")[0] ?? "";
     expect(accessSetCookie).toContain("HttpOnly");
     expect(csrfCookie).toContain("rams_csrf_token=");
     expect(accessCookie).not.toBe("");
 
-    const me = await request(app).get("/api/auth/me").set("Cookie", accessCookie);
+    const me = await request(app)
+      .get("/api/auth/me")
+      .set("Cookie", accessCookie);
     expect(me.status).toBe(200);
 
     const csrfRejected = await request(app)
@@ -88,7 +101,9 @@ describe("authentication security", () => {
       .set("X-CSRF-Token", csrfCookie.split("=")[1] ?? "");
     expect(logout.status).toBe(200);
 
-    const reused = await request(app).get("/api/auth/me").set("Cookie", accessCookie);
+    const reused = await request(app)
+      .get("/api/auth/me")
+      .set("Cookie", accessCookie);
     expect(reused.status).toBe(401);
   });
 });

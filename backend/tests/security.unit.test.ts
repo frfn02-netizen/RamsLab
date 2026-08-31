@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import jwt from "jsonwebtoken";
 import request from "supertest";
 
-process.env.JWT_SECRET ??= "unit-test-secret-that-is-at-least-32-characters-long";
+process.env.JWT_SECRET ??=
+  "unit-test-secret-that-is-at-least-32-characters-long";
 process.env.NODE_ENV = "test";
 
 import app from "../src/app.js";
@@ -11,7 +12,10 @@ import { updateProjectSchema } from "../src/modules/projects/project.schema.js";
 import { updatePartnerSchema } from "../src/modules/partners/partner.schema.js";
 import { updateDosenSchema } from "../src/modules/dosen/dosen.schema.js";
 import { updateTrackingSchema } from "../src/modules/tracking/tracking.schema.js";
-import { updateAlumniSchema, updateMyAlumniSchema } from "../src/modules/alumni/alumni.schema.js";
+import {
+  updateAlumniSchema,
+  updateMyAlumniSchema,
+} from "../src/modules/alumni/alumni.schema.js";
 import { createPublicationSchema } from "../src/modules/publications/publication.schema.js";
 import { createPartnerSchema } from "../src/modules/partners/partner.schema.js";
 
@@ -55,7 +59,14 @@ describe("security regressions", () => {
       published: true,
     };
 
-    for (const schema of [updateProjectSchema, updatePartnerSchema, updateDosenSchema, updateTrackingSchema, updateAlumniSchema, updateMyAlumniSchema]) {
+    for (const schema of [
+      updateProjectSchema,
+      updatePartnerSchema,
+      updateDosenSchema,
+      updateTrackingSchema,
+      updateAlumniSchema,
+      updateMyAlumniSchema,
+    ]) {
       const parsed = schema.parse(attack);
       expect(parsed).not.toHaveProperty("role");
       expect(parsed).not.toHaveProperty("userId");
@@ -92,7 +103,9 @@ describe("security regressions", () => {
     const oversized = await request(app)
       .post("/api/auth/login")
       .set("Content-Type", "application/json")
-      .send(JSON.stringify({ email: "a@b.test", password: "x".repeat(1_100_000) }));
+      .send(
+        JSON.stringify({ email: "a@b.test", password: "x".repeat(1_100_000) }),
+      );
     expect(oversized.status).toBe(413);
     expect(oversized.body.message).toBe("Request body is too large");
 
@@ -115,9 +128,13 @@ describe("security regressions", () => {
   });
 
   it("allows public profile assets to load cross-site from the Vercel UI", async () => {
-    const response = await request(app).get("/uploads/dosen/nonexistent-profile.jpg");
+    const response = await request(app).get(
+      "/uploads/dosen/nonexistent-profile.jpg",
+    );
 
-    expect(response.headers["cross-origin-resource-policy"]).toBe("cross-origin");
+    expect(response.headers["cross-origin-resource-policy"]).toBe(
+      "cross-origin",
+    );
   });
 
   it("allows the configured origin and clears authentication cookies on logout", async () => {
@@ -131,8 +148,14 @@ describe("security regressions", () => {
       .set("X-CSRF-Token", "csrf-token");
 
     expect(response.status).toBe(200);
-    expect(response.headers["access-control-allow-origin"]).toBe("http://localhost:3000");
-    expect(response.headers["set-cookie"]?.some((cookie: string) => cookie.includes("rams_access_token=;"))).toBe(true);
+    expect(response.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:3000",
+    );
+    expect(
+      response.headers["set-cookie"]?.some((cookie: string) =>
+        cookie.includes("rams_access_token=;"),
+      ),
+    ).toBe(true);
   });
 
   it("allows login to replace a stale access and CSRF cookie pair", async () => {
@@ -155,13 +178,17 @@ describe("security regressions", () => {
   it("rate-limits repeated login attempts", async () => {
     const responses = [];
     for (let attempt = 0; attempt < 11; attempt += 1) {
-      responses.push(await request(app).post("/api/auth/login").send({
-        email: "not-an-email",
-        password: "x",
-      }));
+      responses.push(
+        await request(app).post("/api/auth/login").send({
+          email: "not-an-email",
+          password: "x",
+        }),
+      );
     }
 
-    expect(responses.slice(0, 10).every((response) => response.status === 401)).toBe(true);
+    expect(
+      responses.slice(0, 10).every((response) => response.status === 401),
+    ).toBe(true);
     expect(responses[10].status).toBe(429);
     expect(responses[10].body.message).toBe("Too many login attempts");
   });

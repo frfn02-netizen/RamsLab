@@ -7,9 +7,7 @@ type DashboardLayoutProps = {
   children: ReactNode;
 };
 
-export default function DashboardLayout({
-  children,
-}: DashboardLayoutProps) {
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="dashboard-shell flex h-screen overflow-hidden bg-[var(--rams-gray-light)] text-[var(--rams-charcoal)]">
       <Sidebar />

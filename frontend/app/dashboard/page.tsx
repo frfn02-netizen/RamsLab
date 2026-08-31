@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import { getDashboardStats } from "@/lib/api/dashboard";
-import { ApiError } from "@/lib/api/errors";
 import { useAuth } from "@/components/providers/auth-providers";
 import { LinkButton } from "@/components/ui";
+import { getDashboardStats } from "@/lib/api/dashboard";
+import { ApiError } from "@/lib/api/errors";
 import type { DashboardStats } from "@/types/dashboard";
 
 type StatCardProps = {
@@ -14,13 +14,11 @@ type StatCardProps = {
   accent: "red" | "blue" | "navy";
 };
 
-function StatCard({
-  label,
-  value,
-  accent,
-}: StatCardProps) {
+function StatCard({ label, value, accent }: StatCardProps) {
   return (
-    <article className={`dashboard-stat-card dashboard-stat-accent-${accent} p-6`}>
+    <article
+      className={`dashboard-stat-card dashboard-stat-accent-${accent} p-6`}
+    >
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--rams-gray)]">
         {label}
       </p>
@@ -29,45 +27,31 @@ function StatCard({
         {value.toLocaleString("en-US")}
       </p>
 
-      <p className="mt-2 text-xs text-[var(--rams-gray)]">Current platform records</p>
-      <div className="mt-6 h-px w-12 bg-[var(--rams-gray)]/25" aria-hidden="true" />
+      <p className="mt-2 text-xs text-[var(--rams-gray)]">
+        Current platform records
+      </p>
+
+      <div
+        className="mt-6 h-px w-12 bg-[var(--rams-gray)]/25"
+        aria-hidden="true"
+      />
     </article>
   );
 }
 
 export default function DashboardPage() {
-  const {
-    user,
-    status,
-  } = useAuth();
+  const { user, status } = useAuth();
 
-  const [
-    stats,
-    setStats,
-  ] = useState<DashboardStats | null>(null);
-
-  const [
-    isLoading,
-    setIsLoading,
-  ] = useState(false);
-
-  const [
-    error,
-    setError,
-  ] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (
-      status !== "authenticated" ||
-      !user
-    ) {
+    if (status !== "authenticated" || !user) {
       return;
     }
 
-    if (
-      user.role !== "ADMIN" &&
-      user.role !== "DOSEN"
-    ) {
+    if (user.role !== "ADMIN" && user.role !== "DOSEN") {
       return;
     }
 
@@ -78,8 +62,7 @@ export default function DashboardPage() {
       setError(null);
 
       try {
-        const result =
-          await getDashboardStats();
+        const result = await getDashboardStats();
 
         if (!cancelled) {
           setStats(result);
@@ -89,14 +72,10 @@ export default function DashboardPage() {
           return;
         }
 
-        if (
-          error instanceof ApiError
-        ) {
+        if (error instanceof ApiError) {
           setError(error.message);
         } else {
-          setError(
-            "Failed to load dashboard"
-          );
+          setError("Failed to load dashboard");
         }
       } finally {
         if (!cancelled) {
@@ -138,25 +117,35 @@ export default function DashboardPage() {
     return (
       <div className="dashboard-page p-5 sm:p-7 lg:p-9">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">Overview</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-[var(--rams-charcoal)]">Dashboard</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--rams-gray)]">Use the Publications workspace to add Scopus and other publication records to the RAMS website.</p>
-          <div className="mt-8"><LinkButton href="/dashboard/publications">Open publications</LinkButton></div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
+            Overview
+          </p>
+
+          <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-[var(--rams-charcoal)]">
+            Dashboard
+          </h1>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--rams-gray)]">
+            Use the Publications workspace to add Scopus and other publication
+            records to the RAMS website.
+          </p>
+
+          <div className="mt-8">
+            <LinkButton href="/dashboard/publications">
+              Open publications
+            </LinkButton>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (
-    user.role !== "ADMIN" &&
-    user.role !== "DOSEN"
-  ) {
+  if (user.role !== "ADMIN" && user.role !== "DOSEN") {
     return (
       <div className="dashboard-page p-5 sm:p-7 lg:p-9">
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
           <p className="text-sm font-medium text-red-700">
-            You do not have permission to
-            access the dashboard.
+            You do not have permission to access the dashboard.
           </p>
         </div>
       </div>
@@ -176,37 +165,22 @@ export default function DashboardPage() {
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-[var(--rams-gray)]">
-            Monitor the current state of
-            the RAMS Platform.
+            Monitor the current state of the RAMS Platform.
           </p>
         </div>
 
         {error && (
           <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-700">
-              {error}
-            </p>
+            <p className="text-sm font-medium text-red-700">{error}</p>
           </div>
         )}
 
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          <StatCard
-            label="Users"
-            value={stats?.users ?? 0}
-            accent="red"
-          />
+          <StatCard label="Users" value={stats?.users ?? 0} accent="red" />
 
-          <StatCard
-            label="Alumni"
-            value={stats?.alumni ?? 0}
-            accent="blue"
-          />
+          <StatCard label="Alumni" value={stats?.alumni ?? 0} accent="blue" />
 
-          <StatCard
-            label="Dosen"
-            value={stats?.dosen ?? 0}
-            accent="red"
-          />
+          <StatCard label="Dosen" value={stats?.dosen ?? 0} accent="red" />
 
           <StatCard
             label="Projects"
@@ -222,17 +196,13 @@ export default function DashboardPage() {
 
           <StatCard
             label="University Partners"
-            value={
-              stats?.universityPartners ?? 0
-            }
+            value={stats?.universityPartners ?? 0}
             accent="blue"
           />
 
           <StatCard
             label="Industrial Partners"
-            value={
-              stats?.industrialPartners ?? 0
-            }
+            value={stats?.industrialPartners ?? 0}
             accent="red"
           />
 
@@ -256,10 +226,17 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-6 rounded-md border border-[#D9E2EA] bg-white p-6 shadow-[0_8px_24px_rgba(16,38,61,0.04)]">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--rams-gray)]">CMS activity</p>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--rams-gray)]">
+            CMS activity
+          </p>
+
           <p className="mt-3 text-sm text-[var(--rams-gray)]">
             {stats?.latestSiteContentUpdatedAt
-              ? `Last site content update: ${stats.latestSiteContentKey ?? "content"} · ${new Date(stats.latestSiteContentUpdatedAt).toLocaleString()}`
+              ? `Last site content update: ${
+                  stats.latestSiteContentKey ?? "content"
+                } · ${new Date(
+                  stats.latestSiteContentUpdatedAt,
+                ).toLocaleString()}`
               : "No site content updates recorded yet."}
           </p>
         </div>

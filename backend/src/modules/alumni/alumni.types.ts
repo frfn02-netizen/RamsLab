@@ -8,8 +8,7 @@ export const ALUMNI_STATUS = {
   OTHER: "OTHER",
 } as const;
 
-export type AlumniStatus =
-  (typeof ALUMNI_STATUS)[keyof typeof ALUMNI_STATUS];
+export type AlumniStatus = (typeof ALUMNI_STATUS)[keyof typeof ALUMNI_STATUS];
 
 export interface CareerHistory {
   company: string;

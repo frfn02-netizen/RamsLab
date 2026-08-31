@@ -4,7 +4,7 @@ import { countProjects } from "../projects/project.repository.js";
 import { countUsers } from "../users/user.repository.js";
 import { countPartners } from "../partners/partner.repository.js";
 import { countPublications } from "../publications/publication.repository.js";
-import {PARTNER_TYPE} from "../partners/partner.types.js";
+import { PARTNER_TYPE } from "../partners/partner.types.js";
 import { countResearchAreas } from "../research/research.repository.js";
 import { findLatestSiteContent } from "../site-content/site-content.repository.js";
 
@@ -26,12 +26,8 @@ export async function getDashboardStats() {
     countDosen(),
     countProjects(),
     countPublications(),
-    countPartners(
-      PARTNER_TYPE.UNIVERSITY
-    ),
-    countPartners(
-      PARTNER_TYPE.INDUSTRIAL
-    ),
+    countPartners(PARTNER_TYPE.UNIVERSITY),
+    countPartners(PARTNER_TYPE.INDUSTRIAL),
     countResearchAreas(),
     countResearchAreas({ publishedOnly: true }),
     findLatestSiteContent(),

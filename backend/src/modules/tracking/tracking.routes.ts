@@ -8,16 +8,11 @@ import {
   deleteAlumniTracking,
 } from "./tracking.controller.js";
 
-import {
-  authenticate,
-} from "../../middlewares/auth.middlewares.js";
+import { authenticate } from "../../middlewares/auth.middlewares.js";
 
-import {
-  requireRole,
-} from "../../middlewares/role.middlewares.js";
+import { requireRole } from "../../middlewares/role.middlewares.js";
 
 const router = Router();
-
 
 // ========================================
 // ADMIN + DOSEN
@@ -26,23 +21,16 @@ const router = Router();
 router.get(
   "/alumni/:alumniId",
   authenticate,
-  requireRole(
-    "ADMIN",
-    "DOSEN"
-  ),
-  getTrackingByAlumniId
+  requireRole("ADMIN", "DOSEN"),
+  getTrackingByAlumniId,
 );
 
 router.get(
   "/:id",
   authenticate,
-  requireRole(
-    "ADMIN",
-    "DOSEN"
-  ),
-  getTrackingById
+  requireRole("ADMIN", "DOSEN"),
+  getTrackingById,
 );
-
 
 // ========================================
 // ADMIN
@@ -52,21 +40,11 @@ router.post(
   "/alumni/:alumniId",
   authenticate,
   requireRole("ADMIN"),
-  createAlumniTracking
+  createAlumniTracking,
 );
 
-router.patch(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  updateAlumniTracking
-);
+router.patch("/:id", authenticate, requireRole("ADMIN"), updateAlumniTracking);
 
-router.delete(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  deleteAlumniTracking
-);
+router.delete("/:id", authenticate, requireRole("ADMIN"), deleteAlumniTracking);
 
 export default router;

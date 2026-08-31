@@ -5,8 +5,7 @@ export const PARTNER_TYPE = {
   INDUSTRIAL: "INDUSTRIAL",
 } as const;
 
-export type PartnerType =
-  (typeof PARTNER_TYPE)[keyof typeof PARTNER_TYPE];
+export type PartnerType = (typeof PARTNER_TYPE)[keyof typeof PARTNER_TYPE];
 
 export interface Partner {
   _id?: ObjectId;

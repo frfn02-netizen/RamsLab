@@ -4,22 +4,11 @@ import { PARTNER_TYPE } from "./partner.types.js";
 import { isSafeHttpUrl } from "../../lib/url-security.js";
 
 export const createPartnerSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Partner name is required")
-    .max(200),
+  name: z.string().trim().min(2, "Partner name is required").max(200),
 
-  type: z.enum([
-    PARTNER_TYPE.UNIVERSITY,
-    PARTNER_TYPE.INDUSTRIAL,
-  ]),
+  type: z.enum([PARTNER_TYPE.UNIVERSITY, PARTNER_TYPE.INDUSTRIAL]),
 
-  logo: z
-    .string()
-    .trim()
-    .max(500)
-    .optional(),
+  logo: z.string().trim().max(500).optional(),
 
   website: z
     .string()
@@ -27,41 +16,33 @@ export const createPartnerSchema = z.object({
     .refine(isSafeHttpUrl, "Website URL must use HTTP or HTTPS")
     .optional(),
 
-  country: z
-    .string()
-    .trim()
-    .max(100)
-    .optional(),
+  country: z.string().trim().max(100).optional(),
 
-  description: z
-    .string()
-    .trim()
-    .max(1000)
-    .optional(),
+  description: z.string().trim().max(1000).optional(),
 
-  isFeatured: z
-    .boolean()
-    .default(false),
+  isFeatured: z.boolean().default(false),
 
-  published: z
-    .boolean()
-    .default(false),
+  published: z.boolean().default(false),
 });
 
-export const createPartnerDetailsSchema = createPartnerSchema.omit({ type: true });
+export const createPartnerDetailsSchema = createPartnerSchema.omit({
+  type: true,
+});
 
 export const updatePartnerSchema = z.object({
   name: z.string().trim().min(2).max(200).optional(),
   logo: z.string().trim().max(500).optional(),
-  website: z.string().url().refine(isSafeHttpUrl, "Website URL must use HTTP or HTTPS").optional(),
+  website: z
+    .string()
+    .url()
+    .refine(isSafeHttpUrl, "Website URL must use HTTP or HTTPS")
+    .optional(),
   country: z.string().trim().max(100).optional(),
   description: z.string().trim().max(1000).optional(),
   isFeatured: z.boolean().optional(),
   published: z.boolean().optional(),
 });
 
-export type CreatePartnerInput =
-  z.infer<typeof createPartnerSchema>;
+export type CreatePartnerInput = z.infer<typeof createPartnerSchema>;
 
-export type UpdatePartnerInput =
-  z.infer<typeof updatePartnerSchema>;
+export type UpdatePartnerInput = z.infer<typeof updatePartnerSchema>;

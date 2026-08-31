@@ -3,50 +3,36 @@ import { z } from "zod";
 import { ALUMNI_STATUS } from "./alumni.types.js";
 import { isSafeLinkedInUrl } from "../../lib/url-security.js";
 
-export const createAdminAlumniSchema = z.object({
-  email: z
+const optionalLinkedInSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim() === "" ? undefined : value,
+  z
     .string()
     .trim()
-    .email("Invalid email"),
+    .url()
+    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
+    .optional(),
+);
+
+export const createAdminAlumniSchema = z.object({
+  email: z.string().trim().email("Invalid email"),
 
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
     .max(128),
 
-  fullName: z
-    .string()
-    .trim()
-    .min(2, "Full name is required")
-    .max(200),
+  fullName: z.string().trim().min(2, "Full name is required").max(200),
 
-  nim: z
-    .string()
-    .trim()
-    .min(1, "NIM is required")
-    .max(50),
+  nim: z.string().trim().min(1, "NIM is required").max(50),
 
-  graduationYear: z
-    .number()
-    .int()
-    .min(1900)
-    .max(2100),
+  graduationYear: z.number().int().min(1900).max(2100),
 
-  program: z
-    .string()
-    .trim()
-    .min(1, "Program is required")
-    .max(200),
+  program: z.string().trim().min(1, "Program is required").max(200),
 
-  phone: z
-    .string()
-    .trim()
-    .optional(),
+  phone: z.string().trim().optional(),
 
-  location: z
-    .string()
-    .trim()
-    .optional(),
+  location: z.string().trim().optional(),
 
   currentStatus: z.enum([
     ALUMNI_STATUS.WORKING,
@@ -56,32 +42,15 @@ export const createAdminAlumniSchema = z.object({
     ALUMNI_STATUS.OTHER,
   ]),
 
-  currentCompany: z
-    .string()
-    .trim()
-    .optional(),
+  currentCompany: z.string().trim().optional(),
 
-  currentPosition: z
-    .string()
-    .trim()
-    .optional(),
+  currentPosition: z.string().trim().optional(),
 
-  linkedin: z
-    .string()
-    .url()
-    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
-    .optional(),
+  linkedin: optionalLinkedInSchema,
 
-  bio: z
-    .string()
-    .trim()
-    .max(1000)
-    .optional(),
+  bio: z.string().trim().max(1000).optional(),
 
-  isPublic: z
-    .boolean()
-    .default(false),
+  isPublic: z.boolean().default(false),
 });
 
-export type CreateAdminAlumniInput =
-  z.infer<typeof createAdminAlumniSchema>;
+export type CreateAdminAlumniInput = z.infer<typeof createAdminAlumniSchema>;

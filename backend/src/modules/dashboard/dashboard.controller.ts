@@ -1,14 +1,9 @@
-import type { Request, Response, } from "express";
-import { getDashboardStats, } from "./dashboard.service.js";
+import type { Request, Response } from "express";
+import { getDashboardStats } from "./dashboard.service.js";
 
-
-export async function getDashboardController(
-  _req: Request,
-  res: Response
-) {
+export async function getDashboardController(_req: Request, res: Response) {
   try {
-    const stats =
-      await getDashboardStats();
+    const stats = await getDashboardStats();
 
     return res.json({
       success: true,
@@ -17,8 +12,7 @@ export async function getDashboardController(
   } catch {
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch dashboard statistics",
+      message: "Failed to fetch dashboard statistics",
     });
   }
 }

@@ -15,7 +15,9 @@ async function seedAdmin() {
     const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
     const password = process.env.SEED_ADMIN_PASSWORD;
     if (!email || !password || password.length < 12) {
-      throw new Error("SEED_ADMIN_EMAIL and a 12+ character SEED_ADMIN_PASSWORD are required");
+      throw new Error(
+        "SEED_ADMIN_EMAIL and a 12+ character SEED_ADMIN_PASSWORD are required",
+      );
     }
 
     const existingAdmin = await users.findOne({
@@ -27,10 +29,7 @@ async function seedAdmin() {
       return;
     }
 
-    const passwordHash = await bcrypt.hash(
-      password,
-      12
-    );
+    const passwordHash = await bcrypt.hash(password, 12);
 
     await users.insertOne({
       email,
@@ -46,10 +45,7 @@ async function seedAdmin() {
     console.log("✅ Admin created");
     console.log("Admin account created");
   } catch (error) {
-    console.error(
-      "❌ Failed to seed admin:",
-      error
-    );
+    console.error("❌ Failed to seed admin:", error);
 
     process.exit(1);
   }

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 
 type RevealOnScrollProps = {
   children: ReactNode;
@@ -22,14 +28,18 @@ export default function RevealOnScroll({
 
   useEffect(() => {
     const node = nodeRef.current;
-    if (!node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!node || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
 
-      setIsVisible(true);
-      observer.disconnect();
-    }, { threshold });
+        setIsVisible(true);
+        observer.disconnect();
+      },
+      { threshold },
+    );
 
     observer.observe(node);
 
@@ -40,12 +50,14 @@ export default function RevealOnScroll({
     "--reveal-delay": `${delay}ms`,
     "--reveal-stagger": `${stagger}ms`,
   } as CSSProperties;
-  return <div
-    ref={nodeRef}
-    className={`reveal-on-scroll ${isVisible ? "is-visible" : ""} ${className}`.trim()}
-    data-reveal-children={stagger > 0 ? "true" : undefined}
-    style={style}
-  >
-    {children}
-  </div>;
+  return (
+    <div
+      ref={nodeRef}
+      className={`reveal-on-scroll ${isVisible ? "is-visible" : ""} ${className}`.trim()}
+      data-reveal-children={stagger > 0 ? "true" : undefined}
+      style={style}
+    >
+      {children}
+    </div>
+  );
 }

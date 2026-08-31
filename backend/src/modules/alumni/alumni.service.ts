@@ -1,7 +1,14 @@
 import { ObjectId } from "mongodb";
-import { deleteAlumni as deleteAlumniRecord, getAlumniCollection, findAlumniById, findAlumniByNim, findAlumniByUserId, findAlumniList} from "./alumni.repository.js";
-import { getUsersCollection, } from "../users/user.repository.js";
-import { USER_ROLES, } from "../users/user.types.js";
+import {
+  deleteAlumni as deleteAlumniRecord,
+  getAlumniCollection,
+  findAlumniById,
+  findAlumniByNim,
+  findAlumniByUserId,
+  findAlumniList,
+} from "./alumni.repository.js";
+import { getUsersCollection } from "../users/user.repository.js";
+import { USER_ROLES } from "../users/user.types.js";
 import {
   createAlumniSchema,
   updateAlumniSchema,
@@ -12,57 +19,37 @@ import {
 } from "./alumni.schema.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
-export async function createAlumni(
-  input: CreateAlumniInput
-) {
-  const data =
-    createAlumniSchema.parse(input);
+export async function createAlumni(input: CreateAlumniInput) {
+  const data = createAlumniSchema.parse(input);
 
-  const users =
-    getUsersCollection();
+  const users = getUsersCollection();
 
-  const alumniCollection =
-    getAlumniCollection();
+  const alumniCollection = getAlumniCollection();
 
-  const userId =
-    new ObjectId(data.userId);
+  const userId = new ObjectId(data.userId);
 
-  const existingUser =
-    await users.findOne({
-      _id: userId,
-    });
+  const existingUser = await users.findOne({
+    _id: userId,
+  });
 
   if (!existingUser) {
-    throw new Error(
-      "User not found"
-    );
+    throw new Error("User not found");
   }
 
-  if (
-    existingUser.role !==
-    USER_ROLES.ALUMNI
-  ) {
-    throw new Error(
-      "User must have ALUMNI role"
-    );
+  if (existingUser.role !== USER_ROLES.ALUMNI) {
+    throw new Error("User must have ALUMNI role");
   }
 
-  const existingAlumni =
-    await findAlumniByUserId(userId);
+  const existingAlumni = await findAlumniByUserId(userId);
 
   if (existingAlumni) {
-    throw new Error(
-      "Alumni profile already exists"
-    );
+    throw new Error("Alumni profile already exists");
   }
 
-  const existingNim =
-    await findAlumniByNim(data.nim);
+  const existingNim = await findAlumniByNim(data.nim);
 
   if (existingNim) {
-    throw new Error(
-      "NIM already exists"
-    );
+    throw new Error("NIM already exists");
   }
 
   const now = new Date();
@@ -76,8 +63,7 @@ export async function createAlumni(
 
     photo: data.photo,
 
-    graduationYear:
-      data.graduationYear,
+    graduationYear: data.graduationYear,
 
     program: data.program,
 
@@ -85,38 +71,28 @@ export async function createAlumni(
 
     location: data.location,
 
-    currentStatus:
-      data.currentStatus,
+    currentStatus: data.currentStatus,
 
-    currentCompany:
-      data.currentCompany,
+    currentCompany: data.currentCompany,
 
-    currentPosition:
-      data.currentPosition,
+    currentPosition: data.currentPosition,
 
-    linkedin:
-      data.linkedin,
+    linkedin: data.linkedin,
 
     bio: data.bio,
 
-    careerHistory:
-      data.careerHistory,
+    careerHistory: data.careerHistory,
 
-    educationHistory:
-      data.educationHistory,
+    educationHistory: data.educationHistory,
 
-    isPublic:
-      data.isPublic,
+    isPublic: data.isPublic,
 
     createdAt: now,
 
     updatedAt: now,
   };
 
-  const result =
-    await alumniCollection.insertOne(
-      alumni
-    );
+  const result = await alumniCollection.insertOne(alumni);
 
   return {
     ...alumni,
@@ -124,9 +100,7 @@ export async function createAlumni(
   };
 }
 
-export async function getAlumniById(
-  id: string
-) {
+export async function getAlumniById(id: string) {
   return findAlumniById(id);
 }
 
@@ -135,33 +109,22 @@ export async function deleteAlumni(id: string) {
   return deleteAlumniRecord(id);
 }
 
-export async function getAlumniByUserId(
-  userId: string
-) {
+export async function getAlumniByUserId(userId: string) {
   if (!ObjectId.isValid(userId)) {
     return null;
   }
 
-  return findAlumniByUserId(
-    new ObjectId(userId)
-  );
+  return findAlumniByUserId(new ObjectId(userId));
 }
 
-export async function updateAlumni(
-  id: string,
-  input: UpdateAlumniInput
-) {
+export async function updateAlumni(id: string, input: UpdateAlumniInput) {
   if (!ObjectId.isValid(id)) {
-    throw new Error(
-      "Invalid alumni ID"
-    );
+    throw new Error("Invalid alumni ID");
   }
 
-  const data =
-    updateAlumniSchema.parse(input);
+  const data = updateAlumniSchema.parse(input);
 
-  const alumniCollection =
-    getAlumniCollection();
+  const alumniCollection = getAlumniCollection();
 
   const updateData = {
     ...data,
@@ -174,7 +137,7 @@ export async function updateAlumni(
     },
     {
       $set: updateData,
-    }
+    },
   );
 
   return findAlumniById(id);
@@ -182,17 +145,15 @@ export async function updateAlumni(
 
 export async function updateMyAlumni(
   userId: string,
-  input: UpdateMyAlumniInput
+  input: UpdateMyAlumniInput,
 ) {
   if (!ObjectId.isValid(userId)) {
     throw new Error("Invalid user ID");
   }
 
-  const data =
-    updateMyAlumniSchema.parse(input);
+  const data = updateMyAlumniSchema.parse(input);
 
-  const alumniCollection =
-    getAlumniCollection();
+  const alumniCollection = getAlumniCollection();
 
   const updateData = {
     ...data,
@@ -205,35 +166,28 @@ export async function updateMyAlumni(
     },
     {
       $set: updateData,
-    }
+    },
   );
 
-  return findAlumniByUserId(
-    new ObjectId(userId)
-  );
+  return findAlumniByUserId(new ObjectId(userId));
 }
 
 export async function getAlumniList(
   page: number,
   limit: number,
-  search?: string
+  search?: string,
 ) {
-  const safePage =
-    Math.max(1, page);
+  const safePage = Math.max(1, page);
 
   const safeLimit = Math.min(Math.max(1, limit), SECURITY_LIMITS.maxPageSize);
 
-  const result =
-    await findAlumniList({
-      page: safePage,
-      limit: safeLimit,
-      search,
-    });
+  const result = await findAlumniList({
+    page: safePage,
+    limit: safeLimit,
+    search,
+  });
 
-  const totalPages =
-    Math.ceil(
-      result.total / safeLimit
-    );
+  const totalPages = Math.ceil(result.total / safeLimit);
 
   return {
     data: result.data,

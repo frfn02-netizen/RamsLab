@@ -10,7 +10,8 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-const ALL_PUBLICATION_PERMISSIONS: readonly Permission[] = Object.values(PERMISSIONS);
+const ALL_PUBLICATION_PERMISSIONS: readonly Permission[] =
+  Object.values(PERMISSIONS);
 
 const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   ADMIN: ALL_PUBLICATION_PERMISSIONS,
@@ -32,7 +33,11 @@ export function requirePermission(...permissions: Permission[]) {
       });
     }
 
-    if (!permissions.some((permission) => hasPermission(req.user!.role, permission))) {
+    if (
+      !permissions.some((permission) =>
+        hasPermission(req.user!.role, permission),
+      )
+    ) {
       return res.status(403).json({
         success: false,
         message: "Insufficient permissions",

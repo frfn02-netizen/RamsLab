@@ -1,6 +1,13 @@
 import { ObjectId } from "mongodb";
 
-export const RESEARCH_AREA_CODES = ["RISK", "AIS", "RAM", "RCM", "DESIGN", "SIM"] as const;
+export const RESEARCH_AREA_CODES = [
+  "RISK",
+  "AIS",
+  "RAM",
+  "RCM",
+  "DESIGN",
+  "SIM",
+] as const;
 export type ResearchAreaCode = (typeof RESEARCH_AREA_CODES)[number];
 
 export interface BilingualText {
@@ -29,4 +36,7 @@ export interface ResearchArea {
   updatedBy?: ObjectId;
 }
 
-export type PublicResearchArea = Omit<ResearchArea, "_id" | "createdAt" | "updatedAt" | "updatedBy">;
+export type PublicResearchArea = Omit<
+  ResearchArea,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+>;

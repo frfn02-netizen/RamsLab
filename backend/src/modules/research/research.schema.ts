@@ -6,13 +6,29 @@ const bilingualTextSchema = z.object({
 });
 
 const bilingualMethodsSchema = z.object({
-  en: z.tuple([z.string().trim().min(1).max(500), z.string().trim().min(1).max(500), z.string().trim().min(1).max(500)]),
-  id: z.tuple([z.string().trim().min(1).max(500), z.string().trim().min(1).max(500), z.string().trim().min(1).max(500)]),
+  en: z.tuple([
+    z.string().trim().min(1).max(500),
+    z.string().trim().min(1).max(500),
+    z.string().trim().min(1).max(500),
+  ]),
+  id: z.tuple([
+    z.string().trim().min(1).max(500),
+    z.string().trim().min(1).max(500),
+    z.string().trim().min(1).max(500),
+  ]),
 });
 
 const researchAreaFields = {
-  code: z.string().trim().regex(/^[A-Z][A-Z0-9_]*$/, "Code must be an uppercase identifier").max(50),
-  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-safe").max(100),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[A-Z][A-Z0-9_]*$/, "Code must be an uppercase identifier")
+    .max(50),
+  slug: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-safe")
+    .max(100),
   title: bilingualTextSchema,
   description: bilingualTextSchema,
   methods: bilingualMethodsSchema,

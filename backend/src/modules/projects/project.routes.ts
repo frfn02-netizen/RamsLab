@@ -1,10 +1,16 @@
 import { Router } from "express";
-import { authenticate, } from "../../middlewares/auth.middlewares.js";
-import { requireRole, } from "../../middlewares/role.middlewares.js";
-import { createProjectController, deleteProjectController, getProjectBySlugController, getProjectController, getProjectListController, updateProjectController, } from "./project.controller.js";
+import { authenticate } from "../../middlewares/auth.middlewares.js";
+import { requireRole } from "../../middlewares/role.middlewares.js";
+import {
+  createProjectController,
+  deleteProjectController,
+  getProjectBySlugController,
+  getProjectController,
+  getProjectListController,
+  updateProjectController,
+} from "./project.controller.js";
 
 const router = Router();
-
 
 // ========================================
 // ADMIN + DOSEN
@@ -13,58 +19,42 @@ const router = Router();
 router.get(
   "/",
   authenticate,
-  requireRole(
-    "ADMIN",
-    "DOSEN"
-  ),
-  getProjectListController
+  requireRole("ADMIN", "DOSEN"),
+  getProjectListController,
 );
 
 router.get(
   "/slug/:slug",
   authenticate,
-  requireRole(
-    "ADMIN",
-    "DOSEN"
-  ),
-  getProjectBySlugController
+  requireRole("ADMIN", "DOSEN"),
+  getProjectBySlugController,
 );
 
 router.get(
   "/:id",
   authenticate,
-  requireRole(
-    "ADMIN",
-    "DOSEN"
-  ),
-  getProjectController
+  requireRole("ADMIN", "DOSEN"),
+  getProjectController,
 );
-
 
 // ========================================
 // ADMIN
 // ========================================
 
-router.post(
-  "/",
-  authenticate,
-  requireRole("ADMIN"),
-  createProjectController
-);
+router.post("/", authenticate, requireRole("ADMIN"), createProjectController);
 
 router.patch(
   "/:id",
   authenticate,
   requireRole("ADMIN"),
-  updateProjectController
+  updateProjectController,
 );
 
 router.delete(
   "/:id",
   authenticate,
   requireRole("ADMIN"),
-  deleteProjectController
+  deleteProjectController,
 );
-
 
 export default router;

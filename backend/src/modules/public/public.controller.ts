@@ -1,7 +1,4 @@
-import type {
-  Request,
-  Response,
-} from "express";
+import type { Request, Response } from "express";
 
 import {
   findAllProjects,
@@ -19,10 +16,16 @@ import {
 import { findAllDosen } from "../dosen/dosen.repository.js";
 import { findPublicAlumni } from "../alumni/alumni.repository.js";
 import { findAllStudents } from "../students/student.repository.js";
-import { toPublicAlumniProfile, toPublicDosenProfile, toPublicStudentProfile } from "./public-profile.js";
+import {
+  toPublicAlumniProfile,
+  toPublicDosenProfile,
+  toPublicStudentProfile,
+} from "./public-profile.js";
 import { safeHttpUrl } from "../../lib/url-security.js";
 
-function toPublicPartner(partner: Awaited<ReturnType<typeof findUniversityPartners>>[number]) {
+function toPublicPartner(
+  partner: Awaited<ReturnType<typeof findUniversityPartners>>[number],
+) {
   return {
     ...partner,
     _id: partner._id?.toString(),
@@ -31,10 +34,7 @@ function toPublicPartner(partner: Awaited<ReturnType<typeof findUniversityPartne
   };
 }
 
-export async function getPublicPeopleController(
-  req: Request,
-  res: Response,
-) {
+export async function getPublicPeopleController(req: Request, res: Response) {
   try {
     const [dosen, students, alumni] = await Promise.all([
       findAllDosen({ publicOnly: true }),
@@ -48,8 +48,12 @@ export async function getPublicPeopleController(
         DOSEN: dosen.map((member) => toPublicDosenProfile(req, member)),
         // The current schema has no student collection yet. Keep the
         // active student categories available without inventing records.
-        MAHASISWA: students.filter((student) => student.studentType === "PHD_STUDENT").map((student) => toPublicStudentProfile(req, student)),
-        UNDERGRADUATE: students.filter((student) => student.studentType === "UNDERGRADUATE_STUDENT").map((student) => toPublicStudentProfile(req, student)),
+        MAHASISWA: students
+          .filter((student) => student.studentType === "PHD_STUDENT")
+          .map((student) => toPublicStudentProfile(req, student)),
+        UNDERGRADUATE: students
+          .filter((student) => student.studentType === "UNDERGRADUATE_STUDENT")
+          .map((student) => toPublicStudentProfile(req, student)),
         ALUMNI: alumni.map((member) => toPublicAlumniProfile(req, member)),
       },
     });
@@ -61,10 +65,7 @@ export async function getPublicPeopleController(
   }
 }
 
-export async function getPublicAlumniController(
-  req: Request,
-  res: Response,
-) {
+export async function getPublicAlumniController(req: Request, res: Response) {
   try {
     const alumni = await findPublicAlumni();
 
@@ -80,20 +81,18 @@ export async function getPublicAlumniController(
   }
 }
 
-
 // ========================================
 // PUBLIC PROJECTS
 // ========================================
 
 export async function getPublicProjectsController(
   _req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
-    const projects =
-      await findAllProjects({
-        publishedOnly: true,
-      });
+    const projects = await findAllProjects({
+      publishedOnly: true,
+    });
 
     return res.json({
       success: true,
@@ -102,21 +101,16 @@ export async function getPublicProjectsController(
   } catch {
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch public projects",
+      message: "Failed to fetch public projects",
     });
   }
 }
-
 
 // ========================================
 // PUBLIC PROJECT BY SLUG
 // ========================================
 
-export async function getPublicProjectController(
-  req: Request,
-  res: Response
-) {
+export async function getPublicProjectController(req: Request, res: Response) {
   try {
     const slug = req.params.slug as string;
     if (slug.length > 100 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
@@ -125,13 +119,9 @@ export async function getPublicProjectController(
         message: "Project not found",
       });
     }
-    const project =
-      await findProjectBySlug(slug);
+    const project = await findProjectBySlug(slug);
 
-    if (
-      !project ||
-      !project.published
-    ) {
+    if (!project || !project.published) {
       return res.status(404).json({
         success: false,
         message: "Project not found",
@@ -145,12 +135,10 @@ export async function getPublicProjectController(
   } catch {
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch public project",
+      message: "Failed to fetch public project",
     });
   }
 }
-
 
 // ========================================
 // PUBLIC UNIVERSITY PARTNERS
@@ -158,13 +146,12 @@ export async function getPublicProjectController(
 
 export async function getPublicUniversityPartnersController(
   _req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
-    const partners =
-      await findUniversityPartners({
-        publishedOnly: true,
-      });
+    const partners = await findUniversityPartners({
+      publishedOnly: true,
+    });
 
     return res.json({
       success: true,
@@ -173,12 +160,10 @@ export async function getPublicUniversityPartnersController(
   } catch {
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch public university partners",
+      message: "Failed to fetch public university partners",
     });
   }
 }
-
 
 // ========================================
 // PUBLIC INDUSTRIAL PARTNERS
@@ -186,13 +171,12 @@ export async function getPublicUniversityPartnersController(
 
 export async function getPublicIndustrialPartnersController(
   _req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
-    const partners =
-      await findIndustrialPartners({
-        publishedOnly: true,
-      });
+    const partners = await findIndustrialPartners({
+      publishedOnly: true,
+    });
 
     return res.json({
       success: true,
@@ -201,8 +185,7 @@ export async function getPublicIndustrialPartnersController(
   } catch {
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch public industrial partners",
+      message: "Failed to fetch public industrial partners",
     });
   }
 }

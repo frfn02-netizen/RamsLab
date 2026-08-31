@@ -1,20 +1,12 @@
-import type {
-  NextFunction,
-  Request,
-  Response,
-} from "express";
+import type { NextFunction, Request, Response } from "express";
 
-import {
-  verifyAccessToken,
-} from "../modules/auth/auth.utils.js";
+import { verifyAccessToken } from "../modules/auth/auth.utils.js";
 import { findUserById } from "../modules/users/user.repository.js";
 import { USER_ROLES } from "../modules/users/user.types.js";
 import { ObjectId } from "mongodb";
 import { AUTH_COOKIE_NAME } from "../config/security.js";
 
-import type {
-  JwtPayload,
-} from "../modules/auth/auth.types.js";
+import type { JwtPayload } from "../modules/auth/auth.types.js";
 
 declare global {
   namespace Express {
@@ -27,11 +19,10 @@ declare global {
 export async function authenticate(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
-    const token =
-      req.cookies?.[AUTH_COOKIE_NAME];
+    const token = req.cookies?.[AUTH_COOKIE_NAME];
 
     if (!token) {
       return res.status(401).json({
@@ -78,7 +69,7 @@ export async function authenticate(
 export async function optionallyAuthenticate(
   req: Request,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const token = req.cookies?.[AUTH_COOKIE_NAME];
   if (!token) return next();

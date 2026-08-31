@@ -15,8 +15,18 @@ export async function ensureTestUsers() {
       updateOne: {
         filter: { _id: new ObjectId(TEST_ADMIN_USER_ID) },
         update: {
-          $set: { email: "vitest.admin@test.local", role: "ADMIN", isActive: true, tokenVersion: 0, updatedAt: now },
-          $setOnInsert: { passwordHash: "not-used-by-tests", lastLoginAt: null, createdAt: now },
+          $set: {
+            email: "vitest.admin@test.local",
+            role: "ADMIN",
+            isActive: true,
+            tokenVersion: 0,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            passwordHash: "not-used-by-tests",
+            lastLoginAt: null,
+            createdAt: now,
+          },
         },
         upsert: true,
       },
@@ -25,8 +35,18 @@ export async function ensureTestUsers() {
       updateOne: {
         filter: { _id: new ObjectId(TEST_DOSEN_USER_ID) },
         update: {
-          $set: { email: "vitest.dosen.account@test.local", role: "DOSEN", isActive: true, tokenVersion: 0, updatedAt: now },
-          $setOnInsert: { passwordHash: "not-used-by-tests", lastLoginAt: null, createdAt: now },
+          $set: {
+            email: "vitest.dosen.account@test.local",
+            role: "DOSEN",
+            isActive: true,
+            tokenVersion: 0,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            passwordHash: "not-used-by-tests",
+            lastLoginAt: null,
+            createdAt: now,
+          },
         },
         upsert: true,
       },
@@ -35,8 +55,18 @@ export async function ensureTestUsers() {
       updateOne: {
         filter: { _id: new ObjectId(TEST_ALUMNI_USER_ID) },
         update: {
-          $set: { email: "vitest.alumni.account@test.local", role: "ALUMNI", isActive: true, tokenVersion: 0, updatedAt: now },
-          $setOnInsert: { passwordHash: "not-used-by-tests", lastLoginAt: null, createdAt: now },
+          $set: {
+            email: "vitest.alumni.account@test.local",
+            role: "ALUMNI",
+            isActive: true,
+            tokenVersion: 0,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            passwordHash: "not-used-by-tests",
+            lastLoginAt: null,
+            createdAt: now,
+          },
         },
         upsert: true,
       },
@@ -45,8 +75,18 @@ export async function ensureTestUsers() {
       updateOne: {
         filter: { _id: new ObjectId(TEST_PUBLICATION_EDITOR_USER_ID) },
         update: {
-          $set: { email: "vitest.publication.editor@test.local", role: "PUBLICATION_EDITOR", isActive: true, tokenVersion: 0, updatedAt: now },
-          $setOnInsert: { passwordHash: "not-used-by-tests", lastLoginAt: null, createdAt: now },
+          $set: {
+            email: "vitest.publication.editor@test.local",
+            role: "PUBLICATION_EDITOR",
+            isActive: true,
+            tokenVersion: 0,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            passwordHash: "not-used-by-tests",
+            lastLoginAt: null,
+            createdAt: now,
+          },
         },
         upsert: true,
       },
@@ -54,8 +94,15 @@ export async function ensureTestUsers() {
   ]);
 }
 
-export function signTestToken(userId: string, role: "ADMIN" | "DOSEN" | "ALUMNI" | "PUBLICATION_EDITOR") {
+export function signTestToken(
+  userId: string,
+  role: "ADMIN" | "DOSEN" | "ALUMNI" | "PUBLICATION_EDITOR",
+) {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is required for tests");
-  return jwt.sign({ userId, role, tokenVersion: 0 }, secret, { expiresIn: "1h", algorithm: "HS256", issuer: "rams-platform-api" });
+  return jwt.sign({ userId, role, tokenVersion: 0 }, secret, {
+    expiresIn: "1h",
+    algorithm: "HS256",
+    issuer: "rams-platform-api",
+  });
 }

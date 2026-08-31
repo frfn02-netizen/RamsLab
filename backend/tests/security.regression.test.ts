@@ -6,20 +6,111 @@ import {
   updateAlumniSchema,
   updateMyAlumniSchema,
 } from "../src/modules/alumni/alumni.schema.js";
-import { createDosenSchema, updateDosenSchema } from "../src/modules/dosen/dosen.schema.js";
-import { createStudentSchema, updateStudentSchema } from "../src/modules/students/student.schema.js";
+import {
+  createDosenSchema,
+  updateDosenSchema,
+} from "../src/modules/dosen/dosen.schema.js";
+import {
+  createStudentSchema,
+  updateStudentSchema,
+} from "../src/modules/students/student.schema.js";
 import { toPublicAlumniProfile } from "../src/modules/public/public-profile.js";
 
 const maliciousUrl = "javascript:alert(1)";
 
 describe("security regressions", () => {
   it.each([
-    ["dosen create", createDosenSchema, { userId: "000000000000000000000001", fullName: "Test Dosen", specialization: [], linkedin: maliciousUrl }],
+    [
+      "alumni create",
+      createAlumniSchema,
+      {
+        userId: "000000000000000000000001",
+        fullName: "Test Alumni",
+        nim: "TEST",
+        graduationYear: 2020,
+        program: "Test",
+        currentStatus: "WORKING",
+      },
+    ],
+    [
+      "admin alumni create",
+      createAdminAlumniSchema,
+      {
+        email: "test@example.local",
+        password: "a-secure-test-password",
+        fullName: "Test Alumni",
+        nim: "TEST",
+        graduationYear: 2020,
+        program: "Test",
+        currentStatus: "WORKING",
+      },
+    ],
+    ["alumni update", updateAlumniSchema, {}],
+    ["alumni self update", updateMyAlumniSchema, {}],
+  ])(
+    "accepts an omitted or blank LinkedIn URL in %s",
+    (_name, schema, baseInput) => {
+      expect(schema.safeParse({ ...baseInput, linkedin: "" }).success).toBe(
+        true,
+      );
+      expect(schema.safeParse({ ...baseInput, linkedin: "   " }).success).toBe(
+        true,
+      );
+      expect(schema.safeParse(baseInput).success).toBe(true);
+    },
+  );
+
+  it.each([
+    [
+      "dosen create",
+      createDosenSchema,
+      {
+        userId: "000000000000000000000001",
+        fullName: "Test Dosen",
+        specialization: [],
+        linkedin: maliciousUrl,
+      },
+    ],
     ["dosen update", updateDosenSchema, { linkedin: maliciousUrl }],
-    ["student create", createStudentSchema, { fullName: "Test Student", studentType: "PHD_STUDENT", linkedin: maliciousUrl }],
+    [
+      "student create",
+      createStudentSchema,
+      {
+        fullName: "Test Student",
+        studentType: "PHD_STUDENT",
+        linkedin: maliciousUrl,
+      },
+    ],
     ["student update", updateStudentSchema, { linkedin: maliciousUrl }],
-    ["alumni create", createAlumniSchema, { userId: "000000000000000000000001", fullName: "Test Alumni", nim: "TEST", graduationYear: 2020, program: "Test", currentStatus: "WORKING", careerHistory: [], educationHistory: [], linkedin: maliciousUrl }],
-    ["admin alumni create", createAdminAlumniSchema, { email: "test@example.local", password: "a-secure-test-password", fullName: "Test Alumni", nim: "TEST", graduationYear: 2020, program: "Test", currentStatus: "WORKING", linkedin: maliciousUrl }],
+    [
+      "alumni create",
+      createAlumniSchema,
+      {
+        userId: "000000000000000000000001",
+        fullName: "Test Alumni",
+        nim: "TEST",
+        graduationYear: 2020,
+        program: "Test",
+        currentStatus: "WORKING",
+        careerHistory: [],
+        educationHistory: [],
+        linkedin: maliciousUrl,
+      },
+    ],
+    [
+      "admin alumni create",
+      createAdminAlumniSchema,
+      {
+        email: "test@example.local",
+        password: "a-secure-test-password",
+        fullName: "Test Alumni",
+        nim: "TEST",
+        graduationYear: 2020,
+        program: "Test",
+        currentStatus: "WORKING",
+        linkedin: maliciousUrl,
+      },
+    ],
     ["alumni update", updateAlumniSchema, { linkedin: maliciousUrl }],
     ["alumni self update", updateMyAlumniSchema, { linkedin: maliciousUrl }],
   ])("rejects dangerous LinkedIn URLs in %s", (_name, schema, input) => {
@@ -51,6 +142,9 @@ describe("security regressions", () => {
     expect(profile).not.toHaveProperty("location");
     expect(profile).not.toHaveProperty("userId");
     expect(profile).not.toHaveProperty("phone");
-    expect(profile).toMatchObject({ fullName: "Public Alumni", graduationYear: 2020 });
+    expect(profile).toMatchObject({
+      fullName: "Public Alumni",
+      graduationYear: 2020,
+    });
   });
 });

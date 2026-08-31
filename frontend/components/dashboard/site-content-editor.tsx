@@ -2,75 +2,1270 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Button, Card, ErrorState, Field, LoadingState, PageHeader, inputClass } from "@/components/ui";
+import {
+  Button,
+  Card,
+  ErrorState,
+  Field,
+  LoadingState,
+  PageHeader,
+  inputClass,
+} from "@/components/ui";
 import { getAdminSiteContent, updateAdminSiteContent } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import type { AboutContent, BilingualText, ContactContent, FooterContent, HomepageContent } from "@/types/site-content";
+import type {
+  AboutContent,
+  BilingualText,
+  ContactContent,
+  FooterContent,
+  HomepageContent,
+} from "@/types/site-content";
 
-function BilingualField({ label, value, onChange, multiline = false }: { label: string; value: BilingualText; onChange: (locale: "en" | "id", value: string) => void; multiline?: boolean }) {
-  return <div className="grid gap-5 md:grid-cols-2"><Field label={`${label} — English`}>{multiline ? <textarea required className={`${inputClass} min-h-28`} value={value.en} onChange={(event) => onChange("en", event.target.value)} /> : <input required className={inputClass} value={value.en} onChange={(event) => onChange("en", event.target.value)} />}</Field><Field label={`${label} — Indonesian`}>{multiline ? <textarea required className={`${inputClass} min-h-28`} value={value.id} onChange={(event) => onChange("id", event.target.value)} /> : <input required className={inputClass} value={value.id} onChange={(event) => onChange("id", event.target.value)} />}</Field></div>;
+function BilingualField({
+  label,
+  value,
+  onChange,
+  multiline = false,
+}: {
+  label: string;
+  value: BilingualText;
+  onChange: (locale: "en" | "id", value: string) => void;
+  multiline?: boolean;
+}) {
+  return (
+    <div className="grid gap-5 md:grid-cols-2">
+      <Field label={`${label} — English`}>
+        {multiline ? (
+          <textarea
+            required
+            className={`${inputClass} min-h-28`}
+            value={value.en}
+            onChange={(event) => onChange("en", event.target.value)}
+          />
+        ) : (
+          <input
+            required
+            className={inputClass}
+            value={value.en}
+            onChange={(event) => onChange("en", event.target.value)}
+          />
+        )}
+      </Field>
+
+      <Field label={`${label} — Indonesian`}>
+        {multiline ? (
+          <textarea
+            required
+            className={`${inputClass} min-h-28`}
+            value={value.id}
+            onChange={(event) => onChange("id", event.target.value)}
+          />
+        ) : (
+          <input
+            required
+            className={inputClass}
+            value={value.id}
+            onChange={(event) => onChange("id", event.target.value)}
+          />
+        )}
+      </Field>
+    </div>
+  );
 }
 
-function EditorShell({ title, description, lastUpdated, loading, error, saving, success, onSubmit, children }: { title: string; description: string; lastUpdated?: string | null; loading: boolean; error: string | null; saving: boolean; success: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void; children: ReactNode }) {
-  if (loading) return <div className="p-5 sm:p-7 lg:p-9"><LoadingState label="Loading site content" /></div>;
-  return <div className="p-5 sm:p-7 lg:p-9"><div className="mx-auto max-w-5xl space-y-7"><Link href="/dashboard/content" className="text-sm font-bold text-[var(--rams-red)]">← Site Content</Link><PageHeader eyebrow="CMS" title={title} description={description} />{lastUpdated && <p className="text-xs text-[var(--rams-gray)]">Last saved {new Date(lastUpdated).toLocaleString()}</p>}{error && <ErrorState message={error} />}{success && <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" role="status">Content saved successfully.</div>}<Card className="p-6"><form onSubmit={onSubmit} className="space-y-8">{children}<div className="flex gap-3 border-t border-black/8 pt-7"><Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save content"}</Button><Link href="/dashboard/content" className="inline-flex min-h-10 items-center px-4 text-sm font-semibold text-[var(--rams-gray)]">Cancel</Link></div></form></Card></div></div>;
+function EditorShell({
+  title,
+  description,
+  lastUpdated,
+  loading,
+  error,
+  saving,
+  success,
+  onSubmit,
+  children,
+}: {
+  title: string;
+  description: string;
+  lastUpdated?: string | null;
+  loading: boolean;
+  error: string | null;
+  saving: boolean;
+  success: boolean;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  children: ReactNode;
+}) {
+  if (loading) {
+    return (
+      <div className="p-5 sm:p-7 lg:p-9">
+        <LoadingState label="Loading site content" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-5 sm:p-7 lg:p-9">
+      <div className="mx-auto max-w-5xl space-y-7">
+        <Link
+          href="/dashboard/content"
+          className="text-sm font-bold text-[var(--rams-red)]"
+        >
+          ← Site Content
+        </Link>
+
+        <PageHeader eyebrow="CMS" title={title} description={description} />
+
+        {lastUpdated && (
+          <p className="text-xs text-[var(--rams-gray)]">
+            Last saved {new Date(lastUpdated).toLocaleString()}
+          </p>
+        )}
+
+        {error && <ErrorState message={error} />}
+
+        {success && (
+          <div
+            className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800"
+            role="status"
+          >
+            Content saved successfully.
+          </div>
+        )}
+
+        <Card className="p-6">
+          <form onSubmit={onSubmit} className="space-y-8">
+            {children}
+
+            <div className="flex gap-3 border-t border-black/8 pt-7">
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving…" : "Save content"}
+              </Button>
+
+              <Link
+                href="/dashboard/content"
+                className="inline-flex min-h-10 items-center px-4 text-sm font-semibold text-[var(--rams-gray)]"
+              >
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="space-y-5 border-t border-black/8 pt-7 first:border-t-0 first:pt-0"><h2 className="text-xl font-bold text-[var(--rams-charcoal)]">{title}</h2>{children}</section>;
+  return (
+    <section className="space-y-5 border-t border-black/8 pt-7 first:border-t-0 first:pt-0">
+      <h2 className="text-xl font-bold text-[var(--rams-charcoal)]">{title}</h2>
+
+      {children}
+    </section>
+  );
 }
 
-function PrincipleFields({ principles, onChange }: { principles: HomepageContent["principles"]; onChange: (index: number, locale: "en" | "id", field: "title" | "description", value: string) => void }) {
-  return <div className="grid gap-5 md:grid-cols-2">{principles.map((principle, index) => <div key={principle.key} className="space-y-4 border border-black/8 p-5"><div className="flex items-center gap-3"><span className="font-display text-3xl font-bold text-[var(--rams-red)]">{principle.key}</span><span className="text-sm font-semibold text-[var(--rams-gray)]">Identity is fixed</span></div><BilingualField label="Title" value={principle.title} onChange={(locale, value) => onChange(index, locale, "title", value)} /><BilingualField label="Description" value={principle.description} onChange={(locale, value) => onChange(index, locale, "description", value)} multiline /></div>)}</div>;
+function PrincipleFields({
+  principles,
+  onChange,
+}: {
+  principles: HomepageContent["principles"];
+  onChange: (
+    index: number,
+    locale: "en" | "id",
+    field: "title" | "description",
+    value: string,
+  ) => void;
+}) {
+  return (
+    <div className="grid gap-5 md:grid-cols-2">
+      {principles.map((principle, index) => (
+        <div
+          key={principle.key}
+          className="space-y-4 border border-black/8 p-5"
+        >
+          <div className="flex items-center gap-3">
+            <span className="font-display text-3xl font-bold text-[var(--rams-red)]">
+              {principle.key}
+            </span>
+
+            <span className="text-sm font-semibold text-[var(--rams-gray)]">
+              Identity is fixed
+            </span>
+          </div>
+
+          <BilingualField
+            label="Title"
+            value={principle.title}
+            onChange={(locale, value) =>
+              onChange(index, locale, "title", value)
+            }
+          />
+
+          <BilingualField
+            label="Description"
+            value={principle.description}
+            onChange={(locale, value) =>
+              onChange(index, locale, "description", value)
+            }
+            multiline
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function HomepageEditor() {
   const [content, setContent] = useState<HomepageContent | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState(false);
-  useEffect(() => { let cancelled = false; getAdminSiteContent("homepage").then((result) => { if (!cancelled) { setContent(result.content); setLastUpdated(result.updatedAt); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, []);
-  const text = (section: "hero" | "ecosystem" | "research" | "projects" | "cta", field: string, locale: "en" | "id", value: string) => setContent((current) => current ? { ...current, [section]: { ...current[section], [field]: { ...(current[section] as Record<string, BilingualText>)[field], [locale]: value } } } as HomepageContent : current);
-  const principle = (index: number, locale: "en" | "id", field: "title" | "description", value: string) => setContent((current) => { if (!current) return current; const principles = [...current.principles] as HomepageContent["principles"]; principles[index] = { ...principles[index], [field]: { ...principles[index][field], [locale]: value } }; return { ...current, principles }; });
-  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!content) return; setSaving(true); setError(null); setSuccess(false); try { const result = await updateAdminSiteContent("homepage", content); setContent(result.content); setLastUpdated(result.updatedAt); setSuccess(true); } catch (reason) { setError(getUserFacingError(reason)); } finally { setSaving(false); } }
-  return <EditorShell title="Homepage" description="Edit homepage copy while keeping research areas, projects, and logos sourced from their existing systems." lastUpdated={lastUpdated} loading={loading} error={error} saving={saving} success={success} onSubmit={save}>{content && <><Section title="Hero"><BilingualField label="Headline" value={content.hero.headline} onChange={(locale, value) => text("hero", "headline", locale, value)} /><BilingualField label="Description" value={content.hero.description} onChange={(locale, value) => text("hero", "description", locale, value)} multiline /><BilingualField label="Primary CTA" value={content.hero.primaryCta} onChange={(locale, value) => text("hero", "primaryCta", locale, value)} /><BilingualField label="Secondary CTA" value={content.hero.secondaryCta} onChange={(locale, value) => text("hero", "secondaryCta", locale, value)} /></Section><Section title="RAMS Principles"><PrincipleFields principles={content.principles} onChange={principle} /></Section><Section title="Ecosystem"><BilingualField label="Section title" value={content.ecosystem.title} onChange={(locale, value) => text("ecosystem", "title", locale, value)} /><BilingualField label="AIS description" value={content.ecosystem.aisDescription} onChange={(locale, value) => text("ecosystem", "aisDescription", locale, value)} multiline /></Section><Section title="Research section"><BilingualField label="Title" value={content.research.title} onChange={(locale, value) => text("research", "title", locale, value)} /><BilingualField label="Description" value={content.research.description} onChange={(locale, value) => text("research", "description", locale, value)} multiline /><BilingualField label="Link label" value={content.research.linkLabel} onChange={(locale, value) => text("research", "linkLabel", locale, value)} /></Section><Section title="Projects section"><BilingualField label="Title" value={content.projects.title} onChange={(locale, value) => text("projects", "title", locale, value)} /></Section><Section title="Collaboration CTA"><BilingualField label="Title" value={content.cta.title} onChange={(locale, value) => text("cta", "title", locale, value)} multiline /><BilingualField label="Description" value={content.cta.description} onChange={(locale, value) => text("cta", "description", locale, value)} multiline /><BilingualField label="Button label" value={content.cta.buttonLabel} onChange={(locale, value) => text("cta", "buttonLabel", locale, value)} /></Section></>}</EditorShell>;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminSiteContent("homepage")
+      .then((result) => {
+        if (!cancelled) {
+          setContent(result.content);
+          setLastUpdated(result.updatedAt);
+        }
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setError(getUserFacingError(reason));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const text = (
+    section: "hero" | "ecosystem" | "research" | "projects" | "cta",
+    field: string,
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) =>
+      current
+        ? ({
+            ...current,
+            [section]: {
+              ...current[section],
+              [field]: {
+                ...(current[section] as Record<string, BilingualText>)[field],
+                [locale]: value,
+              },
+            },
+          } as HomepageContent)
+        : current,
+    );
+
+  const principle = (
+    index: number,
+    locale: "en" | "id",
+    field: "title" | "description",
+    value: string,
+  ) =>
+    setContent((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const principles = [
+        ...current.principles,
+      ] as HomepageContent["principles"];
+
+      principles[index] = {
+        ...principles[index],
+        [field]: {
+          ...principles[index][field],
+          [locale]: value,
+        },
+      };
+
+      return {
+        ...current,
+        principles,
+      };
+    });
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!content) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const result = await updateAdminSiteContent("homepage", content);
+
+      setContent(result.content);
+      setLastUpdated(result.updatedAt);
+      setSuccess(true);
+    } catch (reason) {
+      setError(getUserFacingError(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <EditorShell
+      title="Homepage"
+      description="Edit homepage copy while keeping research areas, projects, and logos sourced from their existing systems."
+      lastUpdated={lastUpdated}
+      loading={loading}
+      error={error}
+      saving={saving}
+      success={success}
+      onSubmit={save}
+    >
+      {content && (
+        <>
+          <Section title="Hero">
+            <BilingualField
+              label="Headline"
+              value={content.hero.headline}
+              onChange={(locale, value) =>
+                text("hero", "headline", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.hero.description}
+              onChange={(locale, value) =>
+                text("hero", "description", locale, value)
+              }
+              multiline
+            />
+
+            <BilingualField
+              label="Primary CTA"
+              value={content.hero.primaryCta}
+              onChange={(locale, value) =>
+                text("hero", "primaryCta", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Secondary CTA"
+              value={content.hero.secondaryCta}
+              onChange={(locale, value) =>
+                text("hero", "secondaryCta", locale, value)
+              }
+            />
+          </Section>
+
+          <Section title="RAMS Principles">
+            <PrincipleFields
+              principles={content.principles}
+              onChange={principle}
+            />
+          </Section>
+
+          <Section title="Ecosystem">
+            <BilingualField
+              label="Section title"
+              value={content.ecosystem.title}
+              onChange={(locale, value) =>
+                text("ecosystem", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="AIS description"
+              value={content.ecosystem.aisDescription}
+              onChange={(locale, value) =>
+                text("ecosystem", "aisDescription", locale, value)
+              }
+              multiline
+            />
+          </Section>
+
+          <Section title="Research section">
+            <BilingualField
+              label="Title"
+              value={content.research.title}
+              onChange={(locale, value) =>
+                text("research", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.research.description}
+              onChange={(locale, value) =>
+                text("research", "description", locale, value)
+              }
+              multiline
+            />
+
+            <BilingualField
+              label="Link label"
+              value={content.research.linkLabel}
+              onChange={(locale, value) =>
+                text("research", "linkLabel", locale, value)
+              }
+            />
+          </Section>
+
+          <Section title="Projects section">
+            <BilingualField
+              label="Title"
+              value={content.projects.title}
+              onChange={(locale, value) =>
+                text("projects", "title", locale, value)
+              }
+            />
+          </Section>
+
+          <Section title="Collaboration CTA">
+            <BilingualField
+              label="Title"
+              value={content.cta.title}
+              onChange={(locale, value) => text("cta", "title", locale, value)}
+              multiline
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.cta.description}
+              onChange={(locale, value) =>
+                text("cta", "description", locale, value)
+              }
+              multiline
+            />
+
+            <BilingualField
+              label="Button label"
+              value={content.cta.buttonLabel}
+              onChange={(locale, value) =>
+                text("cta", "buttonLabel", locale, value)
+              }
+            />
+          </Section>
+        </>
+      )}
+    </EditorShell>
+  );
 }
 
 function AboutEditor() {
-  const [content, setContent] = useState<AboutContent | null>(null); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState(false);
+  const [content, setContent] = useState<AboutContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  useEffect(() => { let cancelled = false; getAdminSiteContent("about").then((result) => { if (!cancelled) { setContent(result.content); setLastUpdated(result.updatedAt); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, []);
-  const set = (section: "hero" | "researchApproach" | "researchFocus" | "marineContext" | "ecosystem" | "profile" | "cta", field: string, locale: "en" | "id", value: string) => setContent((current) => current ? { ...current, [section]: { ...current[section], [field]: { ...((current[section] as Record<string, BilingualText>)[field]), [locale]: value } } } as AboutContent : current);
-  const principle = (index: number, locale: "en" | "id", field: "title" | "description", value: string) => setContent((current) => { if (!current) return current; const items = [...current.principles.items] as AboutContent["principles"]["items"]; items[index] = { ...items[index], [field]: { ...items[index][field], [locale]: value } }; return { ...current, principles: { ...current.principles, items } }; });
-  const focus = (index: number, locale: "en" | "id", value: string) => setContent((current) => { if (!current) return current; const items = [...current.researchFocus.items] as AboutContent["researchFocus"]["items"]; items[index] = { ...items[index], [locale]: value }; return { ...current, researchFocus: { ...current.researchFocus, items } }; });
-  const profile = (index: number, part: "label" | "value", locale: "en" | "id", value: string) => setContent((current) => { if (!current) return current; const items = [...current.profile.items] as AboutContent["profile"]["items"]; items[index] = { ...items[index], [part]: { ...items[index][part], [locale]: value } }; return { ...current, profile: { ...current.profile, items } }; });
-  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!content) return; setSaving(true); setError(null); setSuccess(false); try { const result = await updateAdminSiteContent("about", content); setContent(result.content); setLastUpdated(result.updatedAt); setSuccess(true); } catch (reason) { setError(getUserFacingError(reason)); } finally { setSaving(false); } }
-  return <EditorShell title="About" description="Edit the existing laboratory profile content without changing its layout or assets." lastUpdated={lastUpdated} loading={loading} error={error} saving={saving} success={success} onSubmit={save}>{content && <><Section title="Hero"><BilingualField label="Eyebrow" value={content.hero.eyebrow} onChange={(locale, value) => set("hero", "eyebrow", locale, value)} /><BilingualField label="Title" value={content.hero.title} onChange={(locale, value) => set("hero", "title", locale, value)} /><BilingualField label="Description" value={content.hero.description} onChange={(locale, value) => set("hero", "description", locale, value)} multiline /></Section><Section title="What RAMS means"><BilingualField label="Heading" value={content.principles.heading} onChange={(locale, value) => setContent((current) => current ? { ...current, principles: { ...current.principles, heading: { ...current.principles.heading, [locale]: value } } } : current)} /><PrincipleFields principles={content.principles.items} onChange={principle} /></Section><Section title="Research approach"><BilingualField label="Eyebrow" value={content.researchApproach.eyebrow} onChange={(locale, value) => set("researchApproach", "eyebrow", locale, value)} /><BilingualField label="Title" value={content.researchApproach.title} onChange={(locale, value) => set("researchApproach", "title", locale, value)} /><BilingualField label="Description" value={content.researchApproach.description} onChange={(locale, value) => set("researchApproach", "description", locale, value)} multiline /></Section><Section title="Research focus"><BilingualField label="Title" value={content.researchFocus.title} onChange={(locale, value) => set("researchFocus", "title", locale, value)} /><BilingualField label="Description" value={content.researchFocus.description} onChange={(locale, value) => set("researchFocus", "description", locale, value)} multiline />{content.researchFocus.items.map((item, index) => <BilingualField key={index} label={`Focus item ${index + 1}`} value={item} onChange={(locale, value) => focus(index, locale, value)} />)}</Section><Section title="Marine context"><BilingualField label="Title" value={content.marineContext.title} onChange={(locale, value) => set("marineContext", "title", locale, value)} /><BilingualField label="Description" value={content.marineContext.description} onChange={(locale, value) => set("marineContext", "description", locale, value)} multiline /></Section><Section title="Ecosystem"><BilingualField label="Title" value={content.ecosystem.title} onChange={(locale, value) => set("ecosystem", "title", locale, value)} /></Section><Section title="Laboratory profile"><BilingualField label="Section title" value={content.profile.title} onChange={(locale, value) => set("profile", "title", locale, value)} />{content.profile.items.map((item, index) => <div key={index} className="grid gap-5 border-t border-black/8 pt-5 md:grid-cols-2"><BilingualField label={`Item ${index + 1} label`} value={item.label} onChange={(locale, value) => profile(index, "label", locale, value)} /><BilingualField label={`Item ${index + 1} value`} value={item.value} onChange={(locale, value) => profile(index, "value", locale, value)} /></div>)}</Section><Section title="Closing CTA"><BilingualField label="Title" value={content.cta.title} onChange={(locale, value) => set("cta", "title", locale, value)} multiline /><BilingualField label="Description" value={content.cta.description} onChange={(locale, value) => set("cta", "description", locale, value)} multiline /><BilingualField label="Button label" value={content.cta.buttonLabel} onChange={(locale, value) => set("cta", "buttonLabel", locale, value)} /></Section></>}</EditorShell>;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminSiteContent("about")
+      .then((result) => {
+        if (!cancelled) {
+          setContent(result.content);
+          setLastUpdated(result.updatedAt);
+        }
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setError(getUserFacingError(reason));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const set = (
+    section:
+      | "hero"
+      | "researchApproach"
+      | "researchFocus"
+      | "marineContext"
+      | "ecosystem"
+      | "profile"
+      | "cta",
+    field: string,
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) =>
+      current
+        ? ({
+            ...current,
+            [section]: {
+              ...current[section],
+              [field]: {
+                ...(current[section] as Record<string, BilingualText>)[field],
+                [locale]: value,
+              },
+            },
+          } as AboutContent)
+        : current,
+    );
+
+  const principle = (
+    index: number,
+    locale: "en" | "id",
+    field: "title" | "description",
+    value: string,
+  ) =>
+    setContent((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const items = [
+        ...current.principles.items,
+      ] as AboutContent["principles"]["items"];
+
+      items[index] = {
+        ...items[index],
+        [field]: {
+          ...items[index][field],
+          [locale]: value,
+        },
+      };
+
+      return {
+        ...current,
+        principles: {
+          ...current.principles,
+          items,
+        },
+      };
+    });
+
+  const focus = (index: number, locale: "en" | "id", value: string) =>
+    setContent((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const items = [
+        ...current.researchFocus.items,
+      ] as AboutContent["researchFocus"]["items"];
+
+      items[index] = {
+        ...items[index],
+        [locale]: value,
+      };
+
+      return {
+        ...current,
+        researchFocus: {
+          ...current.researchFocus,
+          items,
+        },
+      };
+    });
+
+  const profile = (
+    index: number,
+    part: "label" | "value",
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const items = [
+        ...current.profile.items,
+      ] as AboutContent["profile"]["items"];
+
+      items[index] = {
+        ...items[index],
+        [part]: {
+          ...items[index][part],
+          [locale]: value,
+        },
+      };
+
+      return {
+        ...current,
+        profile: {
+          ...current.profile,
+          items,
+        },
+      };
+    });
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!content) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const result = await updateAdminSiteContent("about", content);
+
+      setContent(result.content);
+      setLastUpdated(result.updatedAt);
+      setSuccess(true);
+    } catch (reason) {
+      setError(getUserFacingError(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <EditorShell
+      title="About"
+      description="Edit the existing laboratory profile content without changing its layout or assets."
+      lastUpdated={lastUpdated}
+      loading={loading}
+      error={error}
+      saving={saving}
+      success={success}
+      onSubmit={save}
+    >
+      {content && (
+        <>
+          <Section title="Hero">
+            <BilingualField
+              label="Eyebrow"
+              value={content.hero.eyebrow}
+              onChange={(locale, value) =>
+                set("hero", "eyebrow", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Title"
+              value={content.hero.title}
+              onChange={(locale, value) => set("hero", "title", locale, value)}
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.hero.description}
+              onChange={(locale, value) =>
+                set("hero", "description", locale, value)
+              }
+              multiline
+            />
+          </Section>
+
+          <Section title="What RAMS means">
+            <BilingualField
+              label="Heading"
+              value={content.principles.heading}
+              onChange={(locale, value) =>
+                setContent((current) =>
+                  current
+                    ? {
+                        ...current,
+                        principles: {
+                          ...current.principles,
+                          heading: {
+                            ...current.principles.heading,
+                            [locale]: value,
+                          },
+                        },
+                      }
+                    : current,
+                )
+              }
+            />
+
+            <PrincipleFields
+              principles={content.principles.items}
+              onChange={principle}
+            />
+          </Section>
+
+          <Section title="Research approach">
+            <BilingualField
+              label="Eyebrow"
+              value={content.researchApproach.eyebrow}
+              onChange={(locale, value) =>
+                set("researchApproach", "eyebrow", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Title"
+              value={content.researchApproach.title}
+              onChange={(locale, value) =>
+                set("researchApproach", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.researchApproach.description}
+              onChange={(locale, value) =>
+                set("researchApproach", "description", locale, value)
+              }
+              multiline
+            />
+          </Section>
+
+          <Section title="Research focus">
+            <BilingualField
+              label="Title"
+              value={content.researchFocus.title}
+              onChange={(locale, value) =>
+                set("researchFocus", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.researchFocus.description}
+              onChange={(locale, value) =>
+                set("researchFocus", "description", locale, value)
+              }
+              multiline
+            />
+
+            {content.researchFocus.items.map((item, index) => (
+              <BilingualField
+                key={index}
+                label={`Focus item ${index + 1}`}
+                value={item}
+                onChange={(locale, value) => focus(index, locale, value)}
+              />
+            ))}
+          </Section>
+
+          <Section title="Marine context">
+            <BilingualField
+              label="Title"
+              value={content.marineContext.title}
+              onChange={(locale, value) =>
+                set("marineContext", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.marineContext.description}
+              onChange={(locale, value) =>
+                set("marineContext", "description", locale, value)
+              }
+              multiline
+            />
+          </Section>
+
+          <Section title="Ecosystem">
+            <BilingualField
+              label="Title"
+              value={content.ecosystem.title}
+              onChange={(locale, value) =>
+                set("ecosystem", "title", locale, value)
+              }
+            />
+          </Section>
+
+          <Section title="Laboratory profile">
+            <BilingualField
+              label="Section title"
+              value={content.profile.title}
+              onChange={(locale, value) =>
+                set("profile", "title", locale, value)
+              }
+            />
+
+            {content.profile.items.map((item, index) => (
+              <div
+                key={index}
+                className="grid gap-5 border-t border-black/8 pt-5 md:grid-cols-2"
+              >
+                <BilingualField
+                  label={`Item ${index + 1} label`}
+                  value={item.label}
+                  onChange={(locale, value) =>
+                    profile(index, "label", locale, value)
+                  }
+                />
+
+                <BilingualField
+                  label={`Item ${index + 1} value`}
+                  value={item.value}
+                  onChange={(locale, value) =>
+                    profile(index, "value", locale, value)
+                  }
+                />
+              </div>
+            ))}
+          </Section>
+
+          <Section title="Closing CTA">
+            <BilingualField
+              label="Title"
+              value={content.cta.title}
+              onChange={(locale, value) => set("cta", "title", locale, value)}
+              multiline
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.cta.description}
+              onChange={(locale, value) =>
+                set("cta", "description", locale, value)
+              }
+              multiline
+            />
+
+            <BilingualField
+              label="Button label"
+              value={content.cta.buttonLabel}
+              onChange={(locale, value) =>
+                set("cta", "buttonLabel", locale, value)
+              }
+            />
+          </Section>
+        </>
+      )}
+    </EditorShell>
+  );
 }
 
 function ContactEditor() {
-  const [content, setContent] = useState<ContactContent | null>(null); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState(false);
+  const [content, setContent] = useState<ContactContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  useEffect(() => { let cancelled = false; getAdminSiteContent("contact").then((result) => { if (!cancelled) { setContent(result.content); setLastUpdated(result.updatedAt); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, []);
-  const set = (section: "hero" | "homePreview" | "details" | "collaboration", field: string, locale: "en" | "id", value: string) => setContent((current) => current ? { ...current, [section]: { ...current[section], [field]: { ...((current[section] as Record<string, BilingualText>)[field]), [locale]: value } } } as ContactContent : current);
-  const address = (index: number, locale: "en" | "id", value: string) => setContent((current) => { if (!current) return current; const lines = [...current.details.addressLines] as ContactContent["details"]["addressLines"]; lines[index] = { ...lines[index], [locale]: value }; return { ...current, details: { ...current.details, addressLines: lines } }; });
-  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!content) return; setSaving(true); setError(null); setSuccess(false); try { const result = await updateAdminSiteContent("contact", content); setContent(result.content); setLastUpdated(result.updatedAt); setSuccess(true); } catch (reason) { setError(getUserFacingError(reason)); } finally { setSaving(false); } }
-  return <EditorShell title="Contact" description="Edit contact information and collaboration copy used on the Contact page and homepage preview." lastUpdated={lastUpdated} loading={loading} error={error} saving={saving} success={success} onSubmit={save}>{content && <><Section title="Contact hero"><BilingualField label="Eyebrow" value={content.hero.eyebrow} onChange={(locale, value) => set("hero", "eyebrow", locale, value)} /><BilingualField label="Title" value={content.hero.title} onChange={(locale, value) => set("hero", "title", locale, value)} /><BilingualField label="Description" value={content.hero.description} onChange={(locale, value) => set("hero", "description", locale, value)} multiline /></Section><Section title="Homepage contact preview"><BilingualField label="Eyebrow" value={content.homePreview.eyebrow} onChange={(locale, value) => set("homePreview", "eyebrow", locale, value)} /><BilingualField label="Title" value={content.homePreview.title} onChange={(locale, value) => set("homePreview", "title", locale, value)} /><BilingualField label="Description" value={content.homePreview.description} onChange={(locale, value) => set("homePreview", "description", locale, value)} multiline /></Section><Section title="Contact details"><BilingualField label="Panel title" value={content.details.title} onChange={(locale, value) => set("details", "title", locale, value)} /><BilingualField label="Email" value={content.details.email} onChange={(locale, value) => set("details", "email", locale, value)} />{content.details.addressLines.map((line, index) => <BilingualField key={index} label={`Address line ${index + 1}`} value={line} onChange={(locale, value) => address(index, locale, value)} />)}<BilingualField label="Social text" value={content.details.socialText} onChange={(locale, value) => set("details", "socialText", locale, value)} /></Section><Section title="Collaboration"><BilingualField label="Title" value={content.collaboration.title} onChange={(locale, value) => set("collaboration", "title", locale, value)} /><BilingualField label="Description" value={content.collaboration.description} onChange={(locale, value) => set("collaboration", "description", locale, value)} multiline /><BilingualField label="Button label" value={content.collaboration.buttonLabel} onChange={(locale, value) => set("collaboration", "buttonLabel", locale, value)} /></Section></>}</EditorShell>;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminSiteContent("contact")
+      .then((result) => {
+        if (!cancelled) {
+          setContent(result.content);
+          setLastUpdated(result.updatedAt);
+        }
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setError(getUserFacingError(reason));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const set = (
+    section: "hero" | "homePreview" | "details" | "collaboration",
+    field: string,
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) =>
+      current
+        ? ({
+            ...current,
+            [section]: {
+              ...current[section],
+              [field]: {
+                ...(current[section] as Record<string, BilingualText>)[field],
+                [locale]: value,
+              },
+            },
+          } as ContactContent)
+        : current,
+    );
+
+  const address = (index: number, locale: "en" | "id", value: string) =>
+    setContent((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const lines = [
+        ...current.details.addressLines,
+      ] as ContactContent["details"]["addressLines"];
+
+      lines[index] = {
+        ...lines[index],
+        [locale]: value,
+      };
+
+      return {
+        ...current,
+        details: {
+          ...current.details,
+          addressLines: lines,
+        },
+      };
+    });
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!content) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const result = await updateAdminSiteContent("contact", content);
+
+      setContent(result.content);
+      setLastUpdated(result.updatedAt);
+      setSuccess(true);
+    } catch (reason) {
+      setError(getUserFacingError(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <EditorShell
+      title="Contact"
+      description="Edit contact information and collaboration copy used on the Contact page and homepage preview."
+      lastUpdated={lastUpdated}
+      loading={loading}
+      error={error}
+      saving={saving}
+      success={success}
+      onSubmit={save}
+    >
+      {content && (
+        <>
+          <Section title="Contact hero">
+            <BilingualField
+              label="Eyebrow"
+              value={content.hero.eyebrow}
+              onChange={(locale, value) =>
+                set("hero", "eyebrow", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Title"
+              value={content.hero.title}
+              onChange={(locale, value) => set("hero", "title", locale, value)}
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.hero.description}
+              onChange={(locale, value) =>
+                set("hero", "description", locale, value)
+              }
+              multiline
+            />
+          </Section>
+
+          <Section title="Homepage contact preview">
+            <BilingualField
+              label="Eyebrow"
+              value={content.homePreview.eyebrow}
+              onChange={(locale, value) =>
+                set("homePreview", "eyebrow", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Title"
+              value={content.homePreview.title}
+              onChange={(locale, value) =>
+                set("homePreview", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.homePreview.description}
+              onChange={(locale, value) =>
+                set("homePreview", "description", locale, value)
+              }
+              multiline
+            />
+          </Section>
+
+          <Section title="Contact details">
+            <BilingualField
+              label="Panel title"
+              value={content.details.title}
+              onChange={(locale, value) =>
+                set("details", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Email"
+              value={content.details.email}
+              onChange={(locale, value) =>
+                set("details", "email", locale, value)
+              }
+            />
+
+            {content.details.addressLines.map((line, index) => (
+              <BilingualField
+                key={index}
+                label={`Address line ${index + 1}`}
+                value={line}
+                onChange={(locale, value) => address(index, locale, value)}
+              />
+            ))}
+
+            <BilingualField
+              label="Social text"
+              value={content.details.socialText}
+              onChange={(locale, value) =>
+                set("details", "socialText", locale, value)
+              }
+            />
+          </Section>
+
+          <Section title="Collaboration">
+            <BilingualField
+              label="Title"
+              value={content.collaboration.title}
+              onChange={(locale, value) =>
+                set("collaboration", "title", locale, value)
+              }
+            />
+
+            <BilingualField
+              label="Description"
+              value={content.collaboration.description}
+              onChange={(locale, value) =>
+                set("collaboration", "description", locale, value)
+              }
+              multiline
+            />
+
+            <BilingualField
+              label="Button label"
+              value={content.collaboration.buttonLabel}
+              onChange={(locale, value) =>
+                set("collaboration", "buttonLabel", locale, value)
+              }
+            />
+          </Section>
+        </>
+      )}
+    </EditorShell>
+  );
 }
 
 function FooterEditor() {
-  const [content, setContent] = useState<FooterContent | null>(null); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState(false);
+  const [content, setContent] = useState<FooterContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  useEffect(() => { let cancelled = false; getAdminSiteContent("footer").then((result) => { if (!cancelled) { setContent(result.content); setLastUpdated(result.updatedAt); } }).catch((reason) => { if (!cancelled) setError(getUserFacingError(reason)); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, []);
-  const set = (field: "description" | "email" | "socialText" | "copyright" | "institution", locale: "en" | "id", value: string) => setContent((current) => current ? { ...current, [field]: { ...current[field], [locale]: value } } : current);
-  const address = (index: number, locale: "en" | "id", value: string) => setContent((current) => { if (!current) return current; const lines = [...current.addressLines] as FooterContent["addressLines"]; lines[index] = { ...lines[index], [locale]: value }; return { ...current, addressLines: lines }; });
-  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!content) return; setSaving(true); setError(null); setSuccess(false); try { const result = await updateAdminSiteContent("footer", content); setContent(result.content); setLastUpdated(result.updatedAt); setSuccess(true); } catch (reason) { setError(getUserFacingError(reason)); } finally { setSaving(false); } }
-  return <EditorShell title="Footer" description="Edit footer copy and institutional contact text. Navigation and ecosystem logos remain frontend-controlled." lastUpdated={lastUpdated} loading={loading} error={error} saving={saving} success={success} onSubmit={save}>{content && <><Section title="Footer copy"><BilingualField label="Description" value={content.description} onChange={(locale, value) => set("description", locale, value)} multiline /><BilingualField label="Email" value={content.email} onChange={(locale, value) => set("email", locale, value)} /><BilingualField label="Social text" value={content.socialText} onChange={(locale, value) => set("socialText", locale, value)} /></Section><Section title="Address">{content.addressLines.map((line, index) => <BilingualField key={index} label={`Address line ${index + 1}`} value={line} onChange={(locale, value) => address(index, locale, value)} />)}</Section><Section title="Institutional text"><BilingualField label="Copyright" value={content.copyright} onChange={(locale, value) => set("copyright", locale, value)} /><BilingualField label="Institution" value={content.institution} onChange={(locale, value) => set("institution", locale, value)} /></Section></>}</EditorShell>;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminSiteContent("footer")
+      .then((result) => {
+        if (!cancelled) {
+          setContent(result.content);
+          setLastUpdated(result.updatedAt);
+        }
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setError(getUserFacingError(reason));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const set = (
+    field: "description" | "email" | "socialText" | "copyright" | "institution",
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) =>
+      current
+        ? {
+            ...current,
+            [field]: {
+              ...current[field],
+              [locale]: value,
+            },
+          }
+        : current,
+    );
+
+  const address = (index: number, locale: "en" | "id", value: string) =>
+    setContent((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const lines = [...current.addressLines] as FooterContent["addressLines"];
+
+      lines[index] = {
+        ...lines[index],
+        [locale]: value,
+      };
+
+      return {
+        ...current,
+        addressLines: lines,
+      };
+    });
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!content) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const result = await updateAdminSiteContent("footer", content);
+
+      setContent(result.content);
+      setLastUpdated(result.updatedAt);
+      setSuccess(true);
+    } catch (reason) {
+      setError(getUserFacingError(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <EditorShell
+      title="Footer"
+      description="Edit footer copy and institutional contact text. Navigation and ecosystem logos remain frontend-controlled."
+      lastUpdated={lastUpdated}
+      loading={loading}
+      error={error}
+      saving={saving}
+      success={success}
+      onSubmit={save}
+    >
+      {content && (
+        <>
+          <Section title="Footer copy">
+            <BilingualField
+              label="Description"
+              value={content.description}
+              onChange={(locale, value) => set("description", locale, value)}
+              multiline
+            />
+
+            <BilingualField
+              label="Email"
+              value={content.email}
+              onChange={(locale, value) => set("email", locale, value)}
+            />
+
+            <BilingualField
+              label="Social text"
+              value={content.socialText}
+              onChange={(locale, value) => set("socialText", locale, value)}
+            />
+          </Section>
+
+          <Section title="Address">
+            {content.addressLines.map((line, index) => (
+              <BilingualField
+                key={index}
+                label={`Address line ${index + 1}`}
+                value={line}
+                onChange={(locale, value) => address(index, locale, value)}
+              />
+            ))}
+          </Section>
+
+          <Section title="Institutional text">
+            <BilingualField
+              label="Copyright"
+              value={content.copyright}
+              onChange={(locale, value) => set("copyright", locale, value)}
+            />
+
+            <BilingualField
+              label="Institution"
+              value={content.institution}
+              onChange={(locale, value) => set("institution", locale, value)}
+            />
+          </Section>
+        </>
+      )}
+    </EditorShell>
+  );
 }
 
 export default function SiteContentEditor({ keyName }: { keyName: string }) {
-  if (keyName === "homepage") return <HomepageEditor />;
-  if (keyName === "about") return <AboutEditor />;
-  if (keyName === "contact") return <ContactEditor />;
-  if (keyName === "footer") return <FooterEditor />;
-  return <div className="p-5 sm:p-7 lg:p-9"><ErrorState message="Invalid site content page." /></div>;
+  if (keyName === "homepage") {
+    return <HomepageEditor />;
+  }
+
+  if (keyName === "about") {
+    return <AboutEditor />;
+  }
+
+  if (keyName === "contact") {
+    return <ContactEditor />;
+  }
+
+  if (keyName === "footer") {
+    return <FooterEditor />;
+  }
+
+  return (
+    <div className="p-5 sm:p-7 lg:p-9">
+      <ErrorState message="Invalid site content page." />
+    </div>
+  );
 }

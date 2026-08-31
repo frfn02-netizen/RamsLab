@@ -1,7 +1,20 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { getCurrentUser, login as loginRequest, logout as logoutRequest } from "@/lib/api/auth";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  getCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+} from "@/lib/api/auth";
 import { onUnauthorized } from "@/lib/api/client";
 import type { AuthUser, LoginInput } from "@/types/auth";
 
@@ -45,11 +58,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => void refresh(), [refresh]);
-  useEffect(() => onUnauthorized(() => {
-    userRef.current = null;
-    setUser(null);
-    setStatus("unauthenticated");
-  }), []);
+  useEffect(
+    () =>
+      onUnauthorized(() => {
+        userRef.current = null;
+        setUser(null);
+        setStatus("unauthenticated");
+      }),
+    [],
+  );
 
   const login = useCallback(async (input: LoginInput) => {
     const authenticatedUser = await loginRequest(input);
@@ -69,7 +86,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const value = useMemo(() => ({ user, status, isAuthenticated: status === "authenticated", login, logout, refresh }), [user, status, login, logout, refresh]);
+  const value = useMemo(
+    () => ({
+      user,
+      status,
+      isAuthenticated: status === "authenticated",
+      login,
+      logout,
+      refresh,
+    }),
+    [user, status, login, logout, refresh],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -1,6 +1,11 @@
 import { ObjectId } from "mongodb";
 
-export const SITE_CONTENT_KEYS = ["homepage", "about", "contact", "footer"] as const;
+export const SITE_CONTENT_KEYS = [
+  "homepage",
+  "about",
+  "contact",
+  "footer",
+] as const;
 export type SiteContentKey = (typeof SITE_CONTENT_KEYS)[number];
 
 export interface BilingualText {
@@ -19,10 +24,7 @@ export interface SiteContentDocument {
 }
 
 export type SiteContentContent =
-  | HomepageContent
-  | AboutContent
-  | ContactContent
-  | FooterContent;
+  HomepageContent | AboutContent | ContactContent | FooterContent;
 
 export interface HomepagePrinciple {
   key: "R" | "A" | "M" | "S";
@@ -37,7 +39,12 @@ export interface HomepageContent {
     primaryCta: BilingualText;
     secondaryCta: BilingualText;
   };
-  principles: [HomepagePrinciple, HomepagePrinciple, HomepagePrinciple, HomepagePrinciple];
+  principles: [
+    HomepagePrinciple,
+    HomepagePrinciple,
+    HomepagePrinciple,
+    HomepagePrinciple,
+  ];
   ecosystem: {
     title: BilingualText;
     aisDescription: BilingualText;
@@ -65,7 +72,12 @@ export interface AboutContent {
   };
   principles: {
     heading: BilingualText;
-    items: [HomepagePrinciple, HomepagePrinciple, HomepagePrinciple, HomepagePrinciple];
+    items: [
+      HomepagePrinciple,
+      HomepagePrinciple,
+      HomepagePrinciple,
+      HomepagePrinciple,
+    ];
   };
   researchApproach: {
     eyebrow: BilingualText;
@@ -75,7 +87,13 @@ export interface AboutContent {
   researchFocus: {
     title: BilingualText;
     description: BilingualText;
-    items: [BilingualText, BilingualText, BilingualText, BilingualText, BilingualText];
+    items: [
+      BilingualText,
+      BilingualText,
+      BilingualText,
+      BilingualText,
+      BilingualText,
+    ];
   };
   marineContext: {
     title: BilingualText;

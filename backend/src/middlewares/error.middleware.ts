@@ -24,10 +24,14 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   if (error && typeof error === "object" && "type" in error) {
     const type = (error as { type?: string }).type;
     if (type === "entity.too.large") {
-      return res.status(413).json({ success: false, message: "Request body is too large" });
+      return res
+        .status(413)
+        .json({ success: false, message: "Request body is too large" });
     }
     if (type === "entity.parse.failed") {
-      return res.status(400).json({ success: false, message: "Malformed JSON body" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Malformed JSON body" });
     }
   }
 
@@ -39,7 +43,9 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
     method: req.method,
     path: req.path,
     error,
-    ...(isProduction ? {} : { stack: error instanceof Error ? error.stack : undefined }),
+    ...(isProduction
+      ? {}
+      : { stack: error instanceof Error ? error.stack : undefined }),
   });
 
   if (error instanceof ZodError) {
@@ -61,7 +67,9 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
     return res.status(error.statusCode).json({
       success: false,
       message: error.message,
-      ...(error.details !== undefined && !isProduction ? { details: error.details } : {}),
+      ...(error.details !== undefined && !isProduction
+        ? { details: error.details }
+        : {}),
     });
   }
 

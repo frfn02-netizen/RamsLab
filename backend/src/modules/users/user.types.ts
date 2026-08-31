@@ -7,8 +7,7 @@ export const USER_ROLES = {
   PUBLICATION_EDITOR: "PUBLICATION_EDITOR",
 } as const;
 
-export type UserRole =
-  (typeof USER_ROLES)[keyof typeof USER_ROLES];
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
 export interface User {
   _id?: ObjectId;

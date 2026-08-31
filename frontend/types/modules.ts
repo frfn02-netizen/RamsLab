@@ -1,5 +1,6 @@
 export type ProjectStatus = "PLANNING" | "ONGOING" | "COMPLETED";
-export type ProjectCategory = "RESEARCH" | "CONSULTING" | "DEVELOPMENT" | "OTHER";
+export type ProjectCategory =
+  "RESEARCH" | "CONSULTING" | "DEVELOPMENT" | "OTHER";
 
 export interface Project {
   _id: string;
@@ -39,9 +40,20 @@ export interface Publication {
   updatedAt: string;
 }
 
-export const PUBLICATION_TYPES = ["Article", "Review", "Conference Paper", "Book Chapter", "Proceedings", "Editorial", "Other"] as const;
+export const PUBLICATION_TYPES = [
+  "Article",
+  "Review",
+  "Conference Paper",
+  "Book Chapter",
+  "Proceedings",
+  "Editorial",
+  "Other",
+] as const;
 
-export type PublicationInput = Omit<Publication, "_id" | "createdAt" | "updatedAt">;
+export type PublicationInput = Omit<
+  Publication,
+  "_id" | "createdAt" | "updatedAt"
+>;
 export type PublicationUpdateInput = Partial<PublicationInput>;
 
 export type PartnerType = "UNIVERSITY" | "INDUSTRIAL";
@@ -58,7 +70,10 @@ export interface Partner {
   createdAt: string;
   updatedAt: string;
 }
-export type PartnerInput = Omit<Partner, "_id" | "type" | "createdAt" | "updatedAt">;
+export type PartnerInput = Omit<
+  Partner,
+  "_id" | "type" | "createdAt" | "updatedAt"
+>;
 export type PartnerUpdateInput = Partial<PartnerInput>;
 
 export interface Dosen {
@@ -98,7 +113,14 @@ export interface Student {
 export type StudentInput = Omit<Student, "_id" | "createdAt" | "updatedAt">;
 export type StudentUpdateInput = Partial<StudentInput>;
 
-export type TrackingType = "GRADUATION" | "EMPLOYMENT" | "PROMOTION" | "EDUCATION" | "ENTREPRENEURSHIP" | "JOB_SEEKING" | "OTHER";
+export type TrackingType =
+  | "GRADUATION"
+  | "EMPLOYMENT"
+  | "PROMOTION"
+  | "EDUCATION"
+  | "ENTREPRENEURSHIP"
+  | "JOB_SEEKING"
+  | "OTHER";
 export interface AlumniTracking {
   _id: string;
   alumniId: string;
@@ -114,7 +136,10 @@ export interface AlumniTracking {
   createdAt: string;
   updatedAt: string;
 }
-export type TrackingInput = Omit<AlumniTracking, "_id" | "alumniId" | "createdAt" | "updatedAt">;
+export type TrackingInput = Omit<
+  AlumniTracking,
+  "_id" | "alumniId" | "createdAt" | "updatedAt"
+>;
 export type TrackingUpdateInput = Partial<TrackingInput>;
 
 export interface ResearchAreaText {
@@ -138,7 +163,13 @@ export interface ResearchArea {
   updatedBy?: string;
 }
 
-export type ResearchAreaInput = Omit<ResearchArea, "_id" | "createdAt" | "updatedAt">;
+export type ResearchAreaInput = Omit<
+  ResearchArea,
+  "_id" | "createdAt" | "updatedAt"
+>;
 export type ResearchAreaUpdateInput = Partial<ResearchAreaInput>;
 
-export type PublicResearchArea = Omit<ResearchArea, "_id" | "createdAt" | "updatedAt" | "updatedBy">;
+export type PublicResearchArea = Omit<
+  ResearchArea,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+>;

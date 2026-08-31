@@ -1,7 +1,4 @@
-import {
-  Collection,
-  ObjectId,
-} from "mongodb";
+import { Collection, ObjectId } from "mongodb";
 
 import { getDatabase } from "../../config/database.js";
 
@@ -11,13 +8,11 @@ import { SECURITY_LIMITS } from "../../config/security.js";
 const ALUMNI_COLLECTION = "alumni";
 
 export function getAlumniCollection(): Collection<Alumni> {
-  return getDatabase().collection<Alumni>(
-    ALUMNI_COLLECTION
-  );
+  return getDatabase().collection<Alumni>(ALUMNI_COLLECTION);
 }
 
 export async function findAlumniByUserId(
-  userId: ObjectId
+  userId: ObjectId,
 ): Promise<Alumni | null> {
   const collection = getAlumniCollection();
 
@@ -26,9 +21,7 @@ export async function findAlumniByUserId(
   });
 }
 
-export async function findAlumniById(
-  id: string
-): Promise<Alumni | null> {
+export async function findAlumniById(id: string): Promise<Alumni | null> {
   if (!ObjectId.isValid(id)) {
     return null;
   }
@@ -40,9 +33,7 @@ export async function findAlumniById(
   });
 }
 
-export async function findAlumniByNim(
-  nim: string
-): Promise<Alumni | null> {
+export async function findAlumniByNim(nim: string): Promise<Alumni | null> {
   const collection = getAlumniCollection();
 
   return collection.findOne({
@@ -64,20 +55,12 @@ export interface AlumniListParams {
   search?: string;
 }
 
-export async function findAlumniList(
-  params: AlumniListParams
-) {
-  const collection =
-    getAlumniCollection();
+export async function findAlumniList(params: AlumniListParams) {
+  const collection = getAlumniCollection();
 
-  const {
-    page,
-    limit,
-    search,
-  } = params;
+  const { page, limit, search } = params;
 
-  const skip =
-    (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
   const filter: Record<string, unknown> = {};
 
@@ -113,10 +96,7 @@ export async function findAlumniList(
     ];
   }
 
-  const [
-    data,
-    total,
-  ] = await Promise.all([
+  const [data, total] = await Promise.all([
     collection
       .find(filter)
       .sort({
@@ -142,6 +122,8 @@ export async function countAlumni(): Promise<number> {
 
 export async function deleteAlumni(id: string): Promise<boolean> {
   if (!ObjectId.isValid(id)) return false;
-  const result = await getAlumniCollection().deleteOne({ _id: new ObjectId(id) });
+  const result = await getAlumniCollection().deleteOne({
+    _id: new ObjectId(id),
+  });
   return result.deletedCount === 1;
 }

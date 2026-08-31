@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+
 import { useAuth } from "@/components/providers/auth-providers";
 import {
   Card,
@@ -13,14 +14,13 @@ import {
   PageHeader,
   inputClass,
 } from "@/components/ui";
-import { deletePublication, getPublications } from "@/lib/api/modules";
+import { getPublications, deletePublication } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import { canManagePublication, hasPermission } from "@/lib/authz";
 import type { Publication } from "@/types/modules";
-import SuccessToast from "./success-toast";
-import DeleteButton from "./delete-button";
 
-const Button = DeleteButton;
+import DeleteButton from "./delete-button";
+import SuccessToast from "./success-toast";
 
 export default function PublicationsPage() {
   const router = useRouter();
@@ -41,12 +41,12 @@ export default function PublicationsPage() {
       setError(null);
 
       try {
-        setPublications(
-          await getPublications({
-            search: value,
-            limit: 100,
-          }),
-        );
+        const result = await getPublications({
+          search: value,
+          limit: 100,
+        });
+
+        setPublications(result);
       } catch (reason) {
         setError(getUserFacingError(reason));
       } finally {
@@ -57,31 +57,33 @@ export default function PublicationsPage() {
   );
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void load(), 250);
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 250);
 
     return () => window.clearTimeout(timer);
   }, [load]);
 
   useEffect(() => {
-    if (!showSavedNotice) return;
+    if (!showSavedNotice) {
+      return;
+    }
 
-    const timeout = window.setTimeout(
-      () =>
-        router.replace("/dashboard/publications", {
-          scroll: false,
-        }),
-      4500,
-    );
+    const timeout = window.setTimeout(() => {
+      router.replace("/dashboard/publications", {
+        scroll: false,
+      });
+    }, 4500);
 
     return () => window.clearTimeout(timeout);
   }, [router, showSavedNotice]);
 
   async function remove(publication: Publication) {
-    if (
-      !window.confirm(
-        `Delete “${publication.title}”? This action cannot be undone.`,
-      )
-    ) {
+    const confirmed = window.confirm(
+      `Delete “${publication.title}”? This action cannot be undone.`,
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -131,10 +133,7 @@ export default function PublicationsPage() {
         />
 
         <Card className="p-4">
-          <label
-            htmlFor="admin-publication-search"
-            className="sr-only"
-          >
+          <label htmlFor="admin-publication-search" className="sr-only">
             Search publications
           </label>
 
@@ -148,12 +147,7 @@ export default function PublicationsPage() {
           />
         </Card>
 
-        {error && (
-          <ErrorState
-            message={error}
-            onRetry={() => void load()}
-          />
-        )}
+        {error && <ErrorState message={error} onRetry={() => void load()} />}
 
         {loading ? (
           <Card>
@@ -214,9 +208,7 @@ export default function PublicationsPage() {
                             {publication.title}
                           </Link>
                         ) : (
-                          <p className="font-semibold">
-                            {publication.title}
-                          </p>
+                          <p className="font-semibold">{publication.title}</p>
                         )}
 
                         <p className="mt-1 text-xs text-[var(--rams-gray)]">
@@ -228,9 +220,7 @@ export default function PublicationsPage() {
                         {publication.publicationType || "Article"}
                       </td>
 
-                      <td className="px-5 py-4 text-sm">
-                        {publication.year}
-                      </td>
+                      <td className="px-5 py-4 text-sm">{publication.year}</td>
 
                       <td className="px-5 py-4 text-sm">
                         {publication.journal}
@@ -240,7 +230,7 @@ export default function PublicationsPage() {
                         {publication.authors.join(", ")}
                       </td>
 
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-4">
                         <div className="flex w-full items-center justify-center gap-2">
                           {canManagePublication(user, publication) && (
                             <>
@@ -251,7 +241,7 @@ export default function PublicationsPage() {
                                 Edit
                               </LinkButton>
 
-                              <Button
+                              <DeleteButton
                                 variant="danger"
                                 disabled={deletingId === publication._id}
                                 onClick={() => void remove(publication)}
@@ -259,7 +249,7 @@ export default function PublicationsPage() {
                                 {deletingId === publication._id
                                   ? "Deleting…"
                                   : "Delete"}
-                              </Button>
+                              </DeleteButton>
                             </>
                           )}
                         </div>

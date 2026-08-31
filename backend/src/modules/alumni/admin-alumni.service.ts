@@ -8,35 +8,27 @@ import {
 
 import { USER_ROLES } from "../users/user.types.js";
 
-import {
-  createAlumni,
-} from "./alumni.service.js";
+import { createAlumni } from "./alumni.service.js";
 
 import {
   createAdminAlumniSchema,
   type CreateAdminAlumniInput,
 } from "./admin-alumni.schema.js";
 
-export async function createAdminAlumni(
-  input: CreateAdminAlumniInput
-) {
-  const data =
-    createAdminAlumniSchema.parse(input);
+export async function createAdminAlumni(input: CreateAdminAlumniInput) {
+  const data = createAdminAlumniSchema.parse(input);
 
-  const users =
-    getUsersCollection();
+  const users = getUsersCollection();
 
   // Check email
-  const existingUser =
-    await findUserByEmail(data.email);
+  const existingUser = await findUserByEmail(data.email);
 
   if (existingUser) {
     throw new Error("Email already exists");
   }
 
   // Hash password
-  const passwordHash =
-    await bcrypt.hash(data.password, 12);
+  const passwordHash = await bcrypt.hash(data.password, 12);
 
   const now = new Date();
 
@@ -52,48 +44,38 @@ export async function createAdminAlumni(
     updatedAt: now,
   };
 
-  const userResult =
-    await users.insertOne(user);
+  const userResult = await users.insertOne(user);
 
-  const userId =
-    userResult.insertedId;
+  const userId = userResult.insertedId;
 
   try {
     // Create alumni profile
-    const alumni =
-      await createAlumni({
-        userId: userId.toString(),
+    const alumni = await createAlumni({
+      userId: userId.toString(),
 
-        fullName: data.fullName,
-        nim: data.nim,
-        graduationYear:
-          data.graduationYear,
-        program: data.program,
+      fullName: data.fullName,
+      nim: data.nim,
+      graduationYear: data.graduationYear,
+      program: data.program,
 
-        phone: data.phone,
-        location: data.location,
+      phone: data.phone,
+      location: data.location,
 
-        currentStatus:
-          data.currentStatus,
+      currentStatus: data.currentStatus,
 
-        currentCompany:
-          data.currentCompany,
+      currentCompany: data.currentCompany,
 
-        currentPosition:
-          data.currentPosition,
+      currentPosition: data.currentPosition,
 
-        linkedin:
-          data.linkedin,
+      linkedin: data.linkedin,
 
-        bio:
-          data.bio,
+      bio: data.bio,
 
-        careerHistory: [],
-        educationHistory: [],
+      careerHistory: [],
+      educationHistory: [],
 
-        isPublic:
-          data.isPublic,
-      });
+      isPublic: data.isPublic,
+    });
 
     return {
       user: {

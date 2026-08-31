@@ -3,9 +3,18 @@ import { getPublicPartners, getPublicProjects } from "@/lib/api/modules";
 
 describe("public API modules", () => {
   it("uses unauthenticated public project and partner endpoints", async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: [] }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true, data: [] }), { status: 200 }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, data: [] }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, data: [] }), {
+          status: 200,
+        }),
+      );
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(getPublicProjects()).resolves.toEqual([]);

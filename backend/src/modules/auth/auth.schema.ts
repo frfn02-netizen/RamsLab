@@ -1,11 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email("Invalid email address")
-    .toLowerCase(),
+  email: z.string().trim().email("Invalid email address").toLowerCase(),
 
   password: z
     .string()
@@ -13,5 +9,4 @@ export const loginSchema = z.object({
     .max(128, "Password is too long"),
 });
 
-export type LoginInput =
-  z.infer<typeof loginSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;

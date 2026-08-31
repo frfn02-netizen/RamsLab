@@ -12,10 +12,27 @@ const principleFields = z.object({
   description: bilingualTextSchema,
 });
 
-const fixedPrinciple = <T extends "R" | "A" | "M" | "S">(key: T) => principleFields.extend({ key: z.literal(key) });
-const principleTuple = z.tuple([fixedPrinciple("R"), fixedPrinciple("A"), fixedPrinciple("M"), fixedPrinciple("S")]);
-const focusItems = z.tuple([bilingualTextSchema, bilingualTextSchema, bilingualTextSchema, bilingualTextSchema, bilingualTextSchema]);
-const addressLines = z.tuple([bilingualTextSchema, bilingualTextSchema, bilingualTextSchema, bilingualTextSchema]);
+const fixedPrinciple = <T extends "R" | "A" | "M" | "S">(key: T) =>
+  principleFields.extend({ key: z.literal(key) });
+const principleTuple = z.tuple([
+  fixedPrinciple("R"),
+  fixedPrinciple("A"),
+  fixedPrinciple("M"),
+  fixedPrinciple("S"),
+]);
+const focusItems = z.tuple([
+  bilingualTextSchema,
+  bilingualTextSchema,
+  bilingualTextSchema,
+  bilingualTextSchema,
+  bilingualTextSchema,
+]);
+const addressLines = z.tuple([
+  bilingualTextSchema,
+  bilingualTextSchema,
+  bilingualTextSchema,
+  bilingualTextSchema,
+]);
 
 export const homepageContentSchema = z.object({
   hero: z.object({

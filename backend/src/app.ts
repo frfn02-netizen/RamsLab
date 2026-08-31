@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -19,12 +19,18 @@ import publicationRoutes from "./modules/publications/publication.routes.js";
 import studentRoutes from "./modules/students/student.routes.js";
 import { authenticate } from "./middlewares/auth.middlewares.js";
 import { requireRole } from "./middlewares/role.middlewares.js";
-import { getAllowedOrigins, isProduction, SECURITY_LIMITS, validateProductionSecurityConfiguration } from "./config/security.js";
+import {
+  getAllowedOrigins,
+  isProduction,
+  SECURITY_LIMITS,
+  validateProductionSecurityConfiguration,
+} from "./config/security.js";
 import { createRateLimiter } from "./middlewares/rate-limit.middleware.js";
 import { verifyStateChangingOrigin } from "./middlewares/request-security.middleware.js";
-import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
-import { getDosenPhotoDirectory } from "./modules/dosen/dosen-photo.js";
-import { getStudentPhotoDirectory } from "./modules/students/student-photo.js";
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -45,7 +51,7 @@ app.use(
       : false,
     referrerPolicy: { policy: "no-referrer" },
     crossOriginResourcePolicy: { policy: "same-site" },
-  })
+  }),
 );
 
 const allowedOrigins = getAllowedOrigins();
@@ -60,38 +66,20 @@ app.use(
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "X-CSRF-Token"],
-  })
+  }),
 );
 
 app.use(express.json({ limit: SECURITY_LIMITS.jsonBodyBytes }));
 app.use(cookieParser());
 app.use(verifyStateChangingOrigin);
 
-function allowPublicAssetCrossOrigin(_req: Request, res: Response, next: NextFunction) {
-  // Profile photos are deliberately public and are served by Railway while
-  // the public UI is served by Vercel. Override Helmet's same-site default
-  // only for these static assets, not for the API as a whole.
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  next();
-}
-
-app.use(
-  "/uploads/dosen",
-  allowPublicAssetCrossOrigin,
-  express.static(getDosenPhotoDirectory(), { maxAge: "1d", immutable: true }),
-);
-app.use(
-  "/uploads/students",
-  allowPublicAssetCrossOrigin,
-  express.static(getStudentPhotoDirectory(), { maxAge: "1d", immutable: true }),
-);
 app.use(
   "/api",
   createRateLimiter({
     windowMs: SECURITY_LIMITS.apiWindowMs,
     max: SECURITY_LIMITS.maxApiRequests,
     message: "Too many API requests",
-  })
+  }),
 );
 app.use("/api/auth", authRoutes);
 app.use("/api/alumni", alumniRoutes);
@@ -119,41 +107,29 @@ app.use(
 app.use("/api/admin/research", researchRoutes);
 app.use("/api/admin/site-content", siteContentRoutes);
 
-app.get(
-"/api/admin/test",
-  authenticate,
-  requireRole("ADMIN"),
-  (_req, res) => {
-    return res.json({
-      success: true,
-      message: "Admin access granted",
-    });
-  }
-);
+app.get("/api/admin/test", authenticate, requireRole("ADMIN"), (_req, res) => {
+  return res.json({
+    success: true,
+    message: "Admin access granted",
+  });
+});
 
-app.get(
-  "/api/auth/me",
-  authenticate,
-  (req, res) => {
-    return res.json({
-      success: true,
-      user: req.user
-        ? { userId: req.user.userId, role: req.user.role }
-        : undefined,
-    });
-  }
-);
+app.get("/api/auth/me", authenticate, (req, res) => {
+  return res.json({
+    success: true,
+    user: req.user
+      ? { userId: req.user.userId, role: req.user.role }
+      : undefined,
+  });
+});
 
-app.get(
-  "/api/health",
-  (_req, res) => {
-    return res.json({
-      success: true,
-      message: "RAMS API is running",
-      timestamp: new Date().toISOString(),
-    });
-  }
-);
+app.get("/api/health", (_req, res) => {
+  return res.json({
+    success: true,
+    message: "RAMS API is running",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 app.use(notFoundHandler);
 app.use(errorHandler);

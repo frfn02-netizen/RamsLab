@@ -2,11 +2,7 @@ import { z } from "zod";
 import { USER_ROLES } from "./user.types.js";
 
 export const createUserSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email("Invalid email address")
-    .toLowerCase(),
+  email: z.string().trim().email("Invalid email address").toLowerCase(),
 
   password: z
     .string()
@@ -20,9 +16,7 @@ export const createUserSchema = z.object({
     USER_ROLES.PUBLICATION_EDITOR,
   ]),
 
-  isActive: z
-    .boolean()
-    .default(true),
+  isActive: z.boolean().default(true),
 });
 
 export const updateUserSchema = z.object({
@@ -33,9 +27,7 @@ export const updateUserSchema = z.object({
     .toLowerCase()
     .optional(),
 
-  isActive: z
-    .boolean()
-    .optional(),
+  isActive: z.boolean().optional(),
 });
 
 export const createManagedAccountSchema = z.object({
@@ -43,8 +35,6 @@ export const createManagedAccountSchema = z.object({
   password: createUserSchema.shape.password,
 });
 
-export type CreateUserInput =
-  z.infer<typeof createUserSchema>;
+export type CreateUserInput = z.infer<typeof createUserSchema>;
 
-export type UpdateUserInput =
-  z.infer<typeof updateUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;

@@ -5,18 +5,39 @@ import SiteContentEditor from "@/components/dashboard/site-content-editor";
 import type { SiteContentAdminEnvelope } from "@/types/site-content";
 import { content } from "./site-content.test-data";
 
-const { getAdminSiteContentList, getAdminSiteContent, updateAdminSiteContent } = vi.hoisted(() => ({ getAdminSiteContentList: vi.fn(), getAdminSiteContent: vi.fn(), updateAdminSiteContent: vi.fn() }));
-vi.mock("@/lib/api/modules", () => ({ getAdminSiteContentList, getAdminSiteContent, updateAdminSiteContent }));
+const { getAdminSiteContentList, getAdminSiteContent, updateAdminSiteContent } =
+  vi.hoisted(() => ({
+    getAdminSiteContentList: vi.fn(),
+    getAdminSiteContent: vi.fn(),
+    updateAdminSiteContent: vi.fn(),
+  }));
+vi.mock("@/lib/api/modules", () => ({
+  getAdminSiteContentList,
+  getAdminSiteContent,
+  updateAdminSiteContent,
+}));
 
-const record: SiteContentAdminEnvelope<"homepage"> = { key: "homepage", page: "homepage", content, createdAt: "2026-01-01", updatedAt: "2026-01-01" };
+const record: SiteContentAdminEnvelope<"homepage"> = {
+  key: "homepage",
+  page: "homepage",
+  content,
+  createdAt: "2026-01-01",
+  updatedAt: "2026-01-01",
+};
 
 describe("site content dashboard", () => {
   it("renders the four content groups", async () => {
     getAdminSiteContentList.mockResolvedValue([record]);
     render(<SiteContentPage />);
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Homepage" })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: "Homepage" }),
+      ).toBeInTheDocument(),
+    );
     expect(screen.getByRole("heading", { name: "About" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Contact" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Contact" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Footer" })).toBeInTheDocument();
   });
 
@@ -24,9 +45,13 @@ describe("site content dashboard", () => {
     getAdminSiteContent.mockResolvedValue(record);
     updateAdminSiteContent.mockResolvedValue(record);
     render(<SiteContentEditor keyName="homepage" />);
-    await waitFor(() => expect(screen.getByDisplayValue("English")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByDisplayValue("English")).toBeInTheDocument(),
+    );
     expect(screen.getByDisplayValue("Indonesia")).toBeInTheDocument();
     screen.getByRole("button", { name: "Save content" }).click();
-    await waitFor(() => expect(updateAdminSiteContent).toHaveBeenCalledWith("homepage", content));
+    await waitFor(() =>
+      expect(updateAdminSiteContent).toHaveBeenCalledWith("homepage", content),
+    );
   });
 });

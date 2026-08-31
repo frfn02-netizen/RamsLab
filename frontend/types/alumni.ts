@@ -1,9 +1,5 @@
 export type AlumniStatus =
-  | "WORKING"
-  | "STUDYING"
-  | "ENTREPRENEUR"
-  | "SEEKING_JOB"
-  | "OTHER";
+  "WORKING" | "STUDYING" | "ENTREPRENEUR" | "SEEKING_JOB" | "OTHER";
 
 export interface Alumni {
   _id: string;
@@ -63,4 +59,6 @@ export interface AlumniListResponse {
 }
 
 export type AlumniCreateInput = Omit<Alumni, "_id" | "createdAt" | "updatedAt">;
-export type AlumniUpdateInput = Partial<Omit<Alumni, "_id" | "userId" | "nim" | "createdAt" | "updatedAt">>;
+export type AlumniUpdateInput = Partial<
+  Omit<Alumni, "_id" | "userId" | "nim" | "createdAt" | "updatedAt">
+>;

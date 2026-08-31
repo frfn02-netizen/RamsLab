@@ -10,8 +10,7 @@ export const TRACKING_TYPES = {
   OTHER: "OTHER",
 } as const;
 
-export type TrackingType =
-  (typeof TRACKING_TYPES)[keyof typeof TRACKING_TYPES];
+export type TrackingType = (typeof TRACKING_TYPES)[keyof typeof TRACKING_TYPES];
 
 export interface AlumniTracking {
   _id?: ObjectId;

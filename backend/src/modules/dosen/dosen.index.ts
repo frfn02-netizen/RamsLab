@@ -8,7 +8,7 @@ export async function createDosenIndexes() {
     {
       unique: true,
       name: "dosen_user_unique",
-    }
+    },
   );
 
   await collection.createIndex(
@@ -17,14 +17,14 @@ export async function createDosenIndexes() {
       unique: true,
       sparse: true,
       name: "dosen_employee_id_unique",
-    }
+    },
   );
 
   await collection.createIndex(
     { isPublic: 1 },
     {
       name: "dosen_public_index",
-    }
+    },
   );
 
   console.log("Dosen indexes created");

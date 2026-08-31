@@ -1,51 +1,39 @@
 import bcrypt from "bcrypt";
-import { getUsersCollection, } from "./user.repository.js";
-import { USER_ROLES, } from "./user.types.js";
+import { getUsersCollection } from "./user.repository.js";
+import { USER_ROLES } from "./user.types.js";
 
 export interface CreateAlumniUserInput {
   email: string;
   password: string;
 }
 
-export async function createAlumniUser(
-  input: CreateAlumniUserInput
-) {
-  const users =
-    getUsersCollection();
+export async function createAlumniUser(input: CreateAlumniUserInput) {
+  const users = getUsersCollection();
 
-  const email =
-    input.email.trim().toLowerCase();
+  const email = input.email.trim().toLowerCase();
 
-  const existingUser =
-    await users.findOne({
-      email,
-    });
+  const existingUser = await users.findOne({
+    email,
+  });
 
   if (existingUser) {
-    throw new Error(
-      "Email is already registered"
-    );
+    throw new Error("Email is already registered");
   }
 
-  const passwordHash =
-    await bcrypt.hash(
-      input.password,
-      12
-    );
+  const passwordHash = await bcrypt.hash(input.password, 12);
 
   const now = new Date();
 
-  const result =
-    await users.insertOne({
-      email,
-      passwordHash,
-      role: USER_ROLES.ALUMNI,
-      isActive: true,
-      tokenVersion: 0,
-      lastLoginAt: null,
-      createdAt: now,
-      updatedAt: now,
-    });
+  const result = await users.insertOne({
+    email,
+    passwordHash,
+    role: USER_ROLES.ALUMNI,
+    isActive: true,
+    tokenVersion: 0,
+    lastLoginAt: null,
+    createdAt: now,
+    updatedAt: now,
+  });
 
   return {
     id: result.insertedId.toString(),
@@ -58,45 +46,33 @@ export interface CreateDosenUserInput {
   password: string;
 }
 
-export async function createDosenUser(
-  input: CreateDosenUserInput
-) {
-  const users =
-    getUsersCollection();
+export async function createDosenUser(input: CreateDosenUserInput) {
+  const users = getUsersCollection();
 
-  const email =
-    input.email.trim().toLowerCase();
+  const email = input.email.trim().toLowerCase();
 
-  const existingUser =
-    await users.findOne({
-      email,
-    });
+  const existingUser = await users.findOne({
+    email,
+  });
 
   if (existingUser) {
-    throw new Error(
-      "Email is already registered"
-    );
+    throw new Error("Email is already registered");
   }
 
-  const passwordHash =
-    await bcrypt.hash(
-      input.password,
-      12
-    );
+  const passwordHash = await bcrypt.hash(input.password, 12);
 
   const now = new Date();
 
-  const result =
-    await users.insertOne({
-      email,
-      passwordHash,
-      role: USER_ROLES.DOSEN,
-      isActive: true,
-      tokenVersion: 0,
-      lastLoginAt: null,
-      createdAt: now,
-      updatedAt: now,
-    });
+  const result = await users.insertOne({
+    email,
+    passwordHash,
+    role: USER_ROLES.DOSEN,
+    isActive: true,
+    tokenVersion: 0,
+    lastLoginAt: null,
+    createdAt: now,
+    updatedAt: now,
+  });
 
   return {
     id: result.insertedId.toString(),

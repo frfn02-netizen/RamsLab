@@ -3,10 +3,15 @@ import { describe, expect, it, vi } from "vitest";
 import DashboardPage from "@/app/dashboard/page";
 import type { DashboardStats } from "@/types/dashboard";
 
-const { getDashboardStats } = vi.hoisted(() => ({ getDashboardStats: vi.fn() }));
+const { getDashboardStats } = vi.hoisted(() => ({
+  getDashboardStats: vi.fn(),
+}));
 vi.mock("@/lib/api/dashboard", () => ({ getDashboardStats }));
 vi.mock("@/components/providers/auth-providers", () => ({
-  useAuth: () => ({ user: { role: "ADMIN", email: "admin@example.com" }, status: "authenticated" }),
+  useAuth: () => ({
+    user: { role: "ADMIN", email: "admin@example.com" },
+    status: "authenticated",
+  }),
 }));
 
 const stats: DashboardStats = {
@@ -27,8 +32,12 @@ describe("dashboard overview", () => {
   it("renders CMS overview values from the dashboard API", async () => {
     getDashboardStats.mockResolvedValue(stats);
     render(<DashboardPage />);
-    await waitFor(() => expect(screen.getByText("Published Research")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Published Research")).toBeInTheDocument(),
+    );
     expect(screen.getByText("Unpublished Research")).toBeInTheDocument();
-    expect(screen.getByText(/Last site content update: homepage/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Last site content update: homepage/),
+    ).toBeInTheDocument();
   });
 });

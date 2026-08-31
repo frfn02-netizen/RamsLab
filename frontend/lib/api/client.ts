@@ -1,6 +1,8 @@
 import { ApiError, type ApiErrorDetails } from "./errors";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api").replace(/\/$/, "");
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"
+).replace(/\/$/, "");
 const CSRF_COOKIE = "rams_csrf_token";
 const CSRF_STORAGE_KEY = "rams_csrf_token";
 const CSRF_SHARED_STORAGE_KEY = "rams_csrf_token_shared";
@@ -30,7 +32,10 @@ export function onUnauthorized(handler: (() => void) | null) {
 function getCookie(name: string) {
   if (typeof document === "undefined") return null;
   const encodedName = `${encodeURIComponent(name)}=`;
-  const cookie = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(encodedName));
+  const cookie = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(encodedName));
   return cookie ? decodeURIComponent(cookie.slice(encodedName.length)) : null;
 }
 
@@ -40,8 +45,10 @@ function getStoredCsrfToken() {
     // localStorage keeps separate tabs aligned when one tab refreshes the
     // API-issued CSRF cookie. sessionStorage remains the fallback for privacy
     // modes where shared storage is unavailable.
-    return window.localStorage.getItem(CSRF_SHARED_STORAGE_KEY)
-      ?? window.sessionStorage.getItem(CSRF_STORAGE_KEY);
+    return (
+      window.localStorage.getItem(CSRF_SHARED_STORAGE_KEY) ??
+      window.sessionStorage.getItem(CSRF_STORAGE_KEY)
+    );
   } catch {
     return window.sessionStorage.getItem(CSRF_STORAGE_KEY);
   }
@@ -73,7 +80,11 @@ function getCsrfToken() {
 
 function getErrorDetails(errors: unknown): ApiErrorDetails | undefined {
   if (!errors) return undefined;
-  if (typeof errors === "object" && errors !== null && "fieldErrors" in errors) {
+  if (
+    typeof errors === "object" &&
+    errors !== null &&
+    "fieldErrors" in errors
+  ) {
     const fieldErrors = (errors as { fieldErrors?: unknown }).fieldErrors;
     if (typeof fieldErrors === "object" && fieldErrors !== null) {
       return { fieldErrors: fieldErrors as Record<string, string[]> };
@@ -115,7 +126,11 @@ async function refreshCsrfTokenForRetry(timeoutMs: number) {
   }
 }
 
-async function requestEnvelope<T>(path: string, options: ApiRequestOptions = {}, csrfRetried = false) {
+async function requestEnvelope<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+  csrfRetried = false,
+) {
   const { timeoutMs = 15000, ...fetchOptions } = options;
   const method = (fetchOptions.method ?? "GET").toUpperCase();
   const controller = new AbortController();
@@ -125,7 +140,11 @@ async function requestEnvelope<T>(path: string, options: ApiRequestOptions = {},
   callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
   const headers = new Headers(fetchOptions.headers);
   headers.set("Accept", "application/json");
-  if (fetchOptions.body && !(fetchOptions.body instanceof FormData) && !headers.has("Content-Type")) {
+  if (
+    fetchOptions.body &&
+    !(fetchOptions.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
     headers.set("Content-Type", "application/json");
   }
   if (MUTATION_METHODS.has(method)) {
@@ -153,27 +172,39 @@ async function requestEnvelope<T>(path: string, options: ApiRequestOptions = {},
 
   const body = await parseResponse<T>(response);
   if (
-    response.status === 403
-    && body.message === "CSRF validation failed"
-    && MUTATION_METHODS.has(method)
-    && !csrfRetried
-    && await refreshCsrfTokenForRetry(timeoutMs)
+    response.status === 403 &&
+    body.message === "CSRF validation failed" &&
+    MUTATION_METHODS.has(method) &&
+    !csrfRetried &&
+    (await refreshCsrfTokenForRetry(timeoutMs))
   ) {
     return requestEnvelope<T>(path, options, true);
   }
   if (!response.ok || body.success === false) {
-    if (response.status === 401 && !path.startsWith("/auth/")) unauthorizedHandler?.();
-    throw new ApiError(body.message ?? "Request failed", response.status, getErrorDetails(body.errors));
+    if (response.status === 401 && !path.startsWith("/auth/"))
+      unauthorizedHandler?.();
+    throw new ApiError(
+      body.message ?? "Request failed",
+      response.status,
+      getErrorDetails(body.errors),
+    );
   }
   return body;
 }
 
-export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<T> {
   const body = await requestEnvelope<T>(path, options);
-  if (body.data === undefined) throw new ApiError("Server response did not contain data", 502);
+  if (body.data === undefined)
+    throw new ApiError("Server response did not contain data", 502);
   return body.data;
 }
 
-export function apiRequestWithMeta<T>(path: string, options: ApiRequestOptions = {}) {
+export function apiRequestWithMeta<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+) {
   return requestEnvelope<T>(path, options);
 }

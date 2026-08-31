@@ -8,9 +8,7 @@ export function getUsersCollection(): Collection<User> {
   return getDatabase().collection<User>(USERS_COLLECTION);
 }
 
-export async function findUserByEmail(
-  email: string
-): Promise<User | null> {
+export async function findUserByEmail(email: string): Promise<User | null> {
   const collection = getUsersCollection();
 
   return collection.findOne({
@@ -18,9 +16,7 @@ export async function findUserByEmail(
   });
 }
 
-export async function findUserById(
-  id: string
-): Promise<User | null> {
+export async function findUserById(id: string): Promise<User | null> {
   if (!ObjectId.isValid(id)) {
     return null;
   }

@@ -5,11 +5,16 @@ import type { Dosen } from "../dosen/dosen.types.js";
 import type { Student } from "../students/student.types.js";
 
 function isLocalHost(hostname: string) {
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  return (
+    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]"
+  );
 }
 
 export function getPublicApiOrigin(req: Request) {
-  const configuredOrigin = process.env.PUBLIC_API_URL?.trim().replace(/\/$/, "");
+  const configuredOrigin = process.env.PUBLIC_API_URL?.trim().replace(
+    /\/$/,
+    "",
+  );
   const forwardedProtocol = req.get("x-forwarded-proto")?.split(",")[0]?.trim();
   const requestHost = req.get("host");
   const requestOrigin = requestHost
@@ -22,7 +27,11 @@ export function getPublicApiOrigin(req: Request) {
       const requestUrl = requestOrigin ? new URL(requestOrigin) : undefined;
 
       // A development URL must not leak into a production public response.
-      if (!isLocalHost(configuredUrl.hostname) || !requestUrl || isLocalHost(requestUrl.hostname)) {
+      if (
+        !isLocalHost(configuredUrl.hostname) ||
+        !requestUrl ||
+        isLocalHost(requestUrl.hostname)
+      ) {
         return configuredOrigin;
       }
     } catch {
@@ -39,13 +48,17 @@ function publicPhotoUrl(req: Request, photo?: string) {
   try {
     const origin = getPublicApiOrigin(req);
     const parsed = new URL(photo, origin);
-    const dosenPhotoMatch = parsed.pathname.match(/^\/uploads\/dosen\/([a-f0-9-]+\.(?:jpg|png|webp))$/i);
+    const dosenPhotoMatch = parsed.pathname.match(
+      /^\/uploads\/dosen\/([a-f0-9-]+\.(?:jpg|png|webp))$/i,
+    );
 
     if (dosenPhotoMatch) {
       return `${origin}/uploads/dosen/${dosenPhotoMatch[1]}`;
     }
 
-    const studentPhotoMatch = parsed.pathname.match(/^\/uploads\/students\/([a-f0-9-]+\.(?:jpg|png|webp))$/i);
+    const studentPhotoMatch = parsed.pathname.match(
+      /^\/uploads\/students\/([a-f0-9-]+\.(?:jpg|png|webp))$/i,
+    );
     if (studentPhotoMatch) {
       return `${origin}/uploads/students/${studentPhotoMatch[1]}`;
     }
@@ -63,11 +76,14 @@ function publicLinkedInUrl(linkedin?: string) {
   try {
     const url = new URL(linkedin);
     const hostname = url.hostname.toLowerCase();
-    const isLinkedInHost = hostname === "linkedin.com"
-      || hostname.endsWith(".linkedin.com")
-      || hostname === "lnkd.in";
+    const isLinkedInHost =
+      hostname === "linkedin.com" ||
+      hostname.endsWith(".linkedin.com") ||
+      hostname === "lnkd.in";
 
-    return url.protocol === "https:" && isLinkedInHost ? url.toString() : undefined;
+    return url.protocol === "https:" && isLinkedInHost
+      ? url.toString()
+      : undefined;
   } catch {
     return undefined;
   }
@@ -104,7 +120,10 @@ export function toPublicAlumniProfile(req: Request, member: Alumni) {
 export function toPublicStudentProfile(req: Request, member: Student) {
   return {
     id: member._id?.toString() ?? "",
-    category: member.studentType === "PHD_STUDENT" ? "MAHASISWA" as const : "UNDERGRADUATE" as const,
+    category:
+      member.studentType === "PHD_STUDENT"
+        ? ("MAHASISWA" as const)
+        : ("UNDERGRADUATE" as const),
     fullName: member.fullName,
     title: member.program,
     position: undefined,
