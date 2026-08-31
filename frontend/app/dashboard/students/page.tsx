@@ -22,7 +22,11 @@ import type { Student } from "@/types/modules";
 import { useEffect, useState } from "react";
 
 const typeLabel = (type: Student["studentType"]) =>
-  type === "PHD_STUDENT" ? "Ph.D. Student" : "Undergraduate Student";
+  type === "PHD_STUDENT"
+    ? "Ph.D. Student"
+    : type === "MASTER_STUDENT"
+      ? "Master Student"
+      : "Undergraduate Student";
 
 export default function StudentsPage() {
   const { user } = useAuth();
@@ -86,7 +90,7 @@ export default function StudentsPage() {
         <PageHeader
           eyebrow="People"
           title="Students"
-          description="Manage Ph.D. and undergraduate student profiles for the public People directory."
+          description="Manage Ph.D., master, and undergraduate student profiles for the public People directory."
           action={
             user?.role === "ADMIN" ? (
               <LinkButton href="/dashboard/students/new">

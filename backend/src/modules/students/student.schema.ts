@@ -4,6 +4,7 @@ import { isSafeLinkedInUrl } from "../../lib/url-security.js";
 
 const studentType = z.enum([
   STUDENT_TYPES.PHD_STUDENT,
+  STUDENT_TYPES.MASTER_STUDENT,
   STUDENT_TYPES.UNDERGRADUATE_STUDENT,
 ]);
 

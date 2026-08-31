@@ -16,6 +16,7 @@ import RevealOnScroll from "./reveal-on-scroll";
 const categoryLabels: Record<PublicDirectoryCategory, string> = {
   DOSEN: "OUR LAB MEMBERS",
   MAHASISWA: "PH.D. STUDENTS",
+  MASTER: "MASTER STUDENT",
   UNDERGRADUATE: "UNDERGRADUATE STUDENTS",
   ALUMNI: "ALUMNI",
 };
@@ -23,6 +24,7 @@ const categoryLabels: Record<PublicDirectoryCategory, string> = {
 const categoryOrder: PublicDirectoryCategory[] = [
   "DOSEN",
   "MAHASISWA",
+  "MASTER",
   "UNDERGRADUATE",
   "ALUMNI",
 ];
@@ -173,6 +175,7 @@ export default function TeamDirectory() {
   const [people, setPeople] = useState<PublicPeopleResponse>({
     DOSEN: [],
     MAHASISWA: [],
+    MASTER: [],
     UNDERGRADUATE: [],
     ALUMNI: [],
   });

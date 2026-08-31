@@ -96,7 +96,10 @@ export interface Dosen {
 export type DosenInput = Omit<Dosen, "_id" | "createdAt" | "updatedAt">;
 export type DosenUpdateInput = Partial<Omit<DosenInput, "userId">>;
 
-export type StudentType = "PHD_STUDENT" | "UNDERGRADUATE_STUDENT";
+export type StudentType =
+  | "PHD_STUDENT"
+  | "MASTER_STUDENT"
+  | "UNDERGRADUATE_STUDENT";
 export interface Student {
   _id: string;
   fullName: string;

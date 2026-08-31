@@ -46,10 +46,11 @@ export async function getPublicPeopleController(req: Request, res: Response) {
       success: true,
       data: {
         DOSEN: dosen.map((member) => toPublicDosenProfile(req, member)),
-        // The current schema has no student collection yet. Keep the
-        // active student categories available without inventing records.
         MAHASISWA: students
           .filter((student) => student.studentType === "PHD_STUDENT")
+          .map((student) => toPublicStudentProfile(req, student)),
+        MASTER: students
+          .filter((student) => student.studentType === "MASTER_STUDENT")
           .map((student) => toPublicStudentProfile(req, student)),
         UNDERGRADUATE: students
           .filter((student) => student.studentType === "UNDERGRADUATE_STUDENT")

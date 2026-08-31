@@ -25,7 +25,11 @@ import { safeHttpUrl } from "@/lib/safe-url";
 import type { Student, StudentType } from "@/types/modules";
 
 const typeLabel = (type: StudentType) =>
-  type === "PHD_STUDENT" ? "Ph.D. Student" : "Undergraduate Student";
+  type === "PHD_STUDENT"
+    ? "Ph.D. Student"
+    : type === "MASTER_STUDENT"
+      ? "Master Student"
+      : "Undergraduate Student";
 
 export default function StudentDetail({ id }: { id: string }) {
   const { user } = useAuth();
@@ -203,6 +207,7 @@ export default function StudentDetail({ id }: { id: string }) {
                     }
                   >
                     <option value="PHD_STUDENT">Ph.D. Student</option>
+                    <option value="MASTER_STUDENT">Master Student</option>
                     <option value="UNDERGRADUATE_STUDENT">
                       Undergraduate Student
                     </option>

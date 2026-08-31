@@ -112,6 +112,7 @@ export default function CreateStudent() {
                   }
                 >
                   <option value="PHD_STUDENT">Ph.D. Student</option>
+                  <option value="MASTER_STUDENT">Master Student</option>
                   <option value="UNDERGRADUATE_STUDENT">
                     Undergraduate Student
                   </option>

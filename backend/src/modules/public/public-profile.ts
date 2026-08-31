@@ -123,7 +123,9 @@ export function toPublicStudentProfile(req: Request, member: Student) {
     category:
       member.studentType === "PHD_STUDENT"
         ? ("MAHASISWA" as const)
-        : ("UNDERGRADUATE" as const),
+        : member.studentType === "MASTER_STUDENT"
+          ? ("MASTER" as const)
+          : ("UNDERGRADUATE" as const),
     fullName: member.fullName,
     title: member.program,
     position: undefined,

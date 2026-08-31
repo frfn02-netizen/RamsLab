@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 
 export const STUDENT_TYPES = {
   PHD_STUDENT: "PHD_STUDENT",
+  MASTER_STUDENT: "MASTER_STUDENT",
   UNDERGRADUATE_STUDENT: "UNDERGRADUATE_STUDENT",
 } as const;
 
