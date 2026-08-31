@@ -27,8 +27,6 @@ export default function CreateDosen() {
     password: "",
     fullName: "",
     employeeId: "",
-    title: "",
-    position: "",
     specialization: "",
     phone: "",
     bio: "",
@@ -62,8 +60,6 @@ export default function CreateDosen() {
         userId: account.id,
         fullName: form.fullName,
         employeeId: form.employeeId || undefined,
-        title: form.title || undefined,
-        position: form.position || undefined,
         specialization: form.specialization
           .split(",")
           .map((item) => item.trim())
@@ -149,46 +145,35 @@ export default function CreateDosen() {
                 />
               </Field>
 
-              <Field label="Title">
-                <input
-                  className={inputClass}
-                  placeholder="Dr."
-                  value={form.title}
-                  onChange={(event) => update("title", event.target.value)}
-                />
-              </Field>
+              <div className="grid gap-5 sm:col-span-2 sm:grid-cols-2 sm:items-start">
+                <div className="space-y-5">
+                  <Field label="Phone">
+                    <input
+                      className={inputClass}
+                      value={form.phone}
+                      onChange={(event) => update("phone", event.target.value)}
+                    />
+                  </Field>
 
-              <Field label="Position">
-                <input
-                  className={inputClass}
-                  value={form.position}
-                  onChange={(event) => update("position", event.target.value)}
-                />
-              </Field>
+                  <Field label="LinkedIn URL (optional)">
+                    <input
+                      type="url"
+                      className={inputClass}
+                      value={form.linkedin}
+                      onChange={(event) =>
+                        update("linkedin", event.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
 
-              <Field label="Phone">
-                <input
-                  className={inputClass}
-                  value={form.phone}
-                  onChange={(event) => update("phone", event.target.value)}
-                />
-              </Field>
-
-              <Field label="Profile photo">
-                <DosenPhotoField
-                  onFileChange={setPhotoFile}
-                  disabled={saving}
-                />
-              </Field>
-
-              <Field label="LinkedIn URL">
-                <input
-                  type="url"
-                  className={inputClass}
-                  value={form.linkedin}
-                  onChange={(event) => update("linkedin", event.target.value)}
-                />
-              </Field>
+                <Field label="Profile photo">
+                  <DosenPhotoField
+                    onFileChange={setPhotoFile}
+                    disabled={saving}
+                  />
+                </Field>
+              </div>
             </div>
 
             <Field label="Specializations">
@@ -206,7 +191,7 @@ export default function CreateDosen() {
               </p>
             </Field>
 
-            <Field label="Bio">
+            <Field label="Bio (optional)">
               <textarea
                 className={`${inputClass} min-h-28`}
                 value={form.bio}

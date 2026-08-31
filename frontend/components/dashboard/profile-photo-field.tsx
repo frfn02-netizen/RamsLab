@@ -53,10 +53,58 @@ async function compressPhoto(file: File) {
   );
 }
 
+async function cropPhoto(file: File, zoom: number) {
+  const bitmap = await createImageBitmap(file);
+  const targetWidth = 1200;
+  const targetHeight = 900;
+  const baseWidth = Math.min(bitmap.width, bitmap.height * (4 / 3));
+  const baseHeight = baseWidth * (3 / 4);
+  const sourceWidth = baseWidth / zoom;
+  const sourceHeight = baseHeight / zoom;
+  const sourceX = (bitmap.width - sourceWidth) / 2;
+  const sourceY = (bitmap.height - sourceHeight) / 2;
+  const canvas = document.createElement("canvas");
+
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    bitmap.close();
+    throw new Error("Unable to edit the photo");
+  }
+
+  context.drawImage(
+    bitmap,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    targetWidth,
+    targetHeight,
+  );
+  bitmap.close();
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", 0.84);
+  });
+
+  if (!blob) {
+    throw new Error("Unable to edit the photo");
+  }
+
+  if (blob.size > MAX_UPLOAD_BYTES) {
+    throw new Error("The edited photo is still larger than 3 MB");
+  }
+
+  return new File([blob], "profile-photo.jpg", { type: "image/jpeg" });
+}
+
 export default function ProfilePhotoField({
-  initialUrl,
-  onFileChange,
-  disabled = false,
+  initialUrl, onFileChange, 
+  disabled = false, 
   profileLabel = "profile",
 }: {
   initialUrl?: string;
@@ -65,6 +113,11 @@ export default function ProfilePhotoField({
   profileLabel?: string;
 }) {
   const [preview, setPreview] = useState(initialUrl ?? "");
+  const [editorFile, setEditorFile] = useState<File | null>(null);
+  const [editorPreview, setEditorPreview] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const [editing, setEditing] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -83,8 +136,10 @@ export default function ProfilePhotoField({
 
       const prepared = await compressPhoto(file);
 
-      onFileChange(prepared);
-      setPreview(URL.createObjectURL(prepared));
+      setEditorFile(prepared);
+      setEditorPreview(URL.createObjectURL(prepared));
+      setZoom(1);
+      setEditing(true);
     } catch (reason) {
       onFileChange(null);
 
@@ -96,6 +151,36 @@ export default function ProfilePhotoField({
 
       event.target.value = "";
     }
+  }
+
+  async function applyEdit() {
+    if (!editorFile) return;
+
+    setApplying(true);
+    setError(null);
+
+    try {
+      const edited = await cropPhoto(editorFile, zoom);
+      onFileChange(edited);
+      setPreview(URL.createObjectURL(edited));
+      setEditing(false);
+      setEditorFile(null);
+      setEditorPreview("");
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Unable to edit the photo",
+      );
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  function cancelEdit() {
+    onFileChange(null);
+    setEditing(false);
+    setEditorFile(null);
+    setEditorPreview("");
+    setZoom(1);
   }
 
   return (
@@ -126,8 +211,8 @@ export default function ProfilePhotoField({
           />
 
           <p className="mt-1 text-xs leading-5 text-[var(--rams-gray)]">
-            Choose from Downloads or take a selfie on mobile. Images are resized
-            before upload.
+            Choose from Downloads or take a selfie on mobile. You can adjust the
+            crop and zoom before upload.
           </p>
 
           {error && (
@@ -137,6 +222,56 @@ export default function ProfilePhotoField({
           )}
         </div>
       </div>
+
+      {editing && editorPreview && (
+        <div className="max-w-sm space-y-3 rounded-md border border-black/10 bg-[var(--rams-gray-light)] p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+            Adjust photo
+          </p>
+
+          <div className="aspect-[4/3] overflow-hidden rounded-md bg-black">
+            <img
+              src={editorPreview}
+              alt={`Editing ${profileLabel} profile`}
+              className="h-full w-full object-cover transition-transform"
+              style={{ transform: `scale(${zoom})` }}
+            />
+          </div>
+
+          <label className="block text-xs font-semibold text-[var(--rams-gray)]">
+            Zoom: {zoom.toFixed(1)}×
+            <input
+              type="range"
+              min="1"
+              max="2.5"
+              step="0.1"
+              value={zoom}
+              onChange={(event) => setZoom(Number(event.target.value))}
+              className="mt-2 w-full accent-[var(--rams-red)]"
+              disabled={applying || disabled}
+            />
+          </label>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => void applyEdit()}
+              disabled={applying || disabled}
+              className="rounded-md bg-[var(--navy)] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {applying ? "Applying…" : "Apply crop"}
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              disabled={applying || disabled}
+              className="rounded-md border border-black/15 px-3 py-2 text-xs font-semibold disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
