@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   csrfController,
+  changePasswordController,
   loginController,
   logoutController,
 } from "./auth.controller.js";
@@ -28,6 +29,7 @@ router.post(
   }),
   loginController,
 );
+router.post("/change-password", authenticate, changePasswordController);
 router.post("/logout", logoutController);
 
 export default router;

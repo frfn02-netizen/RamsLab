@@ -94,6 +94,18 @@ export async function createDosen(input: CreateDosenInput): Promise<Dosen> {
 
     employeeId: input.employeeId,
 
+    nip: input.nip,
+
+    nidn: input.nidn,
+
+    faculty: input.faculty,
+
+    department: input.department,
+
+    institution: input.institution,
+
+    program: input.program,
+
     title: input.title,
 
     position: input.position,
@@ -109,6 +121,30 @@ export async function createDosen(input: CreateDosenInput): Promise<Dosen> {
     bio: input.bio,
 
     linkedin: input.linkedin,
+
+    showNip: input.showNip,
+
+    showNidn: input.showNidn,
+
+    showEmail: input.showEmail,
+
+    education: input.education,
+
+    sintaUrl: input.sintaUrl,
+
+    googleScholarUrl: input.googleScholarUrl,
+
+    scopusUrl: input.scopusUrl,
+
+    orcidUrl: input.orcidUrl,
+
+    hIndex: input.hIndex,
+
+    publicationCount: input.publicationCount,
+
+    projectCount: input.projectCount,
+
+    awardCount: input.awardCount,
 
     isPublic: input.isPublic,
 

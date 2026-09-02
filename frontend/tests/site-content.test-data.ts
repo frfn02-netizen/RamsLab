@@ -31,7 +31,9 @@ export const content: HomepageContent = {
   ],
   ecosystem: {
     title: { en: "Ecosystem", id: "Ekosistem" },
+    ramsDescription: { en: "RAMS", id: "RAMS" },
     aisDescription: { en: "AIS", id: "AIS" },
+    puiKekalDescription: { en: "PUI", id: "PUI" },
   },
   research: {
     title: { en: "Research", id: "Riset" },

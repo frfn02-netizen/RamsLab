@@ -26,7 +26,7 @@ const principle = (
   description: text(descriptionEn, descriptionId),
 });
 
-const contentByKey = {
+export const contentByKey = {
   homepage: homepageContentSchema.parse({
     hero: {
       headline: text(
@@ -55,6 +55,14 @@ const contentByKey = {
         "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
         "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
       ),
+      ramsDescription: text(
+        "Reliability, availability, maintainability, and safety research for dependable systems.",
+        "Riset keandalan, ketersediaan, kemudahan pemeliharaan, dan keselamatan untuk sistem yang andal.",
+      ),
+      puiKekalDescription: text(
+        "Center for sustainable energy and maritime systems research.",
+        "Pusat riset energi berkelanjutan dan sistem maritim.",
+      ),
     },
     research: {
       title: text("Our Research Areas", "Our Research Areas"),
@@ -64,7 +72,10 @@ const contentByKey = {
       ),
       linkLabel: text("View all research", "View all research"),
     },
-    projects: { title: text("Featured Projects", "Featured Projects") },
+    projects: {
+      title: text("Featured Projects", "Featured Projects"),
+      featuredLimit: 3,
+    },
     cta: {
       title: text(
         "Let's build safer, more\nreliable marine systems.",

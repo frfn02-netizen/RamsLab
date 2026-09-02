@@ -48,8 +48,25 @@ function publicPhotoUrl(req: Request, photo?: string) {
   try {
     const origin = getPublicApiOrigin(req);
     const parsed = new URL(photo, origin);
+    const filename = parsed.pathname.split("/").filter(Boolean).at(-1);
+    const localPhotoFilename =
+      filename && /^[a-f0-9-]+\.(?:jpe?g|png|webp)$/i.test(filename)
+        ? filename
+        : undefined;
+    const isApiOrigin = parsed.origin === new URL(origin).origin;
+
+    // Older uploads stored only the generated filename, while newer records
+    // store the complete URL. Treat both representations consistently.
+    if (
+      localPhotoFilename &&
+      isApiOrigin &&
+      !parsed.pathname.startsWith("/uploads/")
+    ) {
+      return `${origin}/uploads/dosen/${localPhotoFilename}`;
+    }
+
     const dosenPhotoMatch = parsed.pathname.match(
-      /^\/uploads\/dosen\/([a-f0-9-]+\.(?:jpg|png|webp))$/i,
+      /^\/uploads\/dosen\/([a-f0-9-]+\.(?:jpe?g|png|webp))$/i,
     );
 
     if (dosenPhotoMatch) {
@@ -57,13 +74,20 @@ function publicPhotoUrl(req: Request, photo?: string) {
     }
 
     const studentPhotoMatch = parsed.pathname.match(
-      /^\/uploads\/students\/([a-f0-9-]+\.(?:jpg|png|webp))$/i,
+      /^\/uploads\/students\/([a-f0-9-]+\.(?:jpe?g|png|webp))$/i,
     );
     if (studentPhotoMatch) {
       return `${origin}/uploads/students/${studentPhotoMatch[1]}`;
     }
 
-    // External profile photos are allowed only over HTTPS.
+    // Cloudinary is the current profile-photo provider. Normalize legacy
+    // non-secure Cloudinary URLs instead of dropping the photo entirely.
+    if (parsed.hostname.toLowerCase() === "res.cloudinary.com") {
+      parsed.protocol = "https:";
+      return parsed.toString();
+    }
+
+    // Other external profile photos are allowed only over HTTPS.
     return parsed.protocol === "https:" ? parsed.toString() : undefined;
   } catch {
     return undefined;
@@ -89,6 +113,16 @@ function publicLinkedInUrl(linkedin?: string) {
   }
 }
 
+function publicExternalUrl(value?: string) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function toPublicDosenProfile(req: Request, member: Dosen) {
   return {
     id: member._id?.toString() ?? member.userId.toString(),
@@ -96,6 +130,22 @@ export function toPublicDosenProfile(req: Request, member: Dosen) {
     fullName: member.fullName,
     title: member.title,
     position: member.position,
+    nip: member.showNip ? member.nip : undefined,
+    nidn: member.showNidn ? member.nidn : undefined,
+    faculty: member.faculty,
+    department: member.department,
+    institution: member.institution,
+    program: member.program,
+    email: member.showEmail ? member.email : undefined,
+    education: member.education,
+    sintaUrl: publicExternalUrl(member.sintaUrl),
+    googleScholarUrl: publicExternalUrl(member.googleScholarUrl),
+    scopusUrl: publicExternalUrl(member.scopusUrl),
+    orcidUrl: publicExternalUrl(member.orcidUrl),
+    hIndex: member.hIndex,
+    publicationCount: member.publicationCount,
+    projectCount: member.projectCount,
+    awardCount: member.awardCount,
     specialization: member.specialization,
     photo: publicPhotoUrl(req, member.photo),
     bio: member.bio,
@@ -108,8 +158,10 @@ export function toPublicAlumniProfile(req: Request, member: Alumni) {
     id: member._id?.toString() ?? member.userId.toString(),
     category: "ALUMNI" as const,
     fullName: member.fullName,
+    nim: member.nim,
     position: member.currentPosition,
     specialization: member.currentCompany ? [member.currentCompany] : [],
+    location: member.location,
     photo: publicPhotoUrl(req, member.photo),
     bio: member.bio,
     linkedin: publicLinkedInUrl(member.linkedin),

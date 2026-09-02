@@ -27,13 +27,11 @@ describe("research API client", () => {
   });
 
   it("sends bilingual admin payloads to the protected endpoint", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ success: true, data: { _id: "1" } }), {
-          status: 201,
-        }),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, data: { _id: "1" } }), {
+        status: 201,
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
     await createResearchArea({
       code: "RISK",

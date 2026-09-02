@@ -20,6 +20,8 @@ export interface User {
 
   isActive: boolean;
 
+  mustChangePassword?: boolean;
+
   /** Incremented to revoke all previously issued access tokens. */
   tokenVersion?: number;
 

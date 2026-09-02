@@ -10,10 +10,7 @@ import {
   updateDosen,
 } from "./dosen.repository.js";
 import { deactivateUser, findUserById } from "../users/user.repository.js";
-import {
-  removeDosenPhoto,
-  saveDosenPhoto,
-} from "./dosen-photo.js";
+import { removeDosenPhoto, saveDosenPhoto } from "./dosen-photo.js";
 import { toPublicDosenProfile } from "../public/public-profile.js";
 
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
@@ -145,12 +142,10 @@ export async function uploadDosenPhotoController(req: Request, res: Response) {
       error instanceof Error &&
       error.message === "Unsupported image format"
     ) {
-      return res
-        .status(415)
-        .json({
-          success: false,
-          message: "Only JPG, PNG, and WebP photos are supported",
-        });
+      return res.status(415).json({
+        success: false,
+        message: "Only JPG, PNG, and WebP photos are supported",
+      });
     }
     return res
       .status(500)
@@ -326,7 +321,14 @@ export async function deleteDosenController(req: Request, res: Response) {
       });
     }
 
-    await removeDosenPhoto(existing.photo);
+    // Photo cleanup is best-effort. The database record has already been
+    // deleted; a missing/unavailable Cloudinary configuration must not turn a
+    // successful delete into a misleading 500 response.
+    try {
+      await removeDosenPhoto(existing.photo);
+    } catch (error) {
+      console.error("Failed to remove deleted dosen photo", error);
+    }
 
     return res.json({
       success: true,

@@ -103,8 +103,9 @@ async function cropPhoto(file: File, zoom: number) {
 }
 
 export default function ProfilePhotoField({
-  initialUrl, onFileChange, 
-  disabled = false, 
+  initialUrl,
+  onFileChange,
+  disabled = false,
   profileLabel = "profile",
 }: {
   initialUrl?: string;

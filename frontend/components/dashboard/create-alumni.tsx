@@ -13,46 +13,44 @@ import {
 } from "@/components/ui";
 import { createAdminAlumni } from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
-import type { AlumniStatus } from "@/types/alumni";
 
 export default function CreateAlumni() {
   const router = useRouter();
-
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-    fullName: "",
-    nim: "",
-    graduationYear: String(new Date().getFullYear()),
-    program: "Not specified",
-    currentStatus: "WORKING" as AlumniStatus,
-    phone: "",
-    location: "",
-    currentCompany: "",
-    currentPosition: "",
-    linkedin: "",
-    isPublic: false,
-  });
-
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextErrors: typeof fieldErrors = {};
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      nextErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      nextErrors.email =
+        "Enter a valid email address, for example alumni@example.com.";
+    }
+    if (!password) {
+      nextErrors.password = "Temporary password is required.";
+    } else if (password.length < 8) {
+      nextErrors.password = "Temporary password must be at least 8 characters.";
+    } else if (password.length > 128) {
+      nextErrors.password =
+        "Temporary password must be 128 characters or fewer.";
+    }
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
     setSaving(true);
     setError(null);
-
     try {
       const result = await createAdminAlumni({
-        ...form,
-        graduationYear: Number(form.graduationYear),
-        phone: form.phone || undefined,
-        location: form.location || undefined,
-        currentCompany: form.currentCompany || undefined,
-        currentPosition: form.currentPosition || undefined,
-        linkedin: form.linkedin || undefined,
+        email: normalizedEmail,
+        password,
       });
-
       router.push(`/dashboard/alumni/${result.alumni._id}`);
     } catch (reason) {
       setError(getUserFacingError(reason));
@@ -60,14 +58,6 @@ export default function CreateAlumni() {
       setSaving(false);
     }
   }
-
-  const update = (key: string, value: string | boolean) => {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
-  };
-
   return (
     <div className="p-5 sm:p-7 lg:p-9">
       <div className="mx-auto max-w-3xl space-y-7">
@@ -77,124 +67,55 @@ export default function CreateAlumni() {
         >
           ← Alumni
         </Link>
-
         <PageHeader
           eyebrow="People"
-          title="Add alumni"
-          description="Create an alumni account and profile in one step."
+          title="Create Alumni Account"
+          description="Create the alumni account first. The alumni will complete their profile after signing in."
         />
-
         {error && <ErrorState message={error} />}
-
         <Card className="p-6">
-          <form onSubmit={submit} className="space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Full name">
-                <input
-                  required
-                  minLength={2}
-                  className={inputClass}
-                  value={form.fullName}
-                  onChange={(event) => update("fullName", event.target.value)}
-                />
-              </Field>
-
-              <Field label="NIM">
-                <input
-                  required
-                  className={inputClass}
-                  value={form.nim}
-                  onChange={(event) => update("nim", event.target.value)}
-                />
-              </Field>
-
-              <Field label="Entry year">
-                <input
-                  required
-                  type="number"
-                  min="1900"
-                  max="2100"
-                  className={inputClass}
-                  value={form.graduationYear}
-                  onChange={(event) =>
-                    update("graduationYear", event.target.value)
-                  }
-                />
-              </Field>
-
-              <Field label="Company / Institution">
-                <input
-                  required
-                  className={inputClass}
-                  value={form.currentCompany}
-                  onChange={(event) =>
-                    update("currentCompany", event.target.value)
-                  }
-                />
-              </Field>
-
-              <Field label="Position">
-                <input
-                  required
-                  className={inputClass}
-                  value={form.currentPosition}
-                  onChange={(event) =>
-                    update("currentPosition", event.target.value)
-                  }
-                />
-              </Field>
-
-              <Field label="Domicile / Location">
-                <input
-                  required
-                  className={inputClass}
-                  value={form.location}
-                  onChange={(event) => update("location", event.target.value)}
-                />
-              </Field>
-
-              <Field label="LinkedIn URL">
-                <input
-                  type="url"
-                  className={inputClass}
-                  value={form.linkedin}
-                  onChange={(event) => update("linkedin", event.target.value)}
-                />
-              </Field>
-
-              <Field label="Email">
-                <input
-                  required
-                  type="email"
-                  className={inputClass}
-                  value={form.email}
-                  onChange={(event) => update("email", event.target.value)}
-                />
-              </Field>
-
-              <Field label="Temporary password">
-                <input
-                  required
-                  minLength={8}
-                  type="password"
-                  className={inputClass}
-                  value={form.password}
-                  onChange={(event) => update("password", event.target.value)}
-                />
-              </Field>
-            </div>
-
-            <label className="flex items-center gap-3 text-sm font-semibold">
+          <form onSubmit={submit} className="max-w-xl space-y-5">
+            <Field label="Email" error={fieldErrors.email}>
               <input
-                type="checkbox"
-                checked={form.isPublic}
-                onChange={(event) => update("isPublic", event.target.checked)}
+                required
+                type="email"
+                autoComplete="email"
+                className={inputClass}
+                value={email}
+                aria-invalid={Boolean(fieldErrors.email)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setFieldErrors((current) => ({
+                    ...current,
+                    email: undefined,
+                  }));
+                }}
               />
-              Make profile public
-            </label>
-
+            </Field>
+            <Field label="Temporary Password" error={fieldErrors.password}>
+              <input
+                required
+                minLength={8}
+                type="password"
+                autoComplete="new-password"
+                className={inputClass}
+                value={password}
+                aria-invalid={Boolean(fieldErrors.password)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setFieldErrors((current) => ({
+                    ...current,
+                    password: undefined,
+                  }));
+                }}
+              />
+            </Field>
+            <p className="text-xs leading-5 text-[var(--rams-gray)]">
+              Use at least 8 characters. This password is temporary and must be
+              changed by the alumni after the first login.
+            </p>
             <Button type="submit" disabled={saving}>
-              {saving ? "Saving…" : "Create alumni profile"}
+              {saving ? "Creating…" : "Create Alumni Account"}
             </Button>
           </form>
         </Card>

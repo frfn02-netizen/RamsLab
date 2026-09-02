@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { MongoServerError } from "mongodb";
+import { ZodError } from "zod";
 
 import {
   createAlumni,
@@ -12,7 +14,12 @@ import {
 
 import { createAdminAlumni } from "./admin-alumni.service.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
-import { deactivateUser } from "../users/user.repository.js";
+import { deactivateUser, setUserActive } from "../users/user.repository.js";
+import {
+  removeProfilePhoto,
+  uploadProfilePhoto,
+} from "../../lib/cloudinary.js";
+const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
 export async function createAlumniController(req: Request, res: Response) {
   try {
@@ -38,10 +45,34 @@ export async function createAdminAlumniController(req: Request, res: Response) {
       success: true,
       data: result,
     });
-  } catch {
-    return res.status(400).json({
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: "Please correct the highlighted account fields",
+        errors: error.issues.map(({ path, message }) => ({ path, message })),
+      });
+    }
+    if (
+      error instanceof Error &&
+      (error.message === "Email already exists" ||
+        error.message === "Email is already registered")
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+    }
+    if (error instanceof MongoServerError && error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+    }
+    console.error("Failed to create admin alumni account", error);
+    return res.status(500).json({
       success: false,
-      message: "Failed to create alumni",
+      message: "Unable to create the alumni account right now",
     });
   }
 }
@@ -99,12 +130,10 @@ export async function deleteAlumniController(req: Request, res: Response) {
         .json({ success: false, message: "Alumni not found" });
     }
     if (!(await deactivateUser(existing.userId)))
-      return res
-        .status(500)
-        .json({
-          success: false,
-          message: "Failed to deactivate alumni account",
-        });
+      return res.status(500).json({
+        success: false,
+        message: "Failed to deactivate alumni account",
+      });
     if (!(await deleteAlumni(id)))
       return res
         .status(404)
@@ -177,6 +206,53 @@ export async function updateMyAlumniController(req: Request, res: Response) {
   }
 }
 
+export async function uploadMyAlumniPhotoController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    if (!req.user)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+    const alumni = await getAlumniByUserId(req.user.userId);
+    const photo = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    if (!alumni)
+      return res
+        .status(404)
+        .json({ success: false, message: "Alumni profile not found" });
+    if (!photo.length)
+      return res
+        .status(400)
+        .json({ success: false, message: "Photo is required" });
+    if (photo.length > MAX_PHOTO_BYTES)
+      return res
+        .status(413)
+        .json({ success: false, message: "Photo must be 3 MB or smaller" });
+    const uploaded = await uploadProfilePhoto(photo);
+    const updated = await updateMyAlumni(req.user.userId, {
+      photo: uploaded.url,
+    });
+    if (!updated) {
+      await removeProfilePhoto(uploaded.url);
+      return res
+        .status(404)
+        .json({ success: false, message: "Alumni profile not found" });
+    }
+    await removeProfilePhoto(alumni.photo);
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unsupported image format")
+      return res.status(415).json({
+        success: false,
+        message: "Only JPG, PNG, and WebP photos are supported",
+      });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to upload alumni photo" });
+  }
+}
+
 export async function updateAlumniController(req: Request, res: Response) {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -207,6 +283,22 @@ export async function updateAlumniController(req: Request, res: Response) {
       message: "Failed to update alumni",
     });
   }
+}
+
+export async function setAlumniActiveController(req: Request, res: Response) {
+  const id =
+    typeof req.params.id === "string" ? req.params.id : req.params.id?.[0];
+  const alumni = id ? await getAlumniById(id) : null;
+  if (!alumni)
+    return res
+      .status(404)
+      .json({ success: false, message: "Alumni not found" });
+  const active = Boolean(req.body?.isActive);
+  if (!(await setUserActive(alumni.userId, active)))
+    return res
+      .status(404)
+      .json({ success: false, message: "Account not found" });
+  return res.json({ success: true, data: { isActive: active } });
 }
 export async function getAlumniListController(req: Request, res: Response) {
   try {

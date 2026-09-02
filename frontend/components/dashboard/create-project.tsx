@@ -27,6 +27,7 @@ export default function CreateProject() {
     status: "PLANNING" as ProjectStatus,
     technologies: "",
     published: false,
+    featured: false,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -203,6 +204,17 @@ export default function CreateProject() {
                 }
               />
               Publish this project
+            </label>
+
+            <label className="flex items-center gap-3 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(event) =>
+                  setForm({ ...form, featured: event.target.checked })
+                }
+              />
+              Feature this project on the homepage
             </label>
 
             <Button type="submit" disabled={saving}>

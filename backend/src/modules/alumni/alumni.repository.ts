@@ -42,8 +42,17 @@ export async function findAlumniByNim(nim: string): Promise<Alumni | null> {
 }
 
 export async function findPublicAlumni(): Promise<Alumni[]> {
+  const users = await getDatabase()
+    .collection("users")
+    .find({ role: "ALUMNI", isActive: true })
+    .project({ _id: 1 })
+    .toArray();
   return getAlumniCollection()
-    .find({ isPublic: true })
+    .find({
+      isPublic: true,
+      profileCompleted: true,
+      userId: { $in: users.map((user) => user._id) },
+    })
     .sort({ fullName: 1 })
     .limit(SECURITY_LIMITS.maxListResults)
     .toArray();

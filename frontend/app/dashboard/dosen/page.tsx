@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/providers/auth-providers";
 import {
   Badge,
@@ -32,8 +33,10 @@ export default function DosenPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Dosen | null>(null);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const visibleItems = items.filter((item) => {
+  const filteredItems = items.filter((item) => {
     const query = search.trim().toLowerCase();
 
     if (!query) {
@@ -51,6 +54,16 @@ export default function DosenPage() {
       .filter(Boolean)
       .some((value) => value!.toLowerCase().includes(query));
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedItems = filteredItems.slice(
+    (safeCurrentPage - 1) * pageSize,
+    safeCurrentPage * pageSize,
+  );
+  const firstShown =
+    filteredItems.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
+  const lastShown = Math.min(safeCurrentPage * pageSize, filteredItems.length);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,7 +156,10 @@ export default function DosenPage() {
             className={`${inputClass} max-w-md`}
             placeholder="Name, employee ID, position, or specialization"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setCurrentPage(1);
+            }}
           />
         </Card>
 
@@ -158,7 +174,7 @@ export default function DosenPage() {
           <Card>
             <LoadingState label="Loading dosen" />
           </Card>
-        ) : visibleItems.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <EmptyState
             title={search.trim() ? "No matching dosen found" : "No dosen found"}
             description={
@@ -175,94 +191,180 @@ export default function DosenPage() {
             }
           />
         ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[740px] text-left">
-                <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
-                  <tr>
-                    {[
-                      "Name",
-                      "Employee ID",
-                      "Position",
-                      "Specialization",
-                      "Visibility",
-                      "Action",
-                    ].map((heading) => (
-                      <th
-                        key={heading}
-                        scope="col"
-                        className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] last:text-center"
-                      >
-                        {heading}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
+          <>
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {paginatedItems.map((item) => {
+                const initials = item.fullName
+                  .split(/\s+/)
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((part) => part[0]?.toUpperCase())
+                  .join("");
 
-                <tbody className="divide-y divide-black/8">
-                  {visibleItems.map((item) => (
-                    <tr key={item._id}>
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/dashboard/dosen/${item._id}`}
-                          className="font-semibold hover:text-[var(--rams-red)]"
-                        >
-                          {item.fullName}
-                        </Link>
-
-                        <p className="mt-1 text-xs text-[var(--rams-gray)]">
-                          {item.email ?? "Email not provided"}
-                        </p>
-                      </td>
-
-                      <td className="px-5 py-4 text-sm">
-                        {item.employeeId ?? "—"}
-                      </td>
-
-                      <td className="px-5 py-4 text-sm">
-                        {item.position ?? item.title ?? "—"}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          {item.specialization.map((value) => (
-                            <Badge key={value}>{value}</Badge>
-                          ))}
+                return (
+                  <Card
+                    key={item._id}
+                    className="flex h-full min-w-0 flex-col overflow-hidden p-0"
+                  >
+                    <div className="relative aspect-[5/3] bg-[var(--rams-charcoal)]">
+                      {item.photo ? (
+                        <Image
+                          src={item.photo}
+                          alt={item.fullName}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                        />
+                      ) : (
+                        <div className="grid h-full place-items-center text-4xl font-semibold text-white/85">
+                          {initials}
                         </div>
-                      </td>
-
-                      <td className="px-5 py-4">
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <Link
+                            href={`/dashboard/dosen/${item._id}`}
+                            className="block truncate font-display text-lg font-semibold text-[var(--rams-charcoal)] hover:text-[var(--rams-red)]"
+                          >
+                            {item.fullName}
+                          </Link>
+                          {(item.title || item.position) && (
+                            <p className="mt-1 text-sm text-[var(--rams-gray)]">
+                              {[item.title, item.position]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </p>
+                          )}
+                        </div>
                         <Badge tone={item.isPublic ? "green" : "neutral"}>
                           {item.isPublic ? "Public" : "Private"}
                         </Badge>
-                      </td>
+                      </div>
 
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex w-full items-center justify-center gap-3">
-                          <Link
-                            href={`/dashboard/dosen/${item._id}`}
-                            className="text-sm font-bold text-[var(--rams-red)]"
-                          >
-                            View
-                          </Link>
-
-                          {user?.role === "ADMIN" && (
-                            <Button
-                              variant="danger"
-                              disabled={deletingId === item._id}
-                              onClick={() => setPendingDelete(item)}
-                            >
-                              {deletingId === item._id ? "Deleting…" : "Delete"}
-                            </Button>
-                          )}
+                      {(item.department || item.faculty) && (
+                        <p className="mt-3 line-clamp-2 text-sm text-[var(--rams-gray)]">
+                          {[item.department, item.faculty]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
+                      {(item.employeeId || item.nip || item.nidn) && (
+                        <p className="mt-2 text-xs leading-5 text-[var(--rams-gray)]">
+                          {[
+                            item.employeeId && `ID ${item.employeeId}`,
+                            item.nip && `NIP ${item.nip}`,
+                            item.nidn && `NIDN ${item.nidn}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
+                      {item.specialization.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {item.specialization.slice(0, 3).map((value) => (
+                            <Badge key={value}>{value}</Badge>
+                          ))}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+
+                      <div className="mt-auto flex items-center gap-3 border-t border-black/8 pt-4">
+                        <Link
+                          href={`/dashboard/dosen/${item._id}`}
+                          className="inline-flex items-center text-sm font-bold text-[var(--rams-red)]"
+                        >
+                          View
+                        </Link>
+                        {user?.role === "ADMIN" && (
+                          <Link
+                            href={`/dashboard/dosen/${item._id}/edit`}
+                            className="inline-flex items-center text-sm font-bold text-[var(--rams-charcoal)] hover:text-[var(--rams-red)]"
+                          >
+                            Edit
+                          </Link>
+                        )}
+                        {user?.role === "ADMIN" && (
+                          <Button
+                            variant="danger"
+                            disabled={deletingId === item._id}
+                            onClick={() => setPendingDelete(item)}
+                          >
+                            {deletingId === item._id ? "Deleting…" : "Delete"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
-          </Card>
+
+            {filteredItems.length > 0 && totalPages > 1 && (
+              <div className="mt-6 flex flex-col gap-4 rounded-lg border border-black/8 bg-white px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-[var(--rams-gray)]">
+                  Showing {firstShown} to {lastShown} of {filteredItems.length}{" "}
+                  dosen
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label htmlFor="dosen-page-size" className="sr-only">
+                    Dosen per page
+                  </label>
+                  <select
+                    id="dosen-page-size"
+                    className="rounded-md border border-black/15 bg-white px-2 py-2 font-semibold text-[var(--rams-charcoal)]"
+                    value={pageSize}
+                    onChange={(event) => {
+                      setPageSize(Number(event.target.value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    {[10, 20, 50].map((size) => (
+                      <option key={size} value={size}>
+                        {size} / page
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    aria-label="Previous page"
+                    disabled={safeCurrentPage === 1}
+                    onClick={() => setCurrentPage((page) => page - 1)}
+                    className="rounded-md border border-black/15 px-3 py-2 font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ←
+                  </button>
+                  {Array.from(
+                    { length: totalPages },
+                    (_, index) => index + 1,
+                  ).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      aria-label={`Page ${page}`}
+                      aria-current={
+                        page === safeCurrentPage ? "page" : undefined
+                      }
+                      onClick={() => setCurrentPage(page)}
+                      className={`rounded-md border px-3 py-2 font-bold ${page === safeCurrentPage ? "border-[var(--rams-red)] bg-[var(--rams-red)] text-white" : "border-black/15 text-[var(--rams-charcoal)]"}`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    aria-label="Next page"
+                    disabled={safeCurrentPage === totalPages}
+                    onClick={() => setCurrentPage((page) => page + 1)}
+                    className="rounded-md border border-black/15 px-3 py-2 font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

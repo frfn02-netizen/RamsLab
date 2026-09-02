@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { getPublicPeopleList } from "@/lib/api/modules";
 import type {
   PublicDirectoryCategory,
@@ -15,18 +16,25 @@ import RevealOnScroll from "./reveal-on-scroll";
 
 const categoryLabels: Record<PublicDirectoryCategory, string> = {
   DOSEN: "OUR LAB MEMBERS",
-  MAHASISWA: "PH.D. STUDENTS",
-  MASTER: "MASTER STUDENT",
+  MAHASISWA: "PHD",
+  MASTER: "MASTER",
   UNDERGRADUATE: "UNDERGRADUATE STUDENTS",
   ALUMNI: "ALUMNI",
 };
 
-const categoryOrder: PublicDirectoryCategory[] = [
+const categoryOrder: Array<PublicDirectoryCategory | "STUDENTS"> = [
   "DOSEN",
-  "MAHASISWA",
-  "MASTER",
+  "STUDENTS",
   "UNDERGRADUATE",
   "ALUMNI",
+];
+
+const graduatedStudentCategories: Array<{
+  key: "MAHASISWA" | "MASTER";
+  label: string;
+}> = [
+  { key: "MAHASISWA", label: "PHD" },
+  { key: "MASTER", label: "MASTER" },
 ];
 
 function getInitials(name: string) {
@@ -123,6 +131,10 @@ export function MemberCard({
   profileLabel: string;
   roleFallback: string;
 }) {
+  const isStudent = ["MAHASISWA", "MASTER", "UNDERGRADUATE"].includes(
+    member.category,
+  );
+
   return (
     <article className="group flex h-full min-w-0 flex-col">
       <div className="overflow-hidden border border-[var(--border)] bg-white">
@@ -134,23 +146,39 @@ export function MemberCard({
       </div>
       <div className="flex flex-1 flex-col pt-5">
         <h3 className="font-display min-h-[3.25rem] text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">
-          {member.fullName}
+          {isStudent ? (
+            <Link
+              href={`/team/${member.id}`}
+              className="hover:text-[var(--rams-red)]"
+            >
+              {member.fullName}
+            </Link>
+          ) : (
+            member.fullName
+          )}
         </h3>
-        <RoleLine member={member} fallback={roleFallback} />
-        {member.category === "ALUMNI" && (
-          <div className="mt-3 space-y-1 text-sm leading-6 text-[var(--slate)]">
-            <p>{member.nim ? `NIM: ${member.nim}` : "NIM not provided"}</p>
-            {member.location && <p>{member.location}</p>}
-          </div>
-        )}
-        {member.specialization.length > 0 && (
+        {!isStudent && <RoleLine member={member} fallback={roleFallback} />}
+        {!isStudent && member.specialization.length > 0 && (
           <p className="mt-5 text-sm leading-6 text-[var(--slate)]">
             {member.specialization.join(" · ")}
           </p>
         )}
-        {member.linkedin && (
+        {member.linkedin && member.category !== "DOSEN" && !isStudent && (
           <div className="mt-auto pt-5">
             <ProfileLinks member={member} label={profileLabel} />
+          </div>
+        )}
+        {member.category === "DOSEN" && (
+          <div className="mt-auto pt-5">
+            <Link
+              href={`/team/${member.id}`}
+              className="inline-flex font-semibold text-[var(--rams-red)] hover:text-[var(--navy)]"
+            >
+              {profileLabel}{" "}
+              <span className="ml-2" aria-hidden="true">
+                →
+              </span>
+            </Link>
           </div>
         )}
       </div>
@@ -179,8 +207,9 @@ export default function TeamDirectory() {
     UNDERGRADUATE: [],
     ALUMNI: [],
   });
-  const [activeCategory, setActiveCategory] =
-    useState<PublicDirectoryCategory>("DOSEN");
+  const [activeCategory, setActiveCategory] = useState<
+    PublicDirectoryCategory | "STUDENTS"
+  >("DOSEN");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -211,15 +240,30 @@ export default function TeamDirectory() {
     };
   }, []);
 
-  const categoryLabel = categoryLabels[activeCategory];
+  const categoryLabel =
+    activeCategory === "STUDENTS"
+      ? "GRADUATED STUDENT"
+      : categoryLabels[activeCategory];
   const filteredMembers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return people[activeCategory];
-    return people[activeCategory].filter((member) =>
+    const source =
+      activeCategory === "STUDENTS"
+        ? [...people.MAHASISWA, ...people.MASTER]
+        : people[activeCategory];
+    if (!keyword) return source;
+    return source.filter((member) =>
       searchableText(member).includes(keyword),
     );
   }, [activeCategory, people, search]);
   const members = filteredMembers;
+
+  function membersFor(category: "MAHASISWA" | "MASTER") {
+    const categoryMembers = people[category];
+    const keyword = search.trim().toLowerCase();
+    return keyword
+      ? categoryMembers.filter((member) => searchableText(member).includes(keyword))
+      : categoryMembers;
+  }
 
   return (
     <section className="team-directory bg-[var(--paper)]">
@@ -239,7 +283,7 @@ export default function TeamDirectory() {
               }}
               className={`border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${activeCategory === category ? "border-[var(--navy)] bg-[var(--navy)] text-white" : "border-[var(--border)] bg-white text-[var(--gray)] hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"}`}
             >
-              {categoryLabels[category]}
+              {category === "STUDENTS" ? "GRADUATED STUDENT" : categoryLabels[category]}
             </button>
           ))}
         </nav>
@@ -276,7 +320,44 @@ export default function TeamDirectory() {
             <PublicError message={t("error")} onRetry={load} />
           ) : null}
 
-          {!loading && !error && members.length > 0 && (
+          {!loading && !error && activeCategory === "STUDENTS" && (
+            <div className="mt-16 space-y-16 border-t border-[var(--border)] pt-12">
+              {graduatedStudentCategories.map(({ key, label }) => {
+                const categoryMembers = membersFor(key);
+                return (
+                  <section key={key} aria-labelledby={`${key.toLowerCase()}-heading`}>
+                    <h3
+                      id={`${key.toLowerCase()}-heading`}
+                      className="font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy)] sm:text-4xl"
+                    >
+                      {label}
+                    </h3>
+                    {categoryMembers.length > 0 ? (
+                      <RevealOnScroll
+                        className="mt-8 grid gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                        stagger={90}
+                      >
+                        {categoryMembers.map((member) => (
+                          <MemberCard
+                            key={member.id}
+                            member={member}
+                            profileLabel={t("profileLink")}
+                            roleFallback={t("roleFallback")}
+                          />
+                        ))}
+                      </RevealOnScroll>
+                    ) : (
+                      <p className="mt-6 text-sm leading-6 text-[var(--slate)]">
+                        No profiles published in this category.
+                      </p>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          )}
+
+          {!loading && !error && activeCategory !== "STUDENTS" && members.length > 0 && (
             <div
               className={`${activeCategory === "DOSEN" && !search ? "mt-16 border-t border-[var(--border)] pt-12" : ""}`}
             >
@@ -301,7 +382,7 @@ export default function TeamDirectory() {
             </div>
           )}
 
-          {!loading && !error && members.length === 0 && (
+          {!loading && !error && activeCategory !== "STUDENTS" && members.length === 0 && (
             <PublicEmpty
               title="No profiles published"
               description="Profiles in this category will appear here when available."

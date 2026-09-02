@@ -146,6 +146,8 @@ export const updateAlumniSchema = z.object({
 export const updateMyAlumniSchema = z.object({
   fullName: z.string().trim().min(2, "Full name is required").optional(),
 
+  graduationYear: z.number().int().min(1900).max(2100).optional(),
+
   photo: z.string().trim().optional(),
 
   phone: z.string().trim().optional(),
@@ -175,6 +177,15 @@ export const updateMyAlumniSchema = z.object({
   educationHistory: z.array(educationHistorySchema).max(50).optional(),
 
   isPublic: z.boolean().optional(),
+});
+
+export const createAlumniShellSchema = z.object({
+  userId: z.string().regex(/^[a-f\d]{24}$/i),
+});
+
+export const completeMyAlumniSchema = updateMyAlumniSchema.extend({
+  nim: z.string().trim().min(1, "NIM is required").max(50).optional(),
+  graduationYear: z.number().int().min(1900).max(2100).optional(),
 });
 
 export type CreateAlumniInput = z.infer<typeof createAlumniSchema>;

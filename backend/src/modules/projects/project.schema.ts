@@ -38,6 +38,7 @@ export const createProjectSchema = z.object({
   technologies: z.array(z.string().trim().min(1).max(100)).max(50).default([]),
 
   published: z.boolean().default(false),
+  featured: z.boolean().default(false),
 });
 
 export const updateProjectSchema = z.object({
@@ -69,6 +70,7 @@ export const updateProjectSchema = z.object({
   image: z.string().trim().max(500).optional(),
   technologies: z.array(z.string().trim().min(1).max(100)).max(50).optional(),
   published: z.boolean().optional(),
+  featured: z.boolean().optional(),
 });
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;

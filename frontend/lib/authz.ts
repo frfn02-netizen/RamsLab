@@ -49,6 +49,7 @@ export function canAccessDashboardPath(
   return (
     pathname === "/dashboard" ||
     pathname.startsWith("/dashboard/publications/") ||
-    pathname === "/dashboard/publications"
+    pathname === "/dashboard/publications" ||
+    pathname.startsWith("/dashboard/content/")
   );
 }

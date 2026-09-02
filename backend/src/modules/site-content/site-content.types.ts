@@ -38,6 +38,11 @@ export interface HomepageContent {
     description: BilingualText;
     primaryCta: BilingualText;
     secondaryCta: BilingualText;
+    heroImage?: {
+      url: string;
+      publicId?: string;
+      position?: HeroImagePosition;
+    };
   };
   principles: [
     HomepagePrinciple,
@@ -47,7 +52,9 @@ export interface HomepageContent {
   ];
   ecosystem: {
     title: BilingualText;
+    ramsDescription?: BilingualText;
     aisDescription: BilingualText;
+    puiKekalDescription?: BilingualText;
   };
   research: {
     title: BilingualText;
@@ -62,6 +69,11 @@ export interface HomepageContent {
     description: BilingualText;
     buttonLabel: BilingualText;
   };
+}
+
+export interface HeroImagePosition {
+  x: number;
+  y: number;
 }
 
 export interface AboutContent {

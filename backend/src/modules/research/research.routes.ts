@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, raw } from "express";
 import { authenticate } from "../../middlewares/auth.middlewares.js";
 import { requireRole } from "../../middlewares/role.middlewares.js";
 import {
@@ -7,6 +7,7 @@ import {
   getResearchAreaController,
   getResearchAreaListController,
   updateResearchAreaController,
+  uploadResearchAreaImageController,
 } from "./research.controller.js";
 
 const router = Router();
@@ -15,6 +16,11 @@ router.get("/", getResearchAreaListController);
 router.get("/:id", getResearchAreaController);
 router.post("/", createResearchAreaController);
 router.patch("/:id", updateResearchAreaController);
+router.post(
+  "/:id/image",
+  raw({ type: "image/*", limit: "3mb" }),
+  uploadResearchAreaImageController,
+);
 router.delete("/:id", deleteResearchAreaController);
 
 export default router;

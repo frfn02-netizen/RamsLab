@@ -26,6 +26,10 @@ export interface Alumni {
   educationHistory: EducationHistory[];
 
   isPublic: boolean;
+  profileCompleted?: boolean;
+  accountEmail?: string;
+  accountActive?: boolean;
+  mustChangePassword?: boolean;
 
   createdAt: string;
   updatedAt: string;
@@ -60,5 +64,5 @@ export interface AlumniListResponse {
 
 export type AlumniCreateInput = Omit<Alumni, "_id" | "createdAt" | "updatedAt">;
 export type AlumniUpdateInput = Partial<
-  Omit<Alumni, "_id" | "userId" | "nim" | "createdAt" | "updatedAt">
+  Omit<Alumni, "_id" | "userId" | "createdAt" | "updatedAt">
 >;

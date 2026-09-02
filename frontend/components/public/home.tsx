@@ -9,7 +9,7 @@ import {
   getPublicResearch,
   getPublicSiteContent,
 } from "@/lib/api/modules";
-import type { Project } from "@/types/modules";
+import type { Project, PublicResearchArea } from "@/types/modules";
 import type { ContactContent, HomepageContent } from "@/types/site-content";
 import PublicContainer from "./public-container";
 import ProjectCard from "./project-card";
@@ -77,14 +77,7 @@ export default function PublicHome() {
   const [contentError, setContentError] = useState(false);
   const [contactContentLoading, setContactContentLoading] = useState(true);
   const [contactContentError, setContactContentError] = useState(false);
-  const [researchAreas, setResearchAreas] = useState<
-    ReadonlyArray<{
-      _id?: string;
-      code: string;
-      title: { en: string; id: string };
-      description: { en: string; id: string };
-    }>
-  >([]);
+  const [researchAreas, setResearchAreas] = useState<PublicResearchArea[]>([]);
   const [researchLoading, setResearchLoading] = useState(true);
   const [researchError, setResearchError] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -92,8 +85,8 @@ export default function PublicHome() {
   const [projectsError, setProjectsError] = useState(false);
 
   useEffect(() => {
-    getPublicProjects()
-      .then((items) => setProjects(items.slice(0, 3)))
+    getPublicProjects({ featured: true, limit: 12 })
+      .then(setProjects)
       .catch(() => setProjectsError(true))
       .finally(() => setProjectsLoading(false));
     getPublicSiteContent("homepage")
@@ -117,16 +110,22 @@ export default function PublicHome() {
       {/* HERO */}
       <section className="relative flex min-h-[75vh] items-center justify-start bg-[var(--navy)] text-white">
         <Image
-          src="/assets/hero.webp"
-          alt={
-            content
-              ? localized(content.hero.headline)
-              : common("requestUnavailable")
-          }
+          src={content?.hero.heroImage?.url ?? "/assets/hero.webp"}
+          alt={localized(
+            content?.hero.heroImage?.alt ??
+              content?.hero.headline ?? {
+                en: "RAMS Laboratory",
+                id: "Laboratorium RAMS",
+              },
+          )}
           fill
           priority
           sizes="100vw"
+          unoptimized
           className="object-cover"
+          style={{
+            objectPosition: `${content?.hero.heroImage?.position?.x ?? 50}% ${content?.hero.heroImage?.position?.y ?? 50}%`,
+          }}
         />
         <div className="absolute inset-0 bg-[var(--navy)]/50" />
         <PublicContainer className="relative z-10 w-full">
@@ -233,7 +232,14 @@ export default function PublicHome() {
                   {brand("laboratory")}
                 </p>
                 <p className="mt-2 text-xs text-[var(--gray)]">
-                  {brand("technicalLine")}
+                  {content
+                    ? localized(
+                        content.ecosystem.ramsDescription ?? {
+                          en: brand("technicalLine"),
+                          id: brand("technicalLine"),
+                        },
+                      )
+                    : ""}
                 </p>
               </div>
             </div>
@@ -279,6 +285,16 @@ export default function PublicHome() {
                 </div>
                 <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">
                   {brand("pui")}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-[var(--gray)]">
+                  {content
+                    ? localized(
+                        content.ecosystem.puiKekalDescription ?? {
+                          en: "",
+                          id: "",
+                        },
+                      )
+                    : ""}
                 </p>
               </div>
             </div>
@@ -329,9 +345,10 @@ export default function PublicHome() {
                   >
                     <div className="relative h-48 w-full overflow-hidden">
                       <Image
-                        src={researchImages[index]}
+                        src={area.image ?? researchImages[index]}
                         alt={localized(area.title)}
                         fill
+                        unoptimized
                         className="public-image-zoom object-cover"
                       />
                     </div>
@@ -385,9 +402,11 @@ export default function PublicHome() {
                 className="grid gap-8 lg:grid-cols-3"
                 stagger={100}
               >
-                {projects.map((project) => (
-                  <ProjectCard key={project._id} project={project} />
-                ))}
+                {projects
+                  .slice(0, content?.projects.featuredLimit ?? 3)
+                  .map((project) => (
+                    <ProjectCard key={project._id} project={project} />
+                  ))}
               </RevealOnScroll>
             )}
           </div>

@@ -16,12 +16,16 @@ export async function createAlumniIndexes() {
     { name: "alumni_created_at_index" },
   );
 
+  const indexes = await collection.indexes();
+  const existingNimIndex = indexes.find(
+    (index) => index.name === "alumni_nim_unique",
+  );
+  if (existingNimIndex && !existingNimIndex.sparse) {
+    await collection.dropIndex("alumni_nim_unique");
+  }
   await collection.createIndex(
     { nim: 1 },
-    {
-      unique: true,
-      name: "alumni_nim_unique",
-    },
+    { unique: true, sparse: true, name: "alumni_nim_unique" },
   );
 
   await collection.createIndex(

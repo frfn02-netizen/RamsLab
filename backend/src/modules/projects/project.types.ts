@@ -41,6 +41,7 @@ export interface Project {
   technologies: string[];
 
   published: boolean;
+  featured: boolean;
 
   createdAt: Date;
 

@@ -13,6 +13,13 @@ import {
   updateResearchArea,
 } from "./research.repository.js";
 import type { PublicResearchArea, ResearchArea } from "./research.types.js";
+import {
+  removeProfilePhoto,
+  uploadResearchAreaImage,
+} from "../../lib/cloudinary.js";
+
+const MAX_RESEARCH_IMAGE_BYTES = 3 * 1024 * 1024;
+const ALLOWED_IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|avif)$/i;
 
 function publicResearchArea(area: ResearchArea): PublicResearchArea {
   const {
@@ -93,20 +100,16 @@ export async function createResearchAreaController(
       .json({ success: true, data: adminResearchArea(area) });
   } catch (error: unknown) {
     if (validationError(error))
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Validation failed",
-          errors: error.issues,
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.issues,
+      });
     if (duplicateError(error))
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message: "Research area code or slug already exists",
-        });
+      return res.status(409).json({
+        success: false,
+        message: "Research area code or slug already exists",
+      });
     return res
       .status(500)
       .json({ success: false, message: "Failed to create research area" });
@@ -123,6 +126,7 @@ export async function updateResearchAreaController(
       .status(400)
       .json({ success: false, message: "Invalid research area ID" });
   try {
+    const existing = await findResearchAreaById(id);
     const area = await updateResearchArea(
       id,
       updateResearchAreaSchema.parse(req.body),
@@ -132,26 +136,74 @@ export async function updateResearchAreaController(
       return res
         .status(404)
         .json({ success: false, message: "Research area not found" });
+    if (existing?.image && existing.image !== area.image) {
+      try {
+        await removeProfilePhoto(existing.image);
+      } catch {
+        // The database now points to the new image; cleanup is best effort.
+      }
+    }
     return res.json({ success: true, data: adminResearchArea(area) });
   } catch (error: unknown) {
     if (validationError(error))
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Validation failed",
-          errors: error.issues,
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.issues,
+      });
     if (duplicateError(error))
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message: "Research area code or slug already exists",
-        });
+      return res.status(409).json({
+        success: false,
+        message: "Research area code or slug already exists",
+      });
     return res
       .status(500)
       .json({ success: false, message: "Failed to update research area" });
+  }
+}
+
+export async function uploadResearchAreaImageController(
+  req: Request,
+  res: Response,
+) {
+  const image = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  const contentType = req.headers["content-type"] ?? "";
+  const filename =
+    typeof req.query.filename === "string" ? req.query.filename : "";
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid research area ID" });
+  }
+  if (!contentType.startsWith("image/")) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Image file required" });
+  }
+  if (filename && !ALLOWED_IMAGE_EXTENSIONS.test(filename)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Unsupported image extension" });
+  }
+  if (!image.length || image.length > MAX_RESEARCH_IMAGE_BYTES) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Image must be 3 MB or smaller" });
+  }
+  try {
+    if (!(await findResearchAreaById(id))) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Research area not found" });
+    }
+    const uploaded = await uploadResearchAreaImage(image);
+    return res.json({ success: true, data: uploaded });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload research area image",
+    });
   }
 }
 
@@ -188,11 +240,9 @@ export async function getPublicResearchAreasController(
     const areas = await findAllResearchAreas({ publishedOnly: true });
     return res.json({ success: true, data: areas.map(publicResearchArea) });
   } catch {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to fetch public research areas",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public research areas",
+    });
   }
 }

@@ -13,7 +13,7 @@ import {
   LoadingState,
   inputClass,
 } from "@/components/ui";
-import { getAlumniById, updateAlumni } from "@/lib/api/alumni";
+import { getAlumniById, setAlumniActive, updateAlumni } from "@/lib/api/alumni";
 import { getTrackingByAlumniId } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import { safeHttpUrl } from "@/lib/safe-url";
@@ -52,6 +52,7 @@ export default function AlumniDetail({ id }: { id: string }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountUpdating, setAccountUpdating] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -152,6 +153,22 @@ export default function AlumniDetail({ id }: { id: string }) {
     }
   }
 
+  async function toggleAccount() {
+    setAccountUpdating(true);
+    setError(null);
+    const shouldEnable = alumni?.accountActive === false;
+    try {
+      await setAlumniActive(id, shouldEnable);
+      setAlumni((current) =>
+        current ? { ...current, accountActive: shouldEnable } : current,
+      );
+    } catch (reason) {
+      setError(getUserFacingError(reason));
+    } finally {
+      setAccountUpdating(false);
+    }
+  }
+
   if (!alumni && !error) {
     return (
       <div className="p-5 sm:p-7 lg:p-9">
@@ -190,6 +207,27 @@ export default function AlumniDetail({ id }: { id: string }) {
         </Link>
 
         {error && <ErrorState message={error} />}
+        <div className="flex flex-wrap gap-2">
+          <Badge tone={alumni.accountActive === false ? "amber" : "green"}>
+            {alumni.accountActive === false ? "Disabled" : "Active"}
+          </Badge>
+          <Badge tone={alumni.profileCompleted ? "green" : "amber"}>
+            {alumni.profileCompleted ? "Complete" : "Incomplete"}
+          </Badge>
+          <Badge tone={alumni.isPublic ? "green" : "neutral"}>
+            {alumni.isPublic ? "Public" : "Private"}
+          </Badge>
+          {alumni.accountEmail && (
+            <span className="text-sm text-[var(--rams-gray)]">
+              {alumni.accountEmail}
+            </span>
+          )}
+        </div>
+        {!alumni.profileCompleted && (
+          <p className="border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+            Profile incomplete. The alumni has not completed their profile yet.
+          </p>
+        )}
 
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -207,7 +245,9 @@ export default function AlumniDetail({ id }: { id: string }) {
               </span>
             </div>
 
-            <h1 className="mt-4 text-4xl font-bold">{alumni.fullName}</h1>
+            <h1 className="mt-4 text-4xl font-bold">
+              {alumni.fullName || "Alumni Account"}
+            </h1>
 
             <p className="mt-2 text-[var(--rams-gray)]">
               {alumni.program} · Class of {alumni.graduationYear}
@@ -215,12 +255,25 @@ export default function AlumniDetail({ id }: { id: string }) {
           </div>
 
           {user?.role === "ADMIN" && (
-            <Button
-              variant="secondary"
-              onClick={() => setEditing((value) => !value)}
-            >
-              {editing ? "Cancel" : "Edit profile"}
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                disabled={accountUpdating}
+                onClick={() => void toggleAccount()}
+              >
+                {accountUpdating
+                  ? "Updating…"
+                  : alumni.accountActive === false
+                    ? "Enable account"
+                    : "Disable account"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setEditing((value) => !value)}
+              >
+                {editing ? "Cancel" : "Edit profile"}
+              </Button>
+            </div>
           )}
         </header>
 

@@ -1,6 +1,16 @@
 import { z } from "zod";
 
 const text = z.string().trim().min(1).max(5000);
+const contentImageSchema = z.object({
+  url: z.string().url().max(1000),
+  publicId: z.string().trim().max(500).optional(),
+  position: z
+    .object({
+      x: z.number().min(0).max(100),
+      y: z.number().min(0).max(100),
+    })
+    .optional(),
+});
 
 export const bilingualTextSchema = z.object({
   en: text,
@@ -40,11 +50,14 @@ export const homepageContentSchema = z.object({
     description: bilingualTextSchema,
     primaryCta: bilingualTextSchema,
     secondaryCta: bilingualTextSchema,
+    heroImage: contentImageSchema.optional(),
   }),
   principles: principleTuple,
   ecosystem: z.object({
     title: bilingualTextSchema,
+    ramsDescription: bilingualTextSchema.optional(),
     aisDescription: bilingualTextSchema,
+    puiKekalDescription: bilingualTextSchema.optional(),
   }),
   research: z.object({
     title: bilingualTextSchema,

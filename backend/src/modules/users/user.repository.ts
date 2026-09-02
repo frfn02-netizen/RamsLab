@@ -58,3 +58,19 @@ export async function deactivateUser(id: ObjectId): Promise<boolean> {
 
   return result.matchedCount === 1;
 }
+
+export async function setUserActive(
+  id: ObjectId,
+  isActive: boolean,
+): Promise<boolean> {
+  const result = await getUsersCollection().updateOne(
+    { _id: id },
+    { $set: { isActive, updatedAt: new Date() }, $inc: { tokenVersion: 1 } },
+  );
+  return result.matchedCount === 1;
+}
+
+export async function deleteUser(id: ObjectId): Promise<boolean> {
+  const result = await getUsersCollection().deleteOne({ _id: id });
+  return result.deletedCount === 1;
+}

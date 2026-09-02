@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
 import { getUserFacingError } from "@/lib/api/errors";
 import { Button, inputClass } from "@/components/ui";
+import type { AuthUser } from "@/types/auth";
 
 function LoginContent() {
   const router = useRouter();
@@ -15,12 +16,15 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const destination = (role: string | undefined) =>
-    role === "ALUMNI" ? "/profile" : "/dashboard";
+  const destination = (account: AuthUser) =>
+    account.mustChangePassword
+      ? "/change-password"
+      : account.role === "ALUMNI"
+        ? "/dashboard/alumni/profile"
+        : "/dashboard";
 
   useEffect(() => {
-    if (status === "authenticated" && user)
-      router.replace(destination(user.role));
+    if (status === "authenticated" && user) router.replace(destination(user));
   }, [router, status, user]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -30,7 +34,7 @@ function LoginContent() {
     try {
       const authenticatedUser = await login({ email, password });
       const next = searchParams.get("next");
-      const fallback = destination(authenticatedUser.role);
+      const fallback = destination(authenticatedUser);
       router.replace(
         next?.startsWith("/") &&
           !next.startsWith("//") &&

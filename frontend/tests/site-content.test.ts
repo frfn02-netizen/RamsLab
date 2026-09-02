@@ -53,13 +53,11 @@ const content: HomepageContent = {
 
 describe("site content API client", () => {
   it("unwraps public content from the public endpoint", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ success: true, data: content }), {
-          status: 200,
-        }),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, data: content }), {
+        status: 200,
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
     await expect(getPublicSiteContent("homepage")).resolves.toEqual(content);
     expect(fetchMock.mock.calls[0][0]).toContain(
@@ -68,23 +66,21 @@ describe("site content API client", () => {
   });
 
   it("sends admin updates through the shared client", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            success: true,
-            data: {
-              key: "homepage",
-              page: "homepage",
-              content,
-              createdAt: "",
-              updatedAt: "",
-            },
-          }),
-          { status: 200 },
-        ),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            key: "homepage",
+            page: "homepage",
+            content,
+            createdAt: "",
+            updatedAt: "",
+          },
+        }),
+        { status: 200 },
+      ),
+    );
     vi.stubGlobal("fetch", fetchMock);
     await updateAdminSiteContent("homepage", content);
     expect(fetchMock.mock.calls[0][0]).toContain(

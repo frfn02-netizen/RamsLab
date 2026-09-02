@@ -57,6 +57,7 @@ export default function ProjectDetail({ id }: { id: string }) {
     image: "",
     technologies: "",
     published: false,
+    featured: false,
   });
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function ProjectDetail({ id }: { id: string }) {
           image: result.image ?? "",
           technologies: result.technologies.join(", "),
           published: result.published,
+          featured: result.featured ?? false,
         });
       })
       .catch((reason) => {
@@ -118,6 +120,7 @@ export default function ProjectDetail({ id }: { id: string }) {
           .map((item) => item.trim())
           .filter(Boolean),
         published: form.published,
+        featured: form.featured,
       });
 
       setProject(result);
@@ -343,6 +346,15 @@ export default function ProjectDetail({ id }: { id: string }) {
                   }
                 />
                 Publish this project
+              </label>
+
+              <label className="flex items-center gap-3 text-sm font-semibold">
+                <input
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={(event) => update("featured", event.target.checked)}
+                />
+                Feature this project on the homepage
               </label>
 
               <Button type="submit" disabled={saving}>

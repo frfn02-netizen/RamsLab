@@ -47,13 +47,11 @@ describe("API client", () => {
     setCsrfToken("stored-csrf");
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ success: true, data: { ok: true } }), {
-            status: 200,
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ success: true, data: { ok: true } }), {
+          status: 200,
+        }),
+      ),
     );
 
     await apiRequest("/write", {

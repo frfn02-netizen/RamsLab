@@ -29,6 +29,7 @@ export async function createAlumniUser(input: CreateAlumniUserInput) {
     passwordHash,
     role: USER_ROLES.ALUMNI,
     isActive: true,
+    mustChangePassword: true,
     tokenVersion: 0,
     lastLoginAt: null,
     createdAt: now,

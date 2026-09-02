@@ -1,10 +1,11 @@
 import "dotenv/config";
+import { basename } from "node:path";
 import { connectDatabase } from "../config/database.js";
 import { getResearchAreasCollection } from "../modules/research/research.repository.js";
 import { createResearchAreaIndexes } from "../modules/research/research.index.js";
 import type { CreateResearchAreaInput } from "../modules/research/research.schema.js";
 
-const researchAreas: CreateResearchAreaInput[] = [
+export const researchAreas: CreateResearchAreaInput[] = [
   {
     code: "RISK",
     slug: "risk-assessment-safety",
@@ -205,7 +206,9 @@ async function seedResearch() {
   console.log("✅ Research areas seeded idempotently");
 }
 
-seedResearch().catch((error: unknown) => {
-  console.error("❌ Failed to seed research areas:", error);
-  process.exitCode = 1;
-});
+if (basename(process.argv[1] ?? "") === "seed-research.ts") {
+  seedResearch().catch((error: unknown) => {
+    console.error("❌ Failed to seed research areas:", error);
+    process.exitCode = 1;
+  });
+}

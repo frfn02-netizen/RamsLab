@@ -19,6 +19,7 @@ const stats: DashboardStats = {
   alumni: 3,
   dosen: 2,
   projects: 5,
+  publications: 0,
   universityPartners: 6,
   industrialPartners: 7,
   researchAreas: 6,

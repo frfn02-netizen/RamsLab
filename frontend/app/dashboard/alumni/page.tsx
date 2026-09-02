@@ -24,13 +24,6 @@ import type { Alumni } from "@/types/alumni";
 
 const limit = 10;
 
-function formatStatus(status: Alumni["currentStatus"]) {
-  return status
-    .replaceAll("_", " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
 export default function AlumniPage() {
   const { user } = useAuth();
 
@@ -196,9 +189,10 @@ export default function AlumniPage() {
                         {[
                           "Alumni",
                           "NIM",
-                          "Program",
-                          "Graduation",
-                          "Status",
+                          "Company",
+                          "Position",
+                          "Account",
+                          "Profile",
                           "Company",
                           "Action",
                         ].map((heading) => (
@@ -222,35 +216,52 @@ export default function AlumniPage() {
                           className={loading ? "opacity-60" : ""}
                         >
                           <td className="px-5 py-4">
-                            <p className="font-semibold">{item.fullName}</p>
+                            <p className="font-semibold">
+                              {item.fullName || "Alumni Account"}
+                            </p>
 
                             <p className="mt-1 text-xs text-[var(--rams-gray)]">
-                              {item.currentPosition ?? "Position not provided"}
+                              {item.accountEmail ??
+                                item.currentPosition ??
+                                "Profile incomplete"}
                             </p>
                           </td>
 
-                          <td className="px-5 py-4 text-sm">{item.nim}</td>
-
-                          <td className="px-5 py-4 text-sm">{item.program}</td>
-
                           <td className="px-5 py-4 text-sm">
-                            {item.graduationYear}
+                            {item.nim || "Not provided"}
                           </td>
 
+                          <td className="px-5 py-4 text-sm">
+                            {item.currentCompany || "Not provided"}
+                          </td>
+
+                          <td className="px-5 py-4 text-sm">
+                            {item.currentPosition || "Not provided"}
+                          </td>
                           <td className="px-5 py-4">
                             <Badge
                               tone={
-                                item.currentStatus === "SEEKING_JOB"
-                                  ? "amber"
-                                  : "neutral"
+                                item.accountActive === false ? "amber" : "green"
                               }
                             >
-                              {formatStatus(item.currentStatus)}
+                              {item.accountActive === false
+                                ? "Disabled"
+                                : "Active"}
                             </Badge>
                           </td>
-
-                          <td className="px-5 py-4 text-sm">
-                            {item.currentCompany ?? "—"}
+                          <td className="px-5 py-4">
+                            <div className="space-y-1">
+                              <Badge
+                                tone={item.profileCompleted ? "green" : "amber"}
+                              >
+                                {item.profileCompleted
+                                  ? "Complete"
+                                  : "Incomplete"}
+                              </Badge>
+                              <Badge tone={item.isPublic ? "green" : "neutral"}>
+                                {item.isPublic ? "Public" : "Private"}
+                              </Badge>
+                            </div>
                           </td>
 
                           <td className="px-5 py-4 text-right">

@@ -11,6 +11,7 @@ import { getUsersCollection } from "../users/user.repository.js";
 import { USER_ROLES } from "../users/user.types.js";
 import {
   createAlumniSchema,
+  completeMyAlumniSchema,
   updateAlumniSchema,
   updateMyAlumniSchema,
   type CreateAlumniInput,
@@ -25,7 +26,6 @@ export async function createAlumni(input: CreateAlumniInput) {
   const users = getUsersCollection();
 
   const alumniCollection = getAlumniCollection();
-
   const userId = new ObjectId(data.userId);
 
   const existingUser = await users.findOne({
@@ -86,6 +86,9 @@ export async function createAlumni(input: CreateAlumniInput) {
     educationHistory: data.educationHistory,
 
     isPublic: data.isPublic,
+    profileCompleted: Boolean(
+      data.fullName && data.nim && data.graduationYear && data.photo,
+    ),
 
     createdAt: now,
 
@@ -100,8 +103,39 @@ export async function createAlumni(input: CreateAlumniInput) {
   };
 }
 
+export async function createAlumniShell(userId: string) {
+  if (!ObjectId.isValid(userId)) throw new Error("Invalid user ID");
+  const alumniCollection = getAlumniCollection();
+  const now = new Date();
+  const alumni = {
+    userId: new ObjectId(userId),
+    fullName: "",
+    graduationYear: undefined,
+    program: "",
+    currentStatus: "OTHER" as const,
+    careerHistory: [],
+    educationHistory: [],
+    isPublic: false,
+    profileCompleted: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const result = await alumniCollection.insertOne(alumni);
+  return { ...alumni, _id: result.insertedId };
+}
+
 export async function getAlumniById(id: string) {
-  return findAlumniById(id);
+  const alumni = await findAlumniById(id);
+  if (!alumni) return null;
+  const user = alumni.userId
+    ? await getUsersCollection().findOne({ _id: alumni.userId })
+    : null;
+  return {
+    ...alumni,
+    accountEmail: user?.email,
+    accountActive: user?.isActive,
+    mustChangePassword: user?.mustChangePassword ?? false,
+  };
 }
 
 export async function deleteAlumni(id: string) {
@@ -125,9 +159,16 @@ export async function updateAlumni(id: string, input: UpdateAlumniInput) {
   const data = updateAlumniSchema.parse(input);
 
   const alumniCollection = getAlumniCollection();
+  const existing = await findAlumniById(id);
 
   const updateData = {
     ...data,
+    ...(data.fullName &&
+    existing?.nim &&
+    data.graduationYear &&
+    (data.photo !== undefined || existing?.photo)
+      ? { profileCompleted: true }
+      : {}),
     updatedAt: new Date(),
   };
 
@@ -151,12 +192,19 @@ export async function updateMyAlumni(
     throw new Error("Invalid user ID");
   }
 
-  const data = updateMyAlumniSchema.parse(input);
+  const data = completeMyAlumniSchema.parse(input);
 
   const alumniCollection = getAlumniCollection();
+  const existing = await findAlumniByUserId(new ObjectId(userId));
 
   const updateData = {
     ...data,
+    ...((data.fullName || existing?.fullName) &&
+    (data.nim || existing?.nim) &&
+    (data.graduationYear || existing?.graduationYear) &&
+    (data.photo || existing?.photo)
+      ? { profileCompleted: true }
+      : {}),
     updatedAt: new Date(),
   };
 
@@ -186,11 +234,25 @@ export async function getAlumniList(
     limit: safeLimit,
     search,
   });
+  const users = await getUsersCollection()
+    .find({ _id: { $in: result.data.map((item) => item.userId) } })
+    .toArray();
+  const byId = new Map(users.map((user) => [user._id!.toString(), user]));
+  result.data = result.data.map((item) => {
+    const user = byId.get(item.userId.toString());
+    return {
+      ...item,
+      accountEmail: user?.email,
+      accountActive: user?.isActive,
+      mustChangePassword: user?.mustChangePassword ?? false,
+    };
+  });
 
   const totalPages = Math.ceil(result.total / safeLimit);
 
   return {
     data: result.data,
+    total: result.total,
     pagination: {
       page: safePage,
       limit: safeLimit,

@@ -2,7 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 
-const PRIVATE_PREFIXES = ["/api", "/dashboard", "/admin", "/login", "/profile"];
+const PRIVATE_PREFIXES = [
+  "/api",
+  "/dashboard",
+  "/admin",
+  "/login",
+  "/profile",
+  "/change-password",
+];
 
 const intlMiddleware = createMiddleware(routing);
 

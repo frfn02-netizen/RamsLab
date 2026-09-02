@@ -8,10 +8,7 @@ import {
   findStudentById,
   updateStudent,
 } from "./student.repository.js";
-import {
-  removeStudentPhoto,
-  saveStudentPhoto,
-} from "./student-photo.js";
+import { removeStudentPhoto, saveStudentPhoto } from "./student-photo.js";
 import type { Student } from "./student.types.js";
 
 function serializeStudent(student: Student) {
@@ -58,13 +55,11 @@ export async function createStudentController(req: Request, res: Response) {
       .json({ success: true, data: serializeStudent(student) });
   } catch (error: unknown) {
     if (error instanceof Error && error.name === "ZodError") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Validation failed",
-          errors: (error as { issues?: unknown }).issues,
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: (error as { issues?: unknown }).issues,
+      });
     }
     return res
       .status(500)
@@ -88,13 +83,11 @@ export async function updateStudentController(req: Request, res: Response) {
     return res.json({ success: true, data: serializeStudent(student) });
   } catch (error: unknown) {
     if (error instanceof Error && error.name === "ZodError") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Validation failed",
-          errors: (error as { issues?: unknown }).issues,
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: (error as { issues?: unknown }).issues,
+      });
     }
     return res
       .status(500)
@@ -147,12 +140,10 @@ export async function uploadStudentPhotoController(
       error instanceof Error &&
       error.message === "Unsupported image format"
     ) {
-      return res
-        .status(415)
-        .json({
-          success: false,
-          message: "Only JPG, PNG, and WebP photos are supported",
-        });
+      return res.status(415).json({
+        success: false,
+        message: "Only JPG, PNG, and WebP photos are supported",
+      });
     }
     return res
       .status(500)

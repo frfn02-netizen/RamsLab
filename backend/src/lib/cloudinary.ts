@@ -2,6 +2,8 @@ import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 import { Readable } from "node:stream";
 
 const CLOUDINARY_FOLDER = "rams-platform/profile-photos";
+const SITE_CONTENT_HOMEPAGE_FOLDER = "rams-platform/site-content/homepage";
+const RESEARCH_AREA_FOLDER = "rams-platform/research-areas";
 
 function ensureCloudinaryConfigured() {
   if (!process.env.CLOUDINARY_URL) {
@@ -43,6 +45,22 @@ function uploadBuffer(
 
 export async function uploadProfilePhoto(buffer: Buffer) {
   const result = await uploadBuffer(buffer, CLOUDINARY_FOLDER);
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+}
+
+export async function uploadSiteContentHomepageImage(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, SITE_CONTENT_HOMEPAGE_FOLDER);
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+}
+
+export async function uploadResearchAreaImage(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, RESEARCH_AREA_FOLDER);
   return {
     url: result.secure_url,
     publicId: result.public_id,

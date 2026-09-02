@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 
 import { requireRole } from "../../middlewares/role.middlewares.js";
 
@@ -13,6 +13,8 @@ import {
   getMyAlumniController,
   updateAlumniController,
   updateMyAlumniController,
+  uploadMyAlumniPhotoController,
+  setAlumniActiveController,
 } from "./alumni.controller.js";
 
 const router = Router();
@@ -52,6 +54,22 @@ router.patch(
   authenticate,
   requireRole("ALUMNI"),
   updateMyAlumniController,
+);
+router.patch(
+  "/:id/account-status",
+  authenticate,
+  requireRole("ADMIN"),
+  setAlumniActiveController,
+);
+router.post(
+  "/me/photo",
+  authenticate,
+  requireRole("ALUMNI"),
+  express.raw({
+    type: ["image/jpeg", "image/png", "image/webp"],
+    limit: "3mb",
+  }),
+  uploadMyAlumniPhotoController,
 );
 
 // ========================================

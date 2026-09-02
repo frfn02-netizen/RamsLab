@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent, type MouseEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type MouseEvent,
+} from "react";
 
 import {
   Badge,
@@ -16,6 +22,7 @@ import {
 import {
   deleteResearchArea,
   getResearchAreaById,
+  uploadResearchAreaImage,
   updateResearchArea,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
@@ -26,6 +33,72 @@ import { formToInput } from "./research-area-form";
 type FormState = ReturnType<typeof formToInput> & {
   order: number;
 };
+
+function ResearchImageField({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [preview, setPreview] = useState(value);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function select(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setError("Image must be 3 MB or smaller.");
+      return;
+    }
+    setError(null);
+    setPreview(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const uploaded = await uploadResearchAreaImage(id, file);
+      onChange(uploaded.url);
+    } catch {
+      setError("Image upload failed. The existing image is still safe.");
+      setPreview(value);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {preview ? (
+        <img
+          src={preview}
+          alt="Research area preview"
+          className="h-44 w-full object-cover"
+        />
+      ) : (
+        <div className="grid h-44 place-items-center bg-[var(--rams-gray-light)] text-sm text-[var(--rams-gray)]">
+          No image selected.
+        </div>
+      )}
+      <label className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold">
+        {uploading ? "Uploading…" : "Change image"}
+        <input
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          onChange={select}
+          disabled={uploading}
+        />
+      </label>
+      {error && <p className="text-sm text-[var(--rams-red)]">{error}</p>}
+    </div>
+  );
+}
 
 function toForm(area: ResearchArea): FormState {
   return {
@@ -317,6 +390,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
 
         {editing ? (
           <ResearchEditForm
+            id={id}
             form={form}
             update={update}
             updateText={updateText}
@@ -391,6 +465,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
 }
 
 function ResearchEditForm({
+  id,
   form,
   update,
   updateText,
@@ -398,6 +473,7 @@ function ResearchEditForm({
   onSubmit,
   saving,
 }: {
+  id: string;
   form: FormState;
   update: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
   updateText: (
@@ -443,12 +519,11 @@ function ResearchEditForm({
             />
           </Field>
 
-          <Field label="Image URL (optional)">
-            <input
-              type="url"
-              className={inputClass}
+          <Field label="Image">
+            <ResearchImageField
+              id={id}
               value={form.image ?? ""}
-              onChange={(event) => update("image", event.target.value)}
+              onChange={(value) => update("image", value)}
             />
           </Field>
         </div>

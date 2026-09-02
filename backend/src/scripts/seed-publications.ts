@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { basename } from "node:path";
 import { connectDatabase } from "../config/database.js";
 import { createPublicationIndexes } from "../modules/publications/publication.index.js";
 import {
@@ -7,7 +8,7 @@ import {
   normalizePublicationTitle,
 } from "../modules/publications/publication.repository.js";
 
-const demoPublications = [
+export const demoPublications = [
   {
     title: "Demo: Reliability mapping for coastal vessel systems",
     authors: ["RAMS Demo Author", "AIS Demo Researcher"],
@@ -168,7 +169,7 @@ const demoPublications = [
   },
 ];
 
-const demoPublicationTypes = [
+export const demoPublicationTypes = [
   "Article",
   "Review",
   "Conference Paper",
@@ -215,7 +216,9 @@ async function seedPublications() {
   process.exit(0);
 }
 
-seedPublications().catch((error) => {
-  console.error("❌ Failed to seed publications:", error);
-  process.exit(1);
-});
+if (basename(process.argv[1] ?? "") === "seed-publications.ts") {
+  seedPublications().catch((error) => {
+    console.error("❌ Failed to seed publications:", error);
+    process.exit(1);
+  });
+}

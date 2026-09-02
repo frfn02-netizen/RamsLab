@@ -275,14 +275,9 @@ export default function ResearchAreaForm() {
                   />
                 </Field>
 
-                <Field label="Image URL (optional)">
-                  <input
-                    type="url"
-                    className={inputClass}
-                    value={form.image}
-                    onChange={(event) => update("image", event.target.value)}
-                  />
-                </Field>
+                <div className="flex items-end text-sm text-[var(--rams-gray)]">
+                  Image can be uploaded after the research area is created.
+                </div>
               </div>
 
               <label className="flex items-center gap-3 text-sm font-semibold">

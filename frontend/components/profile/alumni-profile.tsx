@@ -15,6 +15,8 @@ import {
   inputClass,
 } from "@/components/ui";
 import { getMyAlumni, updateMyAlumni } from "@/lib/api/alumni";
+import { uploadMyAlumniPhoto } from "@/lib/api/alumni";
+import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
 
@@ -37,6 +39,8 @@ export default function AlumniProfile() {
   const [profile, setProfile] = useState<Alumni | null>(null);
   const [form, setForm] = useState({
     fullName: "",
+    nim: "",
+    graduationYear: "",
     phone: "",
     location: "",
     currentStatus: "WORKING" as AlumniStatus,
@@ -44,9 +48,11 @@ export default function AlumniProfile() {
     currentPosition: "",
     linkedin: "",
     bio: "",
+    isPublic: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login?next=/profile");
@@ -62,6 +68,10 @@ export default function AlumniProfile() {
           setProfile(result);
           setForm({
             fullName: result.fullName,
+            nim: result.nim ?? "",
+            graduationYear: result.graduationYear
+              ? String(result.graduationYear)
+              : "",
             phone: result.phone ?? "",
             location: result.location ?? "",
             currentStatus: result.currentStatus,
@@ -69,6 +79,7 @@ export default function AlumniProfile() {
             currentPosition: result.currentPosition ?? "",
             linkedin: result.linkedin ?? "",
             bio: result.bio ?? "",
+            isPublic: result.isPublic,
           });
         }
       })
@@ -82,15 +93,19 @@ export default function AlumniProfile() {
       cancelled = true;
     };
   }, [status, user]);
-  const update = (key: string, value: string) =>
+  const update = (key: string, value: string | boolean) =>
     setForm((current) => ({ ...current, [key]: value }));
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      const result = await updateMyAlumni({
+      let result = await updateMyAlumni({
         fullName: form.fullName,
+        nim: form.nim || undefined,
+        graduationYear: form.graduationYear
+          ? Number(form.graduationYear)
+          : undefined,
         phone: form.phone || undefined,
         location: form.location || undefined,
         currentStatus: form.currentStatus,
@@ -98,7 +113,10 @@ export default function AlumniProfile() {
         currentPosition: form.currentPosition || undefined,
         linkedin: form.linkedin || undefined,
         bio: form.bio || undefined,
+        isPublic: form.isPublic,
       });
+      if (photoFile) result = await uploadMyAlumniPhoto(photoFile);
+      setPhotoFile(null);
       setProfile(result);
     } catch (reason) {
       setError(getUserFacingError(reason));
@@ -133,8 +151,8 @@ export default function AlumniProfile() {
         </div>
         <PageHeader
           eyebrow="Alumni profile"
-          title="Your profile"
-          description="Keep the professional information you choose to share with RAMS up to date."
+          title="My Alumni Profile"
+          description="Complete your profile so the RAMS community can recognize your journey."
         />
         {error && <ErrorState message={error} />}
         <Card className="p-6">
@@ -151,6 +169,14 @@ export default function AlumniProfile() {
             </span>
           </div>
           <form onSubmit={save} className="space-y-5">
+            <Field label="Profile photo">
+              <ProfilePhotoField
+                initialUrl={profile.photo}
+                onFileChange={setPhotoFile}
+                disabled={saving}
+                profileLabel="alumni"
+              />
+            </Field>
             <Field label="Full name">
               <input
                 required
@@ -160,6 +186,29 @@ export default function AlumniProfile() {
                 onChange={(event) => update("fullName", event.target.value)}
               />
             </Field>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="NIM">
+                <input
+                  required
+                  className={inputClass}
+                  value={form.nim}
+                  onChange={(event) => update("nim", event.target.value)}
+                />
+              </Field>
+              <Field label="Entry year">
+                <input
+                  required
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  className={inputClass}
+                  value={form.graduationYear}
+                  onChange={(event) =>
+                    update("graduationYear", event.target.value)
+                  }
+                />
+              </Field>
+            </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Status">
                 <select
@@ -224,6 +273,14 @@ export default function AlumniProfile() {
                 onChange={(event) => update("bio", event.target.value)}
               />
             </Field>
+            <label className="flex items-center gap-3 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={Boolean(form.isPublic)}
+                onChange={(event) => update("isPublic", event.target.checked)}
+              />{" "}
+              Make my profile public
+            </label>
             <Button type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save profile"}
             </Button>

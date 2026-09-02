@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { ObjectId } from "mongodb";
 
 import {
   findAllProjects,
@@ -13,9 +14,9 @@ import {
   findUniversityPartners,
   findIndustrialPartners,
 } from "../partners/partner.repository.js";
-import { findAllDosen } from "../dosen/dosen.repository.js";
+import { findAllDosen, findDosenById } from "../dosen/dosen.repository.js";
 import { findPublicAlumni } from "../alumni/alumni.repository.js";
-import { findAllStudents } from "../students/student.repository.js";
+import { findAllStudents, findStudentById } from "../students/student.repository.js";
 import {
   toPublicAlumniProfile,
   toPublicDosenProfile,
@@ -66,6 +67,47 @@ export async function getPublicPeopleController(req: Request, res: Response) {
   }
 }
 
+export async function getPublicDosenByIdController(
+  req: Request,
+  res: Response,
+) {
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id)) {
+    return res.status(404).json({
+      success: false,
+      message: "Public profile not found",
+    });
+  }
+
+  try {
+    const member = await findDosenById(id);
+    if (member?.isPublic) {
+      return res.json({
+        success: true,
+        data: toPublicDosenProfile(req, member),
+      });
+    }
+
+    const student = await findStudentById(id);
+    if (student?.isPublic) {
+      return res.json({
+        success: true,
+        data: toPublicStudentProfile(req, student),
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: "Public profile not found",
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public profile",
+    });
+  }
+}
+
 export async function getPublicAlumniController(req: Request, res: Response) {
   try {
     const alumni = await findPublicAlumni();
@@ -86,18 +128,22 @@ export async function getPublicAlumniController(req: Request, res: Response) {
 // PUBLIC PROJECTS
 // ========================================
 
-export async function getPublicProjectsController(
-  _req: Request,
-  res: Response,
-) {
+export async function getPublicProjectsController(req: Request, res: Response) {
   try {
+    const featured = req.query.featured === "true";
+    const parsedLimit = Number(req.query.limit);
+    const limit =
+      Number.isInteger(parsedLimit) && parsedLimit > 0
+        ? Math.min(parsedLimit, 12)
+        : undefined;
     const projects = await findAllProjects({
       publishedOnly: true,
+      featuredOnly: featured,
     });
 
     return res.json({
       success: true,
-      data: projects,
+      data: limit ? projects.slice(0, limit) : projects,
     });
   } catch {
     return res.status(500).json({

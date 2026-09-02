@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
-import { loginSchema } from "./auth.schema.js";
-import { login } from "./auth.service.js";
+import { changePasswordSchema, loginSchema } from "./auth.schema.js";
+import { changePassword, login } from "./auth.service.js";
 import { verifyAccessToken } from "./auth.utils.js";
 import { incrementUserTokenVersion } from "../users/user.repository.js";
 import {
@@ -78,6 +78,29 @@ export async function logoutController(req: Request, res: Response) {
     success: true,
     message: "Logged out successfully",
   });
+}
+
+export async function changePasswordController(req: Request, res: Response) {
+  try {
+    if (!req.user)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+    const input = changePasswordSchema.parse(req.body);
+    await changePassword(
+      req.user.userId,
+      input.currentPassword,
+      input.newPassword,
+    );
+    return res.json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch {
+    return res
+      .status(400)
+      .json({ success: false, message: "Unable to change password" });
+  }
 }
 
 export function csrfController(_req: Request, res: Response) {

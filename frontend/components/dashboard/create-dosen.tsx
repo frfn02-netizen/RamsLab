@@ -27,10 +27,19 @@ export default function CreateDosen() {
     password: "",
     fullName: "",
     employeeId: "",
+    nip: "",
+    nidn: "",
+    faculty: "",
+    department: "",
+    institution: "",
+    program: "",
     specialization: "",
     phone: "",
     bio: "",
     linkedin: "",
+    showNip: false,
+    showNidn: false,
+    showEmail: false,
     isPublic: true,
   });
 
@@ -60,6 +69,12 @@ export default function CreateDosen() {
         userId: account.id,
         fullName: form.fullName,
         employeeId: form.employeeId || undefined,
+        nip: form.nip || undefined,
+        nidn: form.nidn || undefined,
+        faculty: form.faculty || undefined,
+        department: form.department || undefined,
+        institution: form.institution || undefined,
+        program: form.program || undefined,
         specialization: form.specialization
           .split(",")
           .map((item) => item.trim())
@@ -68,6 +83,9 @@ export default function CreateDosen() {
         phone: form.phone || undefined,
         bio: form.bio || undefined,
         linkedin: form.linkedin || undefined,
+        showNip: form.showNip,
+        showNidn: form.showNidn,
+        showEmail: form.showEmail,
         isPublic: form.isPublic,
       });
 
@@ -145,6 +163,22 @@ export default function CreateDosen() {
                 />
               </Field>
 
+              <Field label="NIP">
+                <input
+                  className={inputClass}
+                  value={form.nip}
+                  onChange={(event) => update("nip", event.target.value)}
+                />
+              </Field>
+
+              <Field label="NIDN">
+                <input
+                  className={inputClass}
+                  value={form.nidn}
+                  onChange={(event) => update("nidn", event.target.value)}
+                />
+              </Field>
+
               <div className="grid gap-5 sm:col-span-2 sm:grid-cols-2 sm:items-start">
                 <div className="space-y-5">
                   <Field label="Phone">
@@ -155,7 +189,7 @@ export default function CreateDosen() {
                     />
                   </Field>
 
-                  <Field label="LinkedIn URL (optional)">
+                  <Field label="LinkedIn URL (optional">
                     <input
                       type="url"
                       className={inputClass}
@@ -191,6 +225,39 @@ export default function CreateDosen() {
               </p>
             </Field>
 
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Faculty">
+                <input
+                  className={inputClass}
+                  value={form.faculty}
+                  onChange={(event) => update("faculty", event.target.value)}
+                />
+              </Field>
+              <Field label="Department">
+                <input
+                  className={inputClass}
+                  value={form.department}
+                  onChange={(event) => update("department", event.target.value)}
+                />
+              </Field>
+              <Field label="Institution">
+                <input
+                  className={inputClass}
+                  value={form.institution}
+                  onChange={(event) =>
+                    update("institution", event.target.value)
+                  }
+                />
+              </Field>
+              <Field label="Program">
+                <input
+                  className={inputClass}
+                  value={form.program}
+                  onChange={(event) => update("program", event.target.value)}
+                />
+              </Field>
+            </div>
+
             <Field label="Bio (optional)">
               <textarea
                 className={`${inputClass} min-h-28`}
@@ -198,6 +265,36 @@ export default function CreateDosen() {
                 onChange={(event) => update("bio", event.target.value)}
               />
             </Field>
+
+            <div className="space-y-3 border-t border-black/10 pt-5">
+              <p className="text-sm font-bold">Public academic information</p>
+              <label className="flex items-center gap-3 text-sm font-semibold">
+                <input
+                  type="checkbox"
+                  checked={form.showNip}
+                  onChange={(event) => update("showNip", event.target.checked)}
+                />
+                Show NIP publicly
+              </label>
+              <label className="flex items-center gap-3 text-sm font-semibold">
+                <input
+                  type="checkbox"
+                  checked={form.showNidn}
+                  onChange={(event) => update("showNidn", event.target.checked)}
+                />
+                Show NIDN publicly
+              </label>
+              <label className="flex items-center gap-3 text-sm font-semibold">
+                <input
+                  type="checkbox"
+                  checked={form.showEmail}
+                  onChange={(event) =>
+                    update("showEmail", event.target.checked)
+                  }
+                />
+                Show email publicly
+              </label>
+            </div>
 
             <label className="flex items-center gap-3 text-sm font-semibold">
               <input

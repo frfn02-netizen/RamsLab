@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import {
   Button,
   Card,
@@ -11,15 +19,40 @@ import {
   PageHeader,
   inputClass,
 } from "@/components/ui";
-import { getAdminSiteContent, updateAdminSiteContent } from "@/lib/api/modules";
+import {
+  getAdminSiteContent,
+  updateAdminSiteContent,
+  uploadHomepageImage,
+} from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type {
   AboutContent,
   BilingualText,
   ContactContent,
   FooterContent,
+  HeroImagePosition,
   HomepageContent,
+  SiteContentImage,
 } from "@/types/site-content";
+
+const defaultHeroImagePosition: HeroImagePosition = { x: 50, y: 50 };
+const heroImagePresets = [
+  ["Center", { x: 50, y: 50 }],
+  ["Top", { x: 50, y: 0 }],
+  ["Bottom", { x: 50, y: 100 }],
+  ["Left", { x: 0, y: 50 }],
+  ["Right", { x: 100, y: 50 }],
+] as const;
+
+const defaultRamsDescription: BilingualText = {
+  en: "Reliability, availability, maintainability, and safety research for dependable systems.",
+  id: "Riset keandalan, ketersediaan, kemudahan pemeliharaan, dan keselamatan untuk sistem yang andal.",
+};
+
+const defaultPuiKekalDescription: BilingualText = {
+  en: "Center for sustainable energy and maritime systems research.",
+  id: "Pusat riset energi berkelanjutan dan sistem maritim.",
+};
 
 function BilingualField({
   label,
@@ -73,6 +106,320 @@ function BilingualField({
   );
 }
 
+function ImageField({
+  value,
+  onChange,
+}: {
+  value?: SiteContentImage;
+  onChange: (value: SiteContentImage) => void;
+}) {
+  const [selected, setSelected] = useState<File | null>(null);
+  const [preview, setPreview] = useState(value?.url ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const cropCanvasRef = useRef<HTMLDivElement>(null);
+  const cropImageRef = useRef<HTMLImageElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
+  const [viewportSize, setViewportSize] = useState(() =>
+    typeof window === "undefined"
+      ? { width: 16, height: 9 }
+      : { width: window.innerWidth, height: window.innerHeight },
+  );
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startPosition: HeroImagePosition;
+  } | null>(null);
+  const position = value?.position ?? defaultHeroImagePosition;
+  const publicHeroAspectRatio =
+    viewportSize.width / (viewportSize.height * 0.75);
+  const imageAspectRatio =
+    naturalSize.width > 0 && naturalSize.height > 0
+      ? naturalSize.width / naturalSize.height
+      : 16 / 9;
+  const cropWidth = Math.min(
+    canvasSize.width * 0.78,
+    canvasSize.height * 0.78 * publicHeroAspectRatio,
+  );
+  const cropHeight =
+    publicHeroAspectRatio > 0 ? cropWidth / publicHeroAspectRatio : 0;
+  const cropLeft = (canvasSize.width - cropWidth) / 2;
+  const cropTop = (canvasSize.height - cropHeight) / 2;
+  const coverWidth = Math.max(cropWidth, cropHeight * imageAspectRatio);
+  const coverHeight = Math.max(cropHeight, cropWidth / imageAspectRatio);
+  const imageLeft = cropLeft - (position.x / 100) * (coverWidth - cropWidth);
+  const imageTop = cropTop - (position.y / 100) * (coverHeight - cropHeight);
+
+  useEffect(() => {
+    const canvas = cropCanvasRef.current;
+    if (!canvas) return;
+
+    const updateCanvasSize = () =>
+      setCanvasSize({ width: canvas.clientWidth, height: canvas.clientHeight });
+    updateCanvasSize();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateCanvasSize);
+    observer?.observe(canvas);
+    const updateViewportSize = () =>
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", updateViewportSize);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateViewportSize);
+    };
+  }, [preview]);
+
+  function clampPosition(next: number) {
+    return Math.min(100, Math.max(0, next));
+  }
+
+  function dragStart(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!value?.url || !cropCanvasRef.current || cropWidth <= 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startPosition: position,
+    };
+  }
+
+  function dragMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const overflowX = coverWidth - cropWidth;
+    const overflowY = coverHeight - cropHeight;
+
+    onChange({
+      ...(value as SiteContentImage),
+      position: {
+        x:
+          overflowX > 0
+            ? clampPosition(
+                drag.startPosition.x -
+                  ((event.clientX - drag.startX) / overflowX) * 100,
+              )
+            : 50,
+        y:
+          overflowY > 0
+            ? clampPosition(
+                drag.startPosition.y -
+                  ((event.clientY - drag.startY) / overflowY) * 100,
+              )
+            : 50,
+      },
+    });
+  }
+
+  function dragEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    }
+  }
+
+  function select(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setError("Image must be 3 MB or smaller.");
+      return;
+    }
+    setError(null);
+    setSelected(file);
+    setPreview(URL.createObjectURL(file));
+  }
+
+  async function upload() {
+    if (!selected) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const uploaded = await uploadHomepageImage(selected);
+      onChange({ ...uploaded, position });
+      setSelected(null);
+      setPreview(uploaded.url);
+    } catch {
+      setError("Image upload failed. The existing image is still safe.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {preview ? (
+        <div
+          ref={cropCanvasRef}
+          className="group relative h-[360px] w-full touch-none cursor-grab overflow-hidden bg-[var(--rams-gray-light)] ring-1 ring-black/10 active:cursor-grabbing sm:h-[420px]"
+          onPointerDown={dragStart}
+          onPointerMove={dragMove}
+          onPointerUp={dragEnd}
+          onPointerCancel={dragEnd}
+        >
+          <img
+            ref={cropImageRef}
+            src={preview}
+            alt="Homepage hero preview"
+            className="pointer-events-none absolute max-w-none select-none"
+            draggable={false}
+            onLoad={(event) =>
+              setNaturalSize({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })
+            }
+            style={{
+              width: coverWidth,
+              height: coverHeight,
+              left: imageLeft,
+              top: imageTop,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 bg-black/45"
+            style={{ height: cropTop }}
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/45"
+            style={{
+              height: Math.max(0, canvasSize.height - cropTop - cropHeight),
+            }}
+          />
+          <div
+            className="pointer-events-none absolute left-0 bg-black/45"
+            style={{
+              top: cropTop,
+              width: cropLeft,
+              height: cropHeight,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute right-0 bg-black/45"
+            style={{
+              top: cropTop,
+              width: Math.max(0, canvasSize.width - cropLeft - cropWidth),
+              height: cropHeight,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.45)]"
+            style={{
+              left: cropLeft,
+              top: cropTop,
+              width: cropWidth,
+              height: cropHeight,
+            }}
+          >
+            <div className="absolute left-2 top-2 bg-black/55 px-2 py-1 text-xs font-semibold text-white">
+              Homepage Hero crop
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid min-h-[75vh] place-items-center bg-[var(--rams-gray-light)] text-sm text-[var(--rams-gray)]">
+          No custom hero image. The public homepage uses its fallback image.
+        </div>
+      )}
+      <div className="flex flex-wrap gap-3">
+        <label className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold">
+          Choose image
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={select}
+          />
+        </label>
+        {selected && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void upload()}
+            disabled={uploading}
+          >
+            {uploading ? "Uploading…" : "Upload image"}
+          </Button>
+        )}
+      </div>
+      {error && <p className="text-sm text-[var(--rams-red)]">{error}</p>}
+      <div className="space-y-4 border-t border-black/8 pt-4">
+        <div>
+          <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
+            Image position
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {heroImagePresets.map(([label, preset]) => (
+              <button
+                key={label}
+                type="button"
+                className={`rounded-md border px-3 py-2 text-sm font-semibold ${
+                  position.x === preset.x && position.y === preset.y
+                    ? "border-[var(--rams-red)] bg-red-50 text-[var(--rams-red-dark)]"
+                    : "border-[var(--border)] text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
+                }`}
+                onClick={() =>
+                  onChange({ ...(value as SiteContentImage), position: preset })
+                }
+                disabled={!value?.url}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(["x", "y"] as const).map((axis) => (
+            <label
+              key={axis}
+              className="text-sm font-semibold text-[var(--rams-charcoal)]"
+            >
+              {axis === "x" ? "Horizontal" : "Vertical"} position:{" "}
+              {position[axis]}%
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={position[axis]}
+                disabled={!value?.url}
+                className="mt-2 w-full accent-[var(--rams-red)]"
+                aria-label={`${axis === "x" ? "Horizontal" : "Vertical"} image position`}
+                onChange={(event) =>
+                  onChange({
+                    ...(value as SiteContentImage),
+                    position: {
+                      ...position,
+                      [axis]: Number(event.target.value),
+                    },
+                  })
+                }
+              />
+            </label>
+          ))}
+        </div>
+        {!value?.url && (
+          <p className="text-xs text-[var(--rams-gray)]">
+            Upload a hero image to adjust its position.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function EditorShell({
   title,
   description,
@@ -105,14 +452,7 @@ function EditorShell({
   return (
     <div className="p-5 sm:p-7 lg:p-9">
       <div className="mx-auto max-w-5xl space-y-7">
-        <Link
-          href="/dashboard/content"
-          className="text-sm font-bold text-[var(--rams-red)]"
-        >
-          ← Site Content
-        </Link>
-
-        <PageHeader eyebrow="CMS" title={title} description={description} />
+        <PageHeader eyebrow={null} title={title} description={description} />
 
         {lastUpdated && (
           <p className="text-xs text-[var(--rams-gray)]">
@@ -229,7 +569,31 @@ function HomepageEditor() {
     getAdminSiteContent("homepage")
       .then((result) => {
         if (!cancelled) {
-          setContent(result.content);
+          setContent({
+            ...result.content,
+            hero: {
+              ...result.content.hero,
+              ...(result.content.hero.heroImage
+                ? {
+                    heroImage: {
+                      ...result.content.hero.heroImage,
+                      position:
+                        result.content.hero.heroImage.position ??
+                        defaultHeroImagePosition,
+                    },
+                  }
+                : {}),
+            },
+            ecosystem: {
+              ...result.content.ecosystem,
+              ramsDescription:
+                result.content.ecosystem.ramsDescription ??
+                defaultRamsDescription,
+              puiKekalDescription:
+                result.content.ecosystem.puiKekalDescription ??
+                defaultPuiKekalDescription,
+            },
+          });
           setLastUpdated(result.updatedAt);
         }
       })
@@ -369,6 +733,22 @@ function HomepageEditor() {
                 text("hero", "secondaryCta", locale, value)
               }
             />
+
+            <Field label="Hero image">
+              <ImageField
+                value={content.hero.heroImage}
+                onChange={(image) =>
+                  setContent((current) =>
+                    current
+                      ? {
+                          ...current,
+                          hero: { ...current.hero, heroImage: image },
+                        }
+                      : current,
+                  )
+                }
+              />
+            </Field>
           </Section>
 
           <Section title="RAMS Principles">
@@ -392,6 +772,29 @@ function HomepageEditor() {
               value={content.ecosystem.aisDescription}
               onChange={(locale, value) =>
                 text("ecosystem", "aisDescription", locale, value)
+              }
+              multiline
+            />
+
+            <BilingualField
+              label="RAMS description"
+              value={
+                content.ecosystem.ramsDescription ?? defaultRamsDescription
+              }
+              onChange={(locale, value) =>
+                text("ecosystem", "ramsDescription", locale, value)
+              }
+              multiline
+            />
+
+            <BilingualField
+              label="PUI-KEKAL description"
+              value={
+                content.ecosystem.puiKekalDescription ??
+                defaultPuiKekalDescription
+              }
+              onChange={(locale, value) =>
+                text("ecosystem", "puiKekalDescription", locale, value)
               }
               multiline
             />
@@ -432,6 +835,33 @@ function HomepageEditor() {
                 text("projects", "title", locale, value)
               }
             />
+            <Field label="Featured project limit">
+              <input
+                required
+                type="number"
+                min="1"
+                max="12"
+                className={inputClass}
+                value={content.projects.featuredLimit ?? 3}
+                onChange={(event) =>
+                  setContent((current) =>
+                    current
+                      ? {
+                          ...current,
+                          projects: {
+                            ...current.projects,
+                            featuredLimit: Number(event.target.value),
+                          },
+                        }
+                      : current,
+                  )
+                }
+              />
+              <p className="mt-1 text-xs text-[var(--rams-gray)]">
+                Published projects marked as featured will appear on the
+                homepage.
+              </p>
+            </Field>
           </Section>
 
           <Section title="Collaboration CTA">

@@ -31,13 +31,13 @@ export interface Alumni {
 
   userId: ObjectId;
 
-  fullName: string;
+  fullName?: string;
 
-  nim: string;
+  nim?: string;
 
   photo?: string;
 
-  graduationYear: number;
+  graduationYear?: number;
 
   program: string;
 
@@ -60,6 +60,10 @@ export interface Alumni {
   educationHistory: EducationHistory[];
 
   isPublic: boolean;
+  profileCompleted: boolean;
+  accountEmail?: string;
+  accountActive?: boolean;
+  mustChangePassword?: boolean;
 
   createdAt: Date;
 

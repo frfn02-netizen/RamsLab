@@ -1,405 +1,359 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
-
-import DosenPhotoField from "@/components/dashboard/dosen-photo-field";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
-import {
-  Badge,
-  Button,
-  Card,
-  ErrorState,
-  Field,
-  LoadingState,
-  inputClass,
-} from "@/components/ui";
+import { Badge, Button, Card, ErrorState, LoadingState } from "@/components/ui";
+import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
+import { deleteDosen, getDosenById } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import {
-  deleteDosen,
-  getDosenById,
-  updateDosen,
-  uploadDosenPhoto,
-} from "@/lib/api/modules";
-import { safeHttpUrl } from "@/lib/safe-url";
 import type { Dosen } from "@/types/modules";
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Card className="p-6">
+      <h2 className="text-lg font-bold">{title}</h2>
+      <div className="mt-5">{children}</div>
+    </Card>
+  );
+}
 
 export default function DosenDetail({ id }: { id: string }) {
   const { user } = useAuth();
   const router = useRouter();
-
   const [dosen, setDosen] = useState<Dosen | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
-    fullName: "",
-    employeeId: "",
-    title: "",
-    position: "",
-    specialization: "",
-    email: "",
-    phone: "",
-    bio: "",
-    linkedin: "",
-    isPublic: true,
-  });
+  const [pendingDelete, setPendingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-
     getDosenById(id)
       .then((result) => {
-        if (cancelled) return;
-
-        const safeLinkedin = safeHttpUrl(result.linkedin) ?? undefined;
-        const safeResult = {
-          ...result,
-          linkedin: safeLinkedin,
-        };
-
-        setDosen(safeResult);
-
-        setForm({
-          fullName: result.fullName,
-          employeeId: result.employeeId ?? "",
-          title: result.title ?? "",
-          position: result.position ?? "",
-          specialization: result.specialization.join(", "),
-          email: result.email ?? "",
-          phone: result.phone ?? "",
-          bio: result.bio ?? "",
-          linkedin: safeLinkedin ?? "",
-          isPublic: result.isPublic,
-        });
+        if (!cancelled) setDosen(result);
       })
       .catch((reason) => {
-        if (!cancelled) {
-          setError(getUserFacingError(reason));
-        }
+        if (!cancelled) setError(getUserFacingError(reason));
       });
-
     return () => {
       cancelled = true;
     };
   }, [id]);
 
-  const update = (key: string, value: string | boolean) => {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
-  };
-
-  async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      const result = await updateDosen(id, {
-        fullName: form.fullName,
-        employeeId: form.employeeId || undefined,
-        title: form.title || undefined,
-        position: form.position || undefined,
-        specialization: form.specialization
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        email: form.email || undefined,
-        phone: form.phone || undefined,
-        bio: form.bio || undefined,
-        linkedin: form.linkedin || undefined,
-        isPublic: form.isPublic,
-      });
-
-      const saved = photoFile ? await uploadDosenPhoto(id, photoFile) : result;
-
-      setDosen(saved);
-      setPhotoFile(null);
-      setEditing(false);
-    } catch (reason) {
-      setError(getUserFacingError(reason));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function remove() {
-    if (
-      !dosen ||
-      !window.confirm(
-        `Delete “${dosen.fullName}”? This removes the lecturer profile.`,
-      )
-    ) {
-      return;
-    }
-
+  async function confirmDelete() {
+    if (!dosen) return;
     setDeleting(true);
-    setError(null);
-
     try {
       await deleteDosen(dosen._id);
       router.push("/dashboard/dosen");
     } catch (reason) {
       setError(getUserFacingError(reason));
       setDeleting(false);
+      setPendingDelete(false);
     }
   }
 
-  if (!dosen && !error) {
+  if (!dosen && !error)
     return (
       <div className="p-5 sm:p-7 lg:p-9">
         <LoadingState label="Loading dosen" />
       </div>
     );
-  }
-
-  if (error && !dosen) {
+  if (error && !dosen)
     return (
       <div className="p-5 sm:p-7 lg:p-9">
         <ErrorState message={error} />
-
         <Link
           href="/dashboard/dosen"
-          className="mt-5 inline-block text-sm font-bold text-[var(--rams-red)]"
+          className="mt-5 inline-block font-bold text-[var(--rams-red)]"
         >
-          ← Back to dosen
+          ← Back to Dosen
         </Link>
       </div>
     );
-  }
-
-  if (!dosen) {
-    return null;
-  }
+  if (!dosen) return null;
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
-      <div className="mx-auto max-w-4xl space-y-7">
+      {pendingDelete && (
+        <DeleteConfirmationModal
+          personType="dosen"
+          personName={dosen.fullName}
+          deleting={deleting}
+          onCancel={() => setPendingDelete(false)}
+          onConfirm={() => void confirmDelete()}
+        />
+      )}
+      <div className="mx-auto max-w-5xl space-y-7">
         <Link
           href="/dashboard/dosen"
           className="text-sm font-bold text-[var(--rams-red)]"
         >
-          ← All dosen
+          ← Back to Dosen
         </Link>
-
         {error && <ErrorState message={error} />}
-
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <Badge tone={dosen.isPublic ? "green" : "neutral"}>
-              {dosen.isPublic ? "Public" : "Private"}
-            </Badge>
-
-            <h1 className="mt-4 text-4xl font-bold">{dosen.fullName}</h1>
-
-            <p className="mt-2 text-[var(--rams-gray)]">
-              {dosen.title ?? "Lecturer"}
-              {dosen.position ? ` · ${dosen.position}` : ""}
-            </p>
-          </div>
-
-          {user?.role === "ADMIN" && (
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => setEditing((value) => !value)}
-              >
-                {editing ? "Cancel" : "Edit"}
-              </Button>
-
-              <Button
-                variant="danger"
-                disabled={deleting}
-                onClick={() => void remove()}
-              >
-                {deleting ? "Deleting…" : "Delete"}
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {editing ? (
-          <Card className="p-6">
-            <form onSubmit={save} className="space-y-5">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Full name">
-                  <input
-                    required
-                    minLength={2}
-                    className={inputClass}
-                    value={form.fullName}
-                    onChange={(event) => update("fullName", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="Employee ID">
-                  <input
-                    className={inputClass}
-                    value={form.employeeId}
-                    onChange={(event) =>
-                      update("employeeId", event.target.value)
-                    }
-                  />
-                </Field>
-
-                <Field label="Title">
-                  <input
-                    className={inputClass}
-                    value={form.title}
-                    onChange={(event) => update("title", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="Position">
-                  <input
-                    className={inputClass}
-                    value={form.position}
-                    onChange={(event) => update("position", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="Email">
-                  <input
-                    type="email"
-                    className={inputClass}
-                    value={form.email}
-                    onChange={(event) => update("email", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="Phone">
-                  <input
-                    className={inputClass}
-                    value={form.phone}
-                    onChange={(event) => update("phone", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="Profile photo" className="sm:col-span-2">
-                  <DosenPhotoField
-                    key={`${dosen._id}-${dosen.photo ?? "empty"}`}
-                    initialUrl={dosen.photo}
-                    onFileChange={setPhotoFile}
-                    disabled={saving}
-                  />
-                </Field>
-              </div>
-
-              <Field label="Specializations">
-                <input
-                  className={inputClass}
-                  value={form.specialization}
-                  onChange={(event) =>
-                    update("specialization", event.target.value)
-                  }
-                />
-              </Field>
-
-              <Field label="LinkedIn URL">
-                <input
-                  type="url"
-                  className={inputClass}
-                  value={form.linkedin}
-                  onChange={(event) => update("linkedin", event.target.value)}
-                />
-              </Field>
-
-              <Field label="Bio">
-                <textarea
-                  className={`${inputClass} min-h-28`}
-                  value={form.bio}
-                  onChange={(event) => update("bio", event.target.value)}
-                />
-              </Field>
-
-              <label className="flex items-center gap-3 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  checked={form.isPublic}
-                  onChange={(event) => update("isPublic", event.target.checked)}
-                />
-                Public profile
-              </label>
-
-              <Button type="submit" disabled={saving}>
-                {saving ? "Saving…" : "Save changes"}
-              </Button>
-            </form>
-          </Card>
-        ) : (
-          <Card className="grid gap-6 p-6 sm:grid-cols-2">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                Employee ID
-              </p>
-              <p className="mt-2">{dosen.employeeId ?? "Not provided"}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                Email
-              </p>
-              <p className="mt-2">{dosen.email ?? "Not provided"}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                Specializations
-              </p>
-
-              <div className="mt-2 flex flex-wrap gap-2">
-                {dosen.specialization.length ? (
-                  dosen.specialization.map((item) => (
-                    <Badge key={item}>{item}</Badge>
-                  ))
+        <Card className="p-6 sm:p-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-col gap-5 sm:flex-row">
+              <div className="relative h-32 w-32 shrink-0 overflow-hidden bg-[var(--rams-charcoal)]">
+                {dosen.photo ? (
+                  <>
+                    <span className="sr-only">Profile photo</span>
+                    <Image
+                      src={dosen.photo}
+                      alt={dosen.fullName}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                      sizes="128px"
+                    />
+                  </>
                 ) : (
-                  <span>Not provided</span>
+                  <div className="grid h-full place-items-center text-4xl font-semibold text-white/85">
+                    {initials(dosen.fullName)}
+                  </div>
+                )}
+              </div>
+              <div>
+                <Badge tone={dosen.isPublic ? "green" : "neutral"}>
+                  {dosen.isPublic ? "Public" : "Private"}
+                </Badge>
+                <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-[var(--rams-charcoal)]">
+                  {dosen.fullName}
+                </h1>
+                {(dosen.title || dosen.position) && (
+                  <p className="mt-2 text-lg text-[var(--rams-gray)]">
+                    {[dosen.title, dosen.position].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                {(dosen.faculty || dosen.department) && (
+                  <p className="mt-2 text-sm text-[var(--rams-gray)]">
+                    {[dosen.faculty, dosen.department]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 )}
               </div>
             </div>
-
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                Phone
-              </p>
-              <p className="mt-2">{dosen.phone ?? "Not provided"}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                Photo
-              </p>
-              <p className="mt-2 break-all">{dosen.photo ?? "Not provided"}</p>
-            </div>
-
-            <div className="sm:col-span-2">
-              <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                Bio
-              </p>
-              <p className="mt-2 whitespace-pre-wrap leading-7">
-                {dosen.bio ?? "No biography provided."}
-              </p>
-            </div>
-
-            {dosen.linkedin && (
-              <a
-                href={dosen.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-[var(--rams-red)]"
-              >
-                LinkedIn profile ↗
-              </a>
+            {user?.role === "ADMIN" && (
+              <div className="flex shrink-0 gap-2">
+                <Link
+                  href={`/dashboard/dosen/${dosen._id}/edit`}
+                  className="inline-flex items-center justify-center rounded-md bg-[var(--rams-red)] px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Edit Dosen
+                </Link>
+                <Button
+                  variant="danger"
+                  onClick={() => setPendingDelete(true)}
+                  disabled={deleting}
+                >
+                  Delete
+                </Button>
+              </div>
             )}
-          </Card>
+          </div>
+        </Card>
+
+        {(dosen.employeeId || dosen.nip || dosen.nidn) && (
+          <Section title="Identity">
+            <div className="grid gap-6 sm:grid-cols-3">
+              {[
+                ["Employee ID", dosen.employeeId],
+                ["NIP", dosen.nip],
+                ["NIDN", dosen.nidn],
+              ].map(([label, value]) =>
+                value ? (
+                  <div key={label}>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                      {label}
+                    </p>
+                    <p className="mt-2">{value}</p>
+                  </div>
+                ) : null,
+              )}
+            </div>
+          </Section>
         )}
+        {(dosen.email || dosen.phone || dosen.linkedin) && (
+          <Section title="Contact">
+            <div className="grid gap-6 sm:grid-cols-3">
+              {dosen.email && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                    Email
+                  </p>
+                  <p className="mt-2 break-words">{dosen.email}</p>
+                </div>
+              )}
+              {dosen.phone && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                    Phone
+                  </p>
+                  <p className="mt-2">{dosen.phone}</p>
+                </div>
+              )}
+              {dosen.linkedin && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                    LinkedIn
+                  </p>
+                  <a
+                    href={dosen.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 block font-semibold text-[var(--rams-red)]"
+                  >
+                    Open profile ↗
+                  </a>
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
+        {(dosen.faculty ||
+          dosen.department ||
+          dosen.institution ||
+          dosen.program) && (
+          <Section title="Academic Information">
+            <div className="grid gap-6 sm:grid-cols-2">
+              {[
+                ["Faculty", dosen.faculty],
+                ["Department", dosen.department],
+                ["Institution", dosen.institution],
+                ["Program", dosen.program],
+              ].map(([label, value]) =>
+                value ? (
+                  <div key={label}>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                      {label}
+                    </p>
+                    <p className="mt-2">{value}</p>
+                  </div>
+                ) : null,
+              )}
+            </div>
+          </Section>
+        )}
+        {dosen.specialization.length > 0 && (
+          <Section title="Specializations">
+            <div className="flex flex-wrap gap-2">
+              {dosen.specialization.map((value) => (
+                <Badge key={value}>{value}</Badge>
+              ))}
+            </div>
+          </Section>
+        )}
+        {dosen.bio && (
+          <Section title="Biography">
+            <p className="whitespace-pre-wrap leading-7">{dosen.bio}</p>
+          </Section>
+        )}
+        {dosen.education && dosen.education.length > 0 && (
+          <Section title="Education">
+            <div className="space-y-5">
+              {dosen.education.map((item, index) => (
+                <div
+                  key={`${item.degree}-${item.institution}-${index}`}
+                  className="border-l-2 border-[var(--rams-red)] pl-5"
+                >
+                  <p className="font-semibold">{item.degree}</p>
+                  <p className="mt-1 text-sm text-[var(--rams-gray)]">
+                    {item.field} · {item.institution}
+                  </p>
+                  {(item.startYear || item.endYear) && (
+                    <p className="mt-2 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                      {item.startYear ?? "—"} — {item.endYear ?? "Present"}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+        {(dosen.sintaUrl ||
+          dosen.googleScholarUrl ||
+          dosen.scopusUrl ||
+          dosen.orcidUrl) && (
+          <Section title="Academic Profiles">
+            <div className="flex flex-wrap gap-4">
+              {[
+                ["SINTA", dosen.sintaUrl],
+                ["Google Scholar", dosen.googleScholarUrl],
+                ["Scopus", dosen.scopusUrl],
+                ["ORCID", dosen.orcidUrl],
+              ].map(([label, value]) =>
+                value ? (
+                  <a
+                    key={label}
+                    href={value}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[var(--rams-red)]"
+                  >
+                    {label} ↗
+                  </a>
+                ) : null,
+              )}
+            </div>
+          </Section>
+        )}
+        {(dosen.hIndex !== undefined ||
+          dosen.publicationCount !== undefined ||
+          dosen.projectCount !== undefined ||
+          dosen.awardCount !== undefined) && (
+          <Section title="Statistics">
+            <div className="grid gap-6 sm:grid-cols-4">
+              {[
+                ["h-index", dosen.hIndex],
+                ["Publications", dosen.publicationCount],
+                ["Projects", dosen.projectCount],
+                ["Awards", dosen.awardCount],
+              ].map(([label, value]) =>
+                value !== undefined ? (
+                  <div key={label}>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                      {label}
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold">{value}</p>
+                  </div>
+                ) : null,
+              )}
+            </div>
+          </Section>
+        )}
+        <Section title="Visibility">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              ["Show NIP", dosen.showNip],
+              ["Show NIDN", dosen.showNidn],
+              ["Show email", dosen.showEmail],
+              ["Public profile", dosen.isPublic],
+            ].map(([label, value]) => (
+              <div
+                key={String(label)}
+                className="flex items-center justify-between border-b border-black/8 pb-3 text-sm"
+              >
+                <span>{label}</span>
+                <Badge tone={value ? "green" : "neutral"}>
+                  {value ? "Yes" : "No"}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </Section>
       </div>
     </div>
   );

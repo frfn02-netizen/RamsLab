@@ -27,6 +27,7 @@ import {
 } from "./config/security.js";
 import { createRateLimiter } from "./middlewares/rate-limit.middleware.js";
 import { verifyStateChangingOrigin } from "./middlewares/request-security.middleware.js";
+import { findUserById } from "./modules/users/user.repository.js";
 import {
   errorHandler,
   notFoundHandler,
@@ -114,11 +115,16 @@ app.get("/api/admin/test", authenticate, requireRole("ADMIN"), (_req, res) => {
   });
 });
 
-app.get("/api/auth/me", authenticate, (req, res) => {
+app.get("/api/auth/me", authenticate, async (req, res) => {
+  const account = req.user ? await findUserById(req.user.userId) : null;
   return res.json({
     success: true,
     user: req.user
-      ? { userId: req.user.userId, role: req.user.role }
+      ? {
+          userId: req.user.userId,
+          role: req.user.role,
+          mustChangePassword: account?.mustChangePassword ?? false,
+        }
       : undefined,
   });
 });

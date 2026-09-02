@@ -7,8 +7,13 @@ type LoginUser = {
   email: string;
   role: AuthUser["role"];
   isActive?: boolean;
+  mustChangePassword?: boolean;
 };
-type MeUser = { userId: string; role: AuthUser["role"] };
+type MeUser = {
+  userId: string;
+  role: AuthUser["role"];
+  mustChangePassword?: boolean;
+};
 type CsrfResponse = { csrfToken: string };
 
 function normalizeUser(
@@ -21,6 +26,8 @@ function normalizeUser(
       email: fallback?.email,
       role: user.role,
       isActive: fallback?.isActive ?? true,
+      mustChangePassword:
+        user.mustChangePassword ?? fallback?.mustChangePassword ?? false,
     };
   }
   return {
@@ -28,6 +35,7 @@ function normalizeUser(
     email: user.email,
     role: user.role,
     isActive: user.isActive ?? true,
+    mustChangePassword: user.mustChangePassword ?? false,
   };
 }
 
@@ -65,4 +73,14 @@ export async function logout() {
   } finally {
     clearCsrfToken();
   }
+}
+
+export function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  return apiRequestWithMeta("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }

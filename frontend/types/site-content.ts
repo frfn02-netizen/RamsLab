@@ -5,6 +5,18 @@ export interface BilingualText {
   id: string;
 }
 
+export interface SiteContentImage {
+  url: string;
+  publicId?: string;
+  alt?: BilingualText;
+  position?: HeroImagePosition;
+}
+
+export interface HeroImagePosition {
+  x: number;
+  y: number;
+}
+
 export interface SiteContentPrinciple {
   key: "R" | "A" | "M" | "S";
   title: BilingualText;
@@ -17,6 +29,7 @@ export interface HomepageContent {
     description: BilingualText;
     primaryCta: BilingualText;
     secondaryCta: BilingualText;
+    heroImage?: SiteContentImage;
   };
   principles: [
     SiteContentPrinciple,
@@ -24,13 +37,18 @@ export interface HomepageContent {
     SiteContentPrinciple,
     SiteContentPrinciple,
   ];
-  ecosystem: { title: BilingualText; aisDescription: BilingualText };
+  ecosystem: {
+    title: BilingualText;
+    ramsDescription?: BilingualText;
+    aisDescription: BilingualText;
+    puiKekalDescription?: BilingualText;
+  };
   research: {
     title: BilingualText;
     description: BilingualText;
     linkLabel: BilingualText;
   };
-  projects: { title: BilingualText };
+  projects: { title: BilingualText; featuredLimit?: number };
   cta: {
     title: BilingualText;
     description: BilingualText;

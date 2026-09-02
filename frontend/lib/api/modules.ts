@@ -41,6 +41,8 @@ export const getPublicDosenList = () =>
   apiRequest<PublicPerson[]>("/public/dosen");
 export const getPublicPeopleList = () =>
   apiRequest<PublicPeopleResponse>("/public/people");
+export const getPublicDosenById = (id: string) =>
+  apiRequest<PublicPerson>(`/public/people/${encodeURIComponent(id)}`);
 export const getPublicAlumniList = () =>
   apiRequest<PublicAlumniResponse>("/public/alumni");
 export const getDosenById = (id: string) =>
@@ -214,14 +216,40 @@ export const updateResearchArea = (
     method: "PATCH",
     body: JSON.stringify(input),
   });
+export const uploadResearchAreaImage = (id: string, file: File) =>
+  apiRequest<{ url: string; publicId?: string }>(
+    `/admin/research/${encodeURIComponent(id)}/image?filename=${encodeURIComponent(file.name)}`,
+    {
+      method: "POST",
+      body: file,
+      headers: { "Content-Type": file.type },
+      timeoutMs: 30000,
+    },
+  );
 export const deleteResearchArea = async (id: string) => {
   await apiRequestWithMeta(`/admin/research/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 };
 
-export const getPublicProjects = () =>
-  apiRequest<Project[]>("/public/projects");
+export const getPublicProjects = (options?: {
+  featured?: boolean;
+  limit?: number;
+}) =>
+  apiRequest<Project[]>(
+    `/public/projects${
+      options
+        ? `?${new URLSearchParams({
+            ...(options.featured !== undefined
+              ? { featured: String(options.featured) }
+              : {}),
+            ...(options.limit !== undefined
+              ? { limit: String(options.limit) }
+              : {}),
+          })}`
+        : ""
+    }`,
+  );
 export const getPublicProject = (slug: string) =>
   apiRequest<Project>(`/public/projects/${encodeURIComponent(slug)}`);
 export const getPublicPartners = (type: PartnerType) =>
@@ -246,6 +274,17 @@ export const updateAdminSiteContent = <K extends SiteContentKey>(
   apiRequest<SiteContentAdminEnvelope<K>>(
     `/admin/site-content/${encodeURIComponent(key)}`,
     { method: "PUT", body: JSON.stringify({ content }) },
+  );
+
+export const uploadHomepageImage = (file: File) =>
+  apiRequest<{ url: string; publicId?: string }>(
+    `/admin/site-content/homepage/image?filename=${encodeURIComponent(file.name)}`,
+    {
+      method: "POST",
+      body: file,
+      headers: { "Content-Type": file.type },
+      timeoutMs: 30000,
+    },
   );
 
 export const getTrackingByAlumniId = (alumniId: string) =>

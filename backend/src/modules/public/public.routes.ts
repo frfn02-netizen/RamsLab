@@ -6,6 +6,7 @@ import {
   getPublicProjectController,
   getPublicProjectsController,
   getPublicPeopleController,
+  getPublicDosenByIdController,
   getPublicUniversityPartnersController,
 } from "./public.controller.js";
 import { getPublicDosenController } from "../dosen/dosen.controller.js";
@@ -45,6 +46,8 @@ router.get("/research", getPublicResearchAreasController);
 router.get("/dosen", getPublicDosenController);
 
 router.get("/people", getPublicPeopleController);
+
+router.get("/people/:id", getPublicDosenByIdController);
 
 router.get("/publications", getPublicPublicationListController);
 

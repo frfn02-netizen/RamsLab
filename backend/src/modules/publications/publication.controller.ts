@@ -206,23 +206,19 @@ export async function createPublicationController(req: Request, res: Response) {
       .json({ success: true, data: await serialize(publication, true) });
   } catch (error: any) {
     if (error?.name === "ZodError")
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Validation failed",
-          errors: error.issues,
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.issues,
+      });
     if (error instanceof PublicationConflictError || error?.code === 11000)
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message:
-            error instanceof PublicationConflictError
-              ? error.message
-              : "A publication with the same DOI or normalized title and year already exists",
-        });
+      return res.status(409).json({
+        success: false,
+        message:
+          error instanceof PublicationConflictError
+            ? error.message
+            : "A publication with the same DOI or normalized title and year already exists",
+      });
     return res
       .status(500)
       .json({ success: false, message: "Failed to create publication" });
@@ -243,12 +239,10 @@ export async function updatePublicationController(req: Request, res: Response) {
         .status(404)
         .json({ success: false, message: "Publication not found" });
     if (!canModifyPublication(existing, req.user!))
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You can only modify publications you created",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You can only modify publications you created",
+      });
     const publication = await updatePublication(id, input, req.user!);
     if (!publication)
       return res
@@ -260,23 +254,19 @@ export async function updatePublicationController(req: Request, res: Response) {
     });
   } catch (error: any) {
     if (error?.name === "ZodError")
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Validation failed",
-          errors: error.issues,
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.issues,
+      });
     if (error instanceof PublicationConflictError || error?.code === 11000)
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message:
-            error instanceof PublicationConflictError
-              ? error.message
-              : "A publication with the same DOI or normalized title and year already exists",
-        });
+      return res.status(409).json({
+        success: false,
+        message:
+          error instanceof PublicationConflictError
+            ? error.message
+            : "A publication with the same DOI or normalized title and year already exists",
+      });
     return res
       .status(500)
       .json({ success: false, message: "Failed to update publication" });
@@ -296,12 +286,10 @@ export async function deletePublicationController(req: Request, res: Response) {
         .status(404)
         .json({ success: false, message: "Publication not found" });
     if (!canModifyPublication(existing, req.user!))
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You can only modify publications you created",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You can only modify publications you created",
+      });
     const deleted = await deletePublication(id, req.user!);
     if (!deleted)
       return res

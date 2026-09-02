@@ -13,8 +13,14 @@ export default function DashboardGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-    } else if (status === "authenticated" && user?.role === "ALUMNI") {
-      router.replace("/profile");
+    } else if (status === "authenticated" && user?.mustChangePassword) {
+      router.replace("/change-password");
+    } else if (
+      status === "authenticated" &&
+      user?.role === "ALUMNI" &&
+      !pathname.startsWith("/dashboard/alumni/profile")
+    ) {
+      router.replace("/dashboard/alumni/profile");
     } else if (
       status === "authenticated" &&
       user &&
@@ -24,7 +30,13 @@ export default function DashboardGuard({ children }: { children: ReactNode }) {
     }
   }, [pathname, router, status, user]);
 
-  if (status === "loading" || !user || user.role === "ALUMNI") {
+  if (
+    status === "loading" ||
+    !user ||
+    user.mustChangePassword ||
+    (user.role === "ALUMNI" &&
+      !pathname.startsWith("/dashboard/alumni/profile"))
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--rams-gray-light)]">
         <p className="text-sm text-[var(--rams-gray)]" role="status">

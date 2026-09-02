@@ -47,6 +47,7 @@ export async function findProjectBySlug(slug: string): Promise<Project | null> {
 
 export async function findAllProjects(options?: {
   publishedOnly?: boolean;
+  featuredOnly?: boolean;
   category?: string;
   year?: number;
 }): Promise<Project[]> {
@@ -56,6 +57,10 @@ export async function findAllProjects(options?: {
 
   if (options?.publishedOnly) {
     filter.published = true;
+  }
+
+  if (options?.featuredOnly) {
+    filter.featured = true;
   }
 
   if (options?.category) {
@@ -107,6 +112,7 @@ export async function createProject(
     technologies: input.technologies,
 
     published: input.published,
+    featured: input.featured,
 
     createdAt: now,
 

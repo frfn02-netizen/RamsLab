@@ -39,11 +39,25 @@ export function createAdminAlumni(input: Record<string, unknown>) {
     body: JSON.stringify(input),
   });
 }
+export function uploadMyAlumniPhoto(file: File) {
+  return apiRequest<Alumni>("/alumni/me/photo", {
+    method: "POST",
+    body: file,
+    headers: { "Content-Type": file.type },
+    timeoutMs: 30000,
+  });
+}
 export function updateAlumni(id: string, input: AlumniUpdateInput) {
   return apiRequest<Alumni>(`/alumni/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify(input),
   });
+}
+export function setAlumniActive(id: string, isActive: boolean) {
+  return apiRequest<{ isActive: boolean }>(
+    `/alumni/${encodeURIComponent(id)}/account-status`,
+    { method: "PATCH", body: JSON.stringify({ isActive }) },
+  );
 }
 export async function deleteAlumni(id: string) {
   await apiRequestWithMeta(`/alumni/${encodeURIComponent(id)}`, {
