@@ -167,6 +167,61 @@ export const demoPublications = [
     topics: ["Reliability", "Maintenance"],
     methods: ["Reliability Analysis"],
   },
+  {
+    title:
+      "Risk Assessment of Ship Collision on FSO Abherka and Oil Spill Modelling Due to Structural Damage",
+    authors: ["RAMS Research Group"],
+    year: 2024,
+    journal: "Marine Safety Research",
+    doi: null,
+    pdfUrl: null,
+    topics: ["Maritime Safety", "Risk Assessment"],
+    methods: ["Risk Analysis", "Numerical Simulation"],
+  },
+  {
+    title:
+      "Risk Assessment of Balikpapan-Samarinda Oil Distribution Pipeline Using Kent Muhlbauer Method",
+    authors: ["RAMS Research Group"],
+    year: 2024,
+    journal: "Pipeline Safety Research",
+    doi: null,
+    pdfUrl: null,
+    topics: ["Industrial Risk", "Pipeline Systems"],
+    methods: ["Risk Analysis"],
+  },
+  {
+    title:
+      "LNG Distribution Optimization using Set Partitioning Problem Method",
+    authors: ["RAMS Research Group"],
+    year: 2024,
+    journal: "Marine Logistics Research",
+    doi: null,
+    pdfUrl: null,
+    topics: ["LNG", "Optimization"],
+    methods: ["Optimization"],
+  },
+  {
+    title:
+      "Economic feasibility study due to implementation of dual fuel engine of mini-LNG carrier in LNG distribution to power plants in Bali and Lombok",
+    authors: ["RAMS Research Group"],
+    year: 2024,
+    journal: "Marine Energy Research",
+    doi: null,
+    pdfUrl: null,
+    topics: ["LNG", "Marine Systems"],
+    methods: ["Economic Analysis"],
+  },
+  {
+    title:
+      "Technical and Economical Feasibility Impact on Landing Craft Ship Conversion to Comply with Greenship Requirements",
+    authors: ["RAMS Research Group"],
+    year: 2024,
+    journal: "Sustainable Ship Research",
+    doi: null,
+    pdfUrl: null,
+    topics: ["Green Shipping", "Ship Design"],
+    methods: ["Feasibility Study"],
+  },
 ];
 
 export const demoPublicationTypes = [

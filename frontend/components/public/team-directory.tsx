@@ -251,9 +251,7 @@ export default function TeamDirectory() {
         ? [...people.MAHASISWA, ...people.MASTER]
         : people[activeCategory];
     if (!keyword) return source;
-    return source.filter((member) =>
-      searchableText(member).includes(keyword),
-    );
+    return source.filter((member) => searchableText(member).includes(keyword));
   }, [activeCategory, people, search]);
   const members = filteredMembers;
 
@@ -261,7 +259,9 @@ export default function TeamDirectory() {
     const categoryMembers = people[category];
     const keyword = search.trim().toLowerCase();
     return keyword
-      ? categoryMembers.filter((member) => searchableText(member).includes(keyword))
+      ? categoryMembers.filter((member) =>
+          searchableText(member).includes(keyword),
+        )
       : categoryMembers;
   }
 
@@ -283,7 +283,9 @@ export default function TeamDirectory() {
               }}
               className={`border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${activeCategory === category ? "border-[var(--navy)] bg-[var(--navy)] text-white" : "border-[var(--border)] bg-white text-[var(--gray)] hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"}`}
             >
-              {category === "STUDENTS" ? "GRADUATED STUDENT" : categoryLabels[category]}
+              {category === "STUDENTS"
+                ? "GRADUATED STUDENT"
+                : categoryLabels[category]}
             </button>
           ))}
         </nav>
@@ -325,7 +327,10 @@ export default function TeamDirectory() {
               {graduatedStudentCategories.map(({ key, label }) => {
                 const categoryMembers = membersFor(key);
                 return (
-                  <section key={key} aria-labelledby={`${key.toLowerCase()}-heading`}>
+                  <section
+                    key={key}
+                    aria-labelledby={`${key.toLowerCase()}-heading`}
+                  >
                     <h3
                       id={`${key.toLowerCase()}-heading`}
                       className="font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy)] sm:text-4xl"
@@ -357,37 +362,43 @@ export default function TeamDirectory() {
             </div>
           )}
 
-          {!loading && !error && activeCategory !== "STUDENTS" && members.length > 0 && (
-            <div
-              className={`${activeCategory === "DOSEN" && !search ? "mt-16 border-t border-[var(--border)] pt-12" : ""}`}
-            >
-              {activeCategory === "DOSEN" && !search && (
-                <p className="mb-8 text-sm leading-6 text-[var(--slate)]">
-                  {t("staffDescription")}
-                </p>
-              )}
-              <RevealOnScroll
-                className="grid gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-                stagger={90}
+          {!loading &&
+            !error &&
+            activeCategory !== "STUDENTS" &&
+            members.length > 0 && (
+              <div
+                className={`${activeCategory === "DOSEN" && !search ? "mt-16 border-t border-[var(--border)] pt-12" : ""}`}
               >
-                {members.map((member) => (
-                  <MemberCard
-                    key={member.id}
-                    member={member}
-                    profileLabel={t("profileLink")}
-                    roleFallback={t("roleFallback")}
-                  />
-                ))}
-              </RevealOnScroll>
-            </div>
-          )}
+                {activeCategory === "DOSEN" && !search && (
+                  <p className="mb-8 text-sm leading-6 text-[var(--slate)]">
+                    {t("staffDescription")}
+                  </p>
+                )}
+                <RevealOnScroll
+                  className="grid gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                  stagger={90}
+                >
+                  {members.map((member) => (
+                    <MemberCard
+                      key={member.id}
+                      member={member}
+                      profileLabel={t("profileLink")}
+                      roleFallback={t("roleFallback")}
+                    />
+                  ))}
+                </RevealOnScroll>
+              </div>
+            )}
 
-          {!loading && !error && activeCategory !== "STUDENTS" && members.length === 0 && (
-            <PublicEmpty
-              title="No profiles published"
-              description="Profiles in this category will appear here when available."
-            />
-          )}
+          {!loading &&
+            !error &&
+            activeCategory !== "STUDENTS" &&
+            members.length === 0 && (
+              <PublicEmpty
+                title="No profiles published"
+                description="Profiles in this category will appear here when available."
+              />
+            )}
         </div>
       </PublicContainer>
     </section>

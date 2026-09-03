@@ -1,7 +1,10 @@
 import "dotenv/config";
 import { connectDatabase } from "../config/database.js";
 import { createSiteContentIndexes } from "../modules/site-content/site-content.index.js";
-import { upsertSiteContent } from "../modules/site-content/site-content.repository.js";
+import {
+  getSiteContentCollection,
+  upsertSiteContent,
+} from "../modules/site-content/site-content.repository.js";
 import {
   aboutContentSchema,
   contactContentSchema,
@@ -25,6 +28,37 @@ const principle = (
   title: text(titleEn, titleId),
   description: text(descriptionEn, descriptionId),
 });
+
+export const developmentHeadOfLaboratory = {
+  eyebrow: text("LABORATORY HEAD", "KEPALA LABORATORIUM"),
+  title: text(
+    "Greetings from our Head of Laboratory",
+    "Salam dari Kepala Laboratorium",
+  ),
+  greeting: text(
+    "Welcome to RAMS Laboratory. We connect rigorous research with practical engineering decisions for safer, more dependable systems.",
+    "Selamat datang di Laboratorium RAMS. Kami menghubungkan riset yang ketat dengan keputusan rekayasa praktis untuk sistem yang lebih aman dan andal.",
+  ),
+  name: "Prof. Ketut",
+  role: text("Head of Laboratory", "Kepala Laboratorium"),
+  s1: text("Reliability and availability", "Keandalan dan ketersediaan"),
+  s2: text("Safety and risk", "Keselamatan dan risiko"),
+  s3: text("Marine systems", "Sistem maritim"),
+  imageAlt: text(
+    "Prof. Ketut, Head of RAMS Laboratory",
+    "Prof. Ketut, Kepala Laboratorium RAMS",
+  ),
+};
+
+export async function ensureDevelopmentHeadOfLaboratory() {
+  await getSiteContentCollection().updateOne(
+    {
+      key: "homepage",
+      "content.headOfLaboratory": { $exists: false },
+    },
+    { $set: { "content.headOfLaboratory": developmentHeadOfLaboratory } },
+  );
+}
 
 export const contentByKey = {
   homepage: homepageContentSchema.parse({
@@ -282,6 +316,8 @@ async function seedSiteContent() {
     await upsertSiteContent(key, contentByKey[key] as SiteContentContent);
     console.log(`Updated site content ${key}`);
   }
+  await ensureDevelopmentHeadOfLaboratory();
+  console.log("Ensured development Head of Laboratory content");
   console.log("✅ Site content seeded idempotently");
 }
 

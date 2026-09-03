@@ -108,6 +108,21 @@
       "locationValue": "Gedung WA · Kampus ITS Sukolilo · Surabaya"
     },
     "researchEyebrow": "Bidang riset",
+    "researchHighlights": {
+      "eyebrow": "Sorotan penelitian",
+      "title": "Pertanyaan yang membentuk sistem yang andal.",
+      "question": "Pertanyaan penelitian",
+      "readPaper": "Baca Makalah",
+      "loading": "Memuat sorotan penelitian",
+      "error": "Sorotan penelitian sementara tidak tersedia.",
+      "noImage": "Gambar tidak tersedia",
+      "imageAlt": "Sorotan penelitian",
+      "carouselLabel": "Karusel sorotan penelitian",
+      "controls": "Kontrol sorotan penelitian",
+      "previous": "Sorotan penelitian sebelumnya",
+      "next": "Sorotan penelitian berikutnya",
+      "goTo": "Buka sorotan penelitian nomor {number}"
+    },
     "researchTitle": "Metode untuk keputusan yang berarti.",
     "researchDescription": "Enam bidang yang saling terhubung membingkai pekerjaan laboratorium pada sistem maritim, lepas pantai, dan industri.",
     "researchLink": "Lihat semua riset",

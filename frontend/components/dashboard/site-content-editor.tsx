@@ -30,6 +30,7 @@ import type {
   BilingualText,
   ContactContent,
   FooterContent,
+  HeadOfLaboratoryContent,
   HeroImagePosition,
   HomepageContent,
   SiteContentImage,
@@ -52,6 +53,27 @@ const defaultRamsDescription: BilingualText = {
 const defaultPuiKekalDescription: BilingualText = {
   en: "Center for sustainable energy and maritime systems research.",
   id: "Pusat riset energi berkelanjutan dan sistem maritim.",
+};
+
+const defaultHeadOfLaboratory: HeadOfLaboratoryContent = {
+  eyebrow: { en: "LABORATORY HEAD", id: "KEPALA LABORATORIUM" },
+  title: {
+    en: "Greetings from our Head of Laboratory",
+    id: "Salam dari Kepala Laboratorium",
+  },
+  greeting: {
+    en: "Welcome to RAMS Laboratory. We connect rigorous research with practical engineering decisions for safer, more dependable systems.",
+    id: "Selamat datang di Laboratorium RAMS. Kami menghubungkan riset yang ketat dengan keputusan rekayasa praktis untuk sistem yang lebih aman dan andal.",
+  },
+  name: "Prof. Ketut",
+  role: { en: "Head of Laboratory", id: "Kepala Laboratorium" },
+  s1: { en: "Reliability and availability", id: "Keandalan dan ketersediaan" },
+  s2: { en: "Safety and risk", id: "Keselamatan dan risiko" },
+  s3: { en: "Marine systems", id: "Sistem maritim" },
+  imageAlt: {
+    en: "Prof. Ketut, Head of RAMS Laboratory",
+    id: "Prof. Ketut, Kepala Laboratorium RAMS",
+  },
 };
 
 function BilingualField({
@@ -593,6 +615,8 @@ function HomepageEditor() {
                 result.content.ecosystem.puiKekalDescription ??
                 defaultPuiKekalDescription,
             },
+            headOfLaboratory:
+              result.content.headOfLaboratory ?? defaultHeadOfLaboratory,
           });
           setLastUpdated(result.updatedAt);
         }
@@ -614,7 +638,13 @@ function HomepageEditor() {
   }, []);
 
   const text = (
-    section: "hero" | "ecosystem" | "research" | "projects" | "cta",
+    section:
+      | "hero"
+      | "ecosystem"
+      | "research"
+      | "projects"
+      | "cta"
+      | "headOfLaboratory",
     field: string,
     locale: "en" | "id",
     value: string,
@@ -633,6 +663,28 @@ function HomepageEditor() {
           } as HomepageContent)
         : current,
     );
+
+  const headText = (
+    field: Exclude<keyof HeadOfLaboratoryContent, "name" | "image">,
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) =>
+      current
+        ? {
+            ...current,
+            headOfLaboratory: {
+              ...(current.headOfLaboratory ?? defaultHeadOfLaboratory),
+              [field]: {
+                ...(current.headOfLaboratory ?? defaultHeadOfLaboratory)[field],
+                [locale]: value,
+              },
+            },
+          }
+        : current,
+    );
+
+  const head = content?.headOfLaboratory ?? defaultHeadOfLaboratory;
 
   const principle = (
     index: number,
@@ -755,6 +807,103 @@ function HomepageEditor() {
             <PrincipleFields
               principles={content.principles}
               onChange={principle}
+            />
+          </Section>
+
+          <Section title="Head of Laboratory">
+            <BilingualField
+              label="Eyebrow"
+              value={head.eyebrow}
+              onChange={(locale, value) => headText("eyebrow", locale, value)}
+            />
+
+            <BilingualField
+              label="Title"
+              value={head.title}
+              onChange={(locale, value) => headText("title", locale, value)}
+            />
+
+            <BilingualField
+              label="Greeting"
+              value={head.greeting}
+              multiline
+              onChange={(locale, value) => headText("greeting", locale, value)}
+            />
+
+            <Field label="Name" htmlFor="homepage-head-name">
+              <input
+                id="homepage-head-name"
+                required
+                className={inputClass}
+                value={head.name}
+                onChange={(event) =>
+                  setContent((current) =>
+                    current
+                      ? {
+                          ...current,
+                          headOfLaboratory: {
+                            ...(current.headOfLaboratory ??
+                              defaultHeadOfLaboratory),
+                            name: event.target.value,
+                          },
+                        }
+                      : current,
+                  )
+                }
+              />
+            </Field>
+
+            <BilingualField
+              label="Role"
+              value={head.role}
+              onChange={(locale, value) => headText("role", locale, value)}
+            />
+
+            <div className="space-y-5 rounded-md border border-black/8 bg-[var(--rams-gray-light)]/35 p-4">
+              <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
+                Focus areas
+              </p>
+              <BilingualField
+                label="S1"
+                value={head.s1}
+                onChange={(locale, value) => headText("s1", locale, value)}
+              />
+              <BilingualField
+                label="S2"
+                value={head.s2}
+                onChange={(locale, value) => headText("s2", locale, value)}
+              />
+              <BilingualField
+                label="S3"
+                value={head.s3}
+                onChange={(locale, value) => headText("s3", locale, value)}
+              />
+            </div>
+
+            <Field label="Photo">
+              <ImageField
+                value={head.image}
+                onChange={(image) =>
+                  setContent((current) =>
+                    current
+                      ? {
+                          ...current,
+                          headOfLaboratory: {
+                            ...(current.headOfLaboratory ??
+                              defaultHeadOfLaboratory),
+                            image,
+                          },
+                        }
+                      : current,
+                  )
+                }
+              />
+            </Field>
+
+            <BilingualField
+              label="Image alt text"
+              value={head.imageAlt}
+              onChange={(locale, value) => headText("imageAlt", locale, value)}
             />
           </Section>
 

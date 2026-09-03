@@ -1,8 +1,9 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import {
   authenticate,
   optionallyAuthenticate,
 } from "../../middlewares/auth.middlewares.js";
+import { requireRole } from "../../middlewares/role.middlewares.js";
 import {
   PERMISSIONS,
   requirePermission,
@@ -13,6 +14,7 @@ import {
   getPublicationController,
   getPublicationListController,
   updatePublicationController,
+  uploadPublicationPdfController,
 } from "./publication.controller.js";
 
 const router = Router();
@@ -31,6 +33,13 @@ router.patch(
   authenticate,
   requirePermission(PERMISSIONS.PUBLICATION_UPDATE),
   updatePublicationController,
+);
+router.post(
+  "/:id/pdf",
+  authenticate,
+  requireRole("ADMIN"),
+  express.raw({ type: "*/*", limit: "10mb" }),
+  uploadPublicationPdfController,
 );
 router.delete(
   "/:id",

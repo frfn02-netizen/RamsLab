@@ -16,6 +16,7 @@ import ProjectCard from "./project-card";
 import ContactForm from "./contact-form";
 import RevealOnScroll from "./reveal-on-scroll";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
+import ResearchHighlights from "./research-highlights";
 
 type ContactIconKind = "location" | "email" | "laboratory";
 const researchImages = [
@@ -162,6 +163,8 @@ export default function PublicHome() {
           )}
         </PublicContainer>
       </section>
+
+      <ResearchHighlights />
 
       {/* PRINCIPLES */}
       <section className="bg-white py-20">

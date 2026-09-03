@@ -21,6 +21,7 @@ const navigationGroups = [
     label: "Research & Work",
     items: [
       ["Research Areas", "/dashboard/research"],
+      ["Research Highlights", "/dashboard/research-highlights"],
       ["Publications", "/dashboard/publications"],
       ["Projects", "/dashboard/projects"],
     ],
@@ -68,7 +69,9 @@ export default function Sidebar() {
                 ? hasPermission(user?.role, "dashboard.read")
                 : href === "/dashboard/publications"
                   ? hasPermission(user?.role, "publication.read")
-                  : user?.role === "ADMIN" || user?.role === "DOSEN",
+                  : href === "/dashboard/research-highlights"
+                    ? user?.role === "ADMIN"
+                    : user?.role === "ADMIN" || user?.role === "DOSEN",
             ).length > 0 && (
               <p className="px-3 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-white/35 first:pt-0">
                 {group.label}
@@ -80,7 +83,9 @@ export default function Sidebar() {
                   ? hasPermission(user?.role, "dashboard.read")
                   : href === "/dashboard/publications"
                     ? hasPermission(user?.role, "publication.read")
-                    : user?.role === "ADMIN" || user?.role === "DOSEN",
+                    : href === "/dashboard/research-highlights"
+                      ? user?.role === "ADMIN"
+                      : user?.role === "ADMIN" || user?.role === "DOSEN",
               )
               .map(([label, href]) => {
                 const active =

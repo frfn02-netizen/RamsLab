@@ -109,6 +109,17 @@ export async function updateSiteContentController(req: Request, res: Response) {
         // The database now points to the new image; cleanup is best effort.
       }
     }
+    if (
+      existingHomepage?.headOfLaboratory?.image?.url !==
+        updatedHomepage?.headOfLaboratory?.image?.url &&
+      existingHomepage?.headOfLaboratory?.image?.url
+    ) {
+      try {
+        await removeProfilePhoto(existingHomepage.headOfLaboratory.image.url);
+      } catch {
+        // The database now points to the new image; cleanup is best effort.
+      }
+    }
     return res.json({ success: true, data: adminRepresentation(document) });
   } catch (error: unknown) {
     if (error instanceof ZodError)

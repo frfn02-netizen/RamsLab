@@ -57,6 +57,42 @@ export type PublicationInput = Omit<
 >;
 export type PublicationUpdateInput = Partial<PublicationInput>;
 
+export interface ResearchHighlightImage {
+  url: string;
+  publicId?: string;
+}
+
+export interface ResearchHighlightPublication {
+  id: string;
+  title: string;
+  authors: string[];
+  year: number;
+  journal: string;
+  doi: string | null;
+  pdfUrl: string | null;
+}
+
+export interface ResearchHighlight {
+  id: string;
+  headline: { en: string; id: string };
+  image?: ResearchHighlightImage;
+  order: number;
+  published: boolean;
+  publication: ResearchHighlightPublication;
+  publicationId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  updatedBy?: string | null;
+}
+
+export interface ResearchHighlightInput {
+  headline: { en: string; id: string };
+  publicationId: string;
+  image?: ResearchHighlightImage;
+  order: number;
+  published: boolean;
+}
+
 export type PartnerType = "UNIVERSITY" | "INDUSTRIAL";
 export interface Partner {
   _id: string;

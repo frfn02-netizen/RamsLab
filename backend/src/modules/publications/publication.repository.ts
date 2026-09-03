@@ -20,6 +20,13 @@ export class PublicationConflictError extends Error {
   }
 }
 
+export class PublicationReferencedError extends Error {
+  constructor() {
+    super("Publication is referenced by a research highlight");
+    this.name = "PublicationReferencedError";
+  }
+}
+
 export function getPublicationsCollection(): Collection<Publication> {
   return getDatabase().collection<Publication>(PUBLICATIONS_COLLECTION);
 }
@@ -238,6 +245,10 @@ export async function deletePublication(
   actor: JwtPayload,
 ): Promise<boolean> {
   if (!ObjectId.isValid(id)) return false;
+  const referenced = await getDatabase()
+    .collection("research_highlights")
+    .findOne({ publicationId: new ObjectId(id) }, { projection: { _id: 1 } });
+  if (referenced) throw new PublicationReferencedError();
   const result = await getPublicationsCollection().deleteOne(
     actorFilter(id, actor),
   );

@@ -4,6 +4,8 @@ import { Readable } from "node:stream";
 const CLOUDINARY_FOLDER = "rams-platform/profile-photos";
 const SITE_CONTENT_HOMEPAGE_FOLDER = "rams-platform/site-content/homepage";
 const RESEARCH_AREA_FOLDER = "rams-platform/research-areas";
+const PUBLICATION_FOLDER = "rams-platform/publications";
+const RESEARCH_HIGHLIGHT_FOLDER = "rams-platform/research-highlights";
 
 function ensureCloudinaryConfigured() {
   if (!process.env.CLOUDINARY_URL) {
@@ -16,6 +18,7 @@ function ensureCloudinaryConfigured() {
 function uploadBuffer(
   buffer: Buffer,
   folder: string,
+  resourceType: "image" | "raw" = "image",
 ): Promise<UploadApiResponse> {
   ensureCloudinaryConfigured();
 
@@ -23,7 +26,7 @@ function uploadBuffer(
     const upload = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: "image",
+        resource_type: resourceType,
         overwrite: false,
       },
       (error, result) => {
@@ -67,6 +70,22 @@ export async function uploadResearchAreaImage(buffer: Buffer) {
   };
 }
 
+export async function uploadResearchHighlightImage(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, RESEARCH_HIGHLIGHT_FOLDER);
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+}
+
+export async function uploadPublicationPdf(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, PUBLICATION_FOLDER, "raw");
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+}
+
 function publicIdFromPhotoUrl(photo: string) {
   try {
     const pathname = new URL(photo).pathname;
@@ -99,4 +118,46 @@ export async function removeProfilePhoto(photo?: string) {
 
   ensureCloudinaryConfigured();
   await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+}
+
+function rawPublicIdFromUrl(fileUrl: string) {
+  try {
+    const pathname = new URL(fileUrl).pathname;
+    const segments = pathname.split("/").filter(Boolean);
+    const uploadIndex = segments.indexOf("upload");
+    if (uploadIndex < 0) return undefined;
+
+    let publicIdSegments = segments.slice(uploadIndex + 1);
+    if (publicIdSegments[0]?.startsWith("v")) {
+      publicIdSegments = publicIdSegments.slice(1);
+    }
+    return publicIdSegments.length > 0 ? publicIdSegments.join("/") : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function removePublicationPdf(fileUrl?: string) {
+  if (!fileUrl || !fileUrl.includes("res.cloudinary.com/")) return;
+
+  const publicId = rawPublicIdFromUrl(fileUrl);
+  if (!publicId) return;
+
+  ensureCloudinaryConfigured();
+  await cloudinary.uploader.destroy(publicId, {
+    resource_type: "raw",
+    type: "upload",
+    invalidate: true,
+  });
+}
+
+export async function removeResearchHighlightImage(publicId?: string) {
+  if (!publicId) return;
+
+  ensureCloudinaryConfigured();
+  await cloudinary.uploader.destroy(publicId, {
+    resource_type: "image",
+    type: "upload",
+    invalidate: true,
+  });
 }

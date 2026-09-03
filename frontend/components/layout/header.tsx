@@ -11,6 +11,7 @@ const navigation = [
   ["Contact", "/dashboard/content/contact"],
   ["Footer", "/dashboard/content/footer"],
   ["Research Areas", "/dashboard/research"],
+  ["Research Highlights", "/dashboard/research-highlights"],
   ["Projects", "/dashboard/projects"],
   ["Dosen", "/dashboard/dosen"],
   ["Students", "/dashboard/students"],

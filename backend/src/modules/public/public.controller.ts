@@ -16,7 +16,10 @@ import {
 } from "../partners/partner.repository.js";
 import { findAllDosen, findDosenById } from "../dosen/dosen.repository.js";
 import { findPublicAlumni } from "../alumni/alumni.repository.js";
-import { findAllStudents, findStudentById } from "../students/student.repository.js";
+import {
+  findAllStudents,
+  findStudentById,
+} from "../students/student.repository.js";
 import {
   toPublicAlumniProfile,
   toPublicDosenProfile,

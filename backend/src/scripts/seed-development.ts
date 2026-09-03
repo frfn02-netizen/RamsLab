@@ -49,8 +49,16 @@ import {
   type AlumniTracking,
 } from "../modules/tracking/tracking.types.js";
 import { createSiteContentIndexes } from "../modules/site-content/site-content.index.js";
+import { createResearchHighlightIndexes } from "../modules/research-highlights/research-highlight.index.js";
 import { upsertSiteContent } from "../modules/site-content/site-content.repository.js";
-import { contentByKey } from "./seed-site-content.js";
+import {
+  contentByKey,
+  ensureDevelopmentHeadOfLaboratory,
+} from "./seed-site-content.js";
+import {
+  printResearchHighlightSeedStatus,
+  seedDevelopmentResearchHighlights,
+} from "./seed-research-highlights.js";
 import {
   SITE_CONTENT_KEYS,
   type SiteContentContent,
@@ -411,6 +419,7 @@ async function main() {
     createPublicationIndexes(),
     createTrackingIndexes(),
     createSiteContentIndexes(),
+    createResearchHighlightIndexes(),
   ]);
   const users = await seedUsers();
   await seedDosenProfile(users.dosen._id!);
@@ -421,9 +430,12 @@ async function main() {
   await seedProjects(partners);
   await seedResearchAreas();
   await seedPublications(users.editor._id!);
+  await seedDevelopmentResearchHighlights();
+  await printResearchHighlightSeedStatus();
   await seedTracking(alumni._id);
   for (const key of SITE_CONTENT_KEYS)
     await upsertSiteContent(key, contentByKey[key] as SiteContentContent);
+  await ensureDevelopmentHeadOfLaboratory();
   await printSummary();
   console.log("\n✅ Development database seeded successfully");
 }

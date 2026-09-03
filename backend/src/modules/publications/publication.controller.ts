@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import express, { type Request, type Response } from "express";
 import { ObjectId } from "mongodb";
 import { SECURITY_LIMITS } from "../../config/security.js";
 import {
@@ -12,12 +12,19 @@ import {
   findAllPublications,
   findPublicationById,
   PublicationConflictError,
+  PublicationReferencedError,
   updatePublication,
 } from "./publication.repository.js";
 import { canModifyPublication } from "./publication.repository.js";
 import { findUserById } from "../users/user.repository.js";
 import type { Publication } from "./publication.types.js";
 import { safeHttpUrl } from "../../lib/url-security.js";
+import {
+  removePublicationPdf,
+  uploadPublicationPdf,
+} from "../../lib/cloudinary.js";
+
+const MAX_PUBLICATION_PDF_BYTES = 10 * 1024 * 1024;
 
 async function serialize(publication: Publication, includeAudit = false) {
   const {
@@ -299,9 +306,99 @@ export async function deletePublicationController(req: Request, res: Response) {
       success: true,
       message: "Publication deleted successfully",
     });
-  } catch {
+  } catch (error: any) {
+    if (error instanceof PublicationReferencedError)
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
     return res
       .status(500)
       .json({ success: false, message: "Failed to delete publication" });
+  }
+}
+
+export async function uploadPublicationPdfController(
+  req: Request,
+  res: Response,
+) {
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id))
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid publication ID" });
+
+  const contentType = (req.headers["content-type"] ?? "")
+    .split(";", 1)[0]
+    .trim()
+    .toLowerCase();
+  if (contentType !== "application/pdf")
+    return res
+      .status(415)
+      .json({ success: false, message: "Only PDF files are supported" });
+
+  const pdf = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  if (!pdf.length)
+    return res.status(400).json({ success: false, message: "PDF is required" });
+  if (pdf.length > MAX_PUBLICATION_PDF_BYTES)
+    return res.status(413).json({
+      success: false,
+      message: "PDF must be 10 MB or smaller",
+    });
+
+  try {
+    const publication = await findPublicationById(id);
+    if (!publication)
+      return res
+        .status(404)
+        .json({ success: false, message: "Publication not found" });
+
+    const uploaded = await uploadPublicationPdf(pdf);
+    let updated: Publication | null;
+    try {
+      updated = await updatePublication(
+        id,
+        { pdfUrl: uploaded.url },
+        req.user!,
+      );
+    } catch (error) {
+      try {
+        await removePublicationPdf(uploaded.url);
+      } catch {
+        // The database was not updated; cleanup is best effort.
+      }
+      throw error;
+    }
+
+    if (!updated) {
+      try {
+        await removePublicationPdf(uploaded.url);
+      } catch {
+        // The database was not updated; cleanup is best effort.
+      }
+      return res
+        .status(404)
+        .json({ success: false, message: "Publication not found" });
+    }
+
+    if (publication.pdfUrl && publication.pdfUrl !== updated.pdfUrl) {
+      try {
+        await removePublicationPdf(publication.pdfUrl);
+      } catch {
+        // The new PDF is already stored; old-file cleanup is best effort.
+      }
+    }
+
+    return res.json({ success: true, data: await serialize(updated, true) });
+  } catch (error: any) {
+    if (error?.name === "ApiError")
+      return res.status(error.status || 500).json({
+        success: false,
+        message: error.message,
+      });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload publication PDF",
+    });
   }
 }

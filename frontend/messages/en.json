@@ -108,6 +108,21 @@
       "locationValue": "Gedung WA · Kampus ITS Sukolilo · Surabaya"
     },
     "researchEyebrow": "Research areas",
+    "researchHighlights": {
+      "eyebrow": "Research highlights",
+      "title": "Questions that shape dependable systems.",
+      "question": "Research question",
+      "readPaper": "Read Paper",
+      "loading": "Loading research highlights",
+      "error": "Research highlights are temporarily unavailable.",
+      "noImage": "No image available",
+      "imageAlt": "Research highlight",
+      "carouselLabel": "Research highlights carousel",
+      "controls": "Research highlight controls",
+      "previous": "Previous research highlight",
+      "next": "Next research highlight",
+      "goTo": "Go to research highlight {number}"
+    },
     "researchTitle": "Methods for decisions that matter.",
     "researchDescription": "Six connected areas frame the laboratory’s work across maritime, offshore, and industrial systems.",
     "researchLink": "View all research",

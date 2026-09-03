@@ -44,6 +44,19 @@ const addressLines = z.tuple([
   bilingualTextSchema,
 ]);
 
+const headOfLaboratorySchema = z.object({
+  eyebrow: bilingualTextSchema,
+  title: bilingualTextSchema,
+  greeting: bilingualTextSchema,
+  name: text,
+  role: bilingualTextSchema,
+  s1: bilingualTextSchema,
+  s2: bilingualTextSchema,
+  s3: bilingualTextSchema,
+  image: contentImageSchema.pick({ url: true, publicId: true }).optional(),
+  imageAlt: bilingualTextSchema,
+});
+
 export const homepageContentSchema = z.object({
   hero: z.object({
     headline: bilingualTextSchema,
@@ -72,6 +85,7 @@ export const homepageContentSchema = z.object({
     description: bilingualTextSchema,
     buttonLabel: bilingualTextSchema,
   }),
+  headOfLaboratory: headOfLaboratorySchema.optional(),
 });
 
 export const aboutContentSchema = z.object({

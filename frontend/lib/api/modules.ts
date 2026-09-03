@@ -20,6 +20,8 @@ import type {
   ResearchArea,
   ResearchAreaInput,
   ResearchAreaUpdateInput,
+  ResearchHighlight,
+  ResearchHighlightInput,
   Student,
   StudentInput,
   StudentUpdateInput,
@@ -166,11 +168,59 @@ export const updatePublication = (id: string, input: PublicationUpdateInput) =>
     method: "PATCH",
     body: JSON.stringify(input),
   });
+export const uploadPublicationPdf = (id: string, file: File) =>
+  apiRequest<Publication>(`/publications/${encodeURIComponent(id)}/pdf`, {
+    method: "POST",
+    body: file,
+    headers: { "Content-Type": file.type },
+    timeoutMs: 30000,
+  });
 export const deletePublication = async (id: string) => {
   await apiRequestWithMeta(`/publications/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 };
+
+export const getResearchHighlights = () =>
+  apiRequest<ResearchHighlight[]>("/admin/research-highlights");
+export const getResearchHighlight = (id: string) =>
+  apiRequest<ResearchHighlight>(
+    `/admin/research-highlights/${encodeURIComponent(id)}`,
+  );
+export const createResearchHighlight = (input: ResearchHighlightInput) =>
+  apiRequest<ResearchHighlight>("/admin/research-highlights", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+export const updateResearchHighlight = (
+  id: string,
+  input: Partial<ResearchHighlightInput>,
+) =>
+  apiRequest<ResearchHighlight>(
+    `/admin/research-highlights/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+  );
+export const deleteResearchHighlight = async (id: string) => {
+  await apiRequestWithMeta(
+    `/admin/research-highlights/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+};
+export const uploadResearchHighlightImage = (id: string, file: File) =>
+  apiRequest<ResearchHighlight>(
+    `/admin/research-highlights/${encodeURIComponent(id)}/image`,
+    {
+      method: "POST",
+      body: file,
+      headers: { "Content-Type": file.type },
+      timeoutMs: 30000,
+    },
+  );
+export const removeResearchHighlightImage = (id: string) =>
+  apiRequest<ResearchHighlight>(
+    `/admin/research-highlights/${encodeURIComponent(id)}/image`,
+    { method: "DELETE" },
+  );
 
 export const getPartners = (type: PartnerType) =>
   apiRequest<Partner[]>(`/partners/${type.toLowerCase()}`);
@@ -256,6 +306,8 @@ export const getPublicPartners = (type: PartnerType) =>
   apiRequest<Partner[]>(`/public/partners/${type.toLowerCase()}`);
 export const getPublicResearch = () =>
   apiRequest<PublicResearchArea[]>("/public/research");
+export const getPublicResearchHighlights = () =>
+  apiRequest<ResearchHighlight[]>("/public/research-highlights");
 
 export const getPublicSiteContent = <K extends SiteContentKey>(key: K) =>
   apiRequest<SiteContentMap[K]>(

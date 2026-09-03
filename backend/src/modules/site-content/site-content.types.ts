@@ -32,6 +32,22 @@ export interface HomepagePrinciple {
   description: BilingualText;
 }
 
+export interface HeadOfLaboratoryContent {
+  eyebrow: BilingualText;
+  title: BilingualText;
+  greeting: BilingualText;
+  name: string;
+  role: BilingualText;
+  s1: BilingualText;
+  s2: BilingualText;
+  s3: BilingualText;
+  image?: {
+    url: string;
+    publicId?: string;
+  };
+  imageAlt: BilingualText;
+}
+
 export interface HomepageContent {
   hero: {
     headline: BilingualText;
@@ -69,6 +85,7 @@ export interface HomepageContent {
     description: BilingualText;
     buttonLabel: BilingualText;
   };
+  headOfLaboratory?: HeadOfLaboratoryContent;
 }
 
 export interface HeroImagePosition {

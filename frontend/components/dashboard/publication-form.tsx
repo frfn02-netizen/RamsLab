@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
 import {
@@ -19,6 +25,7 @@ import {
   createPublication,
   getPublication,
   updatePublication,
+  uploadPublicationPdf,
 } from "@/lib/api/modules";
 import { canManagePublication, hasPermission } from "@/lib/authz";
 import { PUBLICATION_TYPES, type Publication } from "@/types/modules";
@@ -55,6 +62,8 @@ const emptyForm = (): FormState => ({
   topics: [],
   methods: [],
 });
+
+const MAX_PUBLICATION_PDF_BYTES = 10 * 1024 * 1024;
 
 function fromPublication(publication: Publication): FormState {
   return {
@@ -95,6 +104,8 @@ export default function PublicationForm({ id }: { id?: string }) {
   const [audit, setAudit] = useState<Publication | null>(null);
   const [canEditRecord, setCanEditRecord] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfUploading, setPdfUploading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -180,6 +191,7 @@ export default function PublicationForm({ id }: { id?: string }) {
     if (!validate()) return;
 
     setSaving(true);
+    setPdfUploading(Boolean(pdfFile));
     setError(null);
 
     const input = {
@@ -198,19 +210,43 @@ export default function PublicationForm({ id }: { id?: string }) {
       const saved = editing
         ? await updatePublication(id as string, input)
         : await createPublication(input);
+      const finalPublication = pdfFile
+        ? await uploadPublicationPdf(saved._id, pdfFile)
+        : saved;
 
       if (editing) {
-        setForm(fromPublication(saved));
-        setAudit(saved);
+        setForm(fromPublication(finalPublication));
+        setAudit(finalPublication);
         setSuccessMessage("Publication updated successfully.");
       } else {
         router.push("/dashboard/publications?saved=1");
       }
+      setPdfFile(null);
     } catch (reason) {
       setError(getUserFacingError(reason));
     } finally {
+      setPdfUploading(false);
       setSaving(false);
     }
+  }
+
+  function selectPdf(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setPdfFile(null);
+      event.target.value = "";
+      setError("Please choose a PDF file.");
+      return;
+    }
+    if (file.size > MAX_PUBLICATION_PDF_BYTES) {
+      setPdfFile(null);
+      event.target.value = "";
+      setError("PDF must be 10 MB or smaller.");
+      return;
+    }
+    setError(null);
+    setPdfFile(file);
   }
 
   function addAuthor() {
@@ -450,7 +486,43 @@ export default function PublicationForm({ id }: { id?: string }) {
                   value={form.pdfUrl}
                   onChange={(event) => update("pdfUrl", event.target.value)}
                 />
+                {form.pdfUrl && (
+                  <a
+                    href={form.pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-sm font-semibold text-[var(--rams-red)] hover:text-[var(--rams-red-dark)]"
+                  >
+                    View current publication PDF / URL →
+                  </a>
+                )}
               </Field>
+
+              {user?.role === "ADMIN" && (
+                <Field label="Upload PDF">
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    className={`${inputClass} file:mr-3 file:border-0 file:bg-[var(--rams-gray-light)] file:px-3 file:py-2 file:text-sm file:font-semibold`}
+                    onChange={selectPdf}
+                    disabled={saving}
+                  />
+                  <p className="mt-2 text-xs leading-5 text-[var(--rams-gray)]">
+                    PDF only, maximum 10 MB. The upload is saved when you save
+                    the publication.
+                  </p>
+                  {pdfFile && (
+                    <p className="mt-1 text-sm text-[var(--rams-charcoal)]">
+                      Selected: {pdfFile.name}
+                    </p>
+                  )}
+                  {pdfUploading && (
+                    <p className="mt-1 text-sm font-semibold text-[var(--rams-red)]">
+                      Uploading PDF…
+                    </p>
+                  )}
+                </Field>
+              )}
             </div>
 
             <TagField
