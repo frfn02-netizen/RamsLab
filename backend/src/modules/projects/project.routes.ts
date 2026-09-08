@@ -8,6 +8,7 @@ import {
   getProjectController,
   getProjectListController,
   updateProjectController,
+  uploadProjectImageController,
 } from "./project.controller.js";
 
 const router = Router();
@@ -42,6 +43,13 @@ router.get(
 // ========================================
 
 router.post("/", authenticate, requireRole("ADMIN"), createProjectController);
+
+router.post(
+  "/image",
+  authenticate,
+  requireRole("ADMIN"),
+  uploadProjectImageController,
+);
 
 router.patch(
   "/:id",

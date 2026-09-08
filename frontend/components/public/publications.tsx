@@ -11,13 +11,12 @@ import {
   type RefObject,
 } from "react";
 import { useTranslations } from "next-intl";
-import { getPublications } from "@/lib/api/modules";
+import { getPublications, getPublicPublicationPdfUrl } from "@/lib/api/modules";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { Publication } from "@/types/modules";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
 import { MaritimeShip } from "./maritime-motion";
-import { safeHttpUrl } from "@/lib/safe-url";
 
 type PublicationProject = Publication;
 
@@ -33,7 +32,6 @@ type QueryParams = {
   get(name: string): string | null;
   getAll(name: string): string[];
 };
-const PUBLICATION_PAGE_SIZE = 100;
 
 function readFilters(params: QueryParams): PublicationFilters {
   const sort = params.get("sort");
@@ -192,10 +190,10 @@ function PublicationCard({
   active: boolean;
   staged?: boolean;
 }) {
-  const publicationUrl =
-    safeHttpUrl(project.pdfUrl) ??
-    (project.doi ? `https://doi.org/${encodeURIComponent(project.doi)}` : null);
-  const publicationLinkLabel = t("viewPublication");
+  const publicationUrl = project.pdfUrl
+    ? getPublicPublicationPdfUrl(project._id)
+    : null;
+  const publicationLinkLabel = t("viewPdf");
 
   return (
     <article
@@ -223,11 +221,24 @@ function PublicationCard({
           <a
             href={publicationUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="text-xs font-bold tracking-[0.08em] text-[var(--rams-red)] transition hover:text-[var(--rams-red-dark)]"
             aria-label={`${publicationLinkLabel}: ${project.title}`}
           >
-            {publicationLinkLabel} <span aria-hidden="true">↗</span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="mr-1 inline-block h-3.5 w-3.5 align-[-0.15em] text-[var(--rams-red)]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.14 1.14" />
+              <path d="M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 7 20l1.14-1.14" />
+            </svg>
+            {publicationLinkLabel}
           </a>
         )}
         {project.doi && (
@@ -477,50 +488,6 @@ function PublicationTimeline({
         ))}
       </div>
     </>
-  );
-}
-
-function PublicationPagination({
-  page,
-  totalPages,
-  disabled,
-  t,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  disabled: boolean;
-  t: (key: string, values?: Record<string, number>) => string;
-  onPageChange: (page: number) => void;
-}) {
-  if (totalPages <= 1) return null;
-  return (
-    <nav
-      className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-5"
-      aria-label={t("pagination")}
-    >
-      <p className="text-sm text-[var(--gray)]">
-        {t("pageStatus", { page, totalPages })}
-      </p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          disabled={disabled || page === 1}
-          onClick={() => onPageChange(page - 1)}
-          className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {t("previousPage")}
-        </button>
-        <button
-          type="button"
-          disabled={disabled || page === totalPages}
-          onClick={() => onPageChange(page + 1)}
-          className="bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--rams-red)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {t("nextPage")}
-        </button>
-      </div>
-    </nav>
   );
 }
 

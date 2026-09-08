@@ -1,4 +1,4 @@
-import { apiRequest, apiRequestWithMeta } from "./client";
+import { apiRequest, apiRequestWithMeta, apiUrl } from "./client";
 import type {
   Dosen,
   DosenInput,
@@ -22,6 +22,18 @@ import type {
   ResearchAreaUpdateInput,
   ResearchHighlight,
   ResearchHighlightInput,
+  CmsEvent,
+  CmsEventInput,
+  CmsEventUpdateInput,
+  PublicEvent,
+  PublicServiceDetail,
+  PublicServiceExpert,
+  PublicServiceExpertInput,
+  PublicServiceExpertUpdateInput,
+  PublicServiceInput,
+  PublicServicePageData,
+  PublicServiceRecord,
+  PublicServiceUpdateInput,
   Student,
   StudentInput,
   StudentUpdateInput,
@@ -134,6 +146,17 @@ export const deleteProject = async (id: string) => {
   });
 };
 
+export const uploadProjectImage = (file: File) =>
+  apiRequest<{ url: string; publicId?: string }>(
+    `/projects/image?filename=${encodeURIComponent(file.name)}`,
+    {
+      method: "POST",
+      body: file,
+      headers: { "Content-Type": file.type },
+      timeoutMs: 30000,
+    },
+  );
+
 export type PublicationQuery = {
   search?: string;
   year?: number;
@@ -172,9 +195,27 @@ export const uploadPublicationPdf = (id: string, file: File) =>
   apiRequest<Publication>(`/publications/${encodeURIComponent(id)}/pdf`, {
     method: "POST",
     body: file,
-    headers: { "Content-Type": file.type },
+    headers: {
+      "Content-Type": file.type,
+      "X-Original-Filename": file.name,
+    },
     timeoutMs: 30000,
   });
+export const uploadTemporaryPublicationPdf = (file: File) =>
+  apiRequest<{ url: string; publicId: string; filename: string }>(
+    "/publications/pdf-upload",
+    {
+      method: "POST",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+        "X-Original-Filename": file.name,
+      },
+      timeoutMs: 30000,
+    },
+  );
+export const getPublicPublicationPdfUrl = (id: string) =>
+  apiUrl(`/publications/${encodeURIComponent(id)}/pdf`);
 export const deletePublication = async (id: string) => {
   await apiRequestWithMeta(`/publications/${encodeURIComponent(id)}`, {
     method: "DELETE",
@@ -221,6 +262,97 @@ export const removeResearchHighlightImage = (id: string) =>
     `/admin/research-highlights/${encodeURIComponent(id)}/image`,
     { method: "DELETE" },
   );
+
+export const getEvents = () => apiRequest<CmsEvent[]>("/admin/events");
+export const getEvent = (id: string) =>
+  apiRequest<CmsEvent>(`/admin/events/${encodeURIComponent(id)}`);
+export const createEvent = (input: CmsEventInput) =>
+  apiRequest<CmsEvent>("/admin/events", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+export const updateEvent = (id: string, input: CmsEventUpdateInput) =>
+  apiRequest<CmsEvent>(`/admin/events/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+export const uploadEventImage = (
+  id: string,
+  file: File,
+  alt?: { en?: string; id?: string },
+) => {
+  const query = new URLSearchParams();
+  if (alt?.en) query.set("altEn", alt.en);
+  if (alt?.id) query.set("altId", alt.id);
+  return apiRequest<CmsEvent>(
+    `/admin/events/${encodeURIComponent(id)}/image${
+      query.size ? `?${query}` : ""
+    }`,
+    {
+      method: "POST",
+      body: file,
+      headers: { "Content-Type": file.type },
+      timeoutMs: 30000,
+    },
+  );
+};
+export const deleteEvent = async (id: string) => {
+  await apiRequestWithMeta(`/admin/events/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+};
+
+export const getPublicServiceExperts = () =>
+  apiRequest<PublicServiceExpert[]>("/admin/public-service/experts");
+export const getPublicServiceExpert = (id: string) =>
+  apiRequest<PublicServiceExpert>(
+    `/admin/public-service/experts/${encodeURIComponent(id)}`,
+  );
+export const createPublicServiceExpert = (input: PublicServiceExpertInput) =>
+  apiRequest<PublicServiceExpert>("/admin/public-service/experts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+export const updatePublicServiceExpert = (
+  id: string,
+  input: PublicServiceExpertUpdateInput,
+) =>
+  apiRequest<PublicServiceExpert>(
+    `/admin/public-service/experts/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+  );
+export const deletePublicServiceExpert = async (id: string) => {
+  await apiRequestWithMeta(
+    `/admin/public-service/experts/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+};
+
+export const getPublicServices = () =>
+  apiRequest<PublicServiceRecord[]>("/admin/public-service/services");
+export const getPublicService = (id: string) =>
+  apiRequest<PublicServiceRecord>(
+    `/admin/public-service/services/${encodeURIComponent(id)}`,
+  );
+export const createPublicService = (input: PublicServiceInput) =>
+  apiRequest<PublicServiceRecord>("/admin/public-service/services", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+export const updatePublicService = (
+  id: string,
+  input: PublicServiceUpdateInput,
+) =>
+  apiRequest<PublicServiceRecord>(
+    `/admin/public-service/services/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+  );
+export const deletePublicService = async (id: string) => {
+  await apiRequestWithMeta(
+    `/admin/public-service/services/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+};
 
 export const getPartners = (type: PartnerType) =>
   apiRequest<Partner[]>(`/partners/${type.toLowerCase()}`);
@@ -308,6 +440,14 @@ export const getPublicResearch = () =>
   apiRequest<PublicResearchArea[]>("/public/research");
 export const getPublicResearchHighlights = () =>
   apiRequest<ResearchHighlight[]>("/public/research-highlights");
+export const getPublicEvents = () =>
+  apiRequest<PublicEvent[]>("/public/events");
+export const getPublicServicePage = () =>
+  apiRequest<PublicServicePageData>("/public/public-services");
+export const getPublicServiceDetail = (id: string) =>
+  apiRequest<PublicServiceDetail>(
+    `/public/public-services/${encodeURIComponent(id)}`,
+  );
 
 export const getPublicSiteContent = <K extends SiteContentKey>(key: K) =>
   apiRequest<SiteContentMap[K]>(

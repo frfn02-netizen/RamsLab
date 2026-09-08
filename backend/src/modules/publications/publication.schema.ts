@@ -18,6 +18,18 @@ const optionalText = (max = 500) =>
     .nullable()
     .optional()
     .transform((value) => value || null);
+const optionalPdfFilename = z
+  .string()
+  .trim()
+  .min(1)
+  .max(255)
+  .refine(
+    (value) => !/[\\/\u0000-\u001f\u007f]/.test(value),
+    "PDF filename contains unsupported characters",
+  )
+  .nullable()
+  .optional()
+  .transform((value) => value || null);
 const list = z.array(z.string().trim().min(1).max(200)).max(50).default([]);
 
 export const createPublicationSchema = z.object({
@@ -39,6 +51,7 @@ export const createPublicationSchema = z.object({
     .nullable()
     .optional()
     .transform((value) => value || null),
+  pdfFilename: optionalPdfFilename,
   topics: list,
   methods: list,
 });

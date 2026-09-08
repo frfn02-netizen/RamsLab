@@ -15,7 +15,7 @@ import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
 
 const categoryLabels: Record<PublicDirectoryCategory, string> = {
-  DOSEN: "OUR LAB MEMBERS",
+  DOSEN: "LECTURERS",
   MAHASISWA: "PHD",
   MASTER: "MASTER",
   UNDERGRADUATE: "UNDERGRADUATE STUDENTS",
@@ -144,41 +144,26 @@ export function MemberCard({
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 25vw, 20vw"
         />
       </div>
-      <div className="flex flex-1 flex-col pt-5">
-        <h3 className="font-display min-h-[3.25rem] text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">
-          {isStudent ? (
-            <Link
-              href={`/team/${member.id}`}
-              className="hover:text-[var(--rams-red)]"
-            >
-              {member.fullName}
-            </Link>
-          ) : (
-            member.fullName
-          )}
+      <div className="flex flex-1 flex-col items-center pt-5 text-center">
+        <h3
+          className={`font-display min-h-[3.25rem] max-w-full text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]`}
+        >
+          <Link
+            href={`/team/${member.id}`}
+            className="hover:text-[var(--rams-red)]"
+          >
+            {member.fullName}
+          </Link>
         </h3>
         {!isStudent && <RoleLine member={member} fallback={roleFallback} />}
         {!isStudent && member.specialization.length > 0 && (
-          <p className="mt-5 text-sm leading-6 text-[var(--slate)]">
+          <p className="mt-2 text-sm leading-6 text-[var(--slate)]">
             {member.specialization.join(" · ")}
           </p>
         )}
         {member.linkedin && member.category !== "DOSEN" && !isStudent && (
           <div className="mt-auto pt-5">
             <ProfileLinks member={member} label={profileLabel} />
-          </div>
-        )}
-        {member.category === "DOSEN" && (
-          <div className="mt-auto pt-5">
-            <Link
-              href={`/team/${member.id}`}
-              className="inline-flex font-semibold text-[var(--rams-red)] hover:text-[var(--navy)]"
-            >
-              {profileLabel}{" "}
-              <span className="ml-2" aria-hidden="true">
-                →
-              </span>
-            </Link>
           </div>
         )}
       </div>

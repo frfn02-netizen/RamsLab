@@ -92,6 +92,9 @@ function toDocument(
     journal: input.journal ?? existing?.journal ?? "",
     doi: normalizeDoi(has("doi") ? input.doi : existing?.doi),
     pdfUrl: has("pdfUrl") ? input.pdfUrl || null : (existing?.pdfUrl ?? null),
+    pdfFilename: has("pdfFilename")
+      ? input.pdfFilename || null
+      : (existing?.pdfFilename ?? null),
     topics: input.topics ?? existing?.topics ?? [],
     methods: input.methods ?? existing?.methods ?? [],
     createdBy: existing

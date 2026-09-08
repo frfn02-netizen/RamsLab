@@ -24,6 +24,8 @@ import { getUserFacingError } from "@/lib/api/errors";
 import {
   createPublication,
   getPublication,
+  getPublicPublicationPdfUrl,
+  uploadTemporaryPublicationPdf,
   updatePublication,
   uploadPublicationPdf,
 } from "@/lib/api/modules";
@@ -40,15 +42,13 @@ type FormState = {
   journal: string;
   doi: string;
   pdfUrl: string;
+  pdfFilename: string;
   topics: string[];
   methods: string[];
 };
 
 type FormErrors = Partial<
-  Record<
-    "title" | "authors" | "publicationType" | "year" | "journal" | "pdfUrl",
-    string
-  >
+  Record<"title" | "authors" | "publicationType" | "year" | "journal", string>
 >;
 
 const emptyForm = (): FormState => ({
@@ -59,11 +59,12 @@ const emptyForm = (): FormState => ({
   journal: "",
   doi: "",
   pdfUrl: "",
+  pdfFilename: "",
   topics: [],
   methods: [],
 });
 
-const MAX_PUBLICATION_PDF_BYTES = 10 * 1024 * 1024;
+const MAX_PUBLICATION_PDF_BYTES = 30 * 1024 * 1024;
 
 function fromPublication(publication: Publication): FormState {
   return {
@@ -74,9 +75,26 @@ function fromPublication(publication: Publication): FormState {
     journal: publication.journal,
     doi: publication.doi ?? "",
     pdfUrl: publication.pdfUrl ?? "",
+    pdfFilename: publication.pdfFilename ?? "",
     topics: publication.topics,
     methods: publication.methods,
   };
+}
+
+function publicationPdfFilename(
+  publication: Pick<Publication, "pdfUrl" | "pdfFilename">,
+) {
+  if (publication.pdfFilename?.trim()) return publication.pdfFilename;
+  if (publication.pdfUrl) {
+    try {
+      const pathname = decodeURIComponent(new URL(publication.pdfUrl).pathname);
+      const filename = pathname.split("/").pop()?.trim();
+      if (filename) return filename;
+    } catch {
+      // Fall through to a stable label for legacy or malformed URLs.
+    }
+  }
+  return "publication.pdf";
 }
 
 function addValue(values: string[], value: string) {
@@ -106,6 +124,9 @@ export default function PublicationForm({ id }: { id?: string }) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUploading, setPdfUploading] = useState(false);
+  const [pdfUploadStatus, setPdfUploadStatus] = useState<
+    "idle" | "uploading" | "success" | "failed"
+  >("idle");
 
   useEffect(() => {
     if (!id) return;
@@ -172,14 +193,6 @@ export default function PublicationForm({ id }: { id?: string }) {
       next.journal = "Journal is required.";
     }
 
-    if (form.pdfUrl.trim()) {
-      try {
-        new URL(form.pdfUrl.trim());
-      } catch {
-        next.pdfUrl = "Enter a valid URL.";
-      }
-    }
-
     setErrors(next);
 
     return Object.keys(next).length === 0;
@@ -188,44 +201,43 @@ export default function PublicationForm({ id }: { id?: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (pdfUploading) return;
     if (!validate()) return;
 
     setSaving(true);
-    setPdfUploading(Boolean(pdfFile));
     setError(null);
 
-    const input = {
+    const metadataInput = {
       title: form.title.trim(),
       authors: form.authors.map((author) => author.trim()).filter(Boolean),
       publicationType: form.publicationType.trim(),
       year: Number(form.year),
       journal: form.journal.trim(),
       doi: form.doi.trim() || null,
-      pdfUrl: form.pdfUrl.trim() || null,
       topics: form.topics,
       methods: form.methods,
     };
-
+    // Existing-publication PDF uploads are already persisted by the immediate
+    // upload endpoint. Omitting PDF fields here prevents a stale form snapshot
+    // from replacing the new PDF during a later metadata save.
     try {
       const saved = editing
-        ? await updatePublication(id as string, input)
-        : await createPublication(input);
-      const finalPublication = pdfFile
-        ? await uploadPublicationPdf(saved._id, pdfFile)
-        : saved;
-
+        ? await updatePublication(id as string, metadataInput)
+        : await createPublication({
+            ...metadataInput,
+            pdfUrl: form.pdfUrl.trim() || null,
+            pdfFilename: form.pdfFilename.trim() || null,
+          });
       if (editing) {
-        setForm(fromPublication(finalPublication));
-        setAudit(finalPublication);
+        setForm(fromPublication(saved));
+        setAudit(saved);
         setSuccessMessage("Publication updated successfully.");
       } else {
         router.push("/dashboard/publications?saved=1");
       }
-      setPdfFile(null);
     } catch (reason) {
       setError(getUserFacingError(reason));
     } finally {
-      setPdfUploading(false);
       setSaving(false);
     }
   }
@@ -242,11 +254,44 @@ export default function PublicationForm({ id }: { id?: string }) {
     if (file.size > MAX_PUBLICATION_PDF_BYTES) {
       setPdfFile(null);
       event.target.value = "";
-      setError("PDF must be 10 MB or smaller.");
+      setError("PDF must be 30 MB or smaller.");
       return;
     }
     setError(null);
     setPdfFile(file);
+    setPdfUploadStatus("uploading");
+    setPdfUploading(true);
+
+    const upload = editing
+      ? uploadPublicationPdf(id as string, file)
+      : uploadTemporaryPublicationPdf(file);
+    upload
+      .then((result) => {
+        if ("_id" in result) {
+          setForm((current) => ({
+            ...current,
+            pdfUrl: result.pdfUrl ?? "",
+            pdfFilename: result.pdfFilename ?? "",
+          }));
+          setAudit(result);
+        } else {
+          setForm((current) => ({
+            ...current,
+            pdfUrl: result.url,
+            pdfFilename: result.filename,
+          }));
+        }
+        setPdfFile(null);
+        setPdfUploadStatus("success");
+        setSuccessMessage("PDF uploaded successfully.");
+      })
+      .catch((reason) => {
+        setPdfUploadStatus("failed");
+        setError(getUserFacingError(reason));
+      })
+      .finally(() => {
+        setPdfUploading(false);
+      });
   }
 
   function addAuthor() {
@@ -473,31 +518,6 @@ export default function PublicationForm({ id }: { id?: string }) {
                 />
               </Field>
 
-              <Field
-                label="Publication URL / PDF URL"
-                htmlFor="publication-url"
-                error={errors.pdfUrl}
-              >
-                <input
-                  id="publication-url"
-                  type="url"
-                  className={inputClass}
-                  placeholder="https://doi.org/... or journal page"
-                  value={form.pdfUrl}
-                  onChange={(event) => update("pdfUrl", event.target.value)}
-                />
-                {form.pdfUrl && (
-                  <a
-                    href={form.pdfUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-block text-sm font-semibold text-[var(--rams-red)] hover:text-[var(--rams-red-dark)]"
-                  >
-                    View current publication PDF / URL →
-                  </a>
-                )}
-              </Field>
-
               {user?.role === "ADMIN" && (
                 <Field label="Upload PDF">
                   <input
@@ -505,15 +525,40 @@ export default function PublicationForm({ id }: { id?: string }) {
                     accept="application/pdf,.pdf"
                     className={`${inputClass} file:mr-3 file:border-0 file:bg-[var(--rams-gray-light)] file:px-3 file:py-2 file:text-sm file:font-semibold`}
                     onChange={selectPdf}
-                    disabled={saving}
+                    disabled={saving || pdfUploading}
                   />
                   <p className="mt-2 text-xs leading-5 text-[var(--rams-gray)]">
-                    PDF only, maximum 10 MB. The upload is saved when you save
-                    the publication.
+                    PDF only, maximum 30 MB. The upload starts immediately.
                   </p>
-                  {pdfFile && (
+                  {pdfFile && !pdfUploading && (
                     <p className="mt-1 text-sm text-[var(--rams-charcoal)]">
                       Selected: {pdfFile.name}
+                    </p>
+                  )}
+                  {form.pdfUrl && !pdfUploading && (
+                    <>
+                      <p className="mt-1 text-sm text-[var(--rams-charcoal)]">
+                        {pdfUploadStatus === "success"
+                          ? `PDF uploaded successfully: ${publicationPdfFilename(form)}`
+                          : `Current PDF: ${publicationPdfFilename(form)}`}
+                      </p>
+                      <a
+                        href={
+                          editing
+                            ? getPublicPublicationPdfUrl(id as string)
+                            : form.pdfUrl
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-block text-sm font-semibold text-[var(--rams-red)] hover:text-[var(--rams-red-dark)]"
+                      >
+                        View PDF →
+                      </a>
+                    </>
+                  )}
+                  {pdfUploadStatus === "failed" && (
+                    <p className="mt-1 text-sm font-semibold text-[var(--rams-red)]">
+                      PDF upload failed. Retry.
                     </p>
                   )}
                   {pdfUploading && (

@@ -13,6 +13,8 @@ import type { Locale } from "@/i18n/routing";
 
 export const dynamic = "force-dynamic";
 
+const RAMS_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4cTDB4Ng2qMJ71nr6";
+
 export async function generateMetadata({
   params,
 }: {
@@ -139,12 +141,19 @@ export default async function ContactPage({
                     <dt className="eyebrow">{t("address")}</dt>
 
                     <dd className="mt-3">
-                      <address className="text-sm not-italic leading-6 text-[var(--navy)]">
-                        {content.details.addressLines.map((line) => (
-                          <span key={line.en} className="block">
-                            {localized(line)}
-                          </span>
-                        ))}
+                      <address className="not-italic">
+                        <a
+                          href={RAMS_GOOGLE_MAPS_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block text-sm leading-6 text-[var(--navy)] underline-offset-4 transition-colors hover:text-[var(--rams-red)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
+                        >
+                          {content.details.addressLines.map((line) => (
+                            <span key={line.en} className="block">
+                              {localized(line)}
+                            </span>
+                          ))}
+                        </a>
                       </address>
                     </dd>
                   </div>

@@ -86,6 +86,8 @@ export const homepageContentSchema = z.object({
     buttonLabel: bilingualTextSchema,
   }),
   headOfLaboratory: headOfLaboratorySchema.optional(),
+  showHeadOfLaboratoryOnHomepage: z.boolean().default(false),
+  showWhoWeAreOnHomepage: z.boolean().default(false),
 });
 
 export const aboutContentSchema = z.object({

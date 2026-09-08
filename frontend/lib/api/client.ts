@@ -3,6 +3,10 @@ import { ApiError, type ApiErrorDetails } from "./errors";
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"
 ).replace(/\/$/, "");
+
+export function apiUrl(path: string) {
+  return `${API_URL}${path}`;
+}
 const CSRF_COOKIE = "rams_csrf_token";
 const CSRF_STORAGE_KEY = "rams_csrf_token";
 const CSRF_SHARED_STORAGE_KEY = "rams_csrf_token_shared";
@@ -154,7 +158,7 @@ async function requestEnvelope<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(apiUrl(path), {
       ...fetchOptions,
       credentials: "include",
       headers,

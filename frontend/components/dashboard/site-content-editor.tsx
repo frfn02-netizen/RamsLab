@@ -65,14 +65,14 @@ const defaultHeadOfLaboratory: HeadOfLaboratoryContent = {
     en: "Welcome to RAMS Laboratory. We connect rigorous research with practical engineering decisions for safer, more dependable systems.",
     id: "Selamat datang di Laboratorium RAMS. Kami menghubungkan riset yang ketat dengan keputusan rekayasa praktis untuk sistem yang lebih aman dan andal.",
   },
-  name: "Prof. Ketut",
-  role: { en: "Head of Laboratory", id: "Kepala Laboratorium" },
+  name: "Dr. Eng. Dhimas Widhi Handani, S.T., M.Sc.",
+  role: { en: "Head of RAMS Laboratory", id: "Kepala Laboratorium RAMS" },
   s1: { en: "Reliability and availability", id: "Keandalan dan ketersediaan" },
   s2: { en: "Safety and risk", id: "Keselamatan dan risiko" },
   s3: { en: "Marine systems", id: "Sistem maritim" },
   imageAlt: {
-    en: "Prof. Ketut, Head of RAMS Laboratory",
-    id: "Prof. Ketut, Kepala Laboratorium RAMS",
+    en: "Dr. Eng. Dhimas Widhi Handani, Head of RAMS Laboratory",
+    id: "Dr. Eng. Dhimas Widhi Handani, Kepala Laboratorium RAMS",
   },
 };
 
@@ -131,9 +131,11 @@ function BilingualField({
 function ImageField({
   value,
   onChange,
+  fixedAspectRatio,
 }: {
   value?: SiteContentImage;
   onChange: (value: SiteContentImage) => void;
+  fixedAspectRatio?: number;
 }) {
   const [selected, setSelected] = useState<File | null>(null);
   const [preview, setPreview] = useState(value?.url ?? "");
@@ -156,7 +158,7 @@ function ImageField({
   } | null>(null);
   const position = value?.position ?? defaultHeroImagePosition;
   const publicHeroAspectRatio =
-    viewportSize.width / (viewportSize.height * 0.75);
+    fixedAspectRatio ?? viewportSize.width / (viewportSize.height * 0.75);
   const imageAspectRatio =
     naturalSize.width > 0 && naturalSize.height > 0
       ? naturalSize.width / naturalSize.height
@@ -811,6 +813,31 @@ function HomepageEditor() {
           </Section>
 
           <Section title="Head of Laboratory">
+            <div className="flex items-center gap-3">
+              <input
+                id="homepage-show-head"
+                type="checkbox"
+                className="h-4 w-4 rounded border-black/20 text-[var(--rams-red)] focus:ring-[var(--rams-red)]"
+                checked={content.showHeadOfLaboratoryOnHomepage ?? false}
+                onChange={(event) =>
+                  setContent((current) =>
+                    current
+                      ? {
+                          ...current,
+                          showHeadOfLaboratoryOnHomepage: event.target.checked,
+                        }
+                      : current,
+                  )
+                }
+              />
+              <label
+                htmlFor="homepage-show-head"
+                className="text-sm font-medium text-[var(--rams-charcoal)]"
+              >
+                Show on Homepage
+              </label>
+            </div>
+
             <BilingualField
               label="Eyebrow"
               value={head.eyebrow}
@@ -859,7 +886,7 @@ function HomepageEditor() {
               onChange={(locale, value) => headText("role", locale, value)}
             />
 
-            <div className="space-y-5 rounded-md border border-black/8 bg-[var(--rams-gray-light)]/35 p-4">
+            {/* <div className="space-y-5 rounded-md border border-black/8 bg-[var(--rams-gray-light)]/35 p-4">
               <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
                 Focus areas
               </p>
@@ -878,11 +905,12 @@ function HomepageEditor() {
                 value={head.s3}
                 onChange={(locale, value) => headText("s3", locale, value)}
               />
-            </div>
+            </div> */}
 
             <Field label="Photo">
               <ImageField
                 value={head.image}
+                fixedAspectRatio={4 / 5}
                 onChange={(image) =>
                   setContent((current) =>
                     current
@@ -900,11 +928,38 @@ function HomepageEditor() {
               />
             </Field>
 
-            <BilingualField
+            {/* <BilingualField
               label="Image alt text"
               value={head.imageAlt}
               onChange={(locale, value) => headText("imageAlt", locale, value)}
-            />
+            /> */}
+          </Section>
+
+          <Section title="Who We Are">
+            <div className="flex items-center gap-3">
+              <input
+                id="homepage-show-who-we-are"
+                type="checkbox"
+                className="h-4 w-4 rounded border-black/20 text-[var(--rams-red)] focus:ring-[var(--rams-red)]"
+                checked={content.showWhoWeAreOnHomepage ?? false}
+                onChange={(event) =>
+                  setContent((current) =>
+                    current
+                      ? {
+                          ...current,
+                          showWhoWeAreOnHomepage: event.target.checked,
+                        }
+                      : current,
+                  )
+                }
+              />
+              <label
+                htmlFor="homepage-show-who-we-are"
+                className="text-sm font-medium text-[var(--rams-charcoal)]"
+              >
+                Show on Homepage
+              </label>
+            </div>
           </Section>
 
           <Section title="Ecosystem">

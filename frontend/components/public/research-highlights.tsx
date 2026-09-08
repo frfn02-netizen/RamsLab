@@ -1,11 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { getPublicResearchHighlights } from "@/lib/api/modules";
+import {
+  getPublicPublicationPdfUrl,
+  getPublicResearchHighlights,
+} from "@/lib/api/modules";
 import type { ResearchHighlight } from "@/types/modules";
 import PublicContainer from "./public-container";
-import RevealOnScroll from "./reveal-on-scroll";
 import { PublicError, PublicLoading } from "./public-states";
 
 const AUTOPLAY_MS = 7000;
@@ -68,7 +71,7 @@ export default function ResearchHighlights() {
 
   if (loading) {
     return (
-      <section className="bg-[var(--background-light)] py-20">
+      <section className="min-h-[75svh] bg-[var(--navy-deep)] py-20 text-white">
         <PublicContainer>
           <PublicLoading label={t("researchHighlights.loading")} />
         </PublicContainer>
@@ -77,7 +80,7 @@ export default function ResearchHighlights() {
   }
   if (error) {
     return (
-      <section className="bg-[var(--background-light)] py-20">
+      <section className="min-h-[75svh] bg-[var(--navy-deep)] py-20 text-white">
         <PublicContainer>
           <PublicError message={t("researchHighlights.error")} />
         </PublicContainer>
@@ -93,105 +96,102 @@ export default function ResearchHighlights() {
 
   return (
     <section
-      className="border-y border-[var(--border)] bg-[var(--background-light)] py-20 sm:py-24"
-      aria-labelledby="research-highlights-title"
+      className="relative min-h-[75svh] overflow-hidden bg-[var(--navy-deep)] text-white sm:min-h-[calc(100svh-5rem)]"
+      aria-label={t("researchHighlights.carouselLabel")}
     >
-      <PublicContainer>
-        <RevealOnScroll>
-          <p className="eyebrow text-[var(--rams-red)]">
-            {t("researchHighlights.eyebrow")}
-          </p>
-          <h2
-            id="research-highlights-title"
-            className="mt-3 font-display text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl"
-          >
-            {t("researchHighlights.title")}
-          </h2>
-        </RevealOnScroll>
-
-        <div
-          className="mt-10 grid overflow-hidden border border-[var(--border)] bg-white lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]"
-          aria-roledescription="carousel"
-          aria-label={t("researchHighlights.carouselLabel")}
-        >
-          <div className="relative aspect-[4/3] min-h-64 bg-[var(--navy)] sm:aspect-[16/10] lg:aspect-auto lg:min-h-[480px]">
-            {item.image?.url ? (
-              <img
-                src={item.image.url}
-                alt={imageAlt}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,var(--navy),#183c59)] p-8 text-center">
-                <span
-                  className="font-display text-5xl font-bold tracking-tight text-white/15 sm:text-7xl"
-                  aria-hidden="true"
-                >
-                  RAMS
-                </span>
-                <span className="sr-only">
-                  {t("researchHighlights.noImage")}
-                </span>
-              </div>
-            )}
-          </div>
+      <div className="absolute inset-0 bg-[var(--navy)]">
+        {item.image?.url ? (
+          <Image
+            src={item.image.url}
+            alt={imageAlt}
+            fill
+            sizes="100vw"
+            unoptimized
+            className="object-cover"
+          />
+        ) : (
           <div
-            className="flex flex-col justify-between p-7 sm:p-10 lg:p-14"
-            aria-live="polite"
+            className="flex h-full items-center justify-center bg-[linear-gradient(135deg,var(--navy),#183c59)]"
+            aria-hidden="true"
           >
-            <div>
-              <p className="eyebrow text-[var(--rams-red)]">
-                {t("researchHighlights.question")}
-              </p>
-              <h3 className="mt-5 max-w-xl font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-[var(--navy)] sm:text-4xl">
-                {headline}
-              </h3>
-              <div className="mt-8 border-t border-[var(--border)] pt-6">
-                <p className="text-sm font-semibold leading-6 text-[var(--navy)]">
-                  {publication.title}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--gray)]">
-                  {publication.authors.join(", ")} · {publication.year}
-                  {publication.journal ? ` · ${publication.journal}` : ""}
-                </p>
-              </div>
-            </div>
-            {publication.pdfUrl ? (
-              <a
-                href={publication.pdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-10 inline-flex w-fit items-center border-b-2 border-[var(--rams-red)] pb-1 text-sm font-bold text-[var(--rams-red)] transition hover:text-[var(--rams-red-dark)]"
-              >
-                {t("researchHighlights.readPaper")} →
-              </a>
-            ) : null}
+            <span className="font-display text-7xl font-bold tracking-tight text-white/10 sm:text-[10rem]">
+              RAMS
+            </span>
           </div>
+        )}
+      </div>
+      <div
+        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,24,38,0.96)_0%,rgba(8,24,38,0.82)_34%,rgba(8,24,38,0.48)_66%,rgba(8,24,38,0.3)_100%)]"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 bg-[linear-gradient(0deg,rgba(8,24,38,0.72),transparent_42%)]"
+        aria-hidden="true"
+      />
+
+      <PublicContainer className="relative z-10 flex min-h-[75svh] flex-col justify-between py-12 sm:min-h-[calc(100svh-5rem)] sm:py-16 lg:py-20">
+        <div
+          key={item.id}
+          className="research-highlight-enter max-w-3xl py-16 sm:py-20 lg:max-w-[55%]"
+          aria-live="polite"
+          aria-roledescription="slide"
+          aria-label={`${active + 1} / ${items.length}`}
+        >
+          <p className="eyebrow !text-[var(--rams-red)]">
+            {t("researchHighlights.question")}
+          </p>
+          <h2 className="mt-5 font-display text-4xl font-bold leading-[1.04] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+            {headline}
+          </h2>
+          <div className="mt-8 max-w-2xl border-t border-white/30 pt-5">
+            <p className="text-base font-semibold leading-6 text-white">
+              {publication.title}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-white/70">
+              {publication.authors.join(", ")} · {publication.year}
+              {publication.journal ? ` · ${publication.journal}` : ""}
+            </p>
+          </div>
+          {publication.pdfUrl ? (
+            <a
+              href={getPublicPublicationPdfUrl(publication.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-9 inline-flex w-fit border-b-2 border-[var(--rams-red-light)] pb-1 text-sm font-bold text-white transition hover:border-white"
+            >
+              {t("researchHighlights.readPaper")} →
+            </a>
+          ) : null}
         </div>
 
         <div
-          className="mt-7 flex items-center justify-between gap-5"
+          className="flex items-center justify-between gap-5"
           role="group"
           aria-label={t("researchHighlights.controls")}
         >
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2"
+            aria-label={t("researchHighlights.indicators")}
+          >
             {items.map((highlight, index) => (
               <button
                 key={highlight.id}
                 type="button"
                 onClick={() => interact(index)}
-                aria-label={t("researchHighlights.goTo", { number: index + 1 })}
+                aria-label={t("researchHighlights.goTo", {
+                  number: index + 1,
+                })}
                 aria-current={index === active ? "true" : undefined}
-                className={`h-2.5 rounded-full transition-all ${index === active ? "w-8 bg-[var(--rams-red)]" : "w-2.5 bg-[var(--navy)]/20 hover:bg-[var(--rams-red)]"}`}
+                className={`h-2.5 rounded-full transition-all ${index === active ? "w-8 bg-[var(--rams-red-light)]" : "w-2.5 bg-white/40 hover:bg-white"}`}
               />
             ))}
           </div>
-          <div className="flex items-center gap-3 text-sm font-semibold text-[var(--navy)]">
+          <div className="flex items-center gap-3 text-sm font-semibold text-white">
             <button
               type="button"
               onClick={() => interact(active - 1)}
               aria-label={t("researchHighlights.previous")}
-              className="border border-[var(--border)] p-3 transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"
+              className="p-2 transition hover:text-[var(--rams-red-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red-light)]"
             >
               <Arrow direction="previous" />
             </button>
@@ -202,7 +202,7 @@ export default function ResearchHighlights() {
               type="button"
               onClick={() => interact(active + 1)}
               aria-label={t("researchHighlights.next")}
-              className="border border-[var(--border)] p-3 transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"
+              className="p-2 transition hover:text-[var(--rams-red-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red-light)]"
             >
               <Arrow direction="next" />
             </button>

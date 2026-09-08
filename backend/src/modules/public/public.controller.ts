@@ -15,7 +15,10 @@ import {
   findIndustrialPartners,
 } from "../partners/partner.repository.js";
 import { findAllDosen, findDosenById } from "../dosen/dosen.repository.js";
-import { findPublicAlumni } from "../alumni/alumni.repository.js";
+import {
+  findPublicAlumni,
+  findAlumniById,
+} from "../alumni/alumni.repository.js";
 import {
   findAllStudents,
   findStudentById,
@@ -96,6 +99,14 @@ export async function getPublicDosenByIdController(
       return res.json({
         success: true,
         data: toPublicStudentProfile(req, student),
+      });
+    }
+
+    const alumni = await findAlumniById(id);
+    if (alumni?.isPublic && alumni.profileCompleted) {
+      return res.json({
+        success: true,
+        data: toPublicAlumniProfile(req, alumni),
       });
     }
 

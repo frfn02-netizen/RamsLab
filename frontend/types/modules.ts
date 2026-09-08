@@ -1,3 +1,5 @@
+import type { PublicPerson } from "./people";
+
 export type ProjectStatus = "PLANNING" | "ONGOING" | "COMPLETED";
 export type ProjectCategory =
   "RESEARCH" | "CONSULTING" | "DEVELOPMENT" | "OTHER";
@@ -31,6 +33,7 @@ export interface Publication {
   journal: string;
   doi: string | null;
   pdfUrl: string | null;
+  pdfFilename?: string | null;
   topics: string[];
   methods: string[];
   createdBy?: string | null;
@@ -236,3 +239,137 @@ export type PublicResearchArea = Omit<
   ResearchArea,
   "_id" | "createdAt" | "updatedAt" | "updatedBy"
 >;
+
+export interface BilingualText {
+  en: string;
+  id: string;
+}
+
+export interface CmsEventImage {
+  url: string;
+  publicId?: string;
+  alt?: BilingualText;
+}
+
+export interface CmsEvent {
+  _id: string;
+  title: BilingualText;
+  description?: BilingualText;
+  image?: CmsEventImage;
+  eventDate?: string | null;
+  location?: BilingualText;
+  order: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export type CmsEventInput = Omit<
+  CmsEvent,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+>;
+export type CmsEventUpdateInput = Partial<CmsEventInput>;
+
+export type PeopleRefKind = "DOSEN" | "STUDENT" | "ALUMNI";
+
+export interface PeopleRef {
+  kind: PeopleRefKind;
+  id: string;
+}
+
+export interface PublicServiceExpert {
+  _id: string;
+  peopleRef?: PeopleRef;
+  displayName?: string;
+  expertise?: BilingualText;
+  order: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export interface PublicServiceExpertInput {
+  peopleRef: PeopleRef;
+  displayName?: string;
+  expertise?: BilingualText;
+  order: number;
+  published: boolean;
+}
+export type PublicServiceExpertUpdateInput = Partial<PublicServiceExpertInput>;
+
+export interface PublicServiceCompany {
+  id?: string;
+  name: string;
+  description?: BilingualText;
+  order: number;
+  published: boolean;
+}
+
+export interface PublicServiceJob {
+  id?: string;
+  name: BilingualText;
+  description?: BilingualText;
+  order: number;
+  published: boolean;
+}
+
+export interface PublicServiceRecord {
+  _id: string;
+  code?: string;
+  title: BilingualText;
+  description?: BilingualText;
+  shortDescription?: BilingualText;
+  detailedDescription?: BilingualText;
+  companies: PublicServiceCompany[];
+  jobs: PublicServiceJob[];
+  order: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export type PublicServiceInput = Omit<
+  PublicServiceRecord,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+>;
+export type PublicServiceUpdateInput = Partial<PublicServiceInput>;
+
+export interface PublicEvent {
+  id: string;
+  title: BilingualText;
+  description?: BilingualText;
+  image?: CmsEventImage;
+  eventDate?: string | null;
+  location?: BilingualText;
+  order: number;
+}
+
+export interface PublicServicePageData {
+  experts: Array<{
+    id: string;
+    peopleId: string;
+    expertise?: BilingualText;
+    order: number;
+    person: PublicPerson;
+  }>;
+  services: Array<{
+    id: string;
+    code?: string;
+    title: BilingualText;
+    description?: BilingualText;
+    order: number;
+  }>;
+}
+
+export interface PublicServiceDetail {
+  id: string;
+  code?: string;
+  title: BilingualText;
+  description?: BilingualText;
+  order: number;
+  companies: PublicServiceCompany[];
+  jobs: PublicServiceJob[];
+}

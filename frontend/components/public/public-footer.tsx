@@ -64,14 +64,13 @@ function SocialIcon({ kind }: { kind: string }) {
 
 const navigation = [
   ["people", "/team"],
-  ["about", "/about"],
   ["research", "/research"],
   ["publications", "/publications"],
-  ["projects", "/projects"],
-  ["partners", "/partners"],
-  ["alumni", "/alumni"],
-  ["participate", "/contact"],
+  ["events", "/events"],
+  ["publicService", "/public-service"],
+  ["contactUs", "/contact"],
 ] as const;
+const RAMS_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4cTDB4Ng2qMJ71nr6";
 
 export default function PublicFooter() {
   const locale = useLocale() === "id" ? "id" : "en";
@@ -190,15 +189,24 @@ export default function PublicFooter() {
                 <span>{footerDescription}</span>
               )}
               <address className="not-italic leading-7">
-                {content
-                  ? content.addressLines.map((line) => (
+                {content ? (
+                  <a
+                    href={RAMS_GOOGLE_MAPS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block underline-offset-4 transition-colors hover:text-[var(--rams-red)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
+                  >
+                    {content.addressLines.map((line) => (
                       <span key={line.en} className="block">
                         {localized(line)}
                       </span>
-                    ))
-                  : error
-                    ? common("requestUnavailable")
-                    : common("loading")}
+                    ))}
+                  </a>
+                ) : error ? (
+                  common("requestUnavailable")
+                ) : (
+                  common("loading")
+                )}
               </address>
               {content && (
                 <p className="max-w-xs leading-6 text-white/45">

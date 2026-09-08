@@ -237,12 +237,10 @@ export async function uploadResearchHighlightImageController(
   try {
     uploaded = await uploadResearchHighlightImage(image);
   } catch {
-    return res
-      .status(502)
-      .json({
-        success: false,
-        message: "Research highlight image upload failed",
-      });
+    return res.status(502).json({
+      success: false,
+      message: "Research highlight image upload failed",
+    });
   }
 
   let updated;

@@ -35,8 +35,8 @@ function AlumniCard({
   const company = member.specialization[0];
 
   return (
-    <article className="group flex h-full min-w-0 flex-col">
-      <div className="overflow-hidden border border-[var(--border)] bg-white">
+    <article className="group flex h-full min-w-0 flex-col text-center">
+      <div className="mx-auto w-full overflow-hidden border border-[var(--border)] bg-white">
         <ProfilePhoto
           name={member.fullName}
           photo={member.photo}
@@ -44,36 +44,27 @@ function AlumniCard({
         />
       </div>
 
-      <div className="flex flex-1 flex-col pt-5">
-        <h3 className="line-clamp-2 min-h-[3.25rem] font-display text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">
+      <h3 className="mx-auto mt-5 line-clamp-2 min-h-[3.25rem] max-w-full font-display text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">
+        <a
+          href={`/alumni/${member.id}`}
+          className="hover:text-[var(--rams-red)]"
+        >
           {member.fullName}
-        </h3>
+        </a>
+      </h3>
 
-        <p className="mt-2 min-h-[1.25rem] font-mono text-[0.62rem] uppercase tracking-[0.1em] text-[var(--rams-red)]">
-          {programLine || "Alumni"}
-        </p>
+      <p className="mx-auto mt-3 max-w-full font-mono text-[0.7rem] font-bold uppercase leading-relaxed tracking-[0.08em] text-[var(--rams-red)]">
+        {programLine || "Alumni"}
+      </p>
 
-        <div className="mt-3 min-h-[5.5rem] space-y-1 text-sm leading-6 text-[var(--slate)]">
-          {member.position && (
-            <p className="line-clamp-2 font-semibold text-[var(--navy)]">
-              {member.position}
-            </p>
-          )}
+      <div className="mx-auto mt-4 max-w-full space-y-1 text-sm leading-6 text-[var(--slate)]">
+        {member.position && (
+          <p className="font-semibold text-[var(--navy)]">
+            {member.position}
+          </p>
+        )}
 
-          {company && <p className="line-clamp-2">{company}</p>}
-        </div>
-
-        <div className="mt-auto border-t border-[var(--border)] pt-4">
-          <a
-            href={`/team/${member.id}`}
-            className="inline-flex font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
-          >
-            {profileLabel}
-            <span className="ml-2" aria-hidden="true">
-              →
-            </span>
-          </a>
-        </div>
+        {company && <p>{company}</p>}
       </div>
     </article>
   );

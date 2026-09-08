@@ -1,4 +1,5 @@
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
+import { randomUUID } from "node:crypto";
 import { Readable } from "node:stream";
 
 const CLOUDINARY_FOLDER = "rams-platform/profile-photos";
@@ -6,6 +7,8 @@ const SITE_CONTENT_HOMEPAGE_FOLDER = "rams-platform/site-content/homepage";
 const RESEARCH_AREA_FOLDER = "rams-platform/research-areas";
 const PUBLICATION_FOLDER = "rams-platform/publications";
 const RESEARCH_HIGHLIGHT_FOLDER = "rams-platform/research-highlights";
+const EVENT_FOLDER = "rams-platform/events";
+const PROJECT_FOLDER = "rams-platform/projects";
 
 function ensureCloudinaryConfigured() {
   if (!process.env.CLOUDINARY_URL) {
@@ -19,6 +22,7 @@ function uploadBuffer(
   buffer: Buffer,
   folder: string,
   resourceType: "image" | "raw" = "image",
+  originalFilename?: string,
 ): Promise<UploadApiResponse> {
   ensureCloudinaryConfigured();
 
@@ -28,6 +32,11 @@ function uploadBuffer(
         folder,
         resource_type: resourceType,
         overwrite: false,
+        ...(originalFilename
+          ? {
+              public_id: `${safePdfBaseName(originalFilename)}-${randomUUID()}`,
+            }
+          : {}),
       },
       (error, result) => {
         if (error) {
@@ -78,11 +87,53 @@ export async function uploadResearchHighlightImage(buffer: Buffer) {
   };
 }
 
-export async function uploadPublicationPdf(buffer: Buffer) {
-  const result = await uploadBuffer(buffer, PUBLICATION_FOLDER, "raw");
+export async function uploadEventImage(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, EVENT_FOLDER);
   return {
     url: result.secure_url,
     publicId: result.public_id,
+  };
+}
+
+export async function uploadProjectImage(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, PROJECT_FOLDER);
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+}
+
+function safePdfBaseName(filename: string) {
+  const base = filename.replace(/\.pdf$/i, "").trim();
+  const sanitized = base
+    .replace(/[\\/\u0000-\u001f\u007f]/g, "")
+    .replace(/[^\p{L}\p{N}._() -]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+  return sanitized || "publication";
+}
+
+export function normalizePdfFilename(filename: string) {
+  const base = safePdfBaseName(filename);
+  return `${base}.pdf`;
+}
+
+export async function uploadPublicationPdf(
+  buffer: Buffer,
+  originalFilename = "publication.pdf",
+) {
+  const filename = normalizePdfFilename(originalFilename);
+  const result = await uploadBuffer(
+    buffer,
+    PUBLICATION_FOLDER,
+    "raw",
+    filename,
+  );
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+    filename,
   };
 }
 
@@ -152,6 +203,17 @@ export async function removePublicationPdf(fileUrl?: string) {
 }
 
 export async function removeResearchHighlightImage(publicId?: string) {
+  if (!publicId) return;
+
+  ensureCloudinaryConfigured();
+  await cloudinary.uploader.destroy(publicId, {
+    resource_type: "image",
+    type: "upload",
+    invalidate: true,
+  });
+}
+
+export async function removeEventImage(publicId?: string) {
   if (!publicId) return;
 
   ensureCloudinaryConfigured();

@@ -63,6 +63,13 @@ import {
   SITE_CONTENT_KEYS,
   type SiteContentContent,
 } from "../modules/site-content/site-content.types.js";
+import { createEventIndexes } from "../modules/events/event.index.js";
+import { getEventsCollection } from "../modules/events/event.repository.js";
+import { createPublicServiceIndexes } from "../modules/public-service/public-service.index.js";
+import {
+  getPublicServiceExpertsCollection,
+  getPublicServicesCollection,
+} from "../modules/public-service/public-service.repository.js";
 
 const DEVELOPMENT_DB_NAME = "rams_platform_dev";
 const developmentEmails = {
@@ -385,6 +392,125 @@ async function seedTracking(alumniId: ObjectId) {
     );
 }
 
+const publicServiceExpertNames = [
+  "Dr. Eng. Dhimas Widhi Handani, S.T., M.Sc.",
+  "Prof. Dr. Ketut Buda Artana, S.T., M.Sc.",
+  "Dr. Emmy Pratiwi, S.T.",
+  "Fadilla Indrayuni Prastyasari, S.T., M.Sc., Ph.D.",
+  "I Gde Manik Sunekanegara Adhita, S.T., M.MST., Ph.D.",
+  "Thariq Arafatul Akbar, S.T., M.T.",
+  "A.A. BGS. Dinarinaya Dwi Putranta, S.T., MES., Ph.D.",
+  "Prof. Dr. I Made Ariana, S.T., M.T.",
+] as const;
+
+async function findPeopleReferenceByName(fullName: string) {
+  const [dosen, student, alumni] = await Promise.all([
+    getDosenCollection().findOne({ fullName }),
+    getStudentCollection().findOne({ fullName }),
+    getAlumniCollection().findOne({ fullName }),
+  ]);
+  if (dosen?._id) return { kind: "DOSEN" as const, id: dosen._id };
+  if (student?._id) return { kind: "STUDENT" as const, id: student._id };
+  if (alumni?._id) return { kind: "ALUMNI" as const, id: alumni._id };
+  return undefined;
+}
+
+async function seedEvents() {
+  const now = new Date();
+  await getEventsCollection().updateOne(
+    { "title.en": "MASTIC over the years" },
+    {
+      $set: {
+        title: {
+          en: "MASTIC over the years",
+          id: "MASTIC dari tahun ke tahun",
+        },
+        order: 0,
+        published: true,
+        updatedAt: now,
+      },
+      $setOnInsert: { createdAt: now },
+    },
+    { upsert: true },
+  );
+}
+
+async function seedPublicServiceExperts() {
+  const now = new Date();
+  for (const [order, displayName] of publicServiceExpertNames.entries()) {
+    const peopleRef = await findPeopleReferenceByName(displayName);
+    await getPublicServiceExpertsCollection().updateOne(
+      { displayName },
+      {
+        $set: {
+          displayName,
+          ...(peopleRef ? { peopleRef } : {}),
+          expertise: { en: "", id: "" },
+          order,
+          published: true,
+          updatedAt: now,
+        },
+        $setOnInsert: { createdAt: now },
+      },
+      { upsert: true },
+    );
+  }
+}
+
+async function seedPublicServices() {
+  const now = new Date();
+  const services = [
+    {
+      code: "ASR",
+      title: { en: "ASR", id: "ASR" },
+      shortDescription: {
+        en: "Abandonment Site & Restoration",
+        id: "Abandonment Site & Restoration",
+      },
+    },
+    {
+      code: "LNG",
+      title: { en: "LNG", id: "LNG" },
+      shortDescription: {
+        en: "Liquefied Natural Gas Terminal",
+        id: "Liquefied Natural Gas Terminal",
+      },
+    },
+    {
+      code: "MOORING",
+      title: { en: "Mooring Arrangement", id: "Mooring Arrangement" },
+      shortDescription: { en: "", id: "" },
+    },
+    {
+      code: "AIS",
+      title: { en: "AIS", id: "AIS" },
+      shortDescription: {
+        en: "Automatic Identification System",
+        id: "Automatic Identification System",
+      },
+    },
+  ];
+
+  for (const [order, service] of services.entries()) {
+    await getPublicServicesCollection().updateOne(
+      { code: service.code },
+      {
+        $set: {
+          ...service,
+          detailedDescription: { en: "", id: "" },
+          companies: [],
+          jobs: [],
+          order,
+          published: true,
+          updatedAt: now,
+        },
+        $setOnInsert: { createdAt: now },
+      },
+      { upsert: true },
+    );
+  }
+}
+
 async function printSummary() {
   const db = getDatabase();
   const names = [
@@ -398,6 +524,9 @@ async function printSummary() {
     "publications",
     "alumni_tracking",
     "site_content",
+    "events",
+    "public_service_experts",
+    "public_services",
   ];
   console.log("\nDevelopment seed summary:");
   for (const name of names)
@@ -420,6 +549,8 @@ async function main() {
     createTrackingIndexes(),
     createSiteContentIndexes(),
     createResearchHighlightIndexes(),
+    createEventIndexes(),
+    createPublicServiceIndexes(),
   ]);
   const users = await seedUsers();
   await seedDosenProfile(users.dosen._id!);
@@ -431,6 +562,9 @@ async function main() {
   await seedResearchAreas();
   await seedPublications(users.editor._id!);
   await seedDevelopmentResearchHighlights();
+  await seedEvents();
+  await seedPublicServiceExperts();
+  await seedPublicServices();
   await printResearchHighlightSeedStatus();
   await seedTracking(alumni._id);
   for (const key of SITE_CONTENT_KEYS)

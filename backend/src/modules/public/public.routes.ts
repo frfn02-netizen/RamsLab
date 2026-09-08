@@ -14,6 +14,11 @@ import { getPublicResearchAreasController } from "../research/research.controlle
 import { getPublicSiteContentController } from "../site-content/site-content.controller.js";
 import { getPublicPublicationListController } from "../publications/publication.controller.js";
 import { getPublicResearchHighlightListController } from "../research-highlights/research-highlight.controller.js";
+import { getPublicEventListController } from "../events/event.controller.js";
+import {
+  getPublicPublicServiceDetailController,
+  getPublicPublicServiceListController,
+} from "../public-service/public-service.controller.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
@@ -55,6 +60,12 @@ router.get("/publications", getPublicPublicationListController);
 router.get("/research-highlights", getPublicResearchHighlightListController);
 
 router.get("/alumni", getPublicAlumniController);
+
+router.get("/events", getPublicEventListController);
+
+router.get("/public-services", getPublicPublicServiceListController);
+
+router.get("/public-services/:id", getPublicPublicServiceDetailController);
 
 router.get("/site-content/:key", getPublicSiteContentController);
 

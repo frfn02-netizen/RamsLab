@@ -23,18 +23,25 @@ const navigationGroups = [
       ["Research Areas", "/dashboard/research"],
       ["Research Highlights", "/dashboard/research-highlights"],
       ["Publications", "/dashboard/publications"],
+      ["Events", "/dashboard/events"],
       ["Projects", "/dashboard/projects"],
     ],
   },
   {
     label: "People",
     items: [
-      ["Dosen", "/dashboard/dosen"],
+      ["Lecturers", "/dashboard/dosen"],
       ["Students", "/dashboard/students"],
       ["Alumni", "/dashboard/alumni"],
     ],
   },
-  { label: "Ecosystem", items: [["Partners", "/dashboard/partners"]] },
+  {
+    label: "Ecosystem",
+    items: [
+      ["Public Service", "/dashboard/public-service"],
+      ["Partners", "/dashboard/partners"],
+    ],
+  },
   { label: "System", items: [["Tracking", "/dashboard/tracking"]] },
 ] as const;
 

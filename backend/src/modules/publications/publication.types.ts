@@ -9,6 +9,7 @@ export interface Publication {
   journal: string;
   doi: string | null;
   pdfUrl: string | null;
+  pdfFilename?: string | null;
   topics: string[];
   methods: string[];
   createdBy?: ObjectId | null;

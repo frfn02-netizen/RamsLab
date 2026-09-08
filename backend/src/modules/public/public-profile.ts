@@ -159,6 +159,8 @@ export function toPublicAlumniProfile(req: Request, member: Alumni) {
     category: "ALUMNI" as const,
     fullName: member.fullName,
     position: member.currentPosition,
+    program: member.program,
+    location: member.location,
     specialization: member.currentCompany ? [member.currentCompany] : [],
     photo: publicPhotoUrl(req, member.photo),
     bio: member.bio,

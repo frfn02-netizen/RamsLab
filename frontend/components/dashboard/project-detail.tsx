@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
 import {
@@ -19,6 +20,7 @@ import {
   deleteProject,
   getProjectById,
   updateProject,
+  uploadProjectImage,
 } from "@/lib/api/modules";
 import type { Project, ProjectCategory, ProjectStatus } from "@/types/modules";
 
@@ -36,6 +38,118 @@ const label = (value: string) =>
     .replaceAll("_", " ")
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const ProjectImageField = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (url: string) => void;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be 5 MB or smaller.");
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    try {
+      const uploaded = await uploadProjectImage(file);
+      onChange(uploaded.url);
+    } catch {
+      setError("Image upload failed.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <Field label="Project image">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFile}
+      />
+      {value ? (
+        <div className="relative aspect-[16/9] w-full overflow-hidden border border-[var(--border)]">
+          <Image
+            src={value}
+            alt="Project image preview"
+            fill
+            unoptimized
+            className="object-cover"
+          />
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/50 to-transparent p-3">
+            <span className="text-xs font-semibold text-white">
+              {uploading ? "Uploading..." : "Image uploaded"}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="rounded bg-white/90 px-3 py-1.5 text-xs font-semibold text-[var(--navy)] transition hover:bg-white"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+              >
+                Replace
+              </button>
+              <button
+                type="button"
+                className="rounded bg-white/90 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-white"
+                onClick={() => onChange("")}
+                disabled={uploading}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="flex w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--border)] bg-[var(--background-light)] py-10 text-center transition hover:border-[var(--rams-red)]/55 hover:bg-white"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          <svg
+            className="h-8 w-8 text-[var(--gray)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
+            />
+          </svg>
+          <span className="text-sm font-semibold text-[var(--navy)]">
+            {uploading ? "Uploading..." : "Upload project image"}
+          </span>
+          <span className="text-xs text-[var(--gray)]">
+            JPG, PNG up to 5 MB
+          </span>
+        </button>
+      )}
+      {error && (
+        <p className="mt-2 text-xs font-semibold text-red-700">{error}</p>
+      )}
+    </Field>
+  );
+};
 
 export default function ProjectDetail({ id }: { id: string }) {
   const { user } = useAuth();
@@ -312,16 +426,12 @@ export default function ProjectDetail({ id }: { id: string }) {
                     onChange={(event) => update("year", event.target.value)}
                   />
                 </Field>
-
-                <Field label="Image URL">
-                  <input
-                    type="url"
-                    className={inputClass}
-                    value={form.image}
-                    onChange={(event) => update("image", event.target.value)}
-                  />
-                </Field>
               </div>
+
+              <ProjectImageField
+                value={form.image}
+                onChange={(url) => update("image", url)}
+              />
 
               <Field label="Technologies">
                 <input

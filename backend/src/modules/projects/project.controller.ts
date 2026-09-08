@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { ObjectId } from "mongodb";
+import { uploadProjectImage } from "../../lib/cloudinary.js";
 import { createProjectSchema, updateProjectSchema } from "./project.schema.js";
 import {
   createProject,
@@ -298,6 +299,40 @@ export async function deleteProjectController(req: Request, res: Response) {
     return res.status(500).json({
       success: false,
       message: "Failed to delete project",
+    });
+  }
+}
+
+// ========================================
+// UPLOAD PROJECT IMAGE
+// ========================================
+
+export async function uploadProjectImageController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const file = req.body as Buffer;
+    if (!file || !Buffer.isBuffer(file)) {
+      return res.status(400).json({
+        success: false,
+        message: "No image file provided",
+      });
+    }
+
+    const uploaded = await uploadProjectImage(file);
+
+    return res.json({
+      success: true,
+      data: {
+        url: uploaded.url,
+        publicId: uploaded.publicId,
+      },
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload project image",
     });
   }
 }

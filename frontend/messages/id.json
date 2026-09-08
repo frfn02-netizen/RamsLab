@@ -2,7 +2,7 @@
   "brand": {
     "laboratory": "Laboratorium RAMS",
     "short": "RAMS LAB",
-    "technicalLine": "Keandalan · Keselamatan · Sistem Maritim",
+    "technicalLine": "Reliability ㆍ Availability ㆍ Management ㆍ Safety",
     "ais": "AIS-ITS",
     "pui": "PUI-KEKAL",
     "institution": "Institut Teknologi Sepuluh Nopember"
@@ -14,6 +14,9 @@
     "research": "Riset",
     "publications": "Publikasi",
     "news": "Berita",
+    "events": "Acara",
+    "publicService": "Layanan Publik",
+    "contactUs": "Hubungi Kami",
     "participate": "Berpartisipasi",
     "projects": "Proyek",
     "partners": "Mitra",
@@ -71,9 +74,25 @@
     "developmentCategory": "Pengembangan",
     "otherCategory": "Lainnya",
     "recordUpper": "REKAMAN",
-    "recordsUpper": "REKAMAN"
+    "recordsUpper": "REKAMAN",
+    "principles": "Prinsip RAMS",
+    "principlesTitle": "Kerangka di balik sistem yang andal."
   },
   "home": {
+    "welcome": {
+      "eyebrow": "Selamat datang di Laboratorium RAMS",
+      "title": "Memajukan Keandalan dan Keselamatan pada Sistem Maritim",
+      "description": "Laboratorium RAMS melakukan penelitian dan mengembangkan solusi inovatif untuk meningkatkan keandalan, keselamatan, dan kinerja sistem maritim melalui rekayasa, teknologi, dan riset terapan.",
+      "note": "Wawasan rekayasa untuk sistem yang harus bekerja, bertahan, dan melindungi."
+    },
+    "head": {
+      "noImage": "Foto Kepala Laboratorium tidak tersedia"
+    },
+    "people": {
+      "eyebrow": "PEOPLE",
+      "title": "Who We Are",
+      "button": "Meet Our Team"
+    },
     "eyebrow": "Laboratorium RAMS",
     "headline": "Riset keandalan, keselamatan & sistem maritim.",
     "description": "Kami mempelajari sistem di balik operasi maritim dan industri yang aman dan andal—mulai dari asesmen risiko dan pemantauan AIS hingga pemeliharaan, keandalan, dan simulasi.",
@@ -111,7 +130,7 @@
     "researchHighlights": {
       "eyebrow": "Sorotan penelitian",
       "title": "Pertanyaan yang membentuk sistem yang andal.",
-      "question": "Pertanyaan penelitian",
+      "question": "Sorotan penelitian",
       "readPaper": "Baca Makalah",
       "loading": "Memuat sorotan penelitian",
       "error": "Sorotan penelitian sementara tidak tersedia.",
@@ -119,6 +138,7 @@
       "imageAlt": "Sorotan penelitian",
       "carouselLabel": "Karusel sorotan penelitian",
       "controls": "Kontrol sorotan penelitian",
+      "indicators": "Indikator slide sorotan penelitian",
       "previous": "Sorotan penelitian sebelumnya",
       "next": "Sorotan penelitian berikutnya",
       "goTo": "Buka sorotan penelitian nomor {number}"
@@ -395,6 +415,10 @@
     "emptyDescription": "Profil alumni publik akan muncul di sini jika tersedia.",
     "noMatchingTitle": "Alumni tidak ditemukan",
     "noMatchingDescription": "Coba sesuaikan pencarian Anda.",
+    "backToAlumni": "Kembali ke Alumni",
+    "detailCategory": "ALUMNI",
+    "entryYear": "Angkatan",
+    "bioLabel": "BIO",
     "ctaTitle": "Tetap terhubung dengan laboratorium."
   },
   "contact": {
@@ -453,6 +477,29 @@
     "address2": "Kampus ITS Sukolilo",
     "address3": "Surabaya 60111",
     "address4": "Indonesia"
+  },
+  "events": {
+    "metaTitle": "Acara | Laboratorium RAMS",
+    "eyebrow": "Acara",
+    "title": "Acara",
+    "description": "Acara dan kegiatan institusional Laboratorium RAMS yang telah dipublikasikan."
+  },
+  "publicService": {
+    "metaTitle": "Layanan Publik | Laboratorium RAMS",
+    "eyebrow": "Layanan Publik",
+    "title": "Layanan Publik",
+    "description": "Keahlian dan layanan publik yang dikelola oleh Laboratorium RAMS.",
+    "expertsEyebrow": "Pakar Kami",
+    "expertsTitle": "Pakar Kami",
+    "servicesEyebrow": "Layanan Publik",
+    "servicesTitle": "Layanan Publik",
+    "companies": "Perusahaan",
+    "jobs": "Pekerjaan / Layanan",
+    "noCompanies": "Belum ada perusahaan yang dipublikasikan untuk layanan ini.",
+    "noJobs": "Belum ada pekerjaan atau layanan yang dipublikasikan untuk layanan ini.",
+    "profileLink": "Lihat profil",
+    "openLabel": "Lihat layanan",
+    "closeLabel": "Tutup"
   },
   "visual": {
     "profile": "Profil",

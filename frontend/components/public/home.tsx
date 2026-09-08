@@ -10,15 +10,15 @@ import {
   getPublicSiteContent,
 } from "@/lib/api/modules";
 import type { Project, PublicResearchArea } from "@/types/modules";
-import type { ContactContent, HomepageContent } from "@/types/site-content";
+import type { HomepageContent } from "@/types/site-content";
 import PublicContainer from "./public-container";
 import ProjectCard from "./project-card";
-import ContactForm from "./contact-form";
 import RevealOnScroll from "./reveal-on-scroll";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
 import ResearchHighlights from "./research-highlights";
+import HomeIntroduction, { HeadOfLaboratorySection } from "./home-introduction";
+import HomePeopleSection from "./home-people";
 
-type ContactIconKind = "location" | "email" | "laboratory";
 const researchImages = [
   "/assets/offshore.jpg",
   "/assets/vessel.jpeg",
@@ -26,58 +26,14 @@ const researchImages = [
   "/assets/upscalemedia-transformed.jpeg",
 ] as const;
 
-function ContactIcon({ kind }: { kind: ContactIconKind }) {
-  const paths = {
-    location: (
-      <>
-        <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
-        <circle cx="12" cy="10" r="2.5" />
-      </>
-    ),
-    email: (
-      <>
-        <rect x="3" y="5" width="18" height="14" rx="1.5" />
-        <path d="m4 7 8 6 8-6" />
-      </>
-    ),
-    laboratory: (
-      <>
-        <path d="M9 3v6l-5.5 9.5A1 1 0 0 0 4.4 20h15.2a1 1 0 0 0 .9-1.5L15 9V3" />
-        <path d="M7 3h10M8 14h8" />
-      </>
-    ),
-  }[kind];
-
-  return (
-    <svg
-      aria-hidden="true"
-      className="homepage-contact-icon h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {paths}
-    </svg>
-  );
-}
-
 export default function PublicHome() {
   const locale = useLocale() === "id" ? "id" : "en";
-  const contact = useTranslations("contact");
   const brand = useTranslations("brand");
   const projectsT = useTranslations("projects");
   const common = useTranslations("common");
   const [content, setContent] = useState<HomepageContent | null>(null);
-  const [contactContent, setContactContent] = useState<ContactContent | null>(
-    null,
-  );
   const [contentLoading, setContentLoading] = useState(true);
   const [contentError, setContentError] = useState(false);
-  const [contactContentLoading, setContactContentLoading] = useState(true);
-  const [contactContentError, setContactContentError] = useState(false);
   const [researchAreas, setResearchAreas] = useState<PublicResearchArea[]>([]);
   const [researchLoading, setResearchLoading] = useState(true);
   const [researchError, setResearchError] = useState(false);
@@ -94,10 +50,6 @@ export default function PublicHome() {
       .then(setContent)
       .catch(() => setContentError(true))
       .finally(() => setContentLoading(false));
-    getPublicSiteContent("contact")
-      .then(setContactContent)
-      .catch(() => setContactContentError(true))
-      .finally(() => setContactContentLoading(false));
     getPublicResearch()
       .then(setResearchAreas)
       .catch(() => setResearchError(true))
@@ -108,67 +60,35 @@ export default function PublicHome() {
 
   return (
     <>
-      {/* HERO */}
-      <section className="relative flex min-h-[75vh] items-center justify-start bg-[var(--navy)] text-white">
-        <Image
-          src={content?.hero.heroImage?.url ?? "/assets/hero.webp"}
-          alt={localized(
-            content?.hero.heroImage?.alt ??
-              content?.hero.headline ?? {
-                en: "RAMS Laboratory",
-                id: "Laboratorium RAMS",
-              },
-          )}
-          fill
-          priority
-          sizes="100vw"
-          unoptimized
-          className="object-cover"
-          style={{
-            objectPosition: `${content?.hero.heroImage?.position?.x ?? 50}% ${content?.hero.heroImage?.position?.y ?? 50}%`,
-          }}
-        />
-        <div className="absolute inset-0 bg-[var(--navy)]/50" />
-        <PublicContainer className="relative z-10 w-full">
-          {contentLoading ? (
-            <PublicLoading label={common("loading")} />
-          ) : contentError || !content ? (
-            <PublicError message={common("requestUnavailable")} />
-          ) : (
-            <div className="hero-entrance max-w-3xl">
-              <p className="font-display font-bold uppercase tracking-widest text-[var(--rams-red)]">
-                {brand("laboratory")}
-              </p>
-              <h1 className="mt-4 font-display text-5xl font-bold leading-tight tracking-tight text-white sm:text-7xl">
-                {localized(content.hero.headline)}
-              </h1>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/90">
-                {localized(content.hero.description)}
-              </p>
-              <div className="mt-10 flex gap-4">
-                <Link
-                  href="/research"
-                  className="bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]"
-                >
-                  {localized(content.hero.primaryCta)} →
-                </Link>
-                <Link
-                  href="/about"
-                  className="border border-white/50 px-8 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  {localized(content.hero.secondaryCta)} →
-                </Link>
-              </div>
-            </div>
-          )}
-        </PublicContainer>
-      </section>
-
       <ResearchHighlights />
+
+      {content && !contentLoading && !contentError && <HomeIntroduction />}
+
+      {content &&
+        !contentLoading &&
+        !contentError &&
+        content.showHeadOfLaboratoryOnHomepage && (
+          <HeadOfLaboratorySection content={content} />
+        )}
+
+      {content &&
+        !contentLoading &&
+        !contentError &&
+        content.showWhoWeAreOnHomepage && (
+          <HomePeopleSection headOfLaboratory={content?.headOfLaboratory} />
+        )}
 
       {/* PRINCIPLES */}
       <section className="bg-white py-20">
         <PublicContainer>
+          <RevealOnScroll className="mb-10 max-w-2xl">
+            <p className="eyebrow text-[var(--rams-red)]">
+              {common("principles")}
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl">
+              {common("principlesTitle")}
+            </h2>
+          </RevealOnScroll>
           {contentLoading ? (
             <PublicLoading label={common("loading")} />
           ) : contentError || !content ? (
@@ -276,7 +196,13 @@ export default function PublicHome() {
             <div className="ecosystem-reveal-item">
               <div className="ecosystem-block group border-[var(--border)] px-6 py-8 text-center sm:border-l sm:px-8 lg:px-12">
                 <div className="ecosystem-logo-stage">
-                  <div className="ecosystem-logo absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2">
+                  <a
+                    href="https://www.youtube.com/watch?v=9ry3kKPBAyg&t=72s"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={brand("pui")}
+                    className="ecosystem-logo absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2"
+                  >
                     <Image
                       src="/assets/logo pu-kekal part2.png"
                       alt={brand("pui")}
@@ -284,7 +210,7 @@ export default function PublicHome() {
                       sizes="320px"
                       className="object-contain"
                     />
-                  </div>
+                  </a>
                 </div>
                 <p className="ecosystem-name font-display text-base font-semibold text-[var(--navy)]">
                   {brand("pui")}
@@ -439,130 +365,6 @@ export default function PublicHome() {
               </Link>
             </RevealOnScroll>
           )}
-        </PublicContainer>
-      </section>
-
-      {/* CONTACT */}
-      <section className="bg-[var(--background-light)] py-20 sm:py-24">
-        <PublicContainer>
-          {contactContentLoading ? (
-            <PublicLoading label={common("loading")} />
-          ) : contactContentError || !contactContent ? (
-            <PublicError message={common("requestUnavailable")} />
-          ) : (
-            <RevealOnScroll className="max-w-3xl">
-              <p className="eyebrow text-[var(--rams-red)]">
-                {localized(contactContent.homePreview.eyebrow)}
-              </p>
-              <h2 className="mt-4 max-w-2xl font-display text-4xl font-bold leading-tight tracking-[-0.03em] text-[var(--navy)] sm:text-5xl">
-                {localized(contactContent.homePreview.title)}
-              </h2>
-              <p className="mt-5 max-w-2xl text-lg leading-7 text-[var(--gray)]">
-                {localized(contactContent.homePreview.description)}
-              </p>
-            </RevealOnScroll>
-          )}
-
-          <div className="mt-12 grid items-stretch gap-8 lg:grid-cols-[3fr_2fr] lg:gap-10">
-            <RevealOnScroll className="h-full">
-              <ContactForm className="homepage-contact-form h-full" />
-            </RevealOnScroll>
-
-            <aside className="grid content-start gap-6">
-              <RevealOnScroll className="h-full" delay={120}>
-                <div className="homepage-contact-info h-full border border-[#D3DBE2] bg-white">
-                  <div className="border-b border-[#D3DBE2] px-6 py-6 sm:px-8">
-                    <p className="eyebrow text-[var(--rams-red)]">
-                      {contact("contactEyebrow")}
-                    </p>
-                    <h3 className="mt-3 font-display text-2xl font-bold text-[var(--navy)]">
-                      {contactContent
-                        ? localized(contactContent.details.title)
-                        : common("requestUnavailable")}
-                    </h3>
-                    <span
-                      className="mt-4 block h-0.5 w-10 bg-[var(--rams-red)]"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="divide-y divide-[#D3DBE2]">
-                    <div className="homepage-contact-info-row flex gap-4 px-6 py-5 sm:px-8">
-                      <ContactIcon kind="location" />
-                      <div>
-                        <p className="eyebrow">{contact("address")}</p>
-                        <address className="homepage-contact-value mt-2 text-sm not-italic leading-6 text-[var(--gray)]">
-                          {contactContent?.details.addressLines.map((line) => (
-                            <span key={line.en} className="block">
-                              {localized(line)}
-                            </span>
-                          ))}
-                        </address>
-                      </div>
-                    </div>
-                    <div className="homepage-contact-info-row flex gap-4 px-6 py-5 sm:px-8">
-                      <ContactIcon kind="email" />
-                      <div>
-                        <p className="eyebrow">{contact("email")}</p>
-                        {contactContent ? (
-                          <a
-                            href={`mailto:${localized(contactContent.details.email)}`}
-                            className="homepage-contact-value mt-2 block text-sm font-semibold text-[var(--rams-red)] transition-colors duration-200 hover:text-[var(--rams-red-dark)]"
-                          >
-                            {localized(contactContent.details.email)}
-                          </a>
-                        ) : (
-                          <span className="homepage-contact-value mt-2 block text-sm text-[var(--gray)]">
-                            {common("requestUnavailable")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="homepage-contact-info-row flex gap-4 px-6 py-5 sm:px-8">
-                      <ContactIcon kind="laboratory" />
-                      <div>
-                        <p className="eyebrow">{contact("laboratory")}</p>
-                        <p className="homepage-contact-value mt-2 text-sm leading-6 text-[var(--gray)]">
-                          {brand("laboratory")}
-                          <br />
-                          {brand("institution")}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </RevealOnScroll>
-
-              <RevealOnScroll delay={220}>
-                <div className="homepage-contact-collaboration bg-[var(--navy)] p-6 text-white sm:p-8">
-                  <h3 className="font-display text-xl font-bold">
-                    {contactContent
-                      ? localized(contactContent.collaboration.title)
-                      : common("requestUnavailable")}
-                  </h3>
-                  <span
-                    className="mt-3 block h-0.5 w-10 bg-[var(--rams-red)]"
-                    aria-hidden="true"
-                  />
-                  <p className="mt-4 text-sm leading-6 text-white/70">
-                    {contactContent
-                      ? localized(contactContent.collaboration.description)
-                      : common("requestUnavailable")}
-                  </p>
-                  <Link
-                    href="#contact-form"
-                    className="mt-6 inline-flex items-center bg-[var(--rams-red)] px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[var(--rams-red-dark)]"
-                  >
-                    {contactContent
-                      ? localized(contactContent.collaboration.buttonLabel)
-                      : common("requestUnavailable")}{" "}
-                    <span className="ml-2" aria-hidden="true">
-                      →
-                    </span>
-                  </Link>
-                </div>
-              </RevealOnScroll>
-            </aside>
-          </div>
         </PublicContainer>
       </section>
     </>

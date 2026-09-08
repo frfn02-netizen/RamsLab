@@ -39,14 +39,14 @@ export const developmentHeadOfLaboratory = {
     "Welcome to RAMS Laboratory. We connect rigorous research with practical engineering decisions for safer, more dependable systems.",
     "Selamat datang di Laboratorium RAMS. Kami menghubungkan riset yang ketat dengan keputusan rekayasa praktis untuk sistem yang lebih aman dan andal.",
   ),
-  name: "Prof. Ketut",
-  role: text("Head of Laboratory", "Kepala Laboratorium"),
+  name: "Dr. Eng. Dhimas Widhi Handani, S.T., M.Sc.",
+  role: text("Head of RAMS Laboratory", "Kepala Laboratorium RAMS"),
   s1: text("Reliability and availability", "Keandalan dan ketersediaan"),
   s2: text("Safety and risk", "Keselamatan dan risiko"),
   s3: text("Marine systems", "Sistem maritim"),
   imageAlt: text(
-    "Prof. Ketut, Head of RAMS Laboratory",
-    "Prof. Ketut, Kepala Laboratorium RAMS",
+    "Dr. Eng. Dhimas Widhi Handani, Head of RAMS Laboratory",
+    "Dr. Eng. Dhimas Widhi Handani, Kepala Laboratorium RAMS",
   ),
 };
 

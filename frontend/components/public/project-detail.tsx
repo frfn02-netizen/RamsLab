@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicProject, getPublicProjects } from "@/lib/api/modules";
@@ -92,7 +93,7 @@ export default function PublicProjectDetail({
 
   return (
     <>
-      <section className="public-grid-dark bg-[var(--navy)] text-white">
+      <section className="bg-[var(--navy)] text-white">
         <PublicContainer className="py-14 sm:py-20">
           <div className="flex flex-wrap items-center gap-2 font-mono text-[0.64rem] uppercase tracking-[0.14em] text-white/45">
             <Link href="/projects" className="transition hover:text-white">
@@ -109,13 +110,36 @@ export default function PublicProjectDetail({
               <span className="font-mono text-xs text-white/45">
                 {project.year}
               </span>
+              <span className="flex items-center gap-2 text-xs text-white/60">
+                <i
+                  className={`inline-block h-2 w-2 rounded-full ${project.status === "COMPLETED" ? "bg-[var(--ais-blue-light)]" : "bg-[var(--rams-red-light)]"}`}
+                />
+                {status(project.status)}
+              </span>
             </div>
-            <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.03] tracking-[-0.05em] sm:text-6xl">
+            <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.03] tracking-[-0.05em] sm:text-5xl lg:text-6xl">
               {project.title}
             </h1>
           </div>
         </PublicContainer>
       </section>
+
+      {project.image && (
+        <section className="bg-[var(--navy)]">
+          <PublicContainer>
+            <div className="relative mx-auto aspect-[21/9] w-full max-w-5xl overflow-hidden lg:aspect-[21/8]">
+              <Image
+                src={project.image}
+                alt={project.title}
+                fill
+                unoptimized
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 900px"
+                className="object-cover"
+              />
+            </div>
+          </PublicContainer>
+        </section>
+      )}
 
       <section className="bg-[var(--paper)]">
         <PublicContainer>
@@ -148,7 +172,7 @@ export default function PublicProjectDetail({
                 </div>
               )}
             </article>
-            <aside className="public-card-interaction h-fit border border-[var(--border)] bg-white p-6 sm:p-8">
+            <aside className="h-fit border border-[var(--border)] bg-white p-6 sm:p-8">
               <p className="eyebrow text-[var(--rams-red)]">{t("metadata")}</p>
               <dl className="mt-6 divide-y divide-[var(--border)]">
                 {[

@@ -20,11 +20,26 @@ import { findUserById } from "../users/user.repository.js";
 import type { Publication } from "./publication.types.js";
 import { safeHttpUrl } from "../../lib/url-security.js";
 import {
+  normalizePdfFilename,
   removePublicationPdf,
   uploadPublicationPdf,
 } from "../../lib/cloudinary.js";
 
-const MAX_PUBLICATION_PDF_BYTES = 10 * 1024 * 1024;
+const MAX_PUBLICATION_PDF_BYTES = 30 * 1024 * 1024;
+
+function originalPdfFilename(req: Request) {
+  const value = req.headers["x-original-filename"];
+  return normalizePdfFilename(
+    typeof value === "string" && value.trim() ? value : "publication.pdf",
+  );
+}
+
+function pdfContentDisposition(filename: string) {
+  const asciiFilename = filename
+    .replace(/[^\x20-\x7e]/g, "_")
+    .replace(/[\\"]+/g, "_");
+  return `inline; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
 
 async function serialize(publication: Publication, includeAudit = false) {
   const {
@@ -343,7 +358,7 @@ export async function uploadPublicationPdfController(
   if (pdf.length > MAX_PUBLICATION_PDF_BYTES)
     return res.status(413).json({
       success: false,
-      message: "PDF must be 10 MB or smaller",
+      message: "PDF must be 30 MB or smaller",
     });
 
   try {
@@ -353,12 +368,13 @@ export async function uploadPublicationPdfController(
         .status(404)
         .json({ success: false, message: "Publication not found" });
 
-    const uploaded = await uploadPublicationPdf(pdf);
+    const filename = originalPdfFilename(req);
+    const uploaded = await uploadPublicationPdf(pdf, filename);
     let updated: Publication | null;
     try {
       updated = await updatePublication(
         id,
-        { pdfUrl: uploaded.url },
+        { pdfUrl: uploaded.url, pdfFilename: uploaded.filename },
         req.user!,
       );
     } catch (error) {
@@ -400,5 +416,99 @@ export async function uploadPublicationPdfController(
       success: false,
       message: "Failed to upload publication PDF",
     });
+  }
+}
+
+export async function uploadTemporaryPublicationPdfController(
+  req: Request,
+  res: Response,
+) {
+  const contentType = (req.headers["content-type"] ?? "")
+    .split(";", 1)[0]
+    .trim()
+    .toLowerCase();
+  if (contentType !== "application/pdf")
+    return res
+      .status(415)
+      .json({ success: false, message: "Only PDF files are supported" });
+
+  const pdf = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  if (!pdf.length)
+    return res.status(400).json({ success: false, message: "PDF is required" });
+  if (pdf.length > MAX_PUBLICATION_PDF_BYTES)
+    return res.status(413).json({
+      success: false,
+      message: "PDF must be 30 MB or smaller",
+    });
+
+  try {
+    const uploaded = await uploadPublicationPdf(pdf, originalPdfFilename(req));
+    return res.status(201).json({
+      success: true,
+      data: {
+        url: uploaded.url,
+        publicId: uploaded.publicId,
+        filename: uploaded.filename,
+      },
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload publication PDF",
+    });
+  }
+}
+
+export async function getPublicPublicationPdfController(
+  req: Request,
+  res: Response,
+) {
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id))
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid publication ID" });
+
+  try {
+    const publication = await findPublicationById(id);
+    const pdfUrl = publication ? safeHttpUrl(publication.pdfUrl) : null;
+    if (!publication || !pdfUrl)
+      return res
+        .status(404)
+        .json({ success: false, message: "Publication PDF not found" });
+
+    const url = new URL(pdfUrl);
+    if (url.hostname.toLowerCase() !== "res.cloudinary.com") {
+      return res.redirect(302, pdfUrl);
+    }
+
+    const upstream = await fetch(pdfUrl, { redirect: "error" });
+    if (!upstream.ok || !upstream.body)
+      return res
+        .status(502)
+        .json({ success: false, message: "Publication PDF is unavailable" });
+
+    // Cloudinary raw assets uploaded without a file extension can be served as
+    // application/octet-stream and with attachment disposition. The stored
+    // Publication URL is still authoritative, so verify the actual payload
+    // before normalizing the response for browser preview.
+    const content = Buffer.from(await upstream.arrayBuffer());
+    if (content.subarray(0, 5).toString("ascii") !== "%PDF-")
+      return res
+        .status(502)
+        .json({ success: false, message: "Publication PDF is unavailable" });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      pdfContentDisposition(publication.pdfFilename || "publication.pdf"),
+    );
+    res.setHeader("Content-Length", content.length);
+    res.end(content);
+    return undefined;
+  } catch {
+    return res
+      .status(502)
+      .json({ success: false, message: "Publication PDF is unavailable" });
   }
 }

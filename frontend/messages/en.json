@@ -2,7 +2,7 @@
   "brand": {
     "laboratory": "RAMS Laboratory",
     "short": "RAMS LAB",
-    "technicalLine": "Reliability · Safety · Marine Systems",
+    "technicalLine": "Reliability ㆍ Availability ㆍ Management ㆍ Safety",
     "ais": "AIS-ITS",
     "pui": "PUI-KEKAL",
     "institution": "Institut Teknologi Sepuluh Nopember"
@@ -14,6 +14,9 @@
     "research": "Research",
     "publications": "Publications",
     "news": "News",
+    "events": "Events",
+    "publicService": "Public Service",
+    "contactUs": "Contact Us",
     "participate": "Participate",
     "projects": "Projects",
     "partners": "Partners",
@@ -71,9 +74,25 @@
     "developmentCategory": "Development",
     "otherCategory": "Other",
     "recordUpper": "RECORD",
-    "recordsUpper": "RECORDS"
+    "recordsUpper": "RECORDS",
+    "principles": "RAMS principles",
+    "principlesTitle": "The framework behind dependable systems."
   },
   "home": {
+    "welcome": {
+      "eyebrow": "Welcome to RAMS Laboratory",
+      "title": "Advancing Reliability and Safety in Maritime Systems",
+      "description": "RAMS Laboratory conducts research and develops innovative solutions to improve the reliability, safety, and performance of maritime systems through engineering, technology, and applied research.",
+      "note": "Engineering insight for systems that need to perform, endure, and protect."
+    },
+    "head": {
+      "noImage": "Head of Laboratory portrait unavailable"
+    },
+    "people": {
+      "eyebrow": "PEOPLE",
+      "title": "Who We Are",
+      "button": "Meet Our Team"
+    },
     "eyebrow": "RAMS Laboratory",
     "headline": "Reliability, safety & marine systems research.",
     "description": "We study the systems behind safe, dependable maritime and industrial operations—from risk assessment and AIS monitoring to maintenance, reliability, and simulation.",
@@ -111,7 +130,7 @@
     "researchHighlights": {
       "eyebrow": "Research highlights",
       "title": "Questions that shape dependable systems.",
-      "question": "Research question",
+      "question": "Research highlight",
       "readPaper": "Read Paper",
       "loading": "Loading research highlights",
       "error": "Research highlights are temporarily unavailable.",
@@ -119,6 +138,7 @@
       "imageAlt": "Research highlight",
       "carouselLabel": "Research highlights carousel",
       "controls": "Research highlight controls",
+      "indicators": "Research highlight slide indicators",
       "previous": "Previous research highlight",
       "next": "Next research highlight",
       "goTo": "Go to research highlight {number}"
@@ -395,6 +415,10 @@
     "emptyDescription": "Public alumni profiles will appear here when available.",
     "noMatchingTitle": "No matching alumni",
     "noMatchingDescription": "Try adjusting your search.",
+    "backToAlumni": "Back to Alumni",
+    "detailCategory": "ALUMNI",
+    "entryYear": "Entry",
+    "bioLabel": "BIO",
     "ctaTitle": "Stay connected with the laboratory."
   },
   "contact": {
@@ -453,6 +477,29 @@
     "address2": "Kampus ITS Sukolilo",
     "address3": "Surabaya 60111",
     "address4": "Indonesia"
+  },
+  "events": {
+    "metaTitle": "Events | RAMS Laboratory",
+    "eyebrow": "Events",
+    "title": "Events",
+    "description": "Published RAMS Laboratory events and institutional activities."
+  },
+  "publicService": {
+    "metaTitle": "Public Service | RAMS Laboratory",
+    "eyebrow": "Public Service",
+    "title": "Public Service",
+    "description": "Expertise and public services managed by RAMS Laboratory.",
+    "expertsEyebrow": "Our Experts",
+    "expertsTitle": "Our Experts",
+    "servicesEyebrow": "Public Services",
+    "servicesTitle": "Public Services",
+    "companies": "Companies",
+    "jobs": "Jobs / Services",
+    "noCompanies": "No companies have been published for this service.",
+    "noJobs": "No jobs or services have been published for this service.",
+    "profileLink": "View profile",
+    "openLabel": "View service",
+    "closeLabel": "Close"
   },
   "visual": {
     "profile": "Profile",

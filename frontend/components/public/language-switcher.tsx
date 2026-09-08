@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import type { Locale } from "@/i18n/routing";
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
@@ -22,15 +22,15 @@ export default function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => switchLocale("en")}
-        className={`px-1 ${locale === "en" ? "text-[var(--rams-red)]" : "text-[var(--charcoal)]"}`}
+        className={`px-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${locale === "en" ? "text-[var(--rams-red)]" : dark ? "text-white/70 hover:text-white" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
       >
         EN
       </button>
-      <span className="text-[var(--border)]">/</span>
+      <span className={dark ? "text-white/35" : "text-[var(--border)]"}>/</span>
       <button
         type="button"
         onClick={() => switchLocale("id")}
-        className={`px-1 ${locale === "id" ? "text-[var(--rams-red)]" : "text-[var(--charcoal)]"}`}
+        className={`px-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${locale === "id" ? "text-[var(--rams-red)]" : dark ? "text-white/70 hover:text-white" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
       >
         ID
       </button>

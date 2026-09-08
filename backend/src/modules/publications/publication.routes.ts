@@ -13,14 +13,25 @@ import {
   deletePublicationController,
   getPublicationController,
   getPublicationListController,
+  getPublicPublicationPdfController,
   updatePublicationController,
+  uploadTemporaryPublicationPdfController,
   uploadPublicationPdfController,
 } from "./publication.controller.js";
 
 const router = Router();
 
 router.get("/", optionallyAuthenticate, getPublicationListController);
+router.get("/:id/pdf", getPublicPublicationPdfController);
 router.get("/:id", optionallyAuthenticate, getPublicationController);
+
+router.post(
+  "/pdf-upload",
+  authenticate,
+  requireRole("ADMIN"),
+  express.raw({ type: "*/*", limit: "30mb" }),
+  uploadTemporaryPublicationPdfController,
+);
 
 router.post(
   "/",
@@ -38,7 +49,7 @@ router.post(
   "/:id/pdf",
   authenticate,
   requireRole("ADMIN"),
-  express.raw({ type: "*/*", limit: "10mb" }),
+  express.raw({ type: "*/*", limit: "30mb" }),
   uploadPublicationPdfController,
 );
 router.delete(

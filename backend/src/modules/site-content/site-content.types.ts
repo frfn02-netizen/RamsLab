@@ -86,6 +86,8 @@ export interface HomepageContent {
     buttonLabel: BilingualText;
   };
   headOfLaboratory?: HeadOfLaboratoryContent;
+  showHeadOfLaboratoryOnHomepage?: boolean;
+  showWhoWeAreOnHomepage?: boolean;
 }
 
 export interface HeroImagePosition {
