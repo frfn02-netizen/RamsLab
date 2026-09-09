@@ -644,7 +644,6 @@ function HomepageEditor() {
       | "hero"
       | "ecosystem"
       | "research"
-      | "projects"
       | "cta"
       | "headOfLaboratory",
     field: string,
@@ -744,7 +743,7 @@ function HomepageEditor() {
   return (
     <EditorShell
       title="Homepage"
-      description="Edit homepage copy while keeping research areas, projects, and logos sourced from their existing systems."
+      description="Edit homepage copy while keeping research areas and logos sourced from their existing systems."
       lastUpdated={lastUpdated}
       loading={loading}
       error={error}
@@ -1031,44 +1030,7 @@ function HomepageEditor() {
             />
           </Section>
 
-          <Section title="Projects section">
-            <BilingualField
-              label="Title"
-              value={content.projects.title}
-              onChange={(locale, value) =>
-                text("projects", "title", locale, value)
-              }
-            />
-            <Field label="Featured project limit">
-              <input
-                required
-                type="number"
-                min="1"
-                max="12"
-                className={inputClass}
-                value={content.projects.featuredLimit ?? 3}
-                onChange={(event) =>
-                  setContent((current) =>
-                    current
-                      ? {
-                          ...current,
-                          projects: {
-                            ...current.projects,
-                            featuredLimit: Number(event.target.value),
-                          },
-                        }
-                      : current,
-                  )
-                }
-              />
-              <p className="mt-1 text-xs text-[var(--rams-gray)]">
-                Published projects marked as featured will appear on the
-                homepage.
-              </p>
-            </Field>
-          </Section>
-
-          <Section title="Collaboration CTA">
+          <Section title="Research section">
             <BilingualField
               label="Title"
               value={content.cta.title}

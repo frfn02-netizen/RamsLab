@@ -23,6 +23,10 @@ export const createPartnerSchema = z.object({
   isFeatured: z.boolean().default(false),
 
   published: z.boolean().default(false),
+
+  showOnHomepage: z.boolean().default(false),
+
+  homepageOrder: z.number().int().min(0).optional(),
 });
 
 export const createPartnerDetailsSchema = createPartnerSchema.omit({
@@ -41,6 +45,8 @@ export const updatePartnerSchema = z.object({
   description: z.string().trim().max(1000).optional(),
   isFeatured: z.boolean().optional(),
   published: z.boolean().optional(),
+  showOnHomepage: z.boolean().optional(),
+  homepageOrder: z.number().int().min(0).optional(),
 });
 
 export type CreatePartnerInput = z.infer<typeof createPartnerSchema>;

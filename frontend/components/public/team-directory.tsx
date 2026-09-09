@@ -92,9 +92,10 @@ export function RoleLine({
 }) {
   const role = [member.title, member.position].filter(Boolean).join(" · ");
   const year = member.graduationYear ? ` · ${member.graduationYear}` : "";
+  if (!role) return null;
   return (
     <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-[var(--rams-red)]">
-      {role ? `${role}${year}` : fallback}
+      {`${role}${year}`}
     </p>
   );
 }
@@ -146,7 +147,7 @@ export function MemberCard({
       </div>
       <div className="flex flex-1 flex-col items-center pt-5 text-center">
         <h3
-          className={`font-display min-h-[3.25rem] max-w-full text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]`}
+          className={`font-display max-w-full text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]`}
         >
           <Link
             href={`/team/${member.id}`}

@@ -183,12 +183,6 @@ export default function DashboardPage() {
           <StatCard label="Dosen" value={stats?.dosen ?? 0} accent="red" />
 
           <StatCard
-            label="Projects"
-            value={stats?.projects ?? 0}
-            accent="navy"
-          />
-
-          <StatCard
             label="Publications"
             value={stats?.publications ?? 0}
             accent="navy"

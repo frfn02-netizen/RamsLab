@@ -59,9 +59,7 @@ function AlumniCard({
 
       <div className="mx-auto mt-4 max-w-full space-y-1 text-sm leading-6 text-[var(--slate)]">
         {member.position && (
-          <p className="font-semibold text-[var(--navy)]">
-            {member.position}
-          </p>
+          <p className="font-semibold text-[var(--navy)]">{member.position}</p>
         )}
 
         {company && <p>{company}</p>}

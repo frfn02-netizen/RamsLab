@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import LanguageSwitcher from "./language-switcher";
+import { useHeroContext } from "./hero-context";
 
 const links = [
   ["people", "/team"],
@@ -17,7 +18,6 @@ const contactLink = ["contactUs", "/contact"] as const;
 
 function isActive(pathname: string, href: string) {
   if (href === "/publications") return pathname.startsWith("/publications");
-  if (href === "/projects") return pathname.startsWith("/projects");
   if (href === "/partners") return pathname.startsWith("/partners");
   if (href === "/events") return pathname.startsWith("/events");
   if (href === "/public-service") return pathname.startsWith("/public-service");
@@ -30,63 +30,98 @@ export default function PublicHeader() {
   const brand = useTranslations("brand");
   const a11y = useTranslations("a11y");
   const [open, setOpen] = useState(false);
+  const { isAtTop } = useHeroContext();
 
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-[var(--ais-blue)] bg-white text-[var(--charcoal)] shadow-[0_4px_18px_rgba(11,32,56,0.08)]">
-      <div className="mx-auto flex min-h-20 max-w-[1380px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,color,box-shadow,border-color] duration-300 ${
+        isAtTop
+          ? "border-b-2 border-transparent bg-transparent text-white shadow-none"
+          : "border-b-2 border-[var(--ais-blue)] bg-white text-[var(--charcoal)] shadow-[0_4px_18px_rgba(11,32,56,0.08)]"
+      }`}
+    >
+      <div className="mx-auto flex min-h-[4.5rem] max-w-[1380px] items-center justify-between gap-5 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-3"
+          className="flex items-center gap-2.5"
           aria-label={a11y("home")}
         >
-          <div className="relative h-12 w-[104px] shrink-0 sm:h-16 sm:w-[128px]">
+          <div className="relative h-14 w-[120px] shrink-0 sm:h-[4.5rem] sm:w-[148px]">
             <Image
               src="/assets/rams-logo.png"
               alt=""
               fill
-              sizes="80px"
+              sizes="96px"
               className="object-contain"
               priority
             />
           </div>
           <div className="flex flex-col">
-            <span className="font-display text-xl font-bold text-[var(--navy)] sm:text-2xl">
+            <span
+              className={`font-display text-[1.35rem] font-bold sm:text-2xl lg:text-[1.65rem] transition-[color] duration-300 ${
+                isAtTop ? "text-white" : "text-[var(--navy)]"
+              }`}
+            >
               {brand("laboratory")}
             </span>
-            <span className="text-[0.72rem] text-[var(--gray)] sm:text-xs">
+            <span
+              className={`text-[0.78rem] sm:text-sm transition-[color] duration-300 ${
+                isAtTop ? "text-white/70" : "text-[var(--gray)]"
+              }`}
+            >
               {brand("technicalLine")}
             </span>
           </div>
         </Link>
 
         <nav
-          className="hidden items-center gap-6 lg:flex"
+          className="hidden items-center gap-7 lg:flex"
           aria-label={a11y("primaryNav")}
         >
           {links.map(([key, href]) => (
             <Link
               key={key}
               href={href}
-              className={`text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)] ${isActive(pathname, href) ? "text-[var(--rams-red)]" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
+              className={`text-[0.95rem] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)] ${
+                isActive(pathname, href)
+                  ? "text-[var(--rams-red)]"
+                  : isAtTop
+                    ? "text-white hover:text-white/80"
+                    : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"
+              }`}
             >
               {t(key)}
             </Link>
           ))}
           <Link
             href={contactLink[1]}
-            className={`inline-flex min-h-11 items-center border border-[var(--rams-red)] px-4 text-base font-semibold text-[var(--rams-red)] transition hover:bg-[var(--rams-red)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)] ${isActive(pathname, contactLink[1]) ? "bg-[var(--rams-red)] text-white" : ""}`}
+            className={`inline-flex min-h-12 items-center px-5 text-[0.95rem] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)] ${
+              isActive(pathname, contactLink[1])
+                ? "bg-[var(--rams-red)] text-white border border-[var(--rams-red)]"
+                : isAtTop
+                  ? "border border-white/40 text-white hover:bg-white/10 hover:border-white"
+                  : "border border-[var(--rams-red)] text-[var(--rams-red)] hover:bg-[var(--rams-red)] hover:text-white"
+            }`}
           >
             {t(contactLink[0])}
           </Link>
-          <div className="flex items-center gap-1 border-l border-[var(--border)] pl-4">
-            <LanguageSwitcher />
+          <div
+            className={`flex items-center gap-1 pl-5 transition-[border-color] duration-300 ${
+              isAtTop ? "border-l border-white/20" : "border-l border-[var(--border)]"
+            }`}
+          >
+            <LanguageSwitcher dark={isAtTop} />
           </div>
         </nav>
 
         <div className="flex items-center lg:hidden">
           <button
             type="button"
-            className="grid min-h-11 min-w-11 place-items-center rounded-full border border-[var(--border)] text-[var(--charcoal)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
+            className={`grid min-h-12 min-w-12 place-items-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)] ${
+              isAtTop
+                ? "border-white/30 text-white hover:border-white hover:text-white"
+                : "border-[var(--border)] text-[var(--charcoal)] hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"
+            }`}
             aria-expanded={open}
             aria-controls="mobile-public-navigation"
             aria-label={open ? a11y("closeMenu") : a11y("openMenu")}
@@ -94,12 +129,24 @@ export default function PublicHeader() {
           >
             <span className="sr-only">{a11y("menu")}</span>
             <span
-              className="flex h-5 w-5 flex-col justify-center gap-1"
+              className="flex h-6 w-6 flex-col justify-center gap-1.5"
               aria-hidden="true"
             >
-              <span className="h-px w-5 bg-[var(--charcoal)]" />
-              <span className="h-px w-5 bg-[var(--charcoal)]" />
-              <span className="h-px w-5 bg-[var(--charcoal)]" />
+              <span
+                className={`h-px w-6 transition-[background-color] duration-300 ${
+                  isAtTop ? "bg-white" : "bg-[var(--charcoal)]"
+                }`}
+              />
+              <span
+                className={`h-px w-6 transition-[background-color] duration-300 ${
+                  isAtTop ? "bg-white" : "bg-[var(--charcoal)]"
+                }`}
+              />
+              <span
+                className={`h-px w-6 transition-[background-color] duration-300 ${
+                  isAtTop ? "bg-white" : "bg-[var(--charcoal)]"
+                }`}
+              />
             </span>
           </button>
         </div>
@@ -107,7 +154,11 @@ export default function PublicHeader() {
       {open && (
         <nav
           id="mobile-public-navigation"
-          className="absolute left-3 right-3 top-[calc(100%+0.75rem)] border border-[var(--ais-blue)] bg-[var(--background-light)] p-5 shadow-[0_16px_35px_rgba(11,32,56,0.18)] sm:left-6 sm:right-6 lg:hidden"
+          className={`absolute left-3 right-3 top-[calc(100%+0.75rem)] border p-5 shadow-[0_16px_35px_rgba(11,32,56,0.18)] sm:left-6 sm:right-6 lg:hidden ${
+            isAtTop
+              ? "border-white/20 bg-[var(--navy-deep)]"
+              : "border-[var(--ais-blue)] bg-[var(--background-light)]"
+          }`}
           aria-label={a11y("mobileNav")}
         >
           <div className="grid gap-3">
@@ -116,7 +167,13 @@ export default function PublicHeader() {
                 key={key}
                 href={href}
                 onClick={() => setOpen(false)}
-                className={`py-1 text-base font-semibold transition hover:text-[var(--rams-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${isActive(pathname, href) ? "text-[var(--rams-red)]" : "text-[var(--charcoal)]"}`}
+                className={`py-1 text-base font-semibold transition hover:text-[var(--rams-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${
+                  isActive(pathname, href)
+                    ? "text-[var(--rams-red)]"
+                    : isAtTop
+                      ? "text-white"
+                      : "text-[var(--charcoal)]"
+                }`}
               >
                 {t(key)}
               </Link>
@@ -124,13 +181,23 @@ export default function PublicHeader() {
             <Link
               href={contactLink[1]}
               onClick={() => setOpen(false)}
-              className="mt-2 inline-flex min-h-11 w-fit items-center border border-[var(--rams-red)] px-4 text-base font-semibold text-[var(--rams-red)] transition hover:bg-[var(--rams-red)] hover:text-white"
+              className={`mt-2 inline-flex min-h-12 w-fit items-center px-5 text-base font-semibold transition hover:bg-[var(--rams-red)] hover:text-white ${
+                isAtTop
+                  ? "border border-white/40 text-white"
+                  : "border border-[var(--rams-red)] text-[var(--rams-red)]"
+              }`}
             >
               {t(contactLink[0])}
             </Link>
           </div>
-          <div className="mt-4 border-t border-[var(--border)] pt-4">
-            <LanguageSwitcher />
+          <div
+            className={`mt-4 pt-4 transition-[border-color] duration-300 ${
+              isAtTop
+                ? "border-t border-white/20"
+                : "border-t border-[var(--border)]"
+            }`}
+          >
+            <LanguageSwitcher dark={isAtTop} />
           </div>
         </nav>
       )}

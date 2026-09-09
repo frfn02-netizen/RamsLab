@@ -193,7 +193,6 @@ export default function AlumniPage() {
                           "Position",
                           "Account",
                           "Profile",
-                          "Company",
                           "Action",
                         ].map((heading) => (
                           <th

@@ -22,7 +22,7 @@ import {
 import {
   deleteResearchArea,
   getResearchAreaById,
-  uploadResearchAreaImage,
+  uploadResearchAreaPng,
   updateResearchArea,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
@@ -34,7 +34,7 @@ type FormState = ReturnType<typeof formToInput> & {
   order: number;
 };
 
-function ResearchImageField({
+function ResearchPngField({
   id,
   value,
   onChange,
@@ -46,27 +46,30 @@ function ResearchImageField({
   const [preview, setPreview] = useState(value);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filename, setFilename] = useState<string | null>(null);
 
   async function select(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file.");
+    if (file.type !== "image/png") {
+      setError("Please choose a PNG file.");
       return;
     }
     if (file.size > 3 * 1024 * 1024) {
-      setError("Image must be 3 MB or smaller.");
+      setError("PNG must be 3 MB or smaller.");
       return;
     }
     setError(null);
+    setFilename(file.name);
     setPreview(URL.createObjectURL(file));
     setUploading(true);
     try {
-      const uploaded = await uploadResearchAreaImage(id, file);
+      const uploaded = await uploadResearchAreaPng(id, file);
       onChange(uploaded.url);
     } catch {
-      setError("Image upload failed. The existing image is still safe.");
+      setError("PNG upload failed. The existing file is still safe.");
       setPreview(value);
+      setFilename(null);
     } finally {
       setUploading(false);
     }
@@ -75,21 +78,26 @@ function ResearchImageField({
   return (
     <div className="space-y-3">
       {preview ? (
-        <img
-          src={preview}
-          alt="Research area preview"
-          className="h-44 w-full object-cover"
-        />
+        <div className="grid h-10 place-items-center rounded-md border border-[var(--border)] bg-[var(--rams-gray-light)]">
+          <a
+            href={preview}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 text-sm font-semibold text-[var(--rams-red)] underline"
+          >
+            {filename ?? "View current PNG"}
+          </a>
+        </div>
       ) : (
-        <div className="grid h-44 place-items-center bg-[var(--rams-gray-light)] text-sm text-[var(--rams-gray)]">
-          No image selected.
+        <div className="grid h-10 place-items-center rounded-md border border-dashed border-[var(--border)] bg-[var(--rams-gray-light)] text-sm text-[var(--rams-gray)]">
+          No PNG selected.
         </div>
       )}
-      <label className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold">
-        {uploading ? "Uploading…" : "Change image"}
+      <label className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold transition hover:bg-[var(--rams-gray-light)]">
+        {uploading ? "Uploading\u2026" : "Upload PNG"}
         <input
           type="file"
-          accept="image/*"
+          accept=".png,image/png"
           className="sr-only"
           onChange={select}
           disabled={uploading}
@@ -103,7 +111,7 @@ function ResearchImageField({
 function toForm(area: ResearchArea): FormState {
   return {
     ...area,
-    image: area.image ?? "",
+    downloadablePng: area.downloadablePng ?? "",
     order: area.order,
     published: area.published,
     title: {
@@ -111,13 +119,6 @@ function toForm(area: ResearchArea): FormState {
     },
     description: {
       ...area.description,
-    },
-    methods: {
-      en: [...area.methods.en] as [string, string, string],
-      id: [...area.methods.id] as [string, string, string],
-    },
-    applications: {
-      ...area.applications,
     },
   };
 }
@@ -195,7 +196,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
 
   function updateText(
     locale: "en" | "id",
-    key: "title" | "description" | "applications",
+    key: "title" | "description",
     value: string,
   ) {
     setDirty(true);
@@ -211,26 +212,6 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
           }
         : current,
     );
-  }
-
-  function updateMethod(locale: "en" | "id", index: number, value: string) {
-    setDirty(true);
-
-    setForm((current) => {
-      if (!current) return current;
-
-      const methods = [...current.methods[locale]] as [string, string, string];
-
-      methods[index] = value;
-
-      return {
-        ...current,
-        methods: {
-          ...current.methods,
-          [locale]: methods,
-        },
-      };
-    });
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -260,7 +241,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
   async function remove() {
     if (
       !area ||
-      !window.confirm(`Delete “${area.code}”? This cannot be undone.`)
+      !window.confirm(`Delete \u201c${area.code}\u201d? This cannot be undone.`)
     ) {
       return;
     }
@@ -294,7 +275,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
           href="/dashboard/research"
           className="mt-5 inline-block text-sm font-bold text-[var(--rams-red)]"
         >
-          ← Back to research areas
+          &larr; Back to research areas
         </Link>
       </div>
     );
@@ -312,7 +293,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
           onClick={confirmNavigation}
           className="text-sm font-bold text-[var(--rams-red)]"
         >
-          ← All research areas
+          &larr; All research areas
         </Link>
 
         {error && <ErrorState message={error} />}
@@ -351,7 +332,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
             </h1>
 
             <p className="mt-2 text-sm text-[var(--rams-gray)]">
-              {area.title.id} · /{area.slug}
+              {area.title.id} &middot; /{area.slug}
             </p>
           </div>
 
@@ -383,7 +364,7 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
               disabled={deleting}
               onClick={() => void remove()}
             >
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? "Deleting\u2026" : "Delete"}
             </Button>
           </div>
         </header>
@@ -394,12 +375,31 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
             form={form}
             update={update}
             updateText={updateText}
-            updateMethod={updateMethod}
             onSubmit={save}
             saving={saving}
           />
         ) : (
           <Card className="space-y-7 p-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                Research Profile PNG
+              </p>
+              {area.downloadablePng ? (
+                <a
+                  href={area.downloadablePng}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm font-semibold text-[var(--rams-red)] underline"
+                >
+                  View PNG
+                </a>
+              ) : (
+                <p className="mt-2 text-sm text-[var(--rams-gray)]">
+                  No PNG uploaded
+                </p>
+              )}
+            </div>
+
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
                 Description
@@ -413,50 +413,6 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
                 {area.description.id}
               </p>
             </div>
-
-            <div className="grid gap-7 border-t border-black/8 pt-6 sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                  English methods
-                </p>
-
-                <ul className="mt-2 list-disc space-y-2 pl-5 text-sm">
-                  {area.methods.en.map((method) => (
-                    <li key={method}>{method}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                  Indonesian methods
-                </p>
-
-                <ul className="mt-2 list-disc space-y-2 pl-5 text-sm">
-                  {area.methods.id.map((method) => (
-                    <li key={method}>{method}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="grid gap-7 border-t border-black/8 pt-6 sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                  English applications
-                </p>
-
-                <p className="mt-2 font-semibold">{area.applications.en}</p>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                  Indonesian applications
-                </p>
-
-                <p className="mt-2 font-semibold">{area.applications.id}</p>
-              </div>
-            </div>
           </Card>
         )}
       </div>
@@ -469,7 +425,6 @@ function ResearchEditForm({
   form,
   update,
   updateText,
-  updateMethod,
   onSubmit,
   saving,
 }: {
@@ -478,127 +433,137 @@ function ResearchEditForm({
   update: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
   updateText: (
     locale: "en" | "id",
-    key: "title" | "description" | "applications",
+    key: "title" | "description",
     value: string,
   ) => void;
-  updateMethod: (locale: "en" | "id", index: number, value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   saving: boolean;
 }) {
   return (
     <Card className="p-6">
-      <form onSubmit={onSubmit} className="space-y-7">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Code">
-            <input
-              required
-              className={inputClass}
-              value={form.code}
-              onChange={(event) => update("code", event.target.value)}
-            />
-          </Field>
+      <form onSubmit={onSubmit} className="space-y-8">
+        <div className="space-y-5">
+          <div className="grid gap-5 sm:grid-cols-3">
+            <Field label="Code">
+              <input
+                required
+                className={inputClass}
+                value={form.code}
+                onChange={(event) => update("code", event.target.value)}
+              />
+            </Field>
 
-          <Field label="Slug">
-            <input
-              required
-              className={inputClass}
-              value={form.slug}
-              onChange={(event) => update("slug", event.target.value)}
-            />
-          </Field>
+            <Field label="Slug">
+              <input
+                required
+                className={inputClass}
+                value={form.slug}
+                onChange={(event) => update("slug", event.target.value)}
+              />
+            </Field>
 
-          <Field label="Order">
-            <input
-              required
-              type="number"
-              min="0"
-              step="1"
-              className={inputClass}
-              value={form.order}
-              onChange={(event) => update("order", Number(event.target.value))}
-            />
-          </Field>
+            <Field label="Order">
+              <input
+                required
+                type="number"
+                min="0"
+                step="1"
+                className={inputClass}
+                value={form.order}
+                onChange={(event) =>
+                  update("order", Number(event.target.value))
+                }
+              />
+            </Field>
+          </div>
 
-          <Field label="Image">
-            <ResearchImageField
-              id={id}
-              value={form.image ?? ""}
-              onChange={(value) => update("image", value)}
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input
+              type="checkbox"
+              checked={form.published}
+              onChange={(event) => update("published", event.target.checked)}
             />
-          </Field>
+            Published
+          </label>
         </div>
 
-        <label className="flex items-center gap-3 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={form.published}
-            onChange={(event) => update("published", event.target.checked)}
+        <section className="space-y-5 border-t border-black/8 pt-7">
+          <h2 className="text-lg font-bold">English</h2>
+
+          <Field label="Title">
+            <input
+              required
+              className={inputClass}
+              value={form.title.en}
+              onChange={(event) =>
+                updateText("en", "title", event.target.value)
+              }
+            />
+          </Field>
+
+          <Field label="Description">
+            <textarea
+              required
+              className={`${inputClass} min-h-28`}
+              value={form.description.en}
+              onChange={(event) =>
+                updateText("en", "description", event.target.value)
+              }
+            />
+          </Field>
+        </section>
+
+        <section className="space-y-5 border-t border-black/8 pt-7">
+          <h2 className="text-lg font-bold">Indonesian</h2>
+
+          <Field label="Title">
+            <input
+              required
+              className={inputClass}
+              value={form.title.id}
+              onChange={(event) =>
+                updateText("id", "title", event.target.value)
+              }
+            />
+          </Field>
+
+          <Field label="Description">
+            <textarea
+              required
+              className={`${inputClass} min-h-28`}
+              value={form.description.id}
+              onChange={(event) =>
+                updateText("id", "description", event.target.value)
+              }
+            />
+          </Field>
+        </section>
+
+        <section className="border-t border-black/8 pt-7">
+          <p className="mb-2 text-sm font-bold">Research Profile PNG</p>
+          <ResearchPngField
+            id={id}
+            value={form.downloadablePng ?? ""}
+            onChange={(value) => update("downloadablePng", value)}
           />
-          Published
-        </label>
+          <p className="mt-3 text-xs text-[var(--rams-gray)]">
+            Upload the PNG used as the research visual and downloadable research
+            profile.
+          </p>
+        </section>
 
-        {(["en", "id"] as const).map((locale) => (
-          <section
-            key={locale}
-            className="space-y-5 border-t border-black/8 pt-7"
+        <div className="flex gap-3 border-t border-black/8 pt-7">
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving\u2026" : "Save Research Area"}
+          </Button>
+
+          <Link
+            href="/dashboard/research"
+            className="inline-flex min-h-10 items-center px-4 text-sm font-semibold text-[var(--rams-gray)]"
           >
-            <h2 className="text-lg font-bold">
-              {locale === "en" ? "English" : "Indonesian"}
-            </h2>
-
-            <Field label="Title">
-              <input
-                required
-                className={inputClass}
-                value={form.title[locale]}
-                onChange={(event) =>
-                  updateText(locale, "title", event.target.value)
-                }
-              />
-            </Field>
-
-            <Field label="Description">
-              <textarea
-                required
-                className={`${inputClass} min-h-28`}
-                value={form.description[locale]}
-                onChange={(event) =>
-                  updateText(locale, "description", event.target.value)
-                }
-              />
-            </Field>
-
-            <div className="grid gap-5 sm:grid-cols-3">
-              {form.methods[locale].map((method, index) => (
-                <Field key={index} label={`Method ${index + 1}`}>
-                  <input
-                    required
-                    className={inputClass}
-                    value={method}
-                    onChange={(event) =>
-                      updateMethod(locale, index, event.target.value)
-                    }
-                  />
-                </Field>
-              ))}
-            </div>
-
-            <Field label="Applications">
-              <input
-                required
-                className={inputClass}
-                value={form.applications[locale]}
-                onChange={(event) =>
-                  updateText(locale, "applications", event.target.value)
-                }
-              />
-            </Field>
-          </section>
-        ))}
-
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving…" : "Save changes"}
-        </Button>
+            Cancel
+          </Link>
+        </div>
       </form>
     </Card>
   );

@@ -271,10 +271,10 @@ export const contentByKey = {
         text("Surabaya 60111", "Surabaya 60111"),
         text("Indonesia", "Indonesia"),
       ],
-      socialText: text(
-        "Instagram · RAMS Laboratory",
-        "Instagram · Laboratorium RAMS",
-      ),
+      // socialText: text(
+      //   "Instagram · RAMS Laboratory",
+      //   "Instagram · Laboratorium RAMS",
+      // ),
     },
     collaboration: {
       title: text("Research & Collaboration", "Riset & Kolaborasi"),
@@ -291,10 +291,10 @@ export const contentByKey = {
       "Riset dan rekayasa untuk keandalan, keselamatan, kemudahan pemeliharaan, dan sistem maritim.",
     ),
     email: text("jtsp@its.ac.id", "jtsp@its.ac.id"),
-    socialText: text(
-      "Instagram · RAMS Laboratory",
-      "Instagram · Laboratorium RAMS",
-    ),
+    // socialText: text(
+    //   "Instagram · RAMS Laboratory",
+    //   "Instagram · Laboratorium RAMS",
+    // ),
     addressLines: [
       text("Gedung WA", "Gedung WA"),
       text("Kampus ITS Sukolilo", "Kampus ITS Sukolilo"),

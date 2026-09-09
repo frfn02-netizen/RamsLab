@@ -7,7 +7,7 @@ import {
   getResearchAreaController,
   getResearchAreaListController,
   updateResearchAreaController,
-  uploadResearchAreaImageController,
+  uploadResearchAreaPngController,
 } from "./research.controller.js";
 
 const router = Router();
@@ -17,9 +17,9 @@ router.get("/:id", getResearchAreaController);
 router.post("/", createResearchAreaController);
 router.patch("/:id", updateResearchAreaController);
 router.post(
-  "/:id/image",
+  "/:id/png",
   raw({ type: "image/*", limit: "3mb" }),
-  uploadResearchAreaImageController,
+  uploadResearchAreaPngController,
 );
 router.delete("/:id", deleteResearchAreaController);
 

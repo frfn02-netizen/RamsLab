@@ -13,6 +13,7 @@ import {
 import {
   findUniversityPartners,
   findIndustrialPartners,
+  findHomepagePartners,
 } from "../partners/partner.repository.js";
 import { findAllDosen, findDosenById } from "../dosen/dosen.repository.js";
 import {
@@ -222,6 +223,29 @@ export async function getPublicUniversityPartnersController(
     return res.status(500).json({
       success: false,
       message: "Failed to fetch public university partners",
+    });
+  }
+}
+
+// ========================================
+// PUBLIC HOMEPAGE PARTNERS
+// ========================================
+
+export async function getPublicHomepagePartnersController(
+  _req: Request,
+  res: Response,
+) {
+  try {
+    const partners = await findHomepagePartners();
+
+    return res.json({
+      success: true,
+      data: partners.map(toPublicPartner),
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch homepage partners",
     });
   }
 }

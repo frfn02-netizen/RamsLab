@@ -26,6 +26,10 @@ export interface Partner {
 
   published: boolean;
 
+  showOnHomepage: boolean;
+
+  homepageOrder?: number;
+
   createdAt: Date;
 
   updatedAt: Date;

@@ -20,6 +20,7 @@ import researchHighlightRoutes from "./modules/research-highlights/research-high
 import studentRoutes from "./modules/students/student.routes.js";
 import eventRoutes from "./modules/events/event.routes.js";
 import publicServiceRoutes from "./modules/public-service/public-service.routes.js";
+import expertRoutes from "./modules/experts/expert.routes.js";
 import { authenticate } from "./middlewares/auth.middlewares.js";
 import { requireRole } from "./middlewares/role.middlewares.js";
 import {
@@ -113,6 +114,7 @@ app.use("/api/admin/research-highlights", researchHighlightRoutes);
 app.use("/api/admin/site-content", siteContentRoutes);
 app.use("/api/admin/events", eventRoutes);
 app.use("/api/admin/public-service", publicServiceRoutes);
+app.use("/api/experts", expertRoutes);
 
 app.get("/api/admin/test", authenticate, requireRole("ADMIN"), (_req, res) => {
   return res.json({

@@ -47,6 +47,7 @@ export interface PublicService {
   description?: BilingualText;
   shortDescription?: BilingualText;
   detailedDescription?: BilingualText;
+  images: string[];
   companies: PublicServiceCompany[];
   jobs: PublicServiceJob[];
   order: number;

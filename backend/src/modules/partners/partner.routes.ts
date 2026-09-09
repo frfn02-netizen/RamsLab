@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 
 import { authenticate } from "../../middlewares/auth.middlewares.js";
 
@@ -15,6 +15,7 @@ import {
   getIndustrialPartnerController,
   getIndustrialPartnerListController,
   updateIndustrialPartnerController,
+  uploadPartnerLogoController,
 } from "./partner.controller.js";
 
 const router = Router();
@@ -103,6 +104,18 @@ router.delete(
   authenticate,
   requireRole("ADMIN"),
   deleteIndustrialPartnerController,
+);
+
+// ========================================
+// LOGO UPLOAD (shared)
+// ========================================
+
+router.post(
+  "/:id/logo",
+  authenticate,
+  requireRole("ADMIN"),
+  express.raw({ type: ["image/jpeg", "image/png", "image/webp", "image/svg+xml"], limit: "3mb" }),
+  uploadPartnerLogoController,
 );
 
 export default router;

@@ -107,6 +107,8 @@ export interface Partner {
   description?: string;
   isFeatured: boolean;
   published: boolean;
+  showOnHomepage: boolean;
+  homepageOrder?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -115,6 +117,51 @@ export type PartnerInput = Omit<
   "_id" | "type" | "createdAt" | "updatedAt"
 >;
 export type PartnerUpdateInput = Partial<PartnerInput>;
+
+export interface ExpertEducation {
+  degree: string;
+  field: string;
+  institution: string;
+  startYear?: number;
+  endYear?: number;
+}
+
+export interface Expert {
+  _id: string;
+  name: string;
+  title?: string;
+  employeeId?: string;
+  nip?: string;
+  nidn?: string;
+  faculty?: string;
+  department?: string;
+  institution?: string;
+  program?: string;
+  position?: string;
+  phone?: string;
+  photo?: string;
+  bio?: string;
+  linkedin?: string;
+  specialization: string[];
+  showNip: boolean;
+  showNidn: boolean;
+  education?: ExpertEducation[];
+  sintaUrl?: string;
+  googleScholarUrl?: string;
+  scopusUrl?: string;
+  orcidUrl?: string;
+  hIndex?: number;
+  publicationCount?: number;
+  projectCount?: number;
+  awardCount?: number;
+  published: boolean;
+  isPublic: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+export type ExpertInput = Omit<Expert, "_id" | "createdAt" | "updatedAt">;
+export type ExpertUpdateInput = Partial<ExpertInput>;
 
 export interface Dosen {
   _id: string;
@@ -219,9 +266,7 @@ export interface ResearchArea {
   slug: string;
   title: ResearchAreaText;
   description: ResearchAreaText;
-  methods: { en: [string, string, string]; id: [string, string, string] };
-  applications: ResearchAreaText;
-  image?: string;
+  downloadablePng?: string;
   order: number;
   published: boolean;
   createdAt: string;
@@ -322,6 +367,7 @@ export interface PublicServiceRecord {
   description?: BilingualText;
   shortDescription?: BilingualText;
   detailedDescription?: BilingualText;
+  images: string[];
   companies: PublicServiceCompany[];
   jobs: PublicServiceJob[];
   order: number;
@@ -360,6 +406,7 @@ export interface PublicServicePageData {
     code?: string;
     title: BilingualText;
     description?: BilingualText;
+    images: string[];
     order: number;
   }>;
 }
@@ -369,6 +416,7 @@ export interface PublicServiceDetail {
   code?: string;
   title: BilingualText;
   description?: BilingualText;
+  images: string[];
   order: number;
   companies: PublicServiceCompany[];
   jobs: PublicServiceJob[];

@@ -9,6 +9,8 @@ const PUBLICATION_FOLDER = "rams-platform/publications";
 const RESEARCH_HIGHLIGHT_FOLDER = "rams-platform/research-highlights";
 const EVENT_FOLDER = "rams-platform/events";
 const PROJECT_FOLDER = "rams-platform/projects";
+const PARTNER_LOGO_FOLDER = "rams-platform/partner-logos";
+const PUBLIC_SERVICE_FOLDER = "rams-platform/public-services";
 
 function ensureCloudinaryConfigured() {
   if (!process.env.CLOUDINARY_URL) {
@@ -71,7 +73,7 @@ export async function uploadSiteContentHomepageImage(buffer: Buffer) {
   };
 }
 
-export async function uploadResearchAreaImage(buffer: Buffer) {
+export async function uploadResearchAreaPng(buffer: Buffer) {
   const result = await uploadBuffer(buffer, RESEARCH_AREA_FOLDER);
   return {
     url: result.secure_url,
@@ -97,6 +99,14 @@ export async function uploadEventImage(buffer: Buffer) {
 
 export async function uploadProjectImage(buffer: Buffer) {
   const result = await uploadBuffer(buffer, PROJECT_FOLDER);
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+}
+
+export async function uploadPartnerLogo(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, PARTNER_LOGO_FOLDER);
   return {
     url: result.secure_url,
     publicId: result.public_id,
@@ -211,6 +221,14 @@ export async function removeResearchHighlightImage(publicId?: string) {
     type: "upload",
     invalidate: true,
   });
+}
+
+export async function uploadPublicServiceImage(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, PUBLIC_SERVICE_FOLDER);
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
 }
 
 export async function removeEventImage(publicId?: string) {

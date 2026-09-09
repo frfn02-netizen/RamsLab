@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 
 import { ObjectId } from "mongodb";
 
+import { uploadPartnerLogo } from "../../lib/cloudinary.js";
+
 import {
   createPartnerDetailsSchema,
   updatePartnerSchema,
@@ -414,6 +416,71 @@ export async function deleteIndustrialPartnerController(
     return res.status(500).json({
       success: false,
       message: "Failed to delete industrial partner",
+    });
+  }
+}
+
+// ========================================
+// UPLOAD PARTNER LOGO
+// ========================================
+
+const MAX_LOGO_BYTES = 3 * 1024 * 1024;
+
+export async function uploadPartnerLogoController(req: Request, res: Response) {
+  try {
+    const id = String(req.params.id);
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid partner ID",
+      });
+    }
+
+    const existing = await findPartnerById(id);
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: "Partner not found",
+      });
+    }
+
+    const photo = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+
+    if (photo.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Logo image is required",
+      });
+    }
+
+    if (photo.length > MAX_LOGO_BYTES) {
+      return res.status(413).json({
+        success: false,
+        message: "Logo must be 3 MB or smaller",
+      });
+    }
+
+    const uploaded = await uploadPartnerLogo(photo);
+
+    const updated = await updatePartner(id, { logo: uploaded.url });
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Partner not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: updated,
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload partner logo",
     });
   }
 }

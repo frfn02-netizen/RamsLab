@@ -24,13 +24,13 @@ const navigationGroups = [
       ["Research Highlights", "/dashboard/research-highlights"],
       ["Publications", "/dashboard/publications"],
       ["Events", "/dashboard/events"],
-      ["Projects", "/dashboard/projects"],
     ],
   },
   {
     label: "People",
     items: [
       ["Lecturers", "/dashboard/dosen"],
+      ["Experts", "/dashboard/experts"],
       ["Students", "/dashboard/students"],
       ["Alumni", "/dashboard/alumni"],
     ],

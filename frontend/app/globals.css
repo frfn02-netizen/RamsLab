@@ -773,3 +773,125 @@ body {
     transition: none;
   }
 }
+
+/* ========================================
+   PARTNER MARQUEE
+   ======================================== */
+
+@keyframes partner-marquee-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-1 * var(--marquee-distance, 50%)));
+  }
+}
+
+@keyframes partner-marquee-right {
+  0% {
+    transform: translateX(calc(-1 * var(--marquee-distance, 50%)));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.partner-marquee-track {
+  display: flex;
+  width: max-content;
+}
+
+.partner-marquee-track--left {
+  animation: partner-marquee-left var(--marquee-duration, 30s) linear infinite;
+}
+
+.partner-marquee-track--right {
+  animation: partner-marquee-right var(--marquee-duration, 30s) linear infinite;
+}
+
+.partner-marquee-row:hover .partner-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-marquee-track--left,
+  .partner-marquee-track--right {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ========================================
+   MARITIME CTA SECTION
+   ======================================== */
+
+.maritime-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.maritime-cta-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+.maritime-cta-horizon::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 35%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 20%,
+    rgba(255, 255, 255, 0.08) 80%,
+    transparent 100%
+  );
+}
+
+/* View-all partners CTA decorative lines */
+.partners-cta-decor {
+  position: relative;
+}
+
+.partners-cta-decor::before,
+.partners-cta-decor::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  width: 60px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border),
+    transparent
+  );
+}
+
+.partners-cta-decor::before {
+  right: calc(50% + 100px);
+}
+
+.partners-cta-decor::after {
+  left: calc(50% + 100px);
+}
+
+@media (min-width: 640px) {
+  .partners-cta-decor::before,
+  .partners-cta-decor::after {
+    width: 100px;
+  }
+
+  .partners-cta-decor::before {
+    right: calc(50% + 140px);
+  }
+
+  .partners-cta-decor::after {
+    left: calc(50% + 140px);
+  }
+}

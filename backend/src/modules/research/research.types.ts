@@ -15,20 +15,13 @@ export interface BilingualText {
   id: string;
 }
 
-export interface BilingualMethods {
-  en: [string, string, string];
-  id: [string, string, string];
-}
-
 export interface ResearchArea {
   _id?: ObjectId;
   code: string;
   slug: string;
   title: BilingualText;
   description: BilingualText;
-  methods: BilingualMethods;
-  applications: BilingualText;
-  image?: string;
+  downloadablePng?: string;
   order: number;
   published: boolean;
   createdAt: Date;

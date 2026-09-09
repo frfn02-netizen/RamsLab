@@ -17,7 +17,7 @@ const pageDetails: Record<
   homepage: {
     title: "Homepage",
     description:
-      "Hero, principles, research, projects, ecosystem, and collaboration copy.",
+      "Hero, principles, research, ecosystem, and collaboration copy.",
   },
   about: {
     title: "About",

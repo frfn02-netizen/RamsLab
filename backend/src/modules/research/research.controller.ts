@@ -9,17 +9,18 @@ import {
   createResearchArea,
   deleteResearchArea,
   findAllResearchAreas,
+  findResearchAreaByCodeOrSlug,
   findResearchAreaById,
   updateResearchArea,
 } from "./research.repository.js";
 import type { PublicResearchArea, ResearchArea } from "./research.types.js";
 import {
   removeProfilePhoto,
-  uploadResearchAreaImage,
+  uploadResearchAreaPng,
 } from "../../lib/cloudinary.js";
 
-const MAX_RESEARCH_IMAGE_BYTES = 3 * 1024 * 1024;
-const ALLOWED_IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|avif)$/i;
+const MAX_RESEARCH_PNG_BYTES = 3 * 1024 * 1024;
+const ALLOWED_PNG_EXTENSIONS = /\.(png)$/i;
 
 function publicResearchArea(area: ResearchArea): PublicResearchArea {
   const {
@@ -136,11 +137,14 @@ export async function updateResearchAreaController(
       return res
         .status(404)
         .json({ success: false, message: "Research area not found" });
-    if (existing?.image && existing.image !== area.image) {
+    if (
+      existing?.downloadablePng &&
+      existing.downloadablePng !== area.downloadablePng
+    ) {
       try {
-        await removeProfilePhoto(existing.image);
+        await removeProfilePhoto(existing.downloadablePng);
       } catch {
-        // The database now points to the new image; cleanup is best effort.
+        // Cleanup is best effort.
       }
     }
     return res.json({ success: true, data: adminResearchArea(area) });
@@ -162,7 +166,7 @@ export async function updateResearchAreaController(
   }
 }
 
-export async function uploadResearchAreaImageController(
+export async function uploadResearchAreaPngController(
   req: Request,
   res: Response,
 ) {
@@ -179,17 +183,17 @@ export async function uploadResearchAreaImageController(
   if (!contentType.startsWith("image/")) {
     return res
       .status(400)
-      .json({ success: false, message: "Image file required" });
+      .json({ success: false, message: "PNG file required" });
   }
-  if (filename && !ALLOWED_IMAGE_EXTENSIONS.test(filename)) {
+  if (filename && !ALLOWED_PNG_EXTENSIONS.test(filename)) {
     return res
       .status(400)
-      .json({ success: false, message: "Unsupported image extension" });
+      .json({ success: false, message: "Only PNG files are supported" });
   }
-  if (!image.length || image.length > MAX_RESEARCH_IMAGE_BYTES) {
+  if (!image.length || image.length > MAX_RESEARCH_PNG_BYTES) {
     return res
       .status(400)
-      .json({ success: false, message: "Image must be 3 MB or smaller" });
+      .json({ success: false, message: "PNG must be 3 MB or smaller" });
   }
   try {
     if (!(await findResearchAreaById(id))) {
@@ -197,12 +201,12 @@ export async function uploadResearchAreaImageController(
         .status(404)
         .json({ success: false, message: "Research area not found" });
     }
-    const uploaded = await uploadResearchAreaImage(image);
+    const uploaded = await uploadResearchAreaPng(image);
     return res.json({ success: true, data: uploaded });
   } catch {
     return res.status(500).json({
       success: false,
-      message: "Failed to upload research area image",
+      message: "Failed to upload research area PNG",
     });
   }
 }
@@ -243,6 +247,32 @@ export async function getPublicResearchAreasController(
     return res.status(500).json({
       success: false,
       message: "Failed to fetch public research areas",
+    });
+  }
+}
+
+export async function getPublicResearchAreaBySlugController(
+  req: Request,
+  res: Response,
+) {
+  const slug = req.params.slug as string;
+  if (!slug) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Slug is required" });
+  }
+  try {
+    const area = await findResearchAreaByCodeOrSlug(slug, slug);
+    if (!area || !area.published) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Research area not found" });
+    }
+    return res.json({ success: true, data: publicResearchArea(area) });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch research area",
     });
   }
 }

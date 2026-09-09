@@ -18,7 +18,6 @@
     "publicService": "Public Service",
     "contactUs": "Contact Us",
     "participate": "Participate",
-    "projects": "Projects",
     "partners": "Partners",
     "team": "Team",
     "alumni": "Alumni",
@@ -44,8 +43,6 @@
   "common": {
     "readMore": "Read more",
     "explore": "Explore",
-    "viewProject": "View project",
-    "allProjects": "All projects",
     "visitWebsite": "Visit website",
     "academic": "Academic",
     "industrial": "Industrial",
@@ -166,7 +163,15 @@
     "ctaTitle": "Have a reliability, safety, or marine systems challenge?",
     "ctaDescription": "Talk with the laboratory about a research, reliability, safety, or marine systems challenge.",
     "ecosystemTitle": "Part of the ITS Research Ecosystem",
-    "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember"
+    "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
+    "partners": {
+      "sectionEyebrow": "Our Partners",
+      "title": "Selected Partners",
+      "description": "We collaborate with leading universities and industrial partners to advance research in reliability, safety, and marine systems.",
+      "industrialTitle": "Industrial Partners",
+      "universityTitle": "University Partners",
+      "viewAll": "View all partners"
+    }
   },
   "about": {
     "heroEyebrow": "About the laboratory",
@@ -279,9 +284,6 @@
       "maintenance": "Maintenance",
       "safety": "Safety"
     },
-    "featuredEyebrow": "Featured projects",
-    "featuredTitle": "Featured Projects",
-    "featuredDescription": "Selected research and engineering projects from RAMS Laboratory.",
     "industryEyebrow": "Research & industry",
     "industryTitle": "From research to engineering decisions.",
     "industryDescription": "RAMS methods connect directly to operational practice: reliability, safety, maintenance, and risk inform how marine and industrial systems are designed, operated, and maintained.",
@@ -292,10 +294,10 @@
       "decision": "Simulation and decision support guide operations planning."
     },
     "ctaTitle": "Better decisions start with better understanding.",
-    "ctaText": "Explore the research, methods, and projects behind RAMS Laboratory.",
-    "ctaPrimary": "View projects",
+    "ctaText": "Explore the research and methods behind RAMS Laboratory.",
     "ctaSecondary": "About RAMS Laboratory",
-    "contextImageAlt": "Vessel & ship systems"
+    "contextImageAlt": "Vessel & ship systems",
+    "downloadPng": "Download PNG"
   },
   "publications": {
     "heroEyebrow": "Research archive",
@@ -328,25 +330,6 @@
     "emptyDescription": "Try adjusting your search or filters.",
     "loading": "Loading publications",
     "error": "Publication records are temporarily unavailable."
-  },
-  "projects": {
-    "heroEyebrow": "Published work",
-    "heroTitle": "Projects with an operational edge.",
-    "heroDescription": "Explore public research, consulting, and development projects published through the RAMS Platform.",
-    "register": "Project register",
-    "sorted": "Published records · sorted by year",
-    "noTitle": "No projects published",
-    "noDescription": "There are no public project records available right now.",
-    "loading": "Loading published projects",
-    "detailDescription": "Project description",
-    "metadata": "Project metadata",
-    "partnerNote": "Partner relationships are represented by platform IDs in the current public project contract; partner names are not fabricated here.",
-    "relatedEyebrow": "Continue exploring",
-    "relatedTitle": "Related projects",
-    "notFound": "The requested project could not be found.",
-    "error": "The project record is temporarily unavailable.",
-    "technicalDetails": "Technical details",
-    "slug": "Project slug"
   },
   "partners": {
     "heroEyebrow": "Collaboration network",

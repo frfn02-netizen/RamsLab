@@ -7,6 +7,7 @@ import {
 import { NextIntlClientProvider } from "next-intl";
 import PublicFooter from "@/components/public/public-footer";
 import PublicHeader from "@/components/public/public-header";
+import { HeroProvider } from "@/components/public/hero-context";
 import { routing, type Locale } from "@/i18n/routing";
 
 export function generateStaticParams() {
@@ -44,11 +45,13 @@ export default async function LocaleLayout({
         {t("skipToContent")}
       </a>
 
-      <PublicHeader />
+      <HeroProvider>
+        <PublicHeader />
 
-      <main id="main-content">{children}</main>
+        <main id="main-content" className="pt-[4.5rem]">{children}</main>
 
-      <PublicFooter />
+        <PublicFooter />
+      </HeroProvider>
     </NextIntlClientProvider>
   );
 }

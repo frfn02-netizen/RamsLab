@@ -5,19 +5,6 @@ const bilingualTextSchema = z.object({
   id: z.string().trim().min(1).max(5000),
 });
 
-const bilingualMethodsSchema = z.object({
-  en: z.tuple([
-    z.string().trim().min(1).max(500),
-    z.string().trim().min(1).max(500),
-    z.string().trim().min(1).max(500),
-  ]),
-  id: z.tuple([
-    z.string().trim().min(1).max(500),
-    z.string().trim().min(1).max(500),
-    z.string().trim().min(1).max(500),
-  ]),
-});
-
 const researchAreaFields = {
   code: z
     .string()
@@ -31,9 +18,7 @@ const researchAreaFields = {
     .max(100),
   title: bilingualTextSchema,
   description: bilingualTextSchema,
-  methods: bilingualMethodsSchema,
-  applications: bilingualTextSchema,
-  image: z.string().trim().max(500).optional(),
+  downloadablePng: z.string().trim().max(500).optional(),
   order: z.number().int().min(0).max(100000),
   published: z.boolean().default(true),
 };
@@ -45,9 +30,7 @@ export const updateResearchAreaSchema = z.object({
   slug: researchAreaFields.slug.optional(),
   title: researchAreaFields.title.optional(),
   description: researchAreaFields.description.optional(),
-  methods: researchAreaFields.methods.optional(),
-  applications: researchAreaFields.applications.optional(),
-  image: researchAreaFields.image,
+  downloadablePng: researchAreaFields.downloadablePng,
   order: researchAreaFields.order.optional(),
   published: z.boolean().optional(),
 });

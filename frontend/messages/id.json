@@ -18,7 +18,6 @@
     "publicService": "Layanan Publik",
     "contactUs": "Hubungi Kami",
     "participate": "Berpartisipasi",
-    "projects": "Proyek",
     "partners": "Mitra",
     "team": "Tim",
     "alumni": "Alumni",
@@ -44,8 +43,6 @@
   "common": {
     "readMore": "Baca selengkapnya",
     "explore": "Jelajahi",
-    "viewProject": "Lihat proyek",
-    "allProjects": "Semua proyek",
     "visitWebsite": "Kunjungi situs",
     "academic": "Akademik",
     "industrial": "Industri",
@@ -166,7 +163,15 @@
     "ctaTitle": "Memiliki tantangan keandalan, keselamatan, atau sistem maritim?",
     "ctaDescription": "Diskusikan tantangan riset, keandalan, keselamatan, atau sistem maritim bersama laboratorium.",
     "ecosystemTitle": "Bagian dari Ekosistem Riset ITS",
-    "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember"
+    "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
+    "partners": {
+      "sectionEyebrow": "Mitra Kami",
+      "title": "Mitra Pilihan",
+      "description": "Kami berkolaborasi dengan universitas terkemuka dan mitra industri untuk memajukan riset dalam keandalan, keselamatan, dan sistem maritim.",
+      "industrialTitle": "Mitra Industri",
+      "universityTitle": "Mitra Universitas",
+      "viewAll": "Lihat semua mitra"
+    }
   },
   "about": {
     "heroEyebrow": "Tentang laboratorium",
@@ -279,9 +284,6 @@
       "maintenance": "Pemeliharaan",
       "safety": "Keselamatan"
     },
-    "featuredEyebrow": "Proyek unggulan",
-    "featuredTitle": "Proyek Unggulan",
-    "featuredDescription": "Proyek riset dan rekayasa terpilih dari Laboratorium RAMS.",
     "industryEyebrow": "Riset & industri",
     "industryTitle": "Dari riset menuju keputusan rekayasa.",
     "industryDescription": "Metode RAMS terhubung langsung dengan praktik operasional: keandalan, keselamatan, pemeliharaan, dan risiko membantu sistem maritim dan industri dirancang, dioperasikan, serta dipelihara.",
@@ -292,10 +294,10 @@
       "decision": "Simulasi dan dukungan keputusan memandu perencanaan operasi."
     },
     "ctaTitle": "Keputusan yang lebih baik dimulai dari pemahaman yang lebih baik.",
-    "ctaText": "Jelajahi riset, metode, dan proyek di balik Laboratorium RAMS.",
-    "ctaPrimary": "Lihat proyek",
+    "ctaText": "Jelajahi riset dan metode di balik Laboratorium RAMS.",
     "ctaSecondary": "Tentang Laboratorium RAMS",
-    "contextImageAlt": "Kapal & sistem kapal"
+    "contextImageAlt": "Kapal & sistem kapal",
+    "downloadPng": "Unduh PNG"
   },
   "publications": {
     "heroEyebrow": "Arsip riset",
@@ -328,25 +330,6 @@
     "emptyDescription": "Coba sesuaikan pencarian atau filter Anda.",
     "loading": "Memuat publikasi",
     "error": "Rekaman publikasi sementara tidak tersedia."
-  },
-  "projects": {
-    "heroEyebrow": "Pekerjaan terbit",
-    "heroTitle": "Proyek dengan sisi operasional.",
-    "heroDescription": "Jelajahi proyek riset, konsultasi, dan pengembangan publik yang diterbitkan melalui RAMS Platform.",
-    "register": "Register proyek",
-    "sorted": "Rekaman terbit · diurutkan berdasarkan tahun",
-    "noTitle": "Belum ada proyek terbit",
-    "noDescription": "Belum ada rekaman proyek publik yang tersedia saat ini.",
-    "loading": "Memuat proyek terbit",
-    "detailDescription": "Deskripsi proyek",
-    "metadata": "Metadata proyek",
-    "partnerNote": "Relasi mitra direpresentasikan sebagai ID platform dalam kontrak publik saat ini; nama mitra tidak dibuat-buat.",
-    "relatedEyebrow": "Jelajahi lebih lanjut",
-    "relatedTitle": "Proyek terkait",
-    "notFound": "Proyek yang diminta tidak ditemukan.",
-    "error": "Rekaman proyek sementara tidak tersedia.",
-    "technicalDetails": "Detail teknis",
-    "slug": "Slug proyek"
   },
   "partners": {
     "heroEyebrow": "Jejaring kolaborasi",

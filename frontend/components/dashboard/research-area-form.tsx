@@ -21,15 +21,10 @@ type FormState = {
   slug: string;
   order: string;
   published: boolean;
-  image: string;
   titleEn: string;
   titleId: string;
   descriptionEn: string;
   descriptionId: string;
-  methodsEn: [string, string, string];
-  methodsId: [string, string, string];
-  applicationsEn: string;
-  applicationsId: string;
 };
 
 export const emptyResearchAreaForm: FormState = {
@@ -37,57 +32,52 @@ export const emptyResearchAreaForm: FormState = {
   slug: "",
   order: "0",
   published: true,
-  image: "",
   titleEn: "",
   titleId: "",
   descriptionEn: "",
   descriptionId: "",
-  methodsEn: ["", "", ""],
-  methodsId: ["", "", ""],
-  applicationsEn: "",
-  applicationsId: "",
 };
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function formToInput(form: FormState): ResearchAreaInput {
+  const titleEn = form.titleEn.trim();
+  const autoCode =
+    form.code.trim() ||
+    titleEn
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, "_")
+      .replace(/^_|_$/g, "")
+      .slice(0, 50) ||
+    "RESEARCH";
+  const autoSlug = form.slug.trim() || slugify(titleEn) || "research-area";
+
   return {
-    code: form.code.trim(),
-    slug: form.slug.trim(),
-    order: Number(form.order),
+    code: autoCode,
+    slug: autoSlug,
+    order: Number(form.order) || 0,
     published: form.published,
-    image: form.image.trim() || undefined,
     title: {
-      en: form.titleEn.trim(),
+      en: titleEn,
       id: form.titleId.trim(),
     },
     description: {
       en: form.descriptionEn.trim(),
       id: form.descriptionId.trim(),
     },
-    methods: {
-      en: form.methodsEn.map((item) => item.trim()) as [string, string, string],
-      id: form.methodsId.map((item) => item.trim()) as [string, string, string],
-    },
-    applications: {
-      en: form.applicationsEn.trim(),
-      id: form.applicationsId.trim(),
-    },
   };
 }
 
 function validate(form: FormState) {
   const errors: Record<string, string> = {};
-
-  if (!/^[A-Z][A-Z0-9_]*$/.test(form.code.trim())) {
-    errors.code = "Use an uppercase identifier.";
-  }
-
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) {
-    errors.slug = "Use lowercase URL-safe words separated by hyphens.";
-  }
-
-  if (!/^\d+$/.test(form.order) || Number(form.order) < 0) {
-    errors.order = "Order must be a non-negative integer.";
-  }
 
   if (!form.titleEn.trim()) {
     errors.titleEn = "English title is required.";
@@ -103,26 +93,6 @@ function validate(form: FormState) {
 
   if (!form.descriptionId.trim()) {
     errors.descriptionId = "Indonesian description is required.";
-  }
-
-  form.methodsEn.forEach((item, index) => {
-    if (!item.trim()) {
-      errors[`methodEn${index}`] = "Required.";
-    }
-  });
-
-  form.methodsId.forEach((item, index) => {
-    if (!item.trim()) {
-      errors[`methodId${index}`] = "Required.";
-    }
-  });
-
-  if (!form.applicationsEn.trim()) {
-    errors.applicationsEn = "English applications are required.";
-  }
-
-  if (!form.applicationsId.trim()) {
-    errors.applicationsId = "Indonesian applications are required.";
   }
 
   return errors;
@@ -172,22 +142,6 @@ export default function ResearchAreaForm() {
     }));
   };
 
-  const updateMethod = (locale: "en" | "id", index: number, value: string) => {
-    setDirty(true);
-
-    setForm((current) => ({
-      ...current,
-      [locale === "en" ? "methodsEn" : "methodsId"]: (locale === "en"
-        ? current.methodsEn
-        : current.methodsId
-      ).map((item, itemIndex) => (itemIndex === index ? value : item)) as [
-        string,
-        string,
-        string,
-      ],
-    }));
-  };
-
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -222,13 +176,13 @@ export default function ResearchAreaForm() {
           onClick={confirmNavigation}
           className="text-sm font-bold text-[var(--rams-red)]"
         >
-          ← Research Areas
+          &larr; Research Areas
         </Link>
 
         <PageHeader
           eyebrow="Research"
-          title="Add research area"
-          description="Create a bilingual research area record for the public Research page."
+          title="Create Research Area"
+          description="Add a new research area to the public Research page."
         />
 
         {dirty && (
@@ -241,45 +195,7 @@ export default function ResearchAreaForm() {
 
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-8">
-            <section className="space-y-5">
-              <h2 className="text-lg font-bold">Basic</h2>
-
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Code" error={errors.code}>
-                  <input
-                    required
-                    className={inputClass}
-                    value={form.code}
-                    onChange={(event) => update("code", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="Slug" error={errors.slug}>
-                  <input
-                    required
-                    className={inputClass}
-                    value={form.slug}
-                    onChange={(event) => update("slug", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="Order" error={errors.order}>
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    step="1"
-                    className={inputClass}
-                    value={form.order}
-                    onChange={(event) => update("order", event.target.value)}
-                  />
-                </Field>
-
-                <div className="flex items-end text-sm text-[var(--rams-gray)]">
-                  Image can be uploaded after the research area is created.
-                </div>
-              </div>
-
+            <div className="space-y-5">
               <label className="flex items-center gap-3 text-sm font-semibold">
                 <input
                   type="checkbox"
@@ -290,39 +206,66 @@ export default function ResearchAreaForm() {
                 />
                 Published
               </label>
+            </div>
+
+            <section className="space-y-5 border-t border-black/8 pt-7">
+              <h2 className="text-lg font-bold">English</h2>
+
+              <Field label="Title" error={errors.titleEn}>
+                <input
+                  required
+                  className={inputClass}
+                  value={form.titleEn}
+                  onChange={(event) => update("titleEn", event.target.value)}
+                />
+              </Field>
+
+              <Field label="Description" error={errors.descriptionEn}>
+                <textarea
+                  required
+                  className={`${inputClass} min-h-28`}
+                  value={form.descriptionEn}
+                  onChange={(event) =>
+                    update("descriptionEn", event.target.value)
+                  }
+                />
+              </Field>
             </section>
 
-            <LocaleFields
-              locale="English"
-              title={form.titleEn}
-              description={form.descriptionEn}
-              applications={form.applicationsEn}
-              methods={form.methodsEn}
-              errors={errors}
-              titleKey="titleEn"
-              descriptionKey="descriptionEn"
-              applicationsKey="applicationsEn"
-              onText={(key, value) => update(key, value)}
-              onMethod={(index, value) => updateMethod("en", index, value)}
-            />
+            <section className="space-y-5 border-t border-black/8 pt-7">
+              <h2 className="text-lg font-bold">Indonesian</h2>
 
-            <LocaleFields
-              locale="Indonesian"
-              title={form.titleId}
-              description={form.descriptionId}
-              applications={form.applicationsId}
-              methods={form.methodsId}
-              errors={errors}
-              titleKey="titleId"
-              descriptionKey="descriptionId"
-              applicationsKey="applicationsId"
-              onText={(key, value) => update(key, value)}
-              onMethod={(index, value) => updateMethod("id", index, value)}
-            />
+              <Field label="Title" error={errors.titleId}>
+                <input
+                  required
+                  className={inputClass}
+                  value={form.titleId}
+                  onChange={(event) => update("titleId", event.target.value)}
+                />
+              </Field>
+
+              <Field label="Description" error={errors.descriptionId}>
+                <textarea
+                  required
+                  className={`${inputClass} min-h-28`}
+                  value={form.descriptionId}
+                  onChange={(event) =>
+                    update("descriptionId", event.target.value)
+                  }
+                />
+              </Field>
+            </section>
+
+            <div className="border-t border-black/8 pt-7">
+              <p className="text-sm text-[var(--rams-gray)]">
+                Research Profile PNG can be uploaded after the research area is
+                created.
+              </p>
+            </div>
 
             <div className="flex gap-3">
               <Button type="submit" disabled={saving}>
-                {saving ? "Saving…" : "Create research area"}
+                {saving ? "Saving\u2026" : "Create Research Area"}
               </Button>
 
               <Link
@@ -337,92 +280,5 @@ export default function ResearchAreaForm() {
         </Card>
       </div>
     </div>
-  );
-}
-
-function LocaleFields({
-  locale,
-  title,
-  description,
-  applications,
-  methods,
-  errors,
-  titleKey,
-  descriptionKey,
-  applicationsKey,
-  onText,
-  onMethod,
-}: {
-  locale: string;
-  title: string;
-  description: string;
-  applications: string;
-  methods: [string, string, string];
-  errors: Record<string, string>;
-  titleKey: "titleEn" | "titleId";
-  descriptionKey: "descriptionEn" | "descriptionId";
-  applicationsKey: "applicationsEn" | "applicationsId";
-  onText: (
-    key:
-      | "titleEn"
-      | "titleId"
-      | "descriptionEn"
-      | "descriptionId"
-      | "applicationsEn"
-      | "applicationsId",
-    value: string,
-  ) => void;
-  onMethod: (index: number, value: string) => void;
-}) {
-  const suffix = locale === "English" ? "En" : "Id";
-
-  return (
-    <section className="space-y-5 border-t border-black/8 pt-7">
-      <h2 className="text-lg font-bold">{locale}</h2>
-
-      <Field label="Title" error={errors[titleKey]}>
-        <input
-          required
-          className={inputClass}
-          value={title}
-          onChange={(event) => onText(titleKey, event.target.value)}
-        />
-      </Field>
-
-      <Field label="Description" error={errors[descriptionKey]}>
-        <textarea
-          required
-          className={`${inputClass} min-h-28`}
-          value={description}
-          onChange={(event) => onText(descriptionKey, event.target.value)}
-        />
-      </Field>
-
-      <div className="grid gap-5 sm:grid-cols-3">
-        {methods.map((method, index) => (
-          <Field
-            key={index}
-            label={`Method ${index + 1}`}
-            error={errors[`method${suffix}${index}`]}
-          >
-            <input
-              required
-              className={inputClass}
-              value={method}
-              onChange={(event) => onMethod(index, event.target.value)}
-            />
-          </Field>
-        ))}
-      </div>
-
-      <Field label="Applications" error={errors[applicationsKey]}>
-        <input
-          required
-          className={inputClass}
-          value={applications}
-          onChange={(event) => onText(applicationsKey, event.target.value)}
-        />
-      </Field>
-    </section>
   );
 }

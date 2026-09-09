@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { ObjectId } from "mongodb";
+import { MongoServerError, ObjectId } from "mongodb";
 import { ZodError } from "zod";
 import { findAlumniById } from "../alumni/alumni.repository.js";
 import { findDosenById } from "../dosen/dosen.repository.js";
@@ -31,9 +31,17 @@ import type {
   PublicService,
   PublicServiceExpert,
 } from "./public-service.types.js";
+import { uploadPublicServiceImage } from "../../lib/cloudinary.js";
+
+const MAX_PUBLIC_SERVICE_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|webp|gif)$/i;
 
 function validationError(error: unknown): error is ZodError {
   return error instanceof ZodError;
+}
+
+function duplicateError(error: unknown): boolean {
+  return error instanceof MongoServerError && error.code === 11000;
 }
 
 function adminExpert(expert: PublicServiceExpert) {
@@ -93,6 +101,7 @@ function publicService(service: PublicService, detail = false) {
     code: service.code,
     title: service.title,
     description: resolveDescription(service),
+    images: service.images ?? [],
     order: service.order,
     ...(detail
       ? {
@@ -295,6 +304,12 @@ export async function createPublicServiceController(
         errors: error.issues,
       });
     }
+    if (duplicateError(error)) {
+      return res.status(409).json({
+        success: false,
+        message: "Public service code already exists",
+      });
+    }
     return res
       .status(500)
       .json({ success: false, message: "Failed to create public service" });
@@ -331,6 +346,12 @@ export async function updatePublicServiceController(
         errors: error.issues,
       });
     }
+    if (duplicateError(error)) {
+      return res.status(409).json({
+        success: false,
+        message: "Public service code already exists",
+      });
+    }
     return res
       .status(500)
       .json({ success: false, message: "Failed to update public service" });
@@ -358,6 +379,52 @@ export async function deletePublicServiceController(
     return res
       .status(500)
       .json({ success: false, message: "Failed to delete public service" });
+  }
+}
+
+export async function uploadPublicServiceImageController(
+  req: Request,
+  res: Response,
+) {
+  const image = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  const contentType = req.headers["content-type"] ?? "";
+  const filename =
+    typeof req.query.filename === "string" ? req.query.filename : "";
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid service ID" });
+  }
+  if (!contentType.startsWith("image/")) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Image file required" });
+  }
+  if (filename && !ALLOWED_IMAGE_EXTENSIONS.test(filename)) {
+    return res.status(400).json({
+      success: false,
+      message: "Only JPG, PNG, WebP, and GIF files are supported",
+    });
+  }
+  if (!image.length || image.length > MAX_PUBLIC_SERVICE_IMAGE_BYTES) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Image must be 5 MB or smaller" });
+  }
+  try {
+    if (!(await findPublicServiceById(id))) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Service not found" });
+    }
+    const uploaded = await uploadPublicServiceImage(image);
+    return res.json({ success: true, data: uploaded });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload public service image",
+    });
   }
 }
 

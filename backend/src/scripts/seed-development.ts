@@ -260,6 +260,7 @@ async function seedPartners() {
       description: `Development ${type.toLowerCase()} partner.`,
       isFeatured: true,
       published: true,
+      showOnHomepage: false,
     };
     await getPartnersCollection().updateOne(
       { name, type },

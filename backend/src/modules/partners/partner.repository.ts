@@ -99,6 +99,26 @@ export async function findIndustrialPartners(options?: {
 }
 
 // ========================================
+// FIND HOMEPAGE PARTNERS
+// ========================================
+
+export async function findHomepagePartners(): Promise<Partner[]> {
+  const collection = getPartnersCollection();
+
+  return collection
+    .find({
+      published: true,
+      showOnHomepage: true,
+    })
+    .sort({
+      homepageOrder: 1,
+      name: 1,
+    })
+    .limit(SECURITY_LIMITS.maxListResults)
+    .toArray();
+}
+
+// ========================================
 // CREATE
 // ========================================
 
@@ -125,6 +145,10 @@ export async function createPartner(
     isFeatured: input.isFeatured,
 
     published: input.published,
+
+    showOnHomepage: input.showOnHomepage,
+
+    homepageOrder: input.homepageOrder,
 
     createdAt: now,
 

@@ -10,8 +10,6 @@ describe("research API client", () => {
         slug: "risk",
         title: { en: "Risk", id: "Risiko" },
         description: { en: "English", id: "Indonesia" },
-        methods: { en: ["a", "b", "c"], id: ["satu", "dua", "tiga"] },
-        applications: { en: "TEST", id: "UJI" },
         order: 1,
         published: true,
       },
@@ -38,14 +36,9 @@ describe("research API client", () => {
       slug: "risk",
       title: { en: "Risk", id: "Risiko" },
       description: { en: "English", id: "Indonesia" },
-      methods: { en: ["a", "b", "c"], id: ["satu", "dua", "tiga"] },
-      applications: { en: "TEST", id: "UJI" },
       order: 1,
       published: true,
     });
     expect(fetchMock.mock.calls[0][0]).toContain("/admin/research");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).methods.en).toHaveLength(
-      3,
-    );
   });
 });

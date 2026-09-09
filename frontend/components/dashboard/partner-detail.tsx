@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
 import {
@@ -18,9 +19,18 @@ import {
   deletePartner,
   getPartnerById,
   updatePartner,
+  uploadPartnerLogo,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Partner, PartnerType } from "@/types/modules";
+
+const MAX_LOGO_BYTES = 3 * 1024 * 1024;
+const ALLOWED_LOGO_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+]);
 
 export default function PartnerDetail({
   id,
@@ -31,6 +41,7 @@ export default function PartnerDetail({
 }) {
   const { user } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [partner, setPartner] = useState<Partner | null>(null);
   const [editing, setEditing] = useState(false);
@@ -46,7 +57,13 @@ export default function PartnerDetail({
     description: "",
     isFeatured: false,
     published: false,
+    showOnHomepage: false,
+    homepageOrder: "",
   });
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +81,11 @@ export default function PartnerDetail({
           description: result.description ?? "",
           isFeatured: result.isFeatured,
           published: result.published,
+          showOnHomepage: result.showOnHomepage ?? false,
+          homepageOrder:
+            result.homepageOrder != null
+              ? String(result.homepageOrder)
+              : "",
         });
       })
       .catch((reason) => {
@@ -76,6 +98,29 @@ export default function PartnerDetail({
       cancelled = true;
     };
   }, [id, type]);
+
+  function chooseLogo(file: File | null) {
+    setLogoError(null);
+
+    if (!file) {
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      return;
+    }
+
+    if (!ALLOWED_LOGO_TYPES.has(file.type)) {
+      setLogoError("Unsupported format. Use JPG, PNG, WebP, or SVG.");
+      return;
+    }
+
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError("Logo must be 3 MB or smaller.");
+      return;
+    }
+
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
 
   const update = (key: string, value: string | boolean) => {
     setForm((current) => ({
@@ -98,9 +143,21 @@ export default function PartnerDetail({
         description: form.description || undefined,
         isFeatured: form.isFeatured,
         published: form.published,
+        showOnHomepage: form.showOnHomepage,
+        homepageOrder: form.homepageOrder
+          ? Number(form.homepageOrder)
+          : undefined,
       });
 
-      setPartner(result);
+      if (selectedFile) {
+        const updated = await uploadPartnerLogo(id, selectedFile);
+        setPartner(updated);
+      } else {
+        setPartner(result);
+      }
+
+      setSelectedFile(null);
+      setPreviewUrl(null);
       setEditing(false);
     } catch (reason) {
       setError(getUserFacingError(reason));
@@ -112,7 +169,7 @@ export default function PartnerDetail({
   async function remove() {
     if (
       !partner ||
-      !window.confirm(`Delete “${partner.name}”? This cannot be undone.`)
+      !window.confirm(`Delete "${partner.name}"? This cannot be undone.`)
     ) {
       return;
     }
@@ -156,6 +213,8 @@ export default function PartnerDetail({
     return null;
   }
 
+  const currentLogoUrl = previewUrl || form.logo || partner.logo;
+
   return (
     <div className="p-5 sm:p-7 lg:p-9">
       <div className="mx-auto max-w-3xl space-y-7">
@@ -187,7 +246,12 @@ export default function PartnerDetail({
             <div className="flex gap-2">
               <Button
                 variant="secondary"
-                onClick={() => setEditing((value) => !value)}
+                onClick={() => {
+                  setEditing((value) => !value);
+                  setSelectedFile(null);
+                  setPreviewUrl(null);
+                  setLogoError(null);
+                }}
               >
                 {editing ? "Cancel" : "Edit"}
               </Button>
@@ -216,6 +280,66 @@ export default function PartnerDetail({
                 />
               </Field>
 
+              {/* Logo upload */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
+                  Partner Logo
+                </p>
+                <p className="text-xs text-[var(--gray)]">
+                  PNG, JPG, WebP, or SVG. Max 3 MB.
+                </p>
+                <div className="flex items-start gap-4">
+                  {currentLogoUrl && (
+                    <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded border border-[var(--border)] bg-white">
+                      <Image
+                        src={currentLogoUrl}
+                        alt="Logo preview"
+                        fill
+                        unoptimized
+                        className="object-contain p-1"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                      className="hidden"
+                      onChange={(event) =>
+                        chooseLogo(event.target.files?.[0] ?? null)
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {currentLogoUrl ? "Replace logo" : "Choose logo"}
+                    </Button>
+
+                    {(previewUrl || form.logo) && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="ml-2"
+                        onClick={() => {
+                          chooseLogo(null);
+                          update("logo", "");
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+
+                    {logoError && (
+                      <p className="mt-2 text-xs text-red-600">{logoError}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Country">
                   <input
@@ -234,14 +358,6 @@ export default function PartnerDetail({
                   />
                 </Field>
               </div>
-
-              <Field label="Logo URL">
-                <input
-                  className={inputClass}
-                  value={form.logo}
-                  onChange={(event) => update("logo", event.target.value)}
-                />
-              </Field>
 
               <Field label="Description">
                 <textarea
@@ -275,7 +391,33 @@ export default function PartnerDetail({
                   />
                   Published
                 </label>
+
+                <label className="flex items-center gap-3 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={form.showOnHomepage}
+                    onChange={(event) =>
+                      update("showOnHomepage", event.target.checked)
+                    }
+                  />
+                  Show on Homepage
+                </label>
               </div>
+
+              {form.showOnHomepage && (
+                <Field label="Display Order (lower number = first)">
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputClass}
+                    placeholder="0"
+                    value={form.homepageOrder}
+                    onChange={(event) =>
+                      update("homepageOrder", event.target.value)
+                    }
+                  />
+                </Field>
+              )}
 
               <Button type="submit" disabled={saving}>
                 {saving ? "Saving…" : "Save changes"}
@@ -284,6 +426,24 @@ export default function PartnerDetail({
           </Card>
         ) : (
           <Card className="space-y-6 p-6">
+            {/* Logo display in view mode */}
+            {partner.logo && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                  Logo
+                </p>
+                <div className="relative mt-2 h-20 w-32 overflow-hidden rounded border border-[var(--border)] bg-white">
+                  <Image
+                    src={partner.logo}
+                    alt={`${partner.name} logo`}
+                    fill
+                    unoptimized
+                    className="object-contain p-1"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
                 Country

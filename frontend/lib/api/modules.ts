@@ -37,6 +37,9 @@ import type {
   Student,
   StudentInput,
   StudentUpdateInput,
+  Expert,
+  ExpertInput,
+  ExpertUpdateInput,
 } from "@/types/modules";
 import type { ManagedAccount } from "@/types/auth";
 import type {
@@ -353,6 +356,16 @@ export const deletePublicService = async (id: string) => {
     { method: "DELETE" },
   );
 };
+export const uploadPublicServiceImage = (id: string, file: File) =>
+  apiRequest<{ url: string; publicId?: string }>(
+    `/admin/public-service/services/${encodeURIComponent(id)}/image?filename=${encodeURIComponent(file.name)}`,
+    {
+      method: "POST",
+      body: file,
+      headers: { "Content-Type": file.type },
+      timeoutMs: 30000,
+    },
+  );
 
 export const getPartners = (type: PartnerType) =>
   apiRequest<Partner[]>(`/partners/${type.toLowerCase()}`);
@@ -381,6 +394,40 @@ export const deletePartner = async (type: PartnerType, id: string) => {
   );
 };
 
+export const uploadPartnerLogo = (id: string, file: File) =>
+  apiRequest<Partner>(`/partners/${encodeURIComponent(id)}/logo`, {
+    method: "POST",
+    body: file,
+    headers: { "Content-Type": file.type },
+    timeoutMs: 30000,
+  });
+
+export const getExpertList = () => apiRequest<Expert[]>("/experts");
+export const getExpertById = (id: string) =>
+  apiRequest<Expert>(`/experts/${encodeURIComponent(id)}`);
+export const createExpert = (input: ExpertInput) =>
+  apiRequest<Expert>("/experts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+export const updateExpert = (id: string, input: ExpertUpdateInput) =>
+  apiRequest<Expert>(`/experts/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+export const deleteExpert = async (id: string) => {
+  await apiRequestWithMeta(`/experts/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+};
+export const uploadExpertPhoto = (id: string, file: File) =>
+  apiRequest<Expert>(`/experts/${encodeURIComponent(id)}/photo`, {
+    method: "POST",
+    body: file,
+    headers: { "Content-Type": file.type },
+    timeoutMs: 30000,
+  });
+
 export const getResearchAreas = () =>
   apiRequest<ResearchArea[]>("/admin/research");
 export const getResearchAreaById = (id: string) =>
@@ -398,9 +445,9 @@ export const updateResearchArea = (
     method: "PATCH",
     body: JSON.stringify(input),
   });
-export const uploadResearchAreaImage = (id: string, file: File) =>
+export const uploadResearchAreaPng = (id: string, file: File) =>
   apiRequest<{ url: string; publicId?: string }>(
-    `/admin/research/${encodeURIComponent(id)}/image?filename=${encodeURIComponent(file.name)}`,
+    `/admin/research/${encodeURIComponent(id)}/png?filename=${encodeURIComponent(file.name)}`,
     {
       method: "POST",
       body: file,
@@ -436,8 +483,18 @@ export const getPublicProject = (slug: string) =>
   apiRequest<Project>(`/public/projects/${encodeURIComponent(slug)}`);
 export const getPublicPartners = (type: PartnerType) =>
   apiRequest<Partner[]>(`/public/partners/${type.toLowerCase()}`);
+export const getPublicHomepagePartners = () =>
+  apiRequest<Partner[]>("/public/partners/homepage");
+export const getPublicExperts = () =>
+  apiRequest<Expert[]>("/public/experts");
+export const getPublicExpertById = (id: string) =>
+  apiRequest<Expert>(`/public/experts/${encodeURIComponent(id)}`);
 export const getPublicResearch = () =>
   apiRequest<PublicResearchArea[]>("/public/research");
+export const getPublicResearchArea = (slug: string) =>
+  apiRequest<PublicResearchArea>(
+    `/public/research/${encodeURIComponent(slug)}`,
+  );
 export const getPublicResearchHighlights = () =>
   apiRequest<ResearchHighlight[]>("/public/research-highlights");
 export const getPublicEvents = () =>

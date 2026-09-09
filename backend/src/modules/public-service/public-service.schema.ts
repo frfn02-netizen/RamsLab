@@ -10,6 +10,11 @@ const requiredBilingualTextSchema = z.object({
   id: z.string().trim().min(1).max(500),
 });
 
+const optionalBilingualTextSchema = z.object({
+  en: z.string().trim().max(500).default(""),
+  id: z.string().trim().max(500).default(""),
+});
+
 const peopleRefSchema = z.object({
   kind: z.enum(["DOSEN", "STUDENT", "ALUMNI"]),
   id: z.string().regex(/^[a-f\d]{24}$/i, "Invalid People ID"),
@@ -57,10 +62,11 @@ export const updatePublicServiceExpertSchema = z.object({
 
 const serviceFields = {
   code: z.string().trim().min(1).max(50).optional(),
-  title: requiredBilingualTextSchema,
+  title: optionalBilingualTextSchema,
   description: emptyableBilingualTextSchema.optional(),
   shortDescription: emptyableBilingualTextSchema.optional(),
   detailedDescription: emptyableBilingualTextSchema.optional(),
+  images: z.array(z.string().trim().max(500)).max(20).default([]),
   companies: z.array(serviceCompanySchema).max(100).default([]),
   jobs: z.array(serviceJobSchema).max(100).default([]),
   order: z.number().int().min(0).max(100000).default(0),
@@ -70,10 +76,11 @@ const serviceFields = {
 export const createPublicServiceSchema = z.object(serviceFields);
 export const updatePublicServiceSchema = z.object({
   code: serviceFields.code,
-  title: serviceFields.title.optional(),
+  title: serviceFields.title,
   description: serviceFields.description,
   shortDescription: serviceFields.shortDescription,
   detailedDescription: serviceFields.detailedDescription,
+  images: serviceFields.images.optional(),
   companies: serviceFields.companies.optional(),
   jobs: serviceFields.jobs.optional(),
   order: serviceFields.order.optional(),

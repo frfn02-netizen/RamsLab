@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import {
   Button,
   Card,
@@ -16,16 +21,10 @@ import {
   createPublicService,
   getPublicService,
   updatePublicService,
+  uploadPublicServiceImage,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import type {
-  PublicServiceCompany,
-  PublicServiceInput,
-  PublicServiceJob,
-} from "@/types/modules";
-
-type CompanyForm = PublicServiceCompany & { id?: string };
-type JobForm = PublicServiceJob & { id?: string };
+import type { PublicServiceInput } from "@/types/modules";
 
 type FormState = {
   code: string;
@@ -35,8 +34,7 @@ type FormState = {
   descriptionId: string;
   order: string;
   published: boolean;
-  companies: CompanyForm[];
-  jobs: JobForm[];
+  images: string[];
 };
 
 const emptyForm: FormState = {
@@ -47,27 +45,8 @@ const emptyForm: FormState = {
   descriptionId: "",
   order: "0",
   published: false,
-  companies: [],
-  jobs: [],
+  images: [],
 };
-
-function emptyCompany(order: number): CompanyForm {
-  return {
-    name: "",
-    description: { en: "", id: "" },
-    order,
-    published: true,
-  };
-}
-
-function emptyJob(order: number): JobForm {
-  return {
-    name: { en: "", id: "" },
-    description: { en: "", id: "" },
-    order,
-    published: true,
-  };
-}
 
 function toInput(form: FormState): PublicServiceInput {
   return {
@@ -80,25 +59,23 @@ function toInput(form: FormState): PublicServiceInput {
             id: form.descriptionId.trim(),
           }
         : undefined,
+    images: form.images,
     order: Number(form.order),
     published: form.published,
-    companies: form.companies
-      .filter((company) => company.name.trim())
-      .map((company, index) => ({
-        ...company,
-        name: company.name.trim(),
-        description: company.description,
-        order: index,
-      })),
-    jobs: form.jobs
-      .filter((job) => job.name.en.trim() || job.name.id.trim())
-      .map((job, index) => ({
-        ...job,
-        name: { en: job.name.en.trim(), id: job.name.id.trim() },
-        description: job.description,
-        order: index,
-      })),
+    companies: [],
+    jobs: [],
   };
+}
+
+function validate(form: FormState) {
+  const errors: Record<string, string> = {};
+  if (!form.descriptionEn.trim()) {
+    errors.descriptionEn = "English description is required.";
+  }
+  if (!form.descriptionId.trim()) {
+    errors.descriptionId = "Indonesian description is required.";
+  }
+  return errors;
 }
 
 export default function ServiceForm({ id }: { id?: string }) {
@@ -107,6 +84,8 @@ export default function ServiceForm({ id }: { id?: string }) {
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -128,29 +107,31 @@ export default function ServiceForm({ id }: { id?: string }) {
             "",
           order: String(service.order),
           published: service.published,
-          companies: service.companies,
-          jobs: service.jobs,
+          images: service.images ?? [],
         }),
       )
       .catch((reason) => setError(getUserFacingError(reason)))
       .finally(() => setLoading(false));
   }, [id]);
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setDirty(true);
     setForm((current) => ({ ...current, [key]: value }));
+  };
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form.titleEn.trim() || !form.titleId.trim()) {
-      setError("English and Indonesian service titles are required.");
-      return;
-    }
+    const nextErrors = validate(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
     setSaving(true);
     setError(null);
     try {
       const saved = id
         ? await updatePublicService(id, toInput(form))
         : await createPublicService(toInput(form));
+      setDirty(false);
       router.push(`/dashboard/public-service/services/${saved._id}`);
     } catch (reason) {
       setError(getUserFacingError(reason));
@@ -171,89 +152,106 @@ export default function ServiceForm({ id }: { id?: string }) {
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
-      <div className="mx-auto max-w-5xl space-y-7">
+      <div className="mx-auto max-w-4xl space-y-7">
         <Link
           href="/dashboard/public-service"
           className="text-sm font-bold text-[var(--rams-red)]"
         >
-          ← Public Service
+          &larr; Public Service
         </Link>
         <PageHeader
           eyebrow="Public Service"
-          title={id ? "Edit service" : "Add service"}
-          description="Manage the service summary plus companies and jobs shown when a visitor opens the service details."
+          title={id ? "Edit Service" : "Create Service"}
+          description="Document a public service activity with description and images."
         />
+        {dirty && (
+          <p className="text-xs font-semibold text-amber-700" role="status">
+            Unsaved changes
+          </p>
+        )}
         {error && <ErrorState message={error} />}
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-8">
-            <section className="grid gap-5 sm:grid-cols-2">
-              <Field label="Code">
+            <div className="space-y-5">
+              <label className="flex items-center gap-3 text-sm font-semibold">
                 <input
-                  className={inputClass}
-                  value={form.code}
-                  onChange={(event) => update("code", event.target.value)}
+                  type="checkbox"
+                  checked={form.published}
+                  onChange={(event) => update("published", event.target.checked)}
                 />
-              </Field>
-              <Field label="Order">
+                Published
+              </label>
+            </div>
+
+            <section className="space-y-5 border-t border-black/8 pt-7">
+              <h2 className="text-lg font-bold">English</h2>
+              <Field label="Title (optional)">
                 <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  className={inputClass}
-                  value={form.order}
-                  onChange={(event) => update("order", event.target.value)}
-                />
-              </Field>
-              <Field label="English title">
-                <input
-                  required
                   className={inputClass}
                   value={form.titleEn}
                   onChange={(event) => update("titleEn", event.target.value)}
                 />
               </Field>
-              <Field label="Indonesian title">
-                <input
+              <Field label="Description" error={errors.descriptionEn}>
+                <textarea
                   required
+                  className={`${inputClass} min-h-28`}
+                  value={form.descriptionEn}
+                  onChange={(event) =>
+                    update("descriptionEn", event.target.value)
+                  }
+                />
+              </Field>
+            </section>
+
+            <section className="space-y-5 border-t border-black/8 pt-7">
+              <h2 className="text-lg font-bold">Indonesian</h2>
+              <Field label="Title (optional)">
+                <input
                   className={inputClass}
                   value={form.titleId}
                   onChange={(event) => update("titleId", event.target.value)}
                 />
               </Field>
+              <Field label="Description" error={errors.descriptionId}>
+                <textarea
+                  required
+                  className={`${inputClass} min-h-28`}
+                  value={form.descriptionId}
+                  onChange={(event) =>
+                    update("descriptionId", event.target.value)
+                  }
+                />
+              </Field>
             </section>
-            <BilingualTextareas
-              title="Description"
-              en={form.descriptionEn}
-              idValue={form.descriptionId}
-              onEn={(value) => update("descriptionEn", value)}
-              onId={(value) => update("descriptionId", value)}
-            />
-            <NestedCompanies
-              companies={form.companies}
-              onChange={(companies) => update("companies", companies)}
-            />
-            <NestedJobs
-              jobs={form.jobs}
-              onChange={(jobs) => update("jobs", jobs)}
-            />
-            <label className="flex items-center gap-3 text-sm font-semibold">
-              <input
-                type="checkbox"
-                checked={form.published}
-                onChange={(event) => update("published", event.target.checked)}
+
+            <section className="space-y-4 border-t border-black/8 pt-7">
+              <div>
+                <p className="text-sm font-bold">Documentation</p>
+                <p className="mt-1 text-xs text-[var(--rams-gray)]">
+                  Upload images documenting the public service activity.
+                </p>
+              </div>
+              <DocumentationUploader
+                serviceId={id ?? null}
+                images={form.images}
+                onChange={(images) => {
+                  setDirty(true);
+                  setForm((current) => ({ ...current, images }));
+                }}
               />
-              Published
-            </label>
-            <div className="flex justify-end gap-3 border-t border-black/8 pt-5">
+            </section>
+
+            <div className="flex gap-3 border-t border-black/8 pt-7">
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving\u2026" : id ? "Save Service" : "Create Service"}
+              </Button>
               <Link
                 href="/dashboard/public-service"
-                className="px-4 py-2 text-sm font-semibold"
+                className="inline-flex min-h-10 items-center px-4 text-sm font-semibold text-[var(--rams-gray)]"
               >
                 Cancel
               </Link>
-              <Button disabled={saving}>
-                {saving ? "Saving..." : "Save service"}
-              </Button>
             </div>
           </form>
         </Card>
@@ -262,261 +260,100 @@ export default function ServiceForm({ id }: { id?: string }) {
   );
 }
 
-function BilingualTextareas({
-  title,
-  en,
-  idValue,
-  onEn,
-  onId,
-}: {
-  title: string;
-  en: string;
-  idValue: string;
-  onEn: (value: string) => void;
-  onId: (value: string) => void;
-}) {
-  return (
-    <section className="grid gap-5 sm:grid-cols-2">
-      <Field label={`${title} (English)`}>
-        <textarea
-          className={inputClass}
-          rows={4}
-          value={en}
-          onChange={(event) => onEn(event.target.value)}
-        />
-      </Field>
-      <Field label={`${title} (Indonesian)`}>
-        <textarea
-          className={inputClass}
-          rows={4}
-          value={idValue}
-          onChange={(event) => onId(event.target.value)}
-        />
-      </Field>
-    </section>
-  );
-}
-
-function NestedCompanies({
-  companies,
+function DocumentationUploader({
+  serviceId,
+  images,
   onChange,
 }: {
-  companies: CompanyForm[];
-  onChange: (companies: CompanyForm[]) => void;
+  serviceId: string | null;
+  images: string[];
+  onChange: (images: string[]) => void;
 }) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (!files || !serviceId) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      if (file.type !== "image/jpeg" && file.type !== "image/png" && file.type !== "image/webp" && file.type !== "image/gif") {
+        setUploadError("Only JPG, PNG, WebP, and GIF files are supported.");
+        setUploading(false);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError("Each image must be 5 MB or smaller.");
+        setUploading(false);
+        return;
+      }
+      try {
+        const uploaded = await uploadPublicServiceImage(serviceId, file);
+        newUrls.push(uploaded.url);
+      } catch {
+        setUploadError("One or more uploads failed. Please try again.");
+        setUploading(false);
+        return;
+      }
+    }
+
+    onChange([...images, ...newUrls]);
+    setUploading(false);
+    event.target.value = "";
+  }
+
+  function removeImage(index: number) {
+    onChange(images.filter((_, i) => i !== index));
+  }
+
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-bold">Companies</h2>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() =>
-            onChange([...companies, emptyCompany(companies.length)])
-          }
-        >
-          Add company
-        </Button>
-      </div>
-      <div className="space-y-4">
-        {companies.map((company, index) => (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-3">
+        {images.map((url, index) => (
           <div
-            key={company.id ?? index}
-            className="grid gap-4 border border-black/10 p-4"
+            key={`${url}-${index}`}
+            className="group relative h-24 w-24 overflow-hidden border border-[var(--border)]"
           >
-            <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-              <Field label="Company name">
-                <input
-                  className={inputClass}
-                  value={company.name}
-                  onChange={(event) =>
-                    onChange(
-                      companies.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? { ...item, name: event.target.value }
-                          : item,
-                      ),
-                    )
-                  }
-                />
-              </Field>
-              <label className="flex items-end gap-2 pb-3 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  checked={company.published}
-                  onChange={(event) =>
-                    onChange(
-                      companies.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? { ...item, published: event.target.checked }
-                          : item,
-                      ),
-                    )
-                  }
-                />
-                Published
-              </label>
-            </div>
-            <BilingualNestedDescription
-              value={company.description ?? { en: "", id: "" }}
-              onChange={(description) =>
-                onChange(
-                  companies.map((item, itemIndex) =>
-                    itemIndex === index ? { ...item, description } : item,
-                  ),
-                )
-              }
+            <img
+              src={url}
+              alt={`Documentation ${index + 1}`}
+              className="h-full w-full object-cover"
             />
-            <Button
+            <button
               type="button"
-              variant="danger"
-              onClick={() =>
-                onChange(
-                  companies.filter((_, itemIndex) => itemIndex !== index),
-                )
-              }
+              onClick={() => removeImage(index)}
+              className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-bold text-white opacity-0 transition group-hover:opacity-100"
             >
-              Remove company
-            </Button>
+              Remove
+            </button>
           </div>
         ))}
       </div>
-    </section>
-  );
-}
-
-function NestedJobs({
-  jobs,
-  onChange,
-}: {
-  jobs: JobForm[];
-  onChange: (jobs: JobForm[]) => void;
-}) {
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-bold">Jobs / Services</h2>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => onChange([...jobs, emptyJob(jobs.length)])}
-        >
-          Add job
-        </Button>
-      </div>
-      <div className="space-y-4">
-        {jobs.map((job, index) => (
-          <div
-            key={job.id ?? index}
-            className="grid gap-4 border border-black/10 p-4"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Job/service name (English)">
-                <input
-                  className={inputClass}
-                  value={job.name.en}
-                  onChange={(event) =>
-                    onChange(
-                      jobs.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? {
-                              ...item,
-                              name: { ...item.name, en: event.target.value },
-                            }
-                          : item,
-                      ),
-                    )
-                  }
-                />
-              </Field>
-              <Field label="Job/service name (Indonesian)">
-                <input
-                  className={inputClass}
-                  value={job.name.id}
-                  onChange={(event) =>
-                    onChange(
-                      jobs.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? {
-                              ...item,
-                              name: { ...item.name, id: event.target.value },
-                            }
-                          : item,
-                      ),
-                    )
-                  }
-                />
-              </Field>
-            </div>
-            <BilingualNestedDescription
-              value={job.description ?? { en: "", id: "" }}
-              onChange={(description) =>
-                onChange(
-                  jobs.map((item, itemIndex) =>
-                    itemIndex === index ? { ...item, description } : item,
-                  ),
-                )
-              }
-            />
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  checked={job.published}
-                  onChange={(event) =>
-                    onChange(
-                      jobs.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? { ...item, published: event.target.checked }
-                          : item,
-                      ),
-                    )
-                  }
-                />
-                Published
-              </label>
-              <Button
-                type="button"
-                variant="danger"
-                onClick={() =>
-                  onChange(jobs.filter((_, itemIndex) => itemIndex !== index))
-                }
-              >
-                Remove job
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function BilingualNestedDescription({
-  value,
-  onChange,
-}: {
-  value: { en: string; id: string };
-  onChange: (value: { en: string; id: string }) => void;
-}) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <Field label="Description (English)">
-        <textarea
-          className={inputClass}
-          rows={3}
-          value={value.en}
-          onChange={(event) => onChange({ ...value, en: event.target.value })}
-        />
-      </Field>
-      <Field label="Description (Indonesian)">
-        <textarea
-          className={inputClass}
-          rows={3}
-          value={value.id}
-          onChange={(event) => onChange({ ...value, id: event.target.value })}
-        />
-      </Field>
+      {uploadError && (
+        <p className="text-sm text-[var(--rams-red)]">{uploadError}</p>
+      )}
+      {serviceId && (
+        <label className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold transition hover:bg-[var(--rams-gray-light)]">
+          {uploading ? "Uploading\u2026" : "Upload Images"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            className="sr-only"
+            onChange={handleUpload}
+            disabled={uploading}
+          />
+        </label>
+      )}
+      {!serviceId && (
+        <p className="text-xs text-[var(--rams-gray)]">
+          Save the service first, then upload documentation images.
+        </p>
+      )}
     </div>
   );
 }

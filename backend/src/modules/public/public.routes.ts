@@ -8,9 +8,13 @@ import {
   getPublicPeopleController,
   getPublicDosenByIdController,
   getPublicUniversityPartnersController,
+  getPublicHomepagePartnersController,
 } from "./public.controller.js";
 import { getPublicDosenController } from "../dosen/dosen.controller.js";
-import { getPublicResearchAreasController } from "../research/research.controller.js";
+import {
+  getPublicResearchAreasController,
+  getPublicResearchAreaBySlugController,
+} from "../research/research.controller.js";
 import { getPublicSiteContentController } from "../site-content/site-content.controller.js";
 import { getPublicPublicationListController } from "../publications/publication.controller.js";
 import { getPublicResearchHighlightListController } from "../research-highlights/research-highlight.controller.js";
@@ -19,6 +23,7 @@ import {
   getPublicPublicServiceDetailController,
   getPublicPublicServiceListController,
 } from "../public-service/public-service.controller.js";
+import { getPublicExpertListController, getPublicExpertByIdController } from "../experts/expert.controller.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
@@ -47,6 +52,9 @@ router.get("/partners/university", getPublicUniversityPartnersController);
 
 router.get("/partners/industrial", getPublicIndustrialPartnersController);
 
+router.get("/partners/homepage", getPublicHomepagePartnersController);
+
+router.get("/research/:slug", getPublicResearchAreaBySlugController);
 router.get("/research", getPublicResearchAreasController);
 
 router.get("/dosen", getPublicDosenController);
@@ -66,6 +74,10 @@ router.get("/events", getPublicEventListController);
 router.get("/public-services", getPublicPublicServiceListController);
 
 router.get("/public-services/:id", getPublicPublicServiceDetailController);
+
+router.get("/experts", getPublicExpertListController);
+
+router.get("/experts/:id", getPublicExpertByIdController);
 
 router.get("/site-content/:key", getPublicSiteContentController);
 

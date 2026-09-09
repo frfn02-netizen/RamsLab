@@ -5,16 +5,16 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
-  getPublicProjects,
   getPublicResearch,
   getPublicSiteContent,
 } from "@/lib/api/modules";
-import type { Project, PublicResearchArea } from "@/types/modules";
+import type { PublicResearchArea } from "@/types/modules";
 import type { HomepageContent } from "@/types/site-content";
 import PublicContainer from "./public-container";
-import ProjectCard from "./project-card";
 import RevealOnScroll from "./reveal-on-scroll";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
+import HomePartnersSection from "./home-partners";
+import HomeMaritimeCta from "./home-maritime-cta";
 import ResearchHighlights from "./research-highlights";
 import HomeIntroduction, { HeadOfLaboratorySection } from "./home-introduction";
 import HomePeopleSection from "./home-people";
@@ -29,7 +29,6 @@ const researchImages = [
 export default function PublicHome() {
   const locale = useLocale() === "id" ? "id" : "en";
   const brand = useTranslations("brand");
-  const projectsT = useTranslations("projects");
   const common = useTranslations("common");
   const [content, setContent] = useState<HomepageContent | null>(null);
   const [contentLoading, setContentLoading] = useState(true);
@@ -37,15 +36,8 @@ export default function PublicHome() {
   const [researchAreas, setResearchAreas] = useState<PublicResearchArea[]>([]);
   const [researchLoading, setResearchLoading] = useState(true);
   const [researchError, setResearchError] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [projectsLoading, setProjectsLoading] = useState(true);
-  const [projectsError, setProjectsError] = useState(false);
 
   useEffect(() => {
-    getPublicProjects({ featured: true, limit: 12 })
-      .then(setProjects)
-      .catch(() => setProjectsError(true))
-      .finally(() => setProjectsLoading(false));
     getPublicSiteContent("homepage")
       .then(setContent)
       .catch(() => setContentError(true))
@@ -274,7 +266,7 @@ export default function PublicHome() {
                   >
                     <div className="relative h-48 w-full overflow-hidden">
                       <Image
-                        src={area.image ?? researchImages[index]}
+                        src={area.downloadablePng ?? researchImages[index]}
                         alt={localized(area.title)}
                         fill
                         unoptimized
@@ -300,73 +292,9 @@ export default function PublicHome() {
         </PublicContainer>
       </section>
 
-      {/* PROJECTS */}
-      <section className="border-t border-[var(--border)] bg-[var(--background-light)] py-20">
-        <PublicContainer>
-          <RevealOnScroll className="flex items-end justify-between">
-            <h2 className="font-display text-4xl font-bold text-[var(--navy)]">
-              {content
-                ? localized(content.projects.title)
-                : common("requestUnavailable")}
-            </h2>
-            <Link
-              href="/projects"
-              className="text-sm font-semibold text-[var(--rams-red)]"
-            >
-              {common("allProjects")} →
-            </Link>
-          </RevealOnScroll>
-          <div className="mt-12">
-            {projectsLoading ? (
-              <PublicLoading label={projectsT("loading")} />
-            ) : projectsError ? (
-              <PublicError message={projectsT("error")} />
-            ) : projects.length === 0 ? (
-              <PublicEmpty
-                title={projectsT("noTitle")}
-                description={projectsT("noDescription")}
-              />
-            ) : (
-              <RevealOnScroll
-                className="grid gap-8 lg:grid-cols-3"
-                stagger={100}
-              >
-                {projects
-                  .slice(0, content?.projects.featuredLimit ?? 3)
-                  .map((project) => (
-                    <ProjectCard key={project._id} project={project} />
-                  ))}
-              </RevealOnScroll>
-            )}
-          </div>
-        </PublicContainer>
-      </section>
+      <HomePartnersSection />
 
-      {/* CTA */}
-      <section className="bg-[var(--navy)] py-20 text-white">
-        <PublicContainer>
-          {contentLoading ? (
-            <PublicLoading label={common("loading")} />
-          ) : contentError || !content ? (
-            <PublicError message={common("requestUnavailable")} />
-          ) : (
-            <RevealOnScroll className="text-center">
-              <h2 className="whitespace-pre-line font-display text-4xl font-bold">
-                {localized(content.cta.title)}
-              </h2>
-              <p className="mt-6 whitespace-pre-line text-lg text-white/80">
-                {localized(content.cta.description)}
-              </p>
-              <Link
-                href="/contact"
-                className="mt-10 inline-block bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]"
-              >
-                {localized(content.cta.buttonLabel)} →
-              </Link>
-            </RevealOnScroll>
-          )}
-        </PublicContainer>
-      </section>
+      <HomeMaritimeCta />
     </>
   );
 }
