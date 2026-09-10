@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   Button,
   Card,
@@ -177,7 +172,9 @@ export default function ServiceForm({ id }: { id?: string }) {
                 <input
                   type="checkbox"
                   checked={form.published}
-                  onChange={(event) => update("published", event.target.checked)}
+                  onChange={(event) =>
+                    update("published", event.target.checked)
+                  }
                 />
                 Published
               </label>
@@ -244,7 +241,11 @@ export default function ServiceForm({ id }: { id?: string }) {
 
             <div className="flex gap-3 border-t border-black/8 pt-7">
               <Button type="submit" disabled={saving}>
-                {saving ? "Saving\u2026" : id ? "Save Service" : "Create Service"}
+                {saving
+                  ? "Saving\u2026"
+                  : id
+                    ? "Save Service"
+                    : "Create Service"}
               </Button>
               <Link
                 href="/dashboard/public-service"
@@ -281,7 +282,12 @@ function DocumentationUploader({
 
     const newUrls: string[] = [];
     for (const file of Array.from(files)) {
-      if (file.type !== "image/jpeg" && file.type !== "image/png" && file.type !== "image/webp" && file.type !== "image/gif") {
+      if (
+        file.type !== "image/jpeg" &&
+        file.type !== "image/png" &&
+        file.type !== "image/webp" &&
+        file.type !== "image/gif"
+      ) {
         setUploadError("Only JPG, PNG, WebP, and GIF files are supported.");
         setUploading(false);
         return;

@@ -7,10 +7,7 @@ import {
   removeProfilePhoto,
 } from "../../lib/cloudinary.js";
 
-import {
-  createExpertSchema,
-  updateExpertSchema,
-} from "./expert.schema.js";
+import { createExpertSchema, updateExpertSchema } from "./expert.schema.js";
 
 import {
   createExpert,
@@ -24,10 +21,7 @@ import {
 // GET ALL EXPERTS (ADMIN)
 // ========================================
 
-export async function getExpertListController(
-  _req: Request,
-  res: Response,
-) {
+export async function getExpertListController(_req: Request, res: Response) {
   try {
     const experts = await findAllExperts();
     return res.json({ success: true, data: experts });
@@ -131,10 +125,7 @@ export async function getExpertController(req: Request, res: Response) {
 // CREATE EXPERT
 // ========================================
 
-export async function createExpertController(
-  req: Request,
-  res: Response,
-) {
+export async function createExpertController(req: Request, res: Response) {
   try {
     const parsed = createExpertSchema.safeParse(req.body);
 
@@ -160,10 +151,7 @@ export async function createExpertController(
 // UPDATE EXPERT
 // ========================================
 
-export async function updateExpertController(
-  req: Request,
-  res: Response,
-) {
+export async function updateExpertController(req: Request, res: Response) {
   try {
     const id = String(req.params.id);
 
@@ -206,10 +194,7 @@ export async function updateExpertController(
 // DELETE EXPERT
 // ========================================
 
-export async function deleteExpertController(
-  req: Request,
-  res: Response,
-) {
+export async function deleteExpertController(req: Request, res: Response) {
   try {
     const id = String(req.params.id);
 
@@ -247,10 +232,7 @@ export async function deleteExpertController(
 
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
-export async function uploadExpertPhotoController(
-  req: Request,
-  res: Response,
-) {
+export async function uploadExpertPhotoController(req: Request, res: Response) {
   try {
     const id = String(req.params.id);
 

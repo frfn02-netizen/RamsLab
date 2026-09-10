@@ -114,7 +114,10 @@ router.post(
   "/:id/logo",
   authenticate,
   requireRole("ADMIN"),
-  express.raw({ type: ["image/jpeg", "image/png", "image/webp", "image/svg+xml"], limit: "3mb" }),
+  express.raw({
+    type: ["image/jpeg", "image/png", "image/webp", "image/svg+xml"],
+    limit: "3mb",
+  }),
   uploadPartnerLogoController,
 );
 

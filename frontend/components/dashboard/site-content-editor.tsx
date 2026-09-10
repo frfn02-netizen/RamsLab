@@ -399,7 +399,10 @@ function ImageField({
                       : "border-[var(--border)] text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
                   }`}
                   onClick={() =>
-                    onChange({ ...(value as SiteContentImage), position: preset })
+                    onChange({
+                      ...(value as SiteContentImage),
+                      position: preset,
+                    })
                   }
                   disabled={!value?.url}
                 >

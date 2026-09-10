@@ -228,7 +228,7 @@ export default function TeamDirectory() {
 
   const categoryLabel =
     activeCategory === "STUDENTS"
-      ? "GRADUATED STUDENT"
+      ? "GRADUATE STUDENT"
       : categoryLabels[activeCategory];
   const filteredMembers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -270,7 +270,7 @@ export default function TeamDirectory() {
               className={`border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${activeCategory === category ? "border-[var(--navy)] bg-[var(--navy)] text-white" : "border-[var(--border)] bg-white text-[var(--gray)] hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"}`}
             >
               {category === "STUDENTS"
-                ? "GRADUATED STUDENT"
+                ? "GRADUATE STUDENT"
                 : categoryLabels[category]}
             </button>
           ))}

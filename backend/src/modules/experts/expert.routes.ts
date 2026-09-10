@@ -18,26 +18,11 @@ const router = Router();
 // ADMIN
 // ========================================
 
-router.get(
-  "/",
-  authenticate,
-  requireRole("ADMIN"),
-  getExpertListController,
-);
+router.get("/", authenticate, requireRole("ADMIN"), getExpertListController);
 
-router.get(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  getExpertController,
-);
+router.get("/:id", authenticate, requireRole("ADMIN"), getExpertController);
 
-router.post(
-  "/",
-  authenticate,
-  requireRole("ADMIN"),
-  createExpertController,
-);
+router.post("/", authenticate, requireRole("ADMIN"), createExpertController);
 
 router.patch(
   "/:id",

@@ -103,10 +103,10 @@ export default function ResearchHighlightsPage() {
                       "Status",
                       "Action",
                     ].map((heading) => (
-                        <th
-                          key={heading}
-                          className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
-                        >
+                      <th
+                        key={heading}
+                        className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
+                      >
                         {heading}
                       </th>
                     ))}

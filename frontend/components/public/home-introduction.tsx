@@ -24,7 +24,9 @@ export default function HomeIntroduction() {
               if (splitIndex === -1) return eyebrow;
               return (
                 <>
-                  <span className="font-normal">{eyebrow.slice(0, splitIndex)}</span>
+                  <span className="font-normal">
+                    {eyebrow.slice(0, splitIndex)}
+                  </span>
                   <span>{eyebrow.slice(splitIndex)}</span>
                 </>
               );

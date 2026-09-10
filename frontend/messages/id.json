@@ -362,8 +362,13 @@
     "academicLabel": "Akademik",
     "industrialLabel": "Industri",
     "directoryNote": "Rekaman mitra terbit akan muncul di sini jika tersedia.",
+    "allPartners": "Semua mitra",
     "universityDirectory": "Direktori universitas",
-    "industrialDirectory": "Direktori industri"
+    "industrialDirectory": "Direktori industri",
+    "pagination": "Paginasi",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "showPerPage": "Tampilkan"
   },
   "team": {
     "heroEyebrow": "Orang & keahlian",

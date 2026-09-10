@@ -258,10 +258,7 @@ function MarqueeRow({
           style={trackStyle}
         >
           {[...partners, ...partners].map((partner, index) => (
-            <MarqueeItem
-              key={`${partner._id}-${index}`}
-              partner={partner}
-            />
+            <MarqueeItem key={`${partner._id}-${index}`} partner={partner} />
           ))}
         </div>
       </div>

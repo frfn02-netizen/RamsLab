@@ -46,6 +46,7 @@ export default function PublicHeader() {
           className="flex items-center gap-2"
           aria-label={a11y("home")}
         >
+          {/* buat gedein logo rams yang di navbar */}
           <div className="relative h-[80px] w-[80px] shrink-0 sm:h-[94px] sm:w-[94px]">
             <Image
               src="/assets/rams-logo.png"
@@ -107,7 +108,9 @@ export default function PublicHeader() {
           </Link>
           <div
             className={`flex items-center gap-1 pl-5 transition-[border-color] duration-300 ${
-              isAtTop ? "border-l border-white/20" : "border-l border-[var(--border)]"
+              isAtTop
+                ? "border-l border-white/20"
+                : "border-l border-[var(--border)]"
             }`}
           >
             <LanguageSwitcher dark={isAtTop} />

@@ -48,7 +48,9 @@ export default async function LocaleLayout({
       <HeroProvider>
         <PublicHeader />
 
-        <main id="main-content" className="pt-[4.5rem]">{children}</main>
+        <main id="main-content" className="pt-[4.5rem]">
+          {children}
+        </main>
 
         <PublicFooter />
       </HeroProvider>

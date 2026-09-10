@@ -95,7 +95,10 @@ function PartnerTable({
                       >
                         Edit
                       </Link>
-                      <Button variant="danger" onClick={() => onDelete(partner)}>
+                      <Button
+                        variant="danger"
+                        onClick={() => onDelete(partner)}
+                      >
                         Delete
                       </Button>
                     </div>

@@ -4,10 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import {
-  getPublicResearch,
-  getPublicSiteContent,
-} from "@/lib/api/modules";
+import { getPublicResearch, getPublicSiteContent } from "@/lib/api/modules";
 import type { PublicResearchArea } from "@/types/modules";
 import type { HomepageContent } from "@/types/site-content";
 import PublicContainer from "./public-container";

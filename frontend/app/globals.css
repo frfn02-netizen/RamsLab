@@ -865,12 +865,7 @@ body {
   top: 50%;
   height: 1px;
   width: 60px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--border),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
 }
 
 .partners-cta-decor::before {

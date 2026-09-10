@@ -197,9 +197,7 @@ export default function ExpertDetail({ id }: { id: string }) {
         publicationCount: form.publicationCount
           ? Number(form.publicationCount)
           : undefined,
-        projectCount: form.projectCount
-          ? Number(form.projectCount)
-          : undefined,
+        projectCount: form.projectCount ? Number(form.projectCount) : undefined,
         awardCount: form.awardCount ? Number(form.awardCount) : undefined,
         showNip: form.showNip,
         showNidn: form.showNidn,
@@ -351,9 +349,7 @@ export default function ExpertDetail({ id }: { id: string }) {
                       (key) => (
                         <Field
                           key={key}
-                          label={
-                            key === "field" ? "Field of study" : key
-                          }
+                          label={key === "field" ? "Field of study" : key}
                         >
                           <input
                             required
@@ -369,9 +365,7 @@ export default function ExpertDetail({ id }: { id: string }) {
                     {(["startYear", "endYear"] as const).map((key) => (
                       <Field
                         key={key}
-                        label={
-                          key === "startYear" ? "Start year" : "End year"
-                        }
+                        label={key === "startYear" ? "Start year" : "End year"}
                       >
                         <input
                           type="number"
@@ -379,9 +373,7 @@ export default function ExpertDetail({ id }: { id: string }) {
                           max="2100"
                           className={inputClass}
                           value={e[key] ?? ""}
-                          onChange={(v) =>
-                            setEducation(i, key, v.target.value)
-                          }
+                          onChange={(v) => setEducation(i, key, v.target.value)}
                         />
                       </Field>
                     ))}
@@ -417,9 +409,7 @@ export default function ExpertDetail({ id }: { id: string }) {
                 ).map((key) => (
                   <Field
                     key={key}
-                    label={key
-                      .replace("Url", "")
-                      .replace(/([A-Z])/g, " $1")}
+                    label={key.replace("Url", "").replace(/([A-Z])/g, " $1")}
                   >
                     <input
                       type="url"
@@ -462,9 +452,7 @@ export default function ExpertDetail({ id }: { id: string }) {
                   >
                     <input
                       type="checkbox"
-                      checked={Boolean(
-                        form[key as keyof FormState],
-                      )}
+                      checked={Boolean(form[key as keyof FormState])}
                       onChange={(e) => set(key, e.target.checked)}
                     />
                     {label}
@@ -524,14 +512,10 @@ export default function ExpertDetail({ id }: { id: string }) {
               </div>
               <div>
                 <div className="flex flex-wrap gap-3">
-                  <Badge
-                    tone={expert.isPublic ? "green" : "neutral"}
-                  >
+                  <Badge tone={expert.isPublic ? "green" : "neutral"}>
                     {expert.isPublic ? "Public" : "Private"}
                   </Badge>
-                  <Badge
-                    tone={expert.published ? "green" : "neutral"}
-                  >
+                  <Badge tone={expert.published ? "green" : "neutral"}>
                     {expert.published ? "Published" : "Draft"}
                   </Badge>
                 </div>
@@ -679,8 +663,7 @@ export default function ExpertDetail({ id }: { id: string }) {
                   </p>
                   {(item.startYear || item.endYear) && (
                     <p className="mt-2 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
-                      {item.startYear ?? "—"} —{" "}
-                      {item.endYear ?? "Present"}
+                      {item.startYear ?? "—"} — {item.endYear ?? "Present"}
                     </p>
                   )}
                 </div>

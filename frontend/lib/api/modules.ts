@@ -485,8 +485,7 @@ export const getPublicPartners = (type: PartnerType) =>
   apiRequest<Partner[]>(`/public/partners/${type.toLowerCase()}`);
 export const getPublicHomepagePartners = () =>
   apiRequest<Partner[]>("/public/partners/homepage");
-export const getPublicExperts = () =>
-  apiRequest<Expert[]>("/public/experts");
+export const getPublicExperts = () => apiRequest<Expert[]>("/public/experts");
 export const getPublicExpertById = (id: string) =>
   apiRequest<Expert>(`/public/experts/${encodeURIComponent(id)}`);
 export const getPublicResearch = () =>

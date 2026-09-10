@@ -81,9 +81,7 @@ export default function PartnerDetail({
           published: result.published,
           showOnHomepage: result.showOnHomepage ?? false,
           homepageOrder:
-            result.homepageOrder != null
-              ? String(result.homepageOrder)
-              : "",
+            result.homepageOrder != null ? String(result.homepageOrder) : "",
         });
       })
       .catch((reason) => {
@@ -219,7 +217,7 @@ export default function PartnerDetail({
           href="/dashboard/partners"
           className="text-sm font-bold text-[var(--rams-red)]"
         >
-          ← All partners
+          back to partners
         </Link>
 
         {error && <ErrorState message={error} />}

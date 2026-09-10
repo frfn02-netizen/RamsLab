@@ -79,9 +79,7 @@ export default function ExpertsPage() {
           description="Manage expert profiles displayed in the public-facing experts section."
           action={
             isAdmin ? (
-              <LinkButton href="/dashboard/experts/new">
-                Add expert
-              </LinkButton>
+              <LinkButton href="/dashboard/experts/new">Add expert</LinkButton>
             ) : undefined
           }
         />
@@ -115,17 +113,21 @@ export default function ExpertsPage() {
               <table className="w-full min-w-[640px] text-left">
                 <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
                   <tr>
-                    {["Expert", "Affiliation", "Visibility", "Order", "Action"].map(
-                      (heading) => (
-                        <th
-                          key={heading}
-                          scope="col"
-                          className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
-                        >
-                          {heading}
-                        </th>
-                      ),
-                    )}
+                    {[
+                      "Expert",
+                      "Affiliation",
+                      "Visibility",
+                      "Order",
+                      "Action",
+                    ].map((heading) => (
+                      <th
+                        key={heading}
+                        scope="col"
+                        className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
+                      >
+                        {heading}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
 

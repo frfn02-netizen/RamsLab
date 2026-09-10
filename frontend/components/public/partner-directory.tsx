@@ -9,53 +9,80 @@ import PartnerCard from "./partner-card";
 import RevealOnScroll from "./reveal-on-scroll";
 import { PublicError, PublicLoading } from "./public-states";
 
+const FEATURED_PER_CATEGORY = 3;
+
 export default function PartnerDirectory() {
   const t = useTranslations("partners");
-  const [partners, setPartners] = useState<Partner[]>([]);
+  const [academic, setAcademic] = useState<Partner[]>([]);
+  const [industrial, setIndustrial] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
   useEffect(() => {
     Promise.all([
       getPublicPartners("UNIVERSITY"),
       getPublicPartners("INDUSTRIAL"),
     ])
-      .then(([university, industrial]) =>
-        setPartners([...university, ...industrial].slice(0, 6)),
-      )
+      .then(([uni, ind]) => {
+        setAcademic(uni);
+        setIndustrial(ind);
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  const totalPublished = academic.length + industrial.length;
+  const featuredAcademic = academic.slice(0, FEATURED_PER_CATEGORY);
+  const featuredIndustrial = industrial.slice(0, FEATURED_PER_CATEGORY);
+
   return (
-    <div className="mt-20">
+    <div>
       <RevealOnScroll className="flex items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
         <div>
-          <p className="eyebrow">{t("directory")}</p>
+          <p className="eyebrow text-[var(--gray)]">{t("directory")}</p>
           <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--navy)]">
             {t("selected")}
           </h2>
         </div>
         <span className="text-sm text-[var(--gray)]">
-          {loading ? t("loading") : `${partners.length} ${t("directory")}`}
+          {loading ? t("loading") : `${totalPublished} ${t("directory")}`}
         </span>
       </RevealOnScroll>
+
       <div className="mt-8">
         {loading ? (
           <PublicLoading label={t("loading")} />
         ) : error ? (
           <PublicError message={t("noDescription")} />
-        ) : partners.length > 0 ? (
-          <RevealOnScroll
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            stagger={100}
-          >
-            {partners.map((partner) => (
-              <PartnerCard key={partner._id} partner={partner} />
-            ))}
-          </RevealOnScroll>
+        ) : totalPublished > 0 ? (
+          <>
+            {featuredAcademic.length > 0 && (
+              <RevealOnScroll
+                className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                stagger={100}
+              >
+                {featuredAcademic.map((partner) => (
+                  <PartnerCard key={partner._id} partner={partner} />
+                ))}
+              </RevealOnScroll>
+            )}
+
+            {featuredIndustrial.length > 0 && (
+              <RevealOnScroll
+                className={`grid gap-5 sm:grid-cols-2 lg:grid-cols-3${featuredAcademic.length > 0 ? " mt-8" : ""}`}
+                stagger={100}
+              >
+                {featuredIndustrial.map((partner) => (
+                  <PartnerCard key={partner._id} partner={partner} />
+                ))}
+              </RevealOnScroll>
+            )}
+          </>
         ) : (
           <p className="text-sm text-[var(--slate)]">{t("directoryNote")}</p>
         )}
       </div>
+
       <RevealOnScroll className="mt-8 flex flex-wrap gap-4 text-sm font-semibold">
         <Link href="/partners/university" className="text-[var(--rams-red)]">
           {t("universityDirectory")} ↗

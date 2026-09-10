@@ -55,12 +55,47 @@ export default function HomeMaritimeCta() {
       >
         <circle cx="60" cy="60" r="55" stroke="white" strokeWidth="0.75" />
         <circle cx="60" cy="60" r="40" stroke="white" strokeWidth="0.5" />
-        <line x1="60" y1="2" x2="60" y2="118" stroke="white" strokeWidth="0.5" />
-        <line x1="2" y1="60" x2="118" y2="60" stroke="white" strokeWidth="0.5" />
-        <line x1="18" y1="18" x2="102" y2="102" stroke="white" strokeWidth="0.35" />
-        <line x1="102" y1="18" x2="18" y2="102" stroke="white" strokeWidth="0.35" />
+        <line
+          x1="60"
+          y1="2"
+          x2="60"
+          y2="118"
+          stroke="white"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="2"
+          y1="60"
+          x2="118"
+          y2="60"
+          stroke="white"
+          strokeWidth="0.5"
+        />
+        <line
+          x1="18"
+          y1="18"
+          x2="102"
+          y2="102"
+          stroke="white"
+          strokeWidth="0.35"
+        />
+        <line
+          x1="102"
+          y1="18"
+          x2="18"
+          y2="102"
+          stroke="white"
+          strokeWidth="0.35"
+        />
         <polygon points="60,8 64,52 60,48 56,52" fill="white" opacity="0.6" />
-        <text x="60" y="6" textAnchor="middle" fill="white" fontSize="7" opacity="0.5">
+        <text
+          x="60"
+          y="6"
+          textAnchor="middle"
+          fill="white"
+          fontSize="7"
+          opacity="0.5"
+        >
           N
         </text>
       </svg>
@@ -69,9 +104,7 @@ export default function HomeMaritimeCta() {
       <PublicContainer className="relative z-10 py-20 sm:py-24 lg:py-28">
         <RevealOnScroll className="text-center">
           <p className="eyebrow text-[var(--rams-red)]">
-            {t("ctaTitle")
-              .split("?")[0]
-              .includes("reliability")
+            {t("ctaTitle").split("?")[0].includes("reliability")
               ? "COLLABORATE WITH US"
               : t("ctaTitle").split("?")[0]}
           </p>

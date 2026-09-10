@@ -12,10 +12,7 @@ import {
   LoadingState,
   PageHeader,
 } from "@/components/ui";
-import {
-  deletePublicService,
-  getPublicServices,
-} from "@/lib/api/modules";
+import { deletePublicService, getPublicServices } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { PublicServiceRecord } from "@/types/modules";
 

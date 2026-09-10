@@ -46,9 +46,7 @@ export async function findExpertById(id: string): Promise<Expert | null> {
 // CREATE
 // ========================================
 
-export async function createExpert(
-  input: CreateExpertInput,
-): Promise<Expert> {
+export async function createExpert(input: CreateExpertInput): Promise<Expert> {
   const collection = getExpertsCollection();
   const now = new Date();
 

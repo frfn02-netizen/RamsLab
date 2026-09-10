@@ -132,7 +132,7 @@ function AcademicProfiles({ links }: { links: Array<[string, string]> }) {
 function ProfileLinks({ links }: { links: Array<[string, string]> }) {
   if (links.length === 0) return null;
   return (
-    <div className="mt-7 flex flex-wrap gap-2.5">
+    <div className="mt-4 flex flex-wrap gap-2.5">
       {links.map(([label, url]) => (
         <a
           key={label}
@@ -187,12 +187,6 @@ export default function PublicExpertProfile({ id }: { id: string }) {
       </PublicContainer>
     );
 
-  const role = [profile.title, profile.position]
-    .filter(Boolean)
-    .join(" · ");
-  const facultyDepartment = [profile.faculty, profile.department]
-    .filter(Boolean)
-    .join(" · ");
   const academicLinks = [
     ["SINTA", profile.sintaUrl],
     ["Google Scholar", profile.googleScholarUrl],
@@ -206,7 +200,6 @@ export default function PublicExpertProfile({ id }: { id: string }) {
     ["Institution", profile.institution],
     ["Faculty", profile.faculty],
     ["Department", profile.department],
-    ["Program", profile.program],
     ...(profile.nip && profile.showNip
       ? [["NIP", profile.nip] as [string, string]]
       : []),
@@ -246,35 +239,30 @@ export default function PublicExpertProfile({ id }: { id: string }) {
             </div>
             <div className="flex min-w-0 flex-col justify-center p-7 sm:p-10 lg:p-12">
               <p className="font-mono text-[0.65rem] font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
-                Expert
+                Academic Profile · Expert
               </p>
-              <h1 className="mt-5 break-words font-display text-5xl font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--navy)] sm:text-6xl">
+              <h1 className="mt-3 break-words font-display text-5xl font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--navy)] sm:text-6xl">
                 {profile.name}
               </h1>
-              {role && (
-                <p className="mt-6 text-xl leading-8 text-[var(--slate)]">
-                  {role}
-                </p>
-              )}
-              {facultyDepartment && (
-                <p className="mt-3 text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
-                  {facultyDepartment}
-                </p>
-              )}
               {profile.specialization.length > 0 && (
-                <p className="mt-3 text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
-                  {profile.specialization.join(" · ")}
-                </p>
+                <div className="mt-5">
+                  <p className="font-mono text-[0.85rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
+                    Specialization
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--slate)]">
+                    {profile.specialization.join(" · ")}
+                  </p>
+                </div>
               )}
               <ProfileLinks links={profileLinks} />
             </div>
-            <dl className="grid content-center gap-5 border-t border-[var(--border)] p-7 sm:grid-cols-2 lg:block lg:border-l lg:border-t-0 lg:p-10">
+            <dl className="grid content-center gap-3 border-t border-[var(--border)] p-7 sm:grid-cols-2 lg:border-l lg:border-t-0 lg:p-10">
               {institutionalFields.map(([label, value]) => (
                 <div key={label}>
                   <dt className="font-mono text-[0.75rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
                     {label}
                   </dt>
-                  <dd className="mt-2 text-base leading-7 text-[var(--slate)]">
+                  <dd className="mt-1 text-base leading-tight text-[var(--slate)]">
                     {value}
                   </dd>
                 </div>

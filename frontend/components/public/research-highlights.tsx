@@ -11,11 +11,13 @@ import type { ResearchHighlight } from "@/types/modules";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
 
-const AUTOPLAY_MS = 7000;
+const AUTOPLAY_MS = 6500;
 
 function Arrow({ direction }: { direction: "previous" | "next" }) {
   return (
-    <span aria-hidden="true">{direction === "previous" ? "\u2190" : "\u2192"}</span>
+    <span aria-hidden="true">
+      {direction === "previous" ? "\u2190" : "\u2192"}
+    </span>
   );
 }
 
@@ -242,11 +244,11 @@ export default function ResearchHighlights() {
   const imageAlt = `${t("researchHighlights.imageAlt")} \u2014 ${headline}`;
 
   return (
-      <section
-        id="hero"
-        className="relative -mt-[4.5rem] h-[100svh] overflow-hidden bg-[#2a0a0e] text-white"
-        aria-label={t("researchHighlights.carouselLabel")}
-      >
+    <section
+      id="hero"
+      className="relative -mt-[4.5rem] h-[100svh] overflow-hidden bg-[#2a0a0e] text-white"
+      aria-label={t("researchHighlights.carouselLabel")}
+    >
       {/* Base layer — maritime photography */}
       <div className="absolute inset-0">
         {item.image?.url ? (
@@ -313,84 +315,85 @@ export default function ResearchHighlights() {
             aria-roledescription="slide"
             aria-label={`${active + 1} / ${items.length}`}
           >
-          <div className="flex items-center gap-3">
-            <span className="inline-block h-px w-8 bg-[var(--rams-red)]" />
-            <p className="eyebrow !text-[var(--rams-red)]">
-              {t("researchHighlights.question")}
-            </p>
+            <div className="flex items-center gap-3">
+              <span className="inline-block h-px w-8 bg-[var(--rams-red)]" />
+              <p className="eyebrow !text-[var(--rams-red)]">
+                {t("researchHighlights.question")}
+              </p>
+            </div>
+            <h2 className="mt-6 font-display text-4xl font-bold leading-[1.04] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+              {headline}
+            </h2>
+            <div className="mt-8 max-w-2xl border-t border-white/20 pt-6">
+              <p className="text-base font-semibold leading-7 text-white/95">
+                {publication.title}
+              </p>
+              <p className="mt-2.5 text-sm leading-6 text-white/60">
+                {publication.authors.join(", ")} \u00B7 {publication.year}
+                {publication.journal ? ` \u00B7 ${publication.journal}` : ""}
+              </p>
+            </div>
+            {publication.pdfUrl ? (
+              <a
+                href={getPublicPublicationPdfUrl(publication.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-10 inline-flex items-center gap-2 border-b-2 border-[var(--rams-red)] pb-1 text-sm font-bold text-white transition-colors hover:border-white"
+              >
+                {t("researchHighlights.readPaper")} \u2192
+              </a>
+            ) : null}
           </div>
-          <h2 className="mt-6 font-display text-4xl font-bold leading-[1.04] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
-            {headline}
-          </h2>
-          <div className="mt-8 max-w-2xl border-t border-white/20 pt-6">
-            <p className="text-base font-semibold leading-7 text-white/95">
-              {publication.title}
-            </p>
-            <p className="mt-2.5 text-sm leading-6 text-white/60">
-              {publication.authors.join(", ")} \u00B7 {publication.year}
-              {publication.journal ? ` \u00B7 ${publication.journal}` : ""}
-            </p>
-          </div>
-          {publication.pdfUrl ? (
-            <a
-              href={getPublicPublicationPdfUrl(publication.id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-10 inline-flex items-center gap-2 border-b-2 border-[var(--rams-red)] pb-1 text-sm font-bold text-white transition-colors hover:border-white"
-            >
-              {t("researchHighlights.readPaper")} \u2192
-            </a>
-          ) : null}
-        </div>
 
-        <div
-          className="flex items-center justify-between gap-5"
-          role="group"
-          aria-label={t("researchHighlights.controls")}
-        >
           <div
-            className="flex items-center gap-2"
-            aria-label={t("researchHighlights.indicators")}
+            className="flex items-center justify-between gap-5"
+            role="group"
+            aria-label={t("researchHighlights.controls")}
           >
-            {items.map((highlight, index) => (
+            <div
+              className="flex items-center gap-2"
+              aria-label={t("researchHighlights.indicators")}
+            >
+              {items.map((highlight, index) => (
+                <button
+                  key={highlight.id}
+                  type="button"
+                  onClick={() => interact(index)}
+                  aria-label={t("researchHighlights.goTo", {
+                    number: index + 1,
+                  })}
+                  aria-current={index === active ? "true" : undefined}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === active
+                      ? "w-10 bg-[var(--rams-red)]"
+                      : "w-2 bg-white/30 hover:bg-white/60"
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-3 text-sm font-semibold text-white">
               <button
-                key={highlight.id}
                 type="button"
-                onClick={() => interact(index)}
-                aria-label={t("researchHighlights.goTo", {
-                  number: index + 1,
-                })}
-                aria-current={index === active ? "true" : undefined}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === active
-                    ? "w-10 bg-[var(--rams-red)]"
-                    : "w-2 bg-white/30 hover:bg-white/60"
-                }`}
-              />
-            ))}
+                onClick={() => interact(active - 1)}
+                aria-label={t("researchHighlights.previous")}
+                className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              >
+                <Arrow direction="previous" />
+              </button>
+              <span className="min-w-14 text-center tabular-nums text-white/70">
+                {String(active + 1).padStart(2, "0")} /{" "}
+                {String(items.length).padStart(2, "0")}
+              </span>
+              <button
+                type="button"
+                onClick={() => interact(active + 1)}
+                aria-label={t("researchHighlights.next")}
+                className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              >
+                <Arrow direction="next" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3 text-sm font-semibold text-white">
-            <button
-              type="button"
-              onClick={() => interact(active - 1)}
-              aria-label={t("researchHighlights.previous")}
-              className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-            >
-              <Arrow direction="previous" />
-            </button>
-            <span className="min-w-14 text-center tabular-nums text-white/70">
-              {String(active + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
-            </span>
-            <button
-              type="button"
-              onClick={() => interact(active + 1)}
-              aria-label={t("researchHighlights.next")}
-              className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-            >
-              <Arrow direction="next" />
-            </button>
-          </div>
-        </div>
         </div>
       </PublicContainer>
     </section>

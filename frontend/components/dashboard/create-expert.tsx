@@ -129,9 +129,7 @@ export default function CreateExpert() {
                 <input
                   className={inputClass}
                   value={form.employeeId}
-                  onChange={(event) =>
-                    update("employeeId", event.target.value)
-                  }
+                  onChange={(event) => update("employeeId", event.target.value)}
                 />
               </Field>
 
@@ -181,9 +179,7 @@ export default function CreateExpert() {
                   type="url"
                   className={inputClass}
                   value={form.linkedin}
-                  onChange={(event) =>
-                    update("linkedin", event.target.value)
-                  }
+                  onChange={(event) => update("linkedin", event.target.value)}
                 />
               </Field>
 
@@ -224,9 +220,7 @@ export default function CreateExpert() {
                 <input
                   className={inputClass}
                   value={form.department}
-                  onChange={(event) =>
-                    update("department", event.target.value)
-                  }
+                  onChange={(event) => update("department", event.target.value)}
                 />
               </Field>
               <Field label="Institution">
@@ -277,9 +271,7 @@ export default function CreateExpert() {
                 <input
                   type="checkbox"
                   checked={form.isPublic}
-                  onChange={(event) =>
-                    update("isPublic", event.target.checked)
-                  }
+                  onChange={(event) => update("isPublic", event.target.checked)}
                 />
                 Show profile publicly
               </label>

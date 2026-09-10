@@ -362,8 +362,13 @@
     "academicLabel": "Academic",
     "industrialLabel": "Industrial",
     "directoryNote": "Published partner records will appear here when available.",
+    "allPartners": "All partners",
     "universityDirectory": "University directory",
-    "industrialDirectory": "Industrial directory"
+    "industrialDirectory": "Industrial directory",
+    "pagination": "Pagination",
+    "previous": "Previous",
+    "next": "Next",
+    "showPerPage": "Show"
   },
   "team": {
     "heroEyebrow": "People & expertise",

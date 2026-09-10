@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicPartners } from "@/lib/api/modules";
@@ -17,7 +17,8 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const university = type === "UNIVERSITY";
-  const load = useCallback(() => {
+
+  useEffect(() => {
     setLoading(true);
     setError(false);
     getPublicPartners(type)
@@ -25,12 +26,7 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [type]);
-  useEffect(() => {
-    getPublicPartners(type)
-      .then(setPartners)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [type]);
+
   return (
     <>
       <PageHero
@@ -45,36 +41,43 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
         <PublicContainer className="py-16 sm:py-20">
           <RevealOnScroll className="mb-10 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
             <div>
-              <p className="eyebrow">
+              <p className="eyebrow text-[var(--gray)]">
                 {university ? t("universityEyebrow") : t("industrialEyebrow")}
               </p>
-              <p className="mt-3 text-sm text-[var(--slate)]">
-                {t("publishedFromApi")}
-              </p>
+              <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--navy)]">
+                {university ? t("universityTitle") : t("industrialTitle")}
+              </h2>
             </div>
-            <div className="flex gap-4 text-sm font-semibold">
-              <Link
-                href="/partners/university"
-                className={
-                  university ? "text-[var(--rams-red)]" : "text-[var(--gray)]"
-                }
-              >
-                {t("academic")}
-              </Link>
+            <span className="text-sm text-[var(--gray)]">
+              {loading ? t("loading") : `${partners.length} ${t("directory")}`}
+            </span>
+          </RevealOnScroll>
+
+          <RevealOnScroll className="mb-8 flex flex-wrap gap-4 text-sm font-semibold">
+            <Link href="/partners" className="text-[var(--rams-red)]">
+              ← Back
+            </Link>
+            {university ? (
               <Link
                 href="/partners/industrial"
-                className={
-                  !university ? "text-[var(--rams-red)]" : "text-[var(--gray)]"
-                }
+                className="text-[var(--rams-red)]"
               >
-                {t("industry")}
+                {t("industrialDirectory")} →
               </Link>
-            </div>
+            ) : (
+              <Link
+                href="/partners/university"
+                className="text-[var(--rams-red)]"
+              >
+                {t("universityDirectory")} →
+              </Link>
+            )}
           </RevealOnScroll>
+
           {loading ? (
             <PublicLoading label={t("loading")} />
           ) : error ? (
-            <PublicError message={t("noDescription")} onRetry={load} />
+            <PublicError message={t("noDescription")} onRetry={() => {}} />
           ) : partners.length === 0 ? (
             <PublicEmpty
               title={university ? t("noUniversity") : t("noIndustrial")}
@@ -82,7 +85,7 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
             />
           ) : (
             <RevealOnScroll
-              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
               stagger={100}
             >
               {partners.map((partner) => (

@@ -85,7 +85,9 @@ describe("Site Content API", () => {
       .set(auth(adminToken))
       .send({ content: testContent });
     expect(updated.status).toBe(200);
-    expect(updated.body.data.content.principles[0].title.en).toBe("Reliability");
+    expect(updated.body.data.content.principles[0].title.en).toBe(
+      "Reliability",
+    );
     expect(updated.body.data.updatedBy).toBe(TEST_ADMIN_USER_ID);
   });
 
