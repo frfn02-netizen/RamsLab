@@ -54,7 +54,6 @@ export default function PartnerDetail({
     logo: "",
     website: "",
     country: "",
-    description: "",
     isFeatured: false,
     published: false,
     showOnHomepage: false,
@@ -78,7 +77,6 @@ export default function PartnerDetail({
           logo: result.logo ?? "",
           website: result.website ?? "",
           country: result.country ?? "",
-          description: result.description ?? "",
           isFeatured: result.isFeatured,
           published: result.published,
           showOnHomepage: result.showOnHomepage ?? false,
@@ -140,7 +138,6 @@ export default function PartnerDetail({
         logo: form.logo || undefined,
         website: form.website || undefined,
         country: form.country || undefined,
-        description: form.description || undefined,
         isFeatured: form.isFeatured,
         published: form.published,
         showOnHomepage: form.showOnHomepage,
@@ -358,16 +355,6 @@ export default function PartnerDetail({
                   />
                 </Field>
               </div>
-
-              <Field label="Description">
-                <textarea
-                  className={`${inputClass} min-h-28`}
-                  value={form.description}
-                  onChange={(event) =>
-                    update("description", event.target.value)
-                  }
-                />
-              </Field>
 
               <div className="flex flex-wrap gap-5">
                 <label className="flex items-center gap-3 text-sm font-semibold">

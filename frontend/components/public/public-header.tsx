@@ -43,15 +43,15 @@ export default function PublicHeader() {
       <div className="mx-auto flex min-h-[4.5rem] max-w-[1380px] items-center justify-between gap-5 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2.5"
+          className="flex items-center gap-2"
           aria-label={a11y("home")}
         >
-          <div className="relative h-14 w-[120px] shrink-0 sm:h-[4.5rem] sm:w-[148px]">
+          <div className="relative h-[80px] w-[80px] shrink-0 sm:h-[94px] sm:w-[94px]">
             <Image
               src="/assets/rams-logo.png"
               alt=""
               fill
-              sizes="96px"
+              sizes="94px"
               className="object-contain"
               priority
             />

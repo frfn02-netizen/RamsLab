@@ -120,7 +120,7 @@ export default function ExpertsPage() {
                         <th
                           key={heading}
                           scope="col"
-                          className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]"
+                          className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
                         >
                           {heading}
                         </th>
@@ -159,15 +159,9 @@ export default function ExpertsPage() {
 
                       <td className="px-5 py-4 text-sm">{expert.order}</td>
 
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-4 text-center">
                         {isAdmin && (
-                          <div className="flex justify-end gap-2">
-                            <Link
-                              href={`/dashboard/experts/${expert._id}`}
-                              className="inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)]"
-                            >
-                              View
-                            </Link>
+                          <div className="flex justify-center gap-2">
                             <Link
                               href={`/dashboard/experts/${expert._id}`}
                               className="inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)]"

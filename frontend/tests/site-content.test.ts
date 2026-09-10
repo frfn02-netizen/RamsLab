@@ -6,12 +6,6 @@ import {
 import type { HomepageContent } from "@/types/site-content";
 
 const content: HomepageContent = {
-  hero: {
-    headline: { en: "English", id: "Indonesia" },
-    description: { en: "Description", id: "Deskripsi" },
-    primaryCta: { en: "Explore", id: "Jelajahi" },
-    secondaryCta: { en: "About", id: "Tentang" },
-  },
   principles: [
     {
       key: "R",
@@ -38,17 +32,7 @@ const content: HomepageContent = {
     title: { en: "Ecosystem", id: "Ekosistem" },
     aisDescription: { en: "AIS", id: "AIS" },
   },
-  research: {
-    title: { en: "Research", id: "Riset" },
-    description: { en: "Description", id: "Deskripsi" },
-    linkLabel: { en: "Explore", id: "Jelajahi" },
-  },
   projects: { title: { en: "Projects", id: "Proyek" } },
-  cta: {
-    title: { en: "CTA", id: "CTA" },
-    description: { en: "Description", id: "Deskripsi" },
-    buttonLabel: { en: "Contact", id: "Kontak" },
-  },
 };
 
 describe("site content API client", () => {

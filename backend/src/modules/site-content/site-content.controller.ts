@@ -15,7 +15,7 @@ import {
 } from "./site-content.types.js";
 import {
   removeProfilePhoto,
-  uploadSiteContentHomepageImage,
+  uploadSiteContentImage,
 } from "../../lib/cloudinary.js";
 
 const MAX_SITE_CONTENT_IMAGE_BYTES = 3 * 1024 * 1024;
@@ -99,17 +99,6 @@ export async function updateSiteContentController(req: Request, res: Response) {
     const updatedHomepage =
       key === "homepage" ? (content as HomepageContent) : undefined;
     if (
-      existingHomepage?.hero.heroImage?.url !==
-        updatedHomepage?.hero.heroImage?.url &&
-      existingHomepage?.hero.heroImage?.url
-    ) {
-      try {
-        await removeProfilePhoto(existingHomepage.hero.heroImage.url);
-      } catch {
-        // The database now points to the new image; cleanup is best effort.
-      }
-    }
-    if (
       existingHomepage?.headOfLaboratory?.image?.url !==
         updatedHomepage?.headOfLaboratory?.image?.url &&
       existingHomepage?.headOfLaboratory?.image?.url
@@ -134,7 +123,7 @@ export async function updateSiteContentController(req: Request, res: Response) {
   }
 }
 
-export async function uploadHomepageImageController(
+export async function uploadSiteContentImageController(
   req: Request,
   res: Response,
 ) {
@@ -158,12 +147,12 @@ export async function uploadHomepageImageController(
       .json({ success: false, message: "Image must be 3 MB or smaller" });
   }
   try {
-    const uploaded = await uploadSiteContentHomepageImage(image);
+    const uploaded = await uploadSiteContentImage(image);
     return res.json({ success: true, data: uploaded });
   } catch {
     return res
       .status(500)
-      .json({ success: false, message: "Failed to upload homepage image" });
+      .json({ success: false, message: "Failed to upload image" });
   }
 }
 

@@ -72,7 +72,7 @@ function LoginContent() {
                   src="/assets/rams-logo.png"
                   alt="RAMS Laboratory"
                   fill
-                  sizes="96px"
+                  sizes="100%"
                   className="object-contain"
                 />
               </div>

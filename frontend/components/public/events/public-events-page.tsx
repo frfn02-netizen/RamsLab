@@ -32,7 +32,7 @@ export default function PublicEventsPage() {
         title={t("title")}
         description={t("description")}
       />
-      <PublicContainer className="py-16 sm:py-20">
+      <PublicContainer className="max-w-4xl py-16 sm:py-20">
         {loading ? (
           <p className="text-sm font-semibold text-[var(--rams-gray)]">
             {common("loading")}
@@ -46,14 +46,14 @@ export default function PublicEventsPage() {
             {common("noPublishedRecords")}
           </p>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {events.map((event) => (
               <article
                 key={event.id}
-                className="border border-[var(--border)] bg-white p-5 shadow-[0_12px_32px_rgba(11,32,56,0.06)]"
+                className="border border-[var(--border)] bg-white p-4 shadow-[0_8px_24px_rgba(11,32,56,0.05)]"
               >
                 {event.image?.url && (
-                  <div className="relative mb-5 aspect-[16/9] overflow-hidden bg-[var(--rams-gray-light)]">
+                  <div className="relative mb-4 aspect-[16/9] overflow-hidden bg-[var(--rams-gray-light)]">
                     <Image
                       src={event.image.url}
                       alt={localized(event.image.alt) || localized(event.title)}
@@ -63,7 +63,7 @@ export default function PublicEventsPage() {
                     />
                   </div>
                 )}
-                <div className="flex flex-wrap gap-3 text-xs font-bold uppercase tracking-[0.14em] text-[var(--rams-red)]">
+                <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--rams-red)]">
                   {event.eventDate && (
                     <time dateTime={event.eventDate}>
                       {new Intl.DateTimeFormat(locale, {
@@ -75,11 +75,11 @@ export default function PublicEventsPage() {
                     <span>{localized(event.location)}</span>
                   )}
                 </div>
-                <h2 className="mt-3 text-2xl font-bold text-[var(--navy)]">
+                <h2 className="mt-2 text-xl font-bold text-[var(--navy)]">
                   {localized(event.title)}
                 </h2>
                 {localized(event.description) && (
-                  <p className="mt-3 text-sm leading-7 text-[var(--rams-gray)]">
+                  <p className="mt-2 text-sm leading-6 text-[var(--rams-gray)]">
                     {localized(event.description)}
                   </p>
                 )}

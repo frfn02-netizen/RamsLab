@@ -22,7 +22,7 @@ import {
 import {
   getAdminSiteContent,
   updateAdminSiteContent,
-  uploadHomepageImage,
+  uploadSiteContentImage,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type {
@@ -272,7 +272,7 @@ function ImageField({
     setUploading(true);
     setError(null);
     try {
-      const uploaded = await uploadHomepageImage(selected);
+      const uploaded = await uploadSiteContentImage(selected);
       onChange({ ...uploaded, position });
       setSelected(null);
       setPreview(uploaded.url);
@@ -349,13 +349,15 @@ function ImageField({
             }}
           >
             <div className="absolute left-2 top-2 bg-black/55 px-2 py-1 text-xs font-semibold text-white">
-              Homepage Hero crop
+              {fixedAspectRatio ? "Image crop" : "Homepage Hero crop"}
             </div>
           </div>
         </div>
       ) : (
         <div className="grid min-h-[75vh] place-items-center bg-[var(--rams-gray-light)] text-sm text-[var(--rams-gray)]">
-          No custom hero image. The public homepage uses its fallback image.
+          {fixedAspectRatio
+            ? "No image uploaded."
+            : "No custom hero image. The public homepage uses its fallback image."}
         </div>
       )}
       <div className="flex flex-wrap gap-3">
@@ -380,66 +382,68 @@ function ImageField({
         )}
       </div>
       {error && <p className="text-sm text-[var(--rams-red)]">{error}</p>}
-      <div className="space-y-4 border-t border-black/8 pt-4">
-        <div>
-          <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
-            Image position
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {heroImagePresets.map(([label, preset]) => (
-              <button
-                key={label}
-                type="button"
-                className={`rounded-md border px-3 py-2 text-sm font-semibold ${
-                  position.x === preset.x && position.y === preset.y
-                    ? "border-[var(--rams-red)] bg-red-50 text-[var(--rams-red-dark)]"
-                    : "border-[var(--border)] text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
-                }`}
-                onClick={() =>
-                  onChange({ ...(value as SiteContentImage), position: preset })
-                }
-                disabled={!value?.url}
+      {!fixedAspectRatio && (
+        <div className="space-y-4 border-t border-black/8 pt-4">
+          <div>
+            <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
+              Image position
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {heroImagePresets.map(([label, preset]) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={`rounded-md border px-3 py-2 text-sm font-semibold ${
+                    position.x === preset.x && position.y === preset.y
+                      ? "border-[var(--rams-red)] bg-red-50 text-[var(--rams-red-dark)]"
+                      : "border-[var(--border)] text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
+                  }`}
+                  onClick={() =>
+                    onChange({ ...(value as SiteContentImage), position: preset })
+                  }
+                  disabled={!value?.url}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(["x", "y"] as const).map((axis) => (
+              <label
+                key={axis}
+                className="text-sm font-semibold text-[var(--rams-charcoal)]"
               >
-                {label}
-              </button>
+                {axis === "x" ? "Horizontal" : "Vertical"} position:{" "}
+                {position[axis]}%
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={position[axis]}
+                  disabled={!value?.url}
+                  className="mt-2 w-full accent-[var(--rams-red)]"
+                  aria-label={`${axis === "x" ? "Horizontal" : "Vertical"} image position`}
+                  onChange={(event) =>
+                    onChange({
+                      ...(value as SiteContentImage),
+                      position: {
+                        ...position,
+                        [axis]: Number(event.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
             ))}
           </div>
+          {!value?.url && (
+            <p className="text-xs text-[var(--rams-gray)]">
+              Upload an image to adjust its position.
+            </p>
+          )}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {(["x", "y"] as const).map((axis) => (
-            <label
-              key={axis}
-              className="text-sm font-semibold text-[var(--rams-charcoal)]"
-            >
-              {axis === "x" ? "Horizontal" : "Vertical"} position:{" "}
-              {position[axis]}%
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={position[axis]}
-                disabled={!value?.url}
-                className="mt-2 w-full accent-[var(--rams-red)]"
-                aria-label={`${axis === "x" ? "Horizontal" : "Vertical"} image position`}
-                onChange={(event) =>
-                  onChange({
-                    ...(value as SiteContentImage),
-                    position: {
-                      ...position,
-                      [axis]: Number(event.target.value),
-                    },
-                  })
-                }
-              />
-            </label>
-          ))}
-        </div>
-        {!value?.url && (
-          <p className="text-xs text-[var(--rams-gray)]">
-            Upload a hero image to adjust its position.
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
 }
@@ -595,19 +599,6 @@ function HomepageEditor() {
         if (!cancelled) {
           setContent({
             ...result.content,
-            hero: {
-              ...result.content.hero,
-              ...(result.content.hero.heroImage
-                ? {
-                    heroImage: {
-                      ...result.content.hero.heroImage,
-                      position:
-                        result.content.hero.heroImage.position ??
-                        defaultHeroImagePosition,
-                    },
-                  }
-                : {}),
-            },
             ecosystem: {
               ...result.content.ecosystem,
               ramsDescription:
@@ -640,12 +631,7 @@ function HomepageEditor() {
   }, []);
 
   const text = (
-    section:
-      | "hero"
-      | "ecosystem"
-      | "research"
-      | "cta"
-      | "headOfLaboratory",
+    section: "ecosystem" | "headOfLaboratory",
     field: string,
     locale: "en" | "id",
     value: string,
@@ -753,57 +739,6 @@ function HomepageEditor() {
     >
       {content && (
         <>
-          <Section title="Hero">
-            <BilingualField
-              label="Headline"
-              value={content.hero.headline}
-              onChange={(locale, value) =>
-                text("hero", "headline", locale, value)
-              }
-            />
-
-            <BilingualField
-              label="Description"
-              value={content.hero.description}
-              onChange={(locale, value) =>
-                text("hero", "description", locale, value)
-              }
-              multiline
-            />
-
-            <BilingualField
-              label="Primary CTA"
-              value={content.hero.primaryCta}
-              onChange={(locale, value) =>
-                text("hero", "primaryCta", locale, value)
-              }
-            />
-
-            <BilingualField
-              label="Secondary CTA"
-              value={content.hero.secondaryCta}
-              onChange={(locale, value) =>
-                text("hero", "secondaryCta", locale, value)
-              }
-            />
-
-            <Field label="Hero image">
-              <ImageField
-                value={content.hero.heroImage}
-                onChange={(image) =>
-                  setContent((current) =>
-                    current
-                      ? {
-                          ...current,
-                          hero: { ...current.hero, heroImage: image },
-                        }
-                      : current,
-                  )
-                }
-              />
-            </Field>
-          </Section>
-
           <Section title="RAMS Principles">
             <PrincipleFields
               principles={content.principles}
@@ -1000,59 +935,6 @@ function HomepageEditor() {
                 text("ecosystem", "puiKekalDescription", locale, value)
               }
               multiline
-            />
-          </Section>
-
-          <Section title="Research section">
-            <BilingualField
-              label="Title"
-              value={content.research.title}
-              onChange={(locale, value) =>
-                text("research", "title", locale, value)
-              }
-            />
-
-            <BilingualField
-              label="Description"
-              value={content.research.description}
-              onChange={(locale, value) =>
-                text("research", "description", locale, value)
-              }
-              multiline
-            />
-
-            <BilingualField
-              label="Link label"
-              value={content.research.linkLabel}
-              onChange={(locale, value) =>
-                text("research", "linkLabel", locale, value)
-              }
-            />
-          </Section>
-
-          <Section title="Research section">
-            <BilingualField
-              label="Title"
-              value={content.cta.title}
-              onChange={(locale, value) => text("cta", "title", locale, value)}
-              multiline
-            />
-
-            <BilingualField
-              label="Description"
-              value={content.cta.description}
-              onChange={(locale, value) =>
-                text("cta", "description", locale, value)
-              }
-              multiline
-            />
-
-            <BilingualField
-              label="Button label"
-              value={content.cta.buttonLabel}
-              onChange={(locale, value) =>
-                text("cta", "buttonLabel", locale, value)
-              }
             />
           </Section>
         </>

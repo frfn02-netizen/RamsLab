@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Readable } from "node:stream";
 
 const CLOUDINARY_FOLDER = "rams-platform/profile-photos";
-const SITE_CONTENT_HOMEPAGE_FOLDER = "rams-platform/site-content/homepage";
+const SITE_CONTENT_IMAGE_FOLDER = "rams-platform/site-content/images";
 const RESEARCH_AREA_FOLDER = "rams-platform/research-areas";
 const PUBLICATION_FOLDER = "rams-platform/publications";
 const RESEARCH_HIGHLIGHT_FOLDER = "rams-platform/research-highlights";
@@ -65,8 +65,8 @@ export async function uploadProfilePhoto(buffer: Buffer) {
   };
 }
 
-export async function uploadSiteContentHomepageImage(buffer: Buffer) {
-  const result = await uploadBuffer(buffer, SITE_CONTENT_HOMEPAGE_FOLDER);
+export async function uploadSiteContentImage(buffer: Buffer) {
+  const result = await uploadBuffer(buffer, SITE_CONTENT_IMAGE_FOLDER);
   return {
     url: result.secure_url,
     publicId: result.public_id,

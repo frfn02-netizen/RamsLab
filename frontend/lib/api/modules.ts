@@ -525,9 +525,9 @@ export const updateAdminSiteContent = <K extends SiteContentKey>(
     { method: "PUT", body: JSON.stringify({ content }) },
   );
 
-export const uploadHomepageImage = (file: File) =>
+export const uploadSiteContentImage = (file: File) =>
   apiRequest<{ url: string; publicId?: string }>(
-    `/admin/site-content/homepage/image?filename=${encodeURIComponent(file.name)}`,
+    `/admin/site-content/image?filename=${encodeURIComponent(file.name)}`,
     {
       method: "POST",
       body: file,

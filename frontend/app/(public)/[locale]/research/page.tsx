@@ -192,29 +192,6 @@ export default async function ResearchPage({
           )}
         </PublicContainer>
       </section>
-
-      {/* CLOSING CTA */}
-      <section className="bg-[var(--navy)] py-20 text-white sm:py-28">
-        <PublicContainer>
-          <RevealOnScroll className="mx-auto max-w-3xl text-center">
-            <p className="text-[0.75rem] font-bold uppercase tracking-[0.1em] text-[var(--rams-red)]">
-              {brand("laboratory")}
-            </p>
-            <h2 className="mt-4 font-display text-4xl font-bold leading-tight tracking-[-0.02em] sm:text-5xl">
-              {t("ctaTitle")}
-            </h2>
-            <p className="mt-6 text-lg text-white/70">{t("ctaText")}</p>
-            <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-              <Link
-                href="/about"
-                className="bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]"
-              >
-                {t("ctaSecondary")} &rarr;
-              </Link>
-            </div>
-          </RevealOnScroll>
-        </PublicContainer>
-      </section>
     </>
   );
 }

@@ -49,17 +49,6 @@ export interface HeadOfLaboratoryContent {
 }
 
 export interface HomepageContent {
-  hero: {
-    headline: BilingualText;
-    description: BilingualText;
-    primaryCta: BilingualText;
-    secondaryCta: BilingualText;
-    heroImage?: {
-      url: string;
-      publicId?: string;
-      position?: HeroImagePosition;
-    };
-  };
   principles: [
     HomepagePrinciple,
     HomepagePrinciple,
@@ -72,27 +61,12 @@ export interface HomepageContent {
     aisDescription: BilingualText;
     puiKekalDescription?: BilingualText;
   };
-  research: {
-    title: BilingualText;
-    description: BilingualText;
-    linkLabel: BilingualText;
-  };
   projects: {
     title: BilingualText;
-  };
-  cta: {
-    title: BilingualText;
-    description: BilingualText;
-    buttonLabel: BilingualText;
   };
   headOfLaboratory?: HeadOfLaboratoryContent;
   showHeadOfLaboratoryOnHomepage?: boolean;
   showWhoWeAreOnHomepage?: boolean;
-}
-
-export interface HeroImagePosition {
-  x: number;
-  y: number;
 }
 
 export interface AboutContent {

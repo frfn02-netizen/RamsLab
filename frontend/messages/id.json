@@ -90,6 +90,11 @@
       "title": "Who We Are",
       "button": "Meet Our Team"
     },
+    "research": {
+      "title": "Bidang Riset",
+      "description": "Jelajahi bidang riset utama kami dalam keandalan, ketersediaan, manajemen, dan keselamatan sistem maritim.",
+      "linkLabel": "Jelajahi riset kami"
+    },
     "eyebrow": "Laboratorium RAMS",
     "headline": "Riset keandalan, keselamatan & sistem maritim.",
     "description": "Kami mempelajari sistem di balik operasi maritim dan industri yang aman dan andal—mulai dari asesmen risiko dan pemantauan AIS hingga pemeliharaan, keandalan, dan simulasi.",

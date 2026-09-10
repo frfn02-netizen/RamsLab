@@ -103,10 +103,10 @@ export default function ResearchHighlightsPage() {
                       "Status",
                       "Action",
                     ].map((heading) => (
-                      <th
-                        key={heading}
-                        className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]"
-                      >
+                        <th
+                          key={heading}
+                          className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
+                        >
                         {heading}
                       </th>
                     ))}
@@ -157,13 +157,13 @@ export default function ResearchHighlightsPage() {
                         </Badge>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <LinkButton
+                        <div className="flex justify-center gap-2">
+                          <Link
                             href={`/dashboard/research-highlights/${item.id}`}
-                            variant="secondary"
+                            className="inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)]"
                           >
-                            View / Edit
-                          </LinkButton>
+                            Edit
+                          </Link>
                           <Button
                             variant="danger"
                             onClick={() => setDeleting(item)}

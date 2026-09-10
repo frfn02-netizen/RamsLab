@@ -34,7 +34,6 @@ export default function CreatePartner() {
     name: "",
     website: "",
     country: "",
-    description: "",
     logo: "",
     isFeatured: false,
     published: false,
@@ -83,7 +82,6 @@ export default function CreatePartner() {
         website: form.website || undefined,
         logo: form.logo || undefined,
         country: form.country || undefined,
-        description: form.description || undefined,
         homepageOrder: form.homepageOrder
           ? Number(form.homepageOrder)
           : undefined,
@@ -231,19 +229,6 @@ export default function CreatePartner() {
                   setForm({
                     ...form,
                     country: event.target.value,
-                  })
-                }
-              />
-            </Field>
-
-            <Field label="Description">
-              <textarea
-                className={`${inputClass} min-h-28`}
-                value={form.description}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    description: event.target.value,
                   })
                 }
               />

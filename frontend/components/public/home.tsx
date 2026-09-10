@@ -30,6 +30,7 @@ export default function PublicHome() {
   const locale = useLocale() === "id" ? "id" : "en";
   const brand = useTranslations("brand");
   const common = useTranslations("common");
+  const research = useTranslations("home.research");
   const [content, setContent] = useState<HomepageContent | null>(null);
   const [contentLoading, setContentLoading] = useState(true);
   const [contentError, setContentError] = useState(false);
@@ -242,17 +243,17 @@ export default function PublicHome() {
               <RevealOnScroll className="flex items-end justify-between">
                 <div className="max-w-2xl">
                   <h2 className="font-display text-4xl font-bold text-[var(--navy)]">
-                    {localized(content.research.title)}
+                    {research("title")}
                   </h2>
                   <p className="mt-4 text-lg text-[var(--gray)]">
-                    {localized(content.research.description)}
+                    {research("description")}
                   </p>
                 </div>
                 <Link
                   href="/research"
                   className="text-sm font-semibold text-[var(--rams-red)]"
                 >
-                  {localized(content.research.linkLabel)} →
+                  {research("linkLabel")} →
                 </Link>
               </RevealOnScroll>
               <RevealOnScroll

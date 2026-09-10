@@ -5,7 +5,7 @@ import {
   getSiteContentController,
   getSiteContentListController,
   updateSiteContentController,
-  uploadHomepageImageController,
+  uploadSiteContentImageController,
 } from "./site-content.controller.js";
 
 const router = Router();
@@ -14,10 +14,9 @@ router.get("/", getSiteContentListController);
 router.get("/:key", getSiteContentController);
 router.put("/:key", updateSiteContentController);
 router.post(
-  "/homepage/image",
-  // The JSON parser skips image/* payloads, leaving the binary available here.
+  "/image",
   raw({ type: "image/*", limit: "3mb" }),
-  uploadHomepageImageController,
+  uploadSiteContentImageController,
 );
 
 export default router;

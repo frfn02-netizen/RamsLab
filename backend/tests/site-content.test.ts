@@ -17,12 +17,6 @@ import {
 } from "./auth-fixture.js";
 
 const testContent: HomepageContent = {
-  hero: {
-    headline: { en: "Test headline", id: "Judul uji" },
-    description: { en: "Test description", id: "Deskripsi uji" },
-    primaryCta: { en: "Primary", id: "Utama" },
-    secondaryCta: { en: "Secondary", id: "Sekunder" },
-  },
   principles: [
     {
       key: "R",
@@ -49,17 +43,7 @@ const testContent: HomepageContent = {
     title: { en: "Ecosystem", id: "Ekosistem" },
     aisDescription: { en: "AIS", id: "AIS" },
   },
-  research: {
-    title: { en: "Research", id: "Riset" },
-    description: { en: "Research description", id: "Deskripsi riset" },
-    linkLabel: { en: "Explore", id: "Jelajahi" },
-  },
   projects: { title: { en: "Projects", id: "Proyek" } },
-  cta: {
-    title: { en: "CTA", id: "CTA" },
-    description: { en: "CTA description", id: "Deskripsi CTA" },
-    buttonLabel: { en: "Contact", id: "Kontak" },
-  },
 };
 
 let adminToken: string;
@@ -101,7 +85,7 @@ describe("Site Content API", () => {
       .set(auth(adminToken))
       .send({ content: testContent });
     expect(updated.status).toBe(200);
-    expect(updated.body.data.content.hero.headline.en).toBe("Test headline");
+    expect(updated.body.data.content.principles[0].title.en).toBe("Reliability");
     expect(updated.body.data.updatedBy).toBe(TEST_ADMIN_USER_ID);
   });
 
@@ -127,7 +111,7 @@ describe("Site Content API", () => {
       "/api/public/site-content/homepage",
     );
     expect(response.status).toBe(200);
-    expect(response.body.data.hero.headline.id).toBe("Judul uji");
+    expect(response.body.data.principles[0].title.id).toBe("Keandalan");
     expect(response.body.data.createdAt).toBeUndefined();
     expect(response.body.data.updatedAt).toBeUndefined();
   });

@@ -58,13 +58,6 @@ const headOfLaboratorySchema = z.object({
 });
 
 export const homepageContentSchema = z.object({
-  hero: z.object({
-    headline: bilingualTextSchema,
-    description: bilingualTextSchema,
-    primaryCta: bilingualTextSchema,
-    secondaryCta: bilingualTextSchema,
-    heroImage: contentImageSchema.optional(),
-  }),
   principles: principleTuple,
   ecosystem: z.object({
     title: bilingualTextSchema,
@@ -72,18 +65,8 @@ export const homepageContentSchema = z.object({
     aisDescription: bilingualTextSchema,
     puiKekalDescription: bilingualTextSchema.optional(),
   }),
-  research: z.object({
-    title: bilingualTextSchema,
-    description: bilingualTextSchema,
-    linkLabel: bilingualTextSchema,
-  }),
   projects: z.object({
     title: bilingualTextSchema,
-  }),
-  cta: z.object({
-    title: bilingualTextSchema,
-    description: bilingualTextSchema,
-    buttonLabel: bilingualTextSchema,
   }),
   headOfLaboratory: headOfLaboratorySchema.optional(),
   showHeadOfLaboratoryOnHomepage: z.boolean().default(false),

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import type { HomepageContent } from "@/types/site-content";
 import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
@@ -11,13 +12,23 @@ export default function HomeIntroduction() {
 
   return (
     <section
-      className="bg-white py-24 sm:py-28 lg:py-36"
+      className="flex items-center bg-white py-24 sm:py-28 lg:py-36"
       aria-labelledby="welcome-title"
     >
-      <PublicContainer>
+      <PublicContainer className="w-full">
         <RevealOnScroll className="mx-auto text-center">
           <p className="text-sm font-bold uppercase leading-snug tracking-normal text-black sm:text-base lg:text-lg">
-            {t("welcome.eyebrow")}
+            {(() => {
+              const eyebrow = t("welcome.eyebrow");
+              const splitIndex = eyebrow.indexOf("RAMS");
+              if (splitIndex === -1) return eyebrow;
+              return (
+                <>
+                  <span className="font-normal">{eyebrow.slice(0, splitIndex)}</span>
+                  <span>{eyebrow.slice(splitIndex)}</span>
+                </>
+              );
+            })()}
           </p>
           <h2
             id="welcome-title"
@@ -28,6 +39,12 @@ export default function HomeIntroduction() {
           <p className="mx-auto mt-7 max-w-4xl text-base leading-8 text-black sm:text-lg lg:text-xl lg:leading-9">
             {t("welcome.description")}
           </p>
+          <Link
+            href="/about"
+            className="mt-10 inline-block bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]"
+          >
+            Learn More About Us
+          </Link>
         </RevealOnScroll>
       </PublicContainer>
     </section>

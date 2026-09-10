@@ -271,12 +271,6 @@ export default function DosenPage() {
                       )}
 
                       <div className="mt-auto flex items-center gap-3 border-t border-black/8 pt-4">
-                        <Link
-                          href={`/dashboard/dosen/${item._id}`}
-                          className="inline-flex items-center text-sm font-bold text-[var(--rams-red)]"
-                        >
-                          View
-                        </Link>
                         {user?.role === "ADMIN" && (
                           <Link
                             href={`/dashboard/dosen/${item._id}/edit`}

@@ -49,7 +49,7 @@ function PartnerTable({
                   <th
                     key={heading}
                     scope="col"
-                    className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]"
+                    className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
                   >
                     {heading}
                   </th>
@@ -86,11 +86,19 @@ function PartnerTable({
                   {partner.isFeatured ? "Yes" : "No"}
                 </td>
 
-                <td className="px-5 py-4 text-right">
+                <td className="px-5 py-4 text-center">
                   {admin && (
-                    <Button variant="danger" onClick={() => onDelete(partner)}>
-                      Delete
-                    </Button>
+                    <div className="flex justify-center gap-2">
+                      <Link
+                        href={`/dashboard/partners/${partner._id}?type=${type}`}
+                        className="inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--rams-charcoal)] transition-colors hover:bg-[var(--rams-gray-light)]"
+                      >
+                        Edit
+                      </Link>
+                      <Button variant="danger" onClick={() => onDelete(partner)}>
+                        Delete
+                      </Button>
+                    </div>
                   )}
                 </td>
               </tr>

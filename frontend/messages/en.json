@@ -90,6 +90,11 @@
       "title": "Who We Are",
       "button": "Meet Our Team"
     },
+    "research": {
+      "title": "Research Areas",
+      "description": "Explore our core research areas in maritime systems reliability, availability, management, and safety.",
+      "linkLabel": "Explore our research"
+    },
     "eyebrow": "RAMS Laboratory",
     "headline": "Reliability, safety & marine systems research.",
     "description": "We study the systems behind safe, dependable maritime and industrial operations—from risk assessment and AIS monitoring to maintenance, reliability, and simulation.",

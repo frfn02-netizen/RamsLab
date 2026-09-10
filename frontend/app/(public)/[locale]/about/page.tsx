@@ -229,57 +229,6 @@ export default async function AboutPage({
         </PublicContainer>
       </section>
 
-      <section className="bg-[var(--background-light)] py-16">
-        <PublicContainer>
-          <RevealOnScroll className="text-center">
-            <h2 className="font-display text-2xl font-bold text-[var(--navy)]">
-              {localized(content.ecosystem.title)}
-            </h2>
-          </RevealOnScroll>
-
-          <RevealOnScroll
-            className="mt-12 flex flex-wrap items-center justify-center gap-12"
-            stagger={120}
-          >
-            {/* RAMS Laboratory */}
-            <div className="public-logo-interaction group relative h-16 w-24">
-              <Image
-                src="/assets/rams-logo.png"
-                alt={brand("laboratory")}
-                fill
-                className="public-image-zoom object-contain"
-              />
-            </div>
-
-            {/* AIS */}
-            <a
-              href="https://aisits.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={brand("ais")}
-              className="public-logo-interaction group relative z-10 block h-16 w-24 cursor-pointer"
-            >
-              <Image
-                src="/assets/logo ais part2.png"
-                alt={brand("ais")}
-                fill
-                className="public-image-zoom pointer-events-none object-contain"
-              />
-            </a>
-
-            {/* PUI */}
-            <div className="public-logo-interaction group relative h-16 w-32">
-              <Image
-                src="/assets/logo pu-kekal part2.png"
-                alt={brand("pui")}
-                fill
-                className="public-image-zoom object-contain"
-              />
-            </div>
-          </RevealOnScroll>
-        </PublicContainer>
-      </section>
-
       <section className="bg-white py-20">
         <PublicContainer>
           <RevealOnScroll>
