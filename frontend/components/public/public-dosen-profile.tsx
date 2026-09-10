@@ -132,14 +132,14 @@ function AcademicProfiles({ links }: { links: Array<[string, string]> }) {
 function ProfileLinks({ links }: { links: Array<[string, string]> }) {
   if (links.length === 0) return null;
   return (
-    <div className="mt-4 flex flex-wrap gap-2.5">
+    <div className="mt-5 flex flex-wrap gap-2.5">
       {links.map(([label, url]) => (
         <a
           key={label}
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 border border-[var(--border)] px-3.5 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--navy)] transition-colors hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"
+          className="inline-flex items-center gap-2 border border-[var(--border)] px-4 py-2.5 text-[0.8rem] font-bold uppercase tracking-[0.08em] text-[var(--navy)] transition-colors hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"
         >
           <span>{label}</span>
           <ExternalLinkIcon />
@@ -273,7 +273,6 @@ export default function PublicDosenProfile({ id }: { id: string }) {
     return <PublicStudentProfile key={profile.id} profile={profile} />;
   }
 
-  const role = [profile.title, profile.position].filter(Boolean).join(" · ");
   const academicLinks = [
     ["SINTA", profile.sintaUrl],
     ["Google Scholar", profile.googleScholarUrl],
@@ -283,7 +282,7 @@ export default function PublicDosenProfile({ id }: { id: string }) {
   const profileLinks = [["LinkedIn", profile.linkedin]].filter(
     (item): item is [string, string] => Boolean(item[1]),
   );
-  const institutionalFields = [
+  const metadataFields = [
     ["Institution", profile.institution],
     ["Faculty", profile.faculty],
     ["Department", profile.department],
@@ -296,72 +295,82 @@ export default function PublicDosenProfile({ id }: { id: string }) {
       <PublicContainer className="py-10 sm:py-16 lg:py-24">
         <Link
           href="/team"
-          className="text-sm font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
+          className="text-[0.95rem] font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
         >
           ← Back to people
         </Link>
-        <section className="mt-8 overflow-hidden border border-[var(--border)] bg-white">
-          <div className="grid lg:grid-cols-[minmax(240px,30%)_minmax(0,40%)_minmax(240px,30%)]">
-            <div className="relative aspect-[4/3] bg-[var(--navy)] lg:aspect-[4/5]">
-              {profile.photo && !imageFailed ? (
-                <Image
-                  src={profile.photo}
-                  alt={profile.fullName}
-                  fill
-                  unoptimized
-                  priority
-                  onError={() => setImageFailed(true)}
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 30vw"
-                />
-              ) : (
-                <div className="grid h-full place-items-center text-7xl font-semibold text-white/85">
-                  {initials(profile.fullName)}
-                </div>
-              )}
+
+        <section className="mt-8 border border-[var(--border)] bg-white">
+          {/* Profile hero: photo + info */}
+          <div className="flex flex-col gap-8 p-6 sm:p-8 lg:flex-row lg:gap-10 lg:p-8">
+            {/* Photo */}
+            <div className="relative w-full flex-shrink-0 self-start overflow-hidden rounded-[4px] bg-[var(--navy)] sm:w-[280px] lg:w-[300px]">
+              <div className="aspect-[4/5]">
+                {profile.photo && !imageFailed ? (
+                  <Image
+                    src={profile.photo}
+                    alt={profile.fullName}
+                    fill
+                    unoptimized
+                    priority
+                    onError={() => setImageFailed(true)}
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 280px, 300px"
+                  />
+                ) : (
+                  <div className="grid h-full place-items-center text-7xl font-semibold text-white/85">
+                    {initials(profile.fullName)}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex min-w-0 flex-col justify-center p-7 sm:p-10 lg:p-12">
-              <p className="font-mono text-[0.65rem] font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
+
+            {/* Profile info */}
+            <div className="flex min-w-0 flex-1 flex-col justify-center">
+              <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
                 Academic Profile · Expert
               </p>
-              <h1 className="mt-3 break-words font-display text-5xl font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--navy)] sm:text-6xl">
+              <h1 className="mt-4 max-w-[650px] break-words font-display text-[3.25rem] font-bold leading-[1.02] tracking-[-0.04em] text-[var(--navy)] sm:text-[3.75rem] lg:text-[4rem]">
                 {profile.fullName}
               </h1>
-              {role && (
-                <p className="mt-3 text-xl leading-8 text-[var(--slate)]">
-                  {role}
-                </p>
-              )}
               {profile.specialization.length > 0 && (
-                <div className="mt-5">
-                  <p className="font-mono text-[0.85rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
+                <div className="mt-8">
+                  <p className="font-mono text-[0.8rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
                     Specialization
                   </p>
-                  <p className="mt-1 text-sm text-[var(--slate)]">
+                  <p className="mt-2 text-[1.15rem] leading-relaxed text-[var(--slate)]">
                     {profile.specialization.join(" · ")}
                   </p>
                 </div>
               )}
               <ProfileLinks links={profileLinks} />
             </div>
-            <dl className="grid content-center gap-3 border-t border-[var(--border)] p-7 sm:grid-cols-2 lg:border-l lg:border-t-0 lg:p-10">
-              {institutionalFields.map(([label, value]) => (
-                <div key={label}>
-                  <dt className="font-mono text-[0.75rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
-                    {label}
-                  </dt>
-                  <dd className="mt-1 text-base leading-tight text-[var(--slate)]">
-                    {value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-[var(--border)]" />
+
+          {/* Institutional metadata row */}
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 p-6 sm:p-8 lg:grid-cols-4 lg:gap-x-8">
+            {metadataFields.map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="font-mono text-[0.75rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
+                  {label}
+                </dt>
+                <dd className="mt-1 text-[1.05rem] leading-snug text-[var(--slate)]">
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </section>
+
+        {/* Education + Academic Profiles */}
         <div className="mt-16 grid gap-14 lg:grid-cols-[minmax(0,65%)_minmax(240px,35%)] lg:gap-16">
           <EducationTimeline education={profile.education ?? []} />
           <AcademicProfiles links={academicLinks} />
         </div>
+
         <aside className="mt-16 border-t border-[var(--border)] pt-6 text-sm leading-7 text-[var(--gray)]">
           Informasi yang ditampilkan mengikuti pengaturan privasi yang
           ditentukan oleh dosen. Data NIP, NIDN, dan email hanya ditampilkan
