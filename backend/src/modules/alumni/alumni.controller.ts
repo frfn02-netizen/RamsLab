@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { MongoServerError } from "mongodb";
+import { MongoServerError, ObjectId } from "mongodb";
 import { ZodError } from "zod";
 
 import {
@@ -13,6 +13,10 @@ import {
 } from "./alumni.service.js";
 
 import { createAdminAlumni } from "./admin-alumni.service.js";
+import {
+  findAuditLogsByAlumniId,
+  findAuditLogsWithUserNames,
+} from "./alumni-audit.repository.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 import { deactivateUser, setUserActive } from "../users/user.repository.js";
 import {
@@ -370,6 +374,56 @@ export async function getAlumniListController(req: Request, res: Response) {
     return res.status(400).json({
       success: false,
       message: "Failed to get alumni list",
+    });
+  }
+}
+
+export async function getMyAlumniAuditLogsController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+    const alumni = await getAlumniByUserId(req.user.userId);
+    if (!alumni) {
+      return res.status(404).json({
+        success: false,
+        message: "Alumni profile not found",
+      });
+    }
+    const logs = await findAuditLogsByAlumniId(alumni._id!);
+    return res.json({ success: true, data: logs });
+  } catch {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to get change history",
+    });
+  }
+}
+
+export async function getAlumniAuditLogsController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id || !ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid alumni ID",
+      });
+    }
+    const logs = await findAuditLogsWithUserNames(new ObjectId(id));
+    return res.json({ success: true, data: logs });
+  } catch {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to get audit logs",
     });
   }
 }

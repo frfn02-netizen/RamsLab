@@ -4,14 +4,19 @@ import { requireRole } from "../../middlewares/role.middlewares.js";
 import {
   createPublicServiceController,
   createPublicServiceExpertController,
+  createPublicServiceProjectController,
   deletePublicServiceController,
   deletePublicServiceExpertController,
+  deletePublicServiceProjectController,
   getPublicServiceController,
   getPublicServiceExpertController,
   getPublicServiceExpertListController,
   getPublicServiceListController,
+  getPublicServiceProjectController,
+  getPublicServiceProjectListController,
   updatePublicServiceController,
   updatePublicServiceExpertController,
+  updatePublicServiceProjectController,
   uploadPublicServiceImageController,
 } from "./public-service.controller.js";
 
@@ -32,5 +37,10 @@ router.post(
   uploadPublicServiceImageController,
 );
 router.delete("/services/:id", deletePublicServiceController);
+router.get("/projects", getPublicServiceProjectListController);
+router.get("/projects/:id", getPublicServiceProjectController);
+router.post("/projects", createPublicServiceProjectController);
+router.patch("/projects/:id", updatePublicServiceProjectController);
+router.delete("/projects/:id", deletePublicServiceProjectController);
 
 export default router;

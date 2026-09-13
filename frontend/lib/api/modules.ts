@@ -11,6 +11,7 @@ import type {
   ProjectInput,
   ProjectUpdateInput,
   Publication,
+  PublicationFacets,
   PublicationInput,
   PublicationUpdateInput,
   AlumniTracking,
@@ -32,6 +33,10 @@ import type {
   PublicServiceExpertUpdateInput,
   PublicServiceInput,
   PublicServicePageData,
+  PublicServiceProject,
+  PublicServiceProjectInput,
+  PublicServiceProjectUpdateInput,
+  PublicServiceProjectListResponse,
   PublicServiceRecord,
   PublicServiceUpdateInput,
   Student,
@@ -40,6 +45,10 @@ import type {
   Expert,
   ExpertInput,
   ExpertUpdateInput,
+  HomepageVideo,
+  HomepageVideoInput,
+  HomepageVideoUpdateInput,
+  PublicHomepageVideo,
 } from "@/types/modules";
 import type { ManagedAccount } from "@/types/auth";
 import type {
@@ -169,8 +178,21 @@ export type PublicationQuery = {
   page?: number;
   limit?: number;
 };
-export const getPublications = (params: PublicationQuery = {}) => {
+
+export interface PublicationListResponse {
+  success: boolean;
+  data: Publication[];
+  total: number;
+  page: number;
+  limit: number;
+  facets: PublicationFacets;
+}
+
+export const getPublications = async (
+  params: PublicationQuery = {},
+): Promise<PublicationListResponse> => {
   const query = new URLSearchParams();
+
   if (params.search) query.set("search", params.search);
   if (params.year) query.set("year", String(params.year));
   params.topic?.forEach((value) => query.append("topic", value));
@@ -178,10 +200,14 @@ export const getPublications = (params: PublicationQuery = {}) => {
   if (params.sort) query.set("sort", params.sort);
   if (params.page) query.set("page", String(params.page));
   if (params.limit) query.set("limit", String(params.limit));
-  return apiRequest<Publication[]>(
+
+  const response = await apiRequestWithMeta<Publication[]>(
     `/publications${query.size ? `?${query}` : ""}`,
   );
+
+  return response as unknown as PublicationListResponse;
 };
+
 export const getPublication = (id: string) =>
   apiRequest<Publication>(`/publications/${encodeURIComponent(id)}`);
 export const createPublication = (input: PublicationInput) =>
@@ -366,6 +392,62 @@ export const uploadPublicServiceImage = (id: string, file: File) =>
       timeoutMs: 30000,
     },
   );
+
+export const getPublicServiceProjects = () =>
+  apiRequest<PublicServiceProject[]>("/admin/public-service/projects");
+export const getPublicServiceProject = (id: string) =>
+  apiRequest<PublicServiceProject>(
+    `/admin/public-service/projects/${encodeURIComponent(id)}`,
+  );
+export const createPublicServiceProject = (input: PublicServiceProjectInput) =>
+  apiRequest<PublicServiceProject>("/admin/public-service/projects", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+export const updatePublicServiceProject = (
+  id: string,
+  input: PublicServiceProjectUpdateInput,
+) =>
+  apiRequest<PublicServiceProject>(
+    `/admin/public-service/projects/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+  );
+export const deletePublicServiceProject = async (id: string) => {
+  await apiRequestWithMeta(
+    `/admin/public-service/projects/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+};
+
+export type PublicProjectQuery = {
+  search?: string;
+  yearGroup?: string;
+  entity?: string;
+  client?: string;
+  sort?: "newest" | "oldest";
+  page?: number;
+  limit?: number;
+};
+
+export const getPublicServiceProjectsList = (
+  params: PublicProjectQuery = {},
+) => {
+  const query = new URLSearchParams();
+  if (params.search) query.set("search", params.search);
+  if (params.yearGroup) query.set("yearGroup", params.yearGroup);
+  if (params.entity) query.set("entity", params.entity);
+  if (params.client) query.set("client", params.client);
+  if (params.sort) query.set("sort", params.sort);
+  if (params.page) query.set("page", String(params.page));
+  if (params.limit) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return fetch(
+    `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"}/public/public-service-projects${qs ? `?${qs}` : ""}`,
+  ).then(async (r) => {
+    if (!r.ok) throw new Error("Failed to fetch public service projects");
+    return (await r.json()) as PublicServiceProjectListResponse;
+  });
+};
 
 export const getPartners = (type: PartnerType) =>
   apiRequest<Partner[]>(`/partners/${type.toLowerCase()}`);
@@ -556,3 +638,29 @@ export const deleteTracking = async (id: string) => {
     method: "DELETE",
   });
 };
+
+export const getVideos = () => apiRequest<HomepageVideo[]>("/admin/videos");
+
+export const getVideo = (id: string) =>
+  apiRequest<HomepageVideo>(`/admin/videos/${encodeURIComponent(id)}`);
+
+export const createVideo = (input: HomepageVideoInput) =>
+  apiRequest<HomepageVideo>("/admin/videos", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const updateVideo = (id: string, input: HomepageVideoUpdateInput) =>
+  apiRequest<HomepageVideo>(`/admin/videos/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+export const deleteVideo = async (id: string) => {
+  await apiRequestWithMeta(`/admin/videos/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+};
+
+export const getPublicHomepageVideos = () =>
+  apiRequest<PublicHomepageVideo[]>("/public/homepage-videos");

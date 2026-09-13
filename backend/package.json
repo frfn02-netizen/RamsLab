@@ -15,7 +15,8 @@
     "seed:publications": "tsx src/scripts/seed-publications.ts",
     "seed:publication-editor": "tsx src/scripts/seed-publication-editor.ts",
     "seed:site-content": "tsx src/scripts/seed-site-content.ts",
-    "seed:development": "tsx src/scripts/seed-development.ts"
+    "seed:development": "tsx src/scripts/seed-development.ts",
+    "seed:demo-data": "tsx src/scripts/seed-demo-data.ts"
   },
   "keywords": [],
   "author": "",

@@ -1,4 +1,4 @@
-import type { AuthUser, LoginInput } from "@/types/auth";
+import type { AuthUser, LoginInput, RegisterInput } from "@/types/auth";
 import { apiRequestWithMeta, clearCsrfToken, setCsrfToken } from "./client";
 import { ApiError } from "./errors";
 
@@ -49,6 +49,18 @@ export async function login(input: LoginInput): Promise<AuthUser> {
   if (!loggedInUser)
     throw new ApiError("Login response did not contain a user", 502);
   return getCurrentUser(normalizeUser(loggedInUser));
+}
+
+export async function register(input: RegisterInput): Promise<AuthUser> {
+  const response = await apiRequestWithMeta<LoginUser>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (response.csrfToken) setCsrfToken(response.csrfToken);
+  const registeredUser = response.user ?? response.data;
+  if (!registeredUser)
+    throw new ApiError("Registration response did not contain a user", 502);
+  return getCurrentUser(normalizeUser(registeredUser));
 }
 
 export async function getCurrentUser(fallback?: AuthUser): Promise<AuthUser> {

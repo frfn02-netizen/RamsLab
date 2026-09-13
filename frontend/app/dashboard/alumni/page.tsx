@@ -269,7 +269,7 @@ export default function AlumniPage() {
                                 href={`/dashboard/alumni/${item._id}`}
                                 className="text-sm font-bold text-[var(--rams-red)] hover:text-[var(--rams-red-dark)]"
                               >
-                                View
+                                Edit
                               </Link>
 
                               {user?.role === "ADMIN" && (

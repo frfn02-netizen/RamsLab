@@ -141,7 +141,10 @@ export async function getPublicationListController(
   res: Response,
 ) {
   try {
-    const result = await findAllPublications(parseQuery(req));
+    const result = await findAllPublications({
+      ...parseQuery(req),
+      includeFacets: true,
+    });
     return res.json({
       success: true,
       data: await Promise.all(
@@ -152,6 +155,7 @@ export async function getPublicationListController(
       total: result.total,
       page: result.page,
       limit: result.limit,
+      facets: result.facets,
     });
   } catch (error: any) {
     if (

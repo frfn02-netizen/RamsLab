@@ -178,7 +178,7 @@ export default function StudentsPage() {
                             href={`/dashboard/students/${item._id}`}
                             className="text-sm font-bold text-[var(--rams-red)]"
                           >
-                            View
+                            Edit
                           </Link>
                           {user?.role === "ADMIN" && (
                             <Button

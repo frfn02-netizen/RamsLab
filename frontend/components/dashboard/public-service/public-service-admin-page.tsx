@@ -12,12 +12,15 @@ import {
   LoadingState,
   PageHeader,
 } from "@/components/ui";
-import { deletePublicService, getPublicServices } from "@/lib/api/modules";
+import {
+  deletePublicServiceProject,
+  getPublicServiceProjects,
+} from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import type { PublicServiceRecord } from "@/types/modules";
+import type { PublicServiceProject } from "@/types/modules";
 
 export default function PublicServiceAdminPage() {
-  const [services, setServices] = useState<PublicServiceRecord[]>([]);
+  const [projects, setProjects] = useState<PublicServiceProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -27,8 +30,8 @@ export default function PublicServiceAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const serviceList = await getPublicServices();
-      setServices(serviceList);
+      const list = await getPublicServiceProjects();
+      setProjects(list);
     } catch (reason) {
       setError(getUserFacingError(reason));
     } finally {
@@ -41,19 +44,19 @@ export default function PublicServiceAdminPage() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  async function removeService(service: PublicServiceRecord) {
+  async function removeProject(project: PublicServiceProject) {
     if (
-      !window.confirm(`Delete "${service.title.en}"? This cannot be undone.`)
+      !window.confirm(`Delete "${project.title.en}"? This cannot be undone.`)
     ) {
       return;
     }
-    setBusyId(service._id);
+    setBusyId(project._id);
     try {
-      await deletePublicService(service._id);
-      setServices((current) =>
-        current.filter((item) => item._id !== service._id),
+      await deletePublicServiceProject(project._id);
+      setProjects((current) =>
+        current.filter((item) => item._id !== project._id),
       );
-      setSuccess(`${service.title.en} was deleted.`);
+      setSuccess(`${project.title.en} was deleted.`);
     } catch (reason) {
       setError(getUserFacingError(reason));
     } finally {
@@ -67,7 +70,7 @@ export default function PublicServiceAdminPage() {
         <PageHeader
           eyebrow="CMS"
           title="Public Service"
-          description="Manage service cards and service detail lists shown on the public Public Service page."
+          description="Manage public service and R&D work records shown on the public Public Service page."
         />
         {error && <ErrorState message={error} onRetry={() => void load()} />}
         {success && (
@@ -83,109 +86,93 @@ export default function PublicServiceAdminPage() {
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-bold text-[var(--rams-charcoal)]">
-                Public Services
+                Projects
               </h2>
-              <LinkButton href="/dashboard/public-service/services/new">
-                Add service
+              <LinkButton href="/dashboard/public-service/new">
+                Add project
               </LinkButton>
             </div>
-            {services.length === 0 ? (
+            {projects.length === 0 ? (
               <EmptyState
-                title="No services found"
-                description="Add services to display them on the Public Service page."
+                title="No projects found"
+                description="Add public service projects to display them on the public page."
               />
             ) : (
               <Card>
-                <AdminTable
-                  rows={services.map((service) => ({
-                    id: service._id,
-                    title: service.title.en,
-                    subtitle: service.description?.en || service.code || "",
-                    order: service.order,
-                    published: service.published,
-                    href: `/dashboard/public-service/services/${service._id}`,
-                    busy: busyId === service._id,
-                    onDelete: () => void removeService(service),
-                  }))}
-                />
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[700px] text-left">
+                    <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
+                      <tr>
+                        {[
+                          "No.",
+                          "Project / Scope of Work",
+                          "Period",
+                          "Visibility",
+                          "Action",
+                        ].map((heading) => (
+                          <th
+                            key={heading}
+                            className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
+                          >
+                            {heading}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/8">
+                      {projects.map((project, index) => (
+                        <tr key={project._id}>
+                          <td className="px-5 py-4 text-sm text-[var(--rams-gray)]">
+                            {index + 1}
+                          </td>
+                          <td className="px-5 py-4">
+                            <Link
+                              href={`/dashboard/public-service/${project._id}`}
+                              className="font-semibold hover:text-[var(--rams-red)]"
+                            >
+                              {project.title.en}
+                            </Link>
+                            <p className="mt-1 text-xs text-[var(--rams-gray)]">
+                              {project.executingEntity} · {project.client}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4 text-sm text-[var(--rams-gray)]">
+                            {project.period}
+                          </td>
+                          <td className="px-5 py-4">
+                            <Badge
+                              tone={project.published ? "green" : "neutral"}
+                            >
+                              {project.published ? "Published" : "Draft"}
+                            </Badge>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <LinkButton
+                                href={`/dashboard/public-service/${project._id}`}
+                                variant="secondary"
+                              >
+                                Edit
+                              </LinkButton>
+                              <Button
+                                variant="danger"
+                                disabled={busyId === project._id}
+                                onClick={() => void removeProject(project)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             )}
           </section>
         )}
       </div>
-    </div>
-  );
-}
-
-function AdminTable({
-  rows,
-}: {
-  rows: Array<{
-    id: string;
-    title: string;
-    subtitle: string;
-    order: number;
-    published: boolean;
-    href: string;
-    busy: boolean;
-    onDelete: () => void;
-  }>;
-}) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[700px] text-left">
-        <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
-          <tr>
-            {["Title", "Order", "Visibility", "Action"].map((heading) => (
-              <th
-                key={heading}
-                className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
-              >
-                {heading}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-black/8">
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td className="px-5 py-4">
-                <Link
-                  href={row.href}
-                  className="font-semibold hover:text-[var(--rams-red)]"
-                >
-                  {row.title}
-                </Link>
-                {row.subtitle && (
-                  <p className="mt-1 text-xs text-[var(--rams-gray)]">
-                    {row.subtitle}
-                  </p>
-                )}
-              </td>
-              <td className="px-5 py-4 text-sm">{row.order}</td>
-              <td className="px-5 py-4">
-                <Badge tone={row.published ? "green" : "neutral"}>
-                  {row.published ? "Published" : "Draft"}
-                </Badge>
-              </td>
-              <td className="px-5 py-4">
-                <div className="flex items-center justify-center gap-2">
-                  <LinkButton href={row.href} variant="secondary">
-                    Edit
-                  </LinkButton>
-                  <Button
-                    variant="danger"
-                    disabled={row.busy}
-                    onClick={row.onDelete}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

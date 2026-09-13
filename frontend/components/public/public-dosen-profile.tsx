@@ -161,73 +161,75 @@ function PublicStudentProfile({ profile }: { profile: PublicPerson }) {
   return (
     <main className="bg-[var(--paper)]">
       <PublicContainer className="py-10 sm:py-16 lg:py-24">
-        <Link
-          href="/team"
-          className="text-sm font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
-        >
-          ← Back to people
-        </Link>
-        <article className="mx-auto mt-8 max-w-4xl border border-[var(--border)] bg-white p-7 sm:p-10 lg:p-14">
-          <div
-            className={
-              profile.photo && !imageFailed
-                ? "grid gap-10 sm:grid-cols-[minmax(200px,32%)_minmax(0,1fr)] sm:gap-12 lg:gap-14"
-                : undefined
-            }
+        <div className="mx-auto max-w-4xl">
+          <Link
+            href="/team"
+            className="text-sm font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
           >
-            {profile.photo && !imageFailed && (
-              <div className="relative aspect-[4/5] self-start overflow-hidden bg-[var(--navy)]">
-                <Image
-                  src={profile.photo}
-                  alt={profile.fullName}
-                  fill
-                  unoptimized
-                  onError={() => setImageFailed(true)}
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 30vw"
-                />
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="font-mono text-sm font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
-                {category}
-              </p>
-              <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--navy)] sm:text-6xl">
-                {profile.fullName}
-              </h1>
-              {profile.title && (
-                <p className="mt-6 text-xl leading-8 text-[var(--slate)]">
-                  {profile.title}
-                </p>
+            ← Back to people
+          </Link>
+          <article className="mt-8 border border-[var(--border)] bg-white p-7 sm:p-10 lg:p-14">
+            <div
+              className={
+                profile.photo && !imageFailed
+                  ? "grid gap-10 sm:grid-cols-[minmax(200px,32%)_minmax(0,1fr)] sm:gap-12 lg:gap-14"
+                  : undefined
+              }
+            >
+              {profile.photo && !imageFailed && (
+                <div className="relative aspect-[4/5] self-start overflow-hidden bg-[var(--navy)]">
+                  <Image
+                    src={profile.photo}
+                    alt={profile.fullName}
+                    fill
+                    unoptimized
+                    onError={() => setImageFailed(true)}
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 30vw"
+                  />
+                </div>
               )}
-              {profile.specialization.length > 0 && (
-                <p className="mt-3 text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
-                  {profile.specialization.join(" · ")}
+              <div className="min-w-0">
+                <p className="font-mono text-sm font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
+                  {category}
                 </p>
-              )}
-              {profile.bio && (
-                <div className="mt-8 border-t border-[var(--border)] pt-6">
-                  <p className="whitespace-pre-wrap text-base leading-7 text-[var(--slate)]">
-                    {profile.bio}
+                <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--navy)] sm:text-6xl">
+                  {profile.fullName}
+                </h1>
+                {profile.title && (
+                  <p className="mt-6 text-xl leading-8 text-[var(--slate)]">
+                    {profile.title}
                   </p>
-                </div>
-              )}
+                )}
+                {profile.specialization.length > 0 && (
+                  <p className="mt-3 text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
+                    {profile.specialization.join(" · ")}
+                  </p>
+                )}
+                {profile.bio && (
+                  <div className="mt-8 border-t border-[var(--border)] pt-6">
+                    <p className="whitespace-pre-wrap text-base leading-7 text-[var(--slate)]">
+                      {profile.bio}
+                    </p>
+                  </div>
+                )}
 
-              {profile.linkedin && (
-                <div className="mt-8">
-                  <a
-                    href={profile.linkedin}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-semibold text-[var(--rams-red)] hover:text-[var(--navy)]"
-                  >
-                    LinkedIn <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              )}
+                {profile.linkedin && (
+                  <div className="mt-8">
+                    <a
+                      href={profile.linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-[var(--rams-red)] hover:text-[var(--navy)]"
+                    >
+                      LinkedIn <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
+        </div>
       </PublicContainer>
     </main>
   );

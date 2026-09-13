@@ -66,3 +66,17 @@ export type AlumniCreateInput = Omit<Alumni, "_id" | "createdAt" | "updatedAt">;
 export type AlumniUpdateInput = Partial<
   Omit<Alumni, "_id" | "userId" | "createdAt" | "updatedAt">
 >;
+
+export interface AlumniAuditChange {
+  oldValue: unknown;
+  newValue: unknown;
+}
+
+export interface AlumniAuditLog {
+  _id: string;
+  alumniId: string;
+  userId: string;
+  action: "UPDATE";
+  changes: Record<string, AlumniAuditChange>;
+  createdAt: string;
+}

@@ -12,6 +12,7 @@ import RevealOnScroll from "./reveal-on-scroll";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
 import HomePartnersSection from "./home-partners";
 import HomeMaritimeCta from "./home-maritime-cta";
+import HomeVideoSection from "./home-video-section";
 import ResearchHighlights from "./research-highlights";
 import HomeIntroduction, { HeadOfLaboratorySection } from "./home-introduction";
 import HomePeopleSection from "./home-people";
@@ -53,6 +54,8 @@ export default function PublicHome() {
       <ResearchHighlights />
 
       {content && !contentLoading && !contentError && <HomeIntroduction />}
+
+      <HomeVideoSection />
 
       {content &&
         !contentLoading &&

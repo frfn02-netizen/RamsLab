@@ -22,11 +22,13 @@ import { getPublicEventListController } from "../events/event.controller.js";
 import {
   getPublicPublicServiceDetailController,
   getPublicPublicServiceListController,
+  getPublicServiceProjectListPublicController,
 } from "../public-service/public-service.controller.js";
 import {
   getPublicExpertListController,
   getPublicExpertByIdController,
 } from "../experts/expert.controller.js";
+import { getPublicHomepageVideosController } from "../videos/video.controller.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
@@ -78,9 +80,16 @@ router.get("/public-services", getPublicPublicServiceListController);
 
 router.get("/public-services/:id", getPublicPublicServiceDetailController);
 
+router.get(
+  "/public-service-projects",
+  getPublicServiceProjectListPublicController,
+);
+
 router.get("/experts", getPublicExpertListController);
 
 router.get("/experts/:id", getPublicExpertByIdController);
+
+router.get("/homepage-videos", getPublicHomepageVideosController);
 
 router.get("/site-content/:key", getPublicSiteContentController);
 

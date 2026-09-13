@@ -56,3 +56,17 @@ export interface PublicService {
   updatedAt: Date;
   updatedBy?: ObjectId;
 }
+
+export interface PublicServiceProject {
+  _id?: ObjectId;
+  yearGroup: string;
+  title: BilingualText;
+  executingEntity: string;
+  client: string;
+  period: string;
+  order: number;
+  published: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  updatedBy?: ObjectId;
+}

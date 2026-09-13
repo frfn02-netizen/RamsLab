@@ -15,6 +15,8 @@ import {
   updateMyAlumniController,
   uploadMyAlumniPhotoController,
   setAlumniActiveController,
+  getMyAlumniAuditLogsController,
+  getAlumniAuditLogsController,
 } from "./alumni.controller.js";
 
 const router = Router();
@@ -49,6 +51,13 @@ router.get(
 
 router.get("/me", authenticate, requireRole("ALUMNI"), getMyAlumniController);
 
+router.get(
+  "/me/history",
+  authenticate,
+  requireRole("ALUMNI"),
+  getMyAlumniAuditLogsController,
+);
+
 router.patch(
   "/me",
   authenticate,
@@ -81,6 +90,13 @@ router.get(
   authenticate,
   requireRole("ADMIN", "DOSEN"),
   getAlumniController,
+);
+
+router.get(
+  "/:id/history",
+  authenticate,
+  requireRole("ADMIN", "DOSEN"),
+  getAlumniAuditLogsController,
 );
 
 // ========================================

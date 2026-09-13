@@ -54,7 +54,7 @@ export default function HomePartnersSection() {
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-[var(--navy)] sm:text-4xl">
               {t("partners.title")}
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-[var(--gray)]">
+            <p className="mx-auto mt-4 max-w-2xl text-base text-[var(--gray)] sm:text-lg">
               {t("partners.description")}
             </p>
           </RevealOnScroll>
@@ -63,7 +63,7 @@ export default function HomePartnersSection() {
         {/* Industrial Partners — RIGHT → LEFT */}
         {industrial.length > 0 && (
           <RevealOnScroll className="mt-12">
-            <p className="mb-5 text-center text-xs font-bold uppercase tracking-widest text-[var(--gray)]">
+            <p className="mb-5 text-center text-xl font-bold uppercase tracking-widest text-[var(--gray)]">
               {t("partners.industrialTitle")}
             </p>
             <MarqueeRow
@@ -77,7 +77,7 @@ export default function HomePartnersSection() {
         {/* University Partners — LEFT → RIGHT */}
         {university.length > 0 && (
           <RevealOnScroll className="mt-10">
-            <p className="mb-5 text-center text-xs font-bold uppercase tracking-widest text-[var(--gray)]">
+            <p className="mb-5 text-center text-xl font-bold uppercase tracking-widest text-[var(--gray)]">
               {t("partners.universityTitle")}
             </p>
             <MarqueeRow
@@ -301,7 +301,7 @@ function MarqueeItem({ partner }: { partner: Partner }) {
   );
 
   const sharedClass =
-    "flex-shrink-0 px-7 sm:px-9 md:px-11 lg:px-14 xl:px-16 flex items-center justify-center opacity-60 grayscale transition duration-300 hover:opacity-100 hover:grayscale-0";
+    "flex-shrink-0 px-7 sm:px-9 md:px-11 lg:px-14 xl:px-16 flex items-center justify-center transition duration-300 hover:scale-105";
 
   if (partner.website) {
     return (

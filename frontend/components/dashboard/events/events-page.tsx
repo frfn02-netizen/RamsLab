@@ -12,7 +12,7 @@ import {
   LoadingState,
   PageHeader,
 } from "@/components/ui";
-import { deleteEvent, getEvents, updateEvent } from "@/lib/api/modules";
+import { deleteEvent, getEvents } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { CmsEvent } from "@/types/modules";
 
@@ -39,60 +39,6 @@ export default function EventsPage() {
     const timer = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timer);
   }, []);
-
-  async function togglePublished(event: CmsEvent) {
-    setBusyId(event._id);
-    setError(null);
-    setSuccess(null);
-    try {
-      const updated = await updateEvent(event._id, {
-        published: !event.published,
-      });
-      setEvents((current) =>
-        current.map((item) => (item._id === updated._id ? updated : item)),
-      );
-      setSuccess(
-        `${updated.title.en} is now ${updated.published ? "published" : "unpublished"}.`,
-      );
-    } catch (reason) {
-      setError(getUserFacingError(reason));
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function move(event: CmsEvent, direction: -1 | 1) {
-    const index = events.findIndex((item) => item._id === event._id);
-    const other = events[index + direction];
-    if (!other) return;
-    setBusyId(event._id);
-    setError(null);
-    setSuccess(null);
-    try {
-      const [updatedEvent, updatedOther] = await Promise.all([
-        updateEvent(event._id, { order: other.order }),
-        updateEvent(other._id, { order: event.order }),
-      ]);
-      setEvents((current) =>
-        current
-          .map((item) =>
-            item._id === updatedEvent._id
-              ? updatedEvent
-              : item._id === updatedOther._id
-                ? updatedOther
-                : item,
-          )
-          .sort(
-            (a, b) => a.order - b.order || a.title.en.localeCompare(b.title.en),
-          ),
-      );
-      setSuccess("Event order updated.");
-    } catch (reason) {
-      setError(getUserFacingError(reason));
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   async function remove(event: CmsEvent) {
     if (!window.confirm(`Delete "${event.title.en}"? This cannot be undone.`)) {
@@ -144,28 +90,23 @@ export default function EventsPage() {
         ) : (
           <Card>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left">
+              <table className="w-full min-w-[700px] text-left">
                 <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
                   <tr>
-                    {[
-                      "Title",
-                      "Order",
-                      "Date",
-                      "Visibility",
-                      "Updated",
-                      "Action",
-                    ].map((heading) => (
-                      <th
-                        key={heading}
-                        className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] last:text-center"
-                      >
-                        {heading}
-                      </th>
-                    ))}
+                    {["Title", "Date", "Visibility", "Updated", "Action"].map(
+                      (heading) => (
+                        <th
+                          key={heading}
+                          className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] last:text-center"
+                        >
+                          {heading}
+                        </th>
+                      ),
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/8">
-                  {events.map((event, index) => (
+                  {events.map((event) => (
                     <tr key={event._id}>
                       <td className="px-5 py-4">
                         <Link
@@ -178,7 +119,6 @@ export default function EventsPage() {
                           {event.title.id}
                         </p>
                       </td>
-                      <td className="px-5 py-4 text-sm">{event.order}</td>
                       <td className="px-5 py-4 text-sm text-[var(--rams-gray)]">
                         {event.eventDate
                           ? new Date(event.eventDate).toLocaleDateString()
@@ -194,30 +134,6 @@ export default function EventsPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap justify-center gap-2">
-                          <Button
-                            variant="secondary"
-                            disabled={busyId === event._id || index === 0}
-                            onClick={() => void move(event, -1)}
-                          >
-                            Up
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            disabled={
-                              busyId === event._id ||
-                              index === events.length - 1
-                            }
-                            onClick={() => void move(event, 1)}
-                          >
-                            Down
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            disabled={busyId === event._id}
-                            onClick={() => void togglePublished(event)}
-                          >
-                            {event.published ? "Unpublish" : "Publish"}
-                          </Button>
                           <LinkButton
                             href={`/dashboard/events/${event._id}`}
                             variant="secondary"
