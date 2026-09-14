@@ -20,7 +20,7 @@ import {
 import { getUserFacingError } from "@/lib/api/errors";
 import type { PublicServiceProjectInput } from "@/types/modules";
 
-const YEAR_GROUP_OPTIONS = ["2023-2024", "2025", "2026"];
+const YEAR_GROUP_OPTIONS = ["2021", "2022", "2023", "2024", "2025", "2026",];
 
 type FormState = {
   yearGroup: string;

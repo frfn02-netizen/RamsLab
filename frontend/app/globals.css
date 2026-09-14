@@ -44,6 +44,15 @@ body {
   color: var(--charcoal);
   font-family: var(--font-sans);
 }
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 .font-display {
   font-family: var(--font-display);
 }
@@ -511,6 +520,386 @@ body {
   transition: color 225ms ease;
 }
 
+/* ========================================
+   ECOSYSTEM CAROUSEL
+   ======================================== */
+
+.ecosystem-section {
+  overflow: hidden;
+}
+
+.ecosystem-heading-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.ecosystem-heading-wrap::after {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 3px;
+  margin: 0.75rem auto 0;
+  border-radius: 2px;
+  background: var(--ais-blue);
+}
+
+/* --- Grid shell: [btn] [viewport] [btn]  /  dots span --- */
+.ecosystem-carousel-shell {
+  --carousel-offset: 420px;
+  --carousel-accent: #6366f8;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 32px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 2rem auto 0;
+}
+
+/* --- Navigation buttons (grid items, no absolute) --- */
+.ecosystem-carousel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  box-shadow: 0 2px 8px rgba(11, 32, 56, 0.07);
+  cursor: pointer;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+}
+
+.ecosystem-carousel-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ecosystem-carousel-btn:hover:not(:disabled) {
+  border-color: var(--carousel-accent);
+  background: var(--carousel-accent);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transform: scale(1.05);
+}
+
+.ecosystem-carousel-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.ecosystem-carousel-btn:focus-visible {
+  outline: 2px solid var(--carousel-accent);
+  outline-offset: 2px;
+}
+
+.ecosystem-carousel-btn--prev {
+  grid-column: 1;
+  justify-self: end;
+}
+
+.ecosystem-carousel-btn--next {
+  grid-column: 3;
+  justify-self: start;
+}
+
+/* --- Viewport (middle column, clips cards) --- */
+.ecosystem-carousel-viewport {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  height: 310px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* --- Cards (absolute inside viewport) --- */
+.ecosystem-carousel-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 800px;
+  height: 100%;
+  will-change: transform, opacity;
+  transition:
+    transform 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    z-index 0ms;
+}
+
+.ecosystem-carousel-card.no-transition {
+  transition: none !important;
+}
+
+.ecosystem-carousel-card[data-pos="center"] {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+  z-index: 3;
+}
+
+.ecosystem-carousel-card[data-pos="left"] {
+  transform: translateX(calc(-50% - var(--carousel-offset))) scale(0.88);
+  opacity: 0.75;
+  z-index: 2;
+}
+
+.ecosystem-carousel-card[data-pos="right"] {
+  transform: translateX(calc(-50% + var(--carousel-offset))) scale(0.88);
+  opacity: 0.75;
+  z-index: 2;
+}
+
+/* --- Card frame --- */
+.ecosystem-card-frame {
+  position: relative;
+  height: 100%;
+  border: 2px solid #e0e0e0;
+  border-radius: 16px;
+  background: white;
+  box-shadow:
+    0 1px 2px rgba(11, 32, 56, 0.03),
+    0 4px 12px rgba(11, 32, 56, 0.04);
+  transition:
+    transform 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 350ms ease;
+  overflow: hidden;
+}
+
+.ecosystem-card-frame::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  border-radius: 16px 16px 0 0;
+  transition: background 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+}
+
+.ecosystem-carousel-card[data-pos="center"] .ecosystem-card-frame {
+  border-color: var(--carousel-accent);
+  box-shadow:
+    0 2px 4px rgba(11, 32, 56, 0.03),
+    0 8px 24px rgba(11, 32, 56, 0.06),
+    0 0 0 1px rgba(99, 102, 241, 0.08);
+}
+
+.ecosystem-carousel-card[data-pos="center"] .ecosystem-card-frame::before {
+  background: var(--carousel-accent);
+}
+
+.ecosystem-carousel-card[data-pos="center"]:hover .ecosystem-card-frame {
+  transform: translateY(-4px);
+  box-shadow:
+    0 4px 8px rgba(11, 32, 56, 0.04),
+    0 16px 40px rgba(11, 32, 56, 0.08),
+    0 0 0 1px rgba(99, 102, 241, 0.12);
+  border-color: #5558e6;
+}
+
+.ecosystem-carousel-card[data-pos="left"]:hover .ecosystem-card-frame,
+.ecosystem-carousel-card[data-pos="right"]:hover .ecosystem-card-frame {
+  transform: translateY(-3px);
+  box-shadow:
+    0 4px 8px rgba(11, 32, 56, 0.04),
+    0 12px 32px rgba(11, 32, 56, 0.07);
+  border-color: #c7d2fe;
+}
+
+/* --- Card inner layout --- */
+.ecosystem-card-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+  padding: 2rem 2.5rem;
+  gap: 2.5rem;
+}
+
+.ecosystem-card-logo-wrap {
+  position: relative;
+  width: 200px;
+  height: 100%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ecosystem-card-logo-wrap img,
+.ecosystem-card-logo-wrap .object-contain {
+  transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ecosystem-carousel-card:hover .ecosystem-card-logo-wrap img,
+.ecosystem-carousel-card:hover .ecosystem-card-logo-wrap .object-contain {
+  transform: scale(1.05);
+}
+
+.ecosystem-card-divider {
+  width: 1px;
+  align-self: stretch;
+  flex-shrink: 0;
+  background: #e5e7eb;
+  margin: 1rem 0;
+}
+
+.ecosystem-card-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.ecosystem-card-name {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.ecosystem-card-desc {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #6b7280;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Dots (span all grid columns, row 2) --- */
+.ecosystem-carousel-dots {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.ecosystem-carousel-dot {
+  height: 5px;
+  width: 5px;
+  border-radius: 9999px;
+  border: 0;
+  background-color: #d1d5db;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background-color 300ms ease,
+    width 300ms ease;
+}
+
+.ecosystem-carousel-dot[data-active="true"] {
+  width: 18px;
+  background-color: var(--carousel-accent);
+}
+
+.ecosystem-carousel-dot:focus-visible {
+  outline: 2px solid var(--carousel-accent);
+  outline-offset: 3px;
+}
+
+/* ---- Responsive: Tablet ---- */
+@media (max-width: 1024px) {
+  .ecosystem-carousel-shell {
+    --carousel-offset: 340px;
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    column-gap: 24px;
+  }
+  .ecosystem-carousel-card {
+    width: 640px;
+  }
+  .ecosystem-carousel-viewport {
+    height: 270px;
+  }
+  .ecosystem-card-inner {
+    padding: 1.75rem 2rem;
+    gap: 2rem;
+  }
+  .ecosystem-card-logo-wrap {
+    width: 170px;
+  }
+  .ecosystem-carousel-btn {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* ---- Responsive: Mobile ---- */
+@media (max-width: 640px) {
+  .ecosystem-carousel-shell {
+    --carousel-offset: 0px;
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    column-gap: 12px;
+  }
+  .ecosystem-carousel-card {
+    width: calc(100vw - 48px);
+    max-width: 400px;
+  }
+  .ecosystem-carousel-viewport {
+    height: 260px;
+  }
+  .ecosystem-card-inner {
+    flex-direction: column;
+    padding: 1.25rem 1.5rem;
+    gap: 0.75rem;
+    text-align: center;
+  }
+  .ecosystem-card-logo-wrap {
+    width: 100%;
+    height: 72px;
+  }
+  .ecosystem-card-divider {
+    width: 100%;
+    height: 1px;
+    align-self: auto;
+    margin: 0 0.5rem;
+  }
+  .ecosystem-card-desc {
+    -webkit-line-clamp: 2;
+    font-size: 0.75rem;
+  }
+  .ecosystem-carousel-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .ecosystem-carousel-card[data-pos="center"]:hover .ecosystem-card-frame {
+    transform: none;
+  }
+  .ecosystem-carousel-card[data-pos="left"]:hover .ecosystem-card-frame,
+  .ecosystem-carousel-card[data-pos="right"]:hover .ecosystem-card-frame {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecosystem-carousel-shell,
+  .ecosystem-carousel-shell * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .homepage-contact-form {
   border-radius: 0.4rem;
   box-shadow: 0 12px 30px rgba(11, 32, 56, 0.06);
@@ -691,6 +1080,10 @@ body {
   .ecosystem-block,
   .ecosystem-block::before,
   .ecosystem-name,
+  .ecosystem-carousel-card,
+  .ecosystem-card-frame,
+  .ecosystem-carousel-dot,
+  .ecosystem-carousel-btn,
   .homepage-contact-form input,
   .homepage-contact-form select,
   .homepage-contact-form textarea,

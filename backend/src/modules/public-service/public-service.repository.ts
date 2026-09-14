@@ -338,10 +338,15 @@ export async function findPublicServiceProjectsWithFilters(
     return { items, total, page, limit };
   }
 
+  const facetsFilter: Record<string, unknown> = {};
+  if (options?.publishedOnly) {
+    facetsFilter.published = true;
+  }
+
   const [yearGroupValues, entityValues, clientValues] = await Promise.all([
-    collection.distinct("yearGroup", filter),
-    collection.distinct("executingEntity", filter),
-    collection.distinct("client", filter),
+    collection.distinct("yearGroup", facetsFilter),
+    collection.distinct("executingEntity", facetsFilter),
+    collection.distinct("client", facetsFilter),
   ]);
 
   return {

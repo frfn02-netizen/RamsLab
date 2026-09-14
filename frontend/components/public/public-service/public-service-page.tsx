@@ -16,6 +16,19 @@ import type {
 import PageHero from "../page-hero";
 import PublicContainer from "../public-container";
 
+function formatPeriodYears(period?: string): string {
+  if (!period || typeof period !== "string") return "—";
+  const yearPattern = /\b(\d{4})\b/g;
+  const years: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = yearPattern.exec(period)) !== null) {
+    if (!years.includes(match[1])) years.push(match[1]);
+  }
+  if (years.length === 0) return "—";
+  if (years.length === 1) return years[0];
+  return `${years[0]} - ${years[years.length - 1]}`;
+}
+
 function ExpertCard({ expert }: { expert: Expert }) {
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -286,13 +299,12 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
         ) : (
           <>
             <div className="hidden overflow-x-auto border border-[var(--border)] bg-white md:block">
-              <table className="w-full min-w-[700px] text-left">
+              <table className="w-full min-w-[600px] text-left">
                 <thead className="border-b border-[var(--border)] bg-[var(--background-light)]">
                   <tr>
                     {[
                       t("projectsTableNo"),
                       t("projectsTableTitle"),
-                      t("projectsTableEntity"),
                       t("projectsTableClient"),
                       t("projectsTablePeriod"),
                     ].map((heading) => (
@@ -320,13 +332,10 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
                         </p>
                       </td>
                       <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
-                        {project.executingEntity}
-                      </td>
-                      <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
                         {project.client}
                       </td>
                       <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
-                        {project.period}
+                        {formatPeriodYears(project.period)}
                       </td>
                     </tr>
                   ))}
@@ -351,12 +360,6 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
                       <dl className="mt-3 space-y-1 text-sm text-[var(--charcoal)]">
                         <div className="flex gap-2">
                           <dt className="font-semibold">
-                            {t("projectsTableEntity")}:
-                          </dt>
-                          <dd>{project.executingEntity}</dd>
-                        </div>
-                        <div className="flex gap-2">
-                          <dt className="font-semibold">
                             {t("projectsTableClient")}:
                           </dt>
                           <dd>{project.client}</dd>
@@ -365,7 +368,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
                           <dt className="font-semibold">
                             {t("projectsTablePeriod")}:
                           </dt>
-                          <dd>{project.period}</dd>
+                          <dd>{formatPeriodYears(project.period)}</dd>
                         </div>
                       </dl>
                     </div>

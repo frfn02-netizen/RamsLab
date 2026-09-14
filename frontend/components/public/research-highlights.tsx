@@ -325,8 +325,8 @@ export default function ResearchHighlights() {
                 {publication.title}
               </p>
               <p className="mt-2.5 text-sm leading-6 text-white/60">
-                {publication.authors.join(", ")} \u00B7 {publication.year}
-                {publication.journal ? ` \u00B7 ${publication.journal}` : ""}
+                {publication.authors.join(", ")} {publication.year}
+                {publication.journal ? ` ${publication.journal}` : ""}
               </p>
             </div>
             {publication.pdfUrl ? (

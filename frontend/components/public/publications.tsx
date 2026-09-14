@@ -16,7 +16,7 @@ import {
 import { useTranslations } from "next-intl";
 import { getPublications, getPublicPublicationPdfUrl } from "@/lib/api/modules";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import type { Publication } from "@/types/modules";
+import type { Publication, PublicationFacets } from "@/types/modules";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
 import { MaritimeShip } from "./maritime-motion";
@@ -572,6 +572,11 @@ export default function Publications() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const [records, setRecords] = useState<PublicationProject[]>([]);
+  const [facets, setFacets] = useState<PublicationFacets>({
+    years: [],
+    topics: [],
+    methods: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
@@ -613,6 +618,7 @@ export default function Publications() {
         });
         if (!active) return;
         setRecords(data.data ?? []);
+        setFacets(data.facets ?? { years: [], topics: [], methods: [] });
       } catch {
         if (active) setError(true);
       } finally {
@@ -651,21 +657,14 @@ export default function Publications() {
   );
 
   const years = useMemo(
-    () => Array.from(new Set(records.map((r) => r.year))).sort((a, b) => b - a),
-    [records],
+    () => [...facets.years].sort((a, b) => b - a),
+    [facets.years],
   );
   const topicOptions = useMemo(
-    () =>
-      Array.from(new Set(records.flatMap((r) => r.topics))).map((value) => ({
-        value,
-        label: value,
-      })),
-    [records],
+    () => facets.topics.map((value) => ({ value, label: value })),
+    [facets.topics],
   );
-  const methodOptions = useMemo(
-    () => Array.from(new Set(records.flatMap((r) => r.methods))),
-    [records],
-  );
+  const methodOptions = useMemo(() => [...facets.methods], [facets.methods]);
 
   const visibleRecords = records;
 
