@@ -61,7 +61,7 @@ export interface PublicServiceProject {
   _id?: ObjectId;
   yearGroup: string;
   title: BilingualText;
-  executingEntity: string;
+  executingEntity?: string;
   client: string;
   period: string;
   order: number;

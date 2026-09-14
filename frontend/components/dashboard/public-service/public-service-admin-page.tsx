@@ -20,19 +20,6 @@ import {
 import { getUserFacingError } from "@/lib/api/errors";
 import type { PublicServiceProject } from "@/types/modules";
 
-function formatPeriodYears(period?: string): string {
-  if (!period || typeof period !== "string") return "—";
-  const yearPattern = /\b(\d{4})\b/g;
-  const years: string[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = yearPattern.exec(period)) !== null) {
-    if (!years.includes(match[1])) years.push(match[1]);
-  }
-  if (years.length === 0) return "—";
-  if (years.length === 1) return years[0];
-  return `${years[0]} - ${years[years.length - 1]}`;
-}
-
 export default function PublicServiceAdminPage() {
   const [projects, setProjects] = useState<PublicServiceProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,7 +220,7 @@ export default function PublicServiceAdminPage() {
                                 </span>
                               </td>
                               <td className="whitespace-nowrap px-4 py-3.5 text-sm text-[var(--rams-gray)]">
-                                {formatPeriodYears(project.period)}
+                                {project.period || "—"}
                               </td>
                               <td className="px-4 py-3.5">
                                 <Badge

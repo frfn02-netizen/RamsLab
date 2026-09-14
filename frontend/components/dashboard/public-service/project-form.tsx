@@ -46,7 +46,6 @@ function toInput(form: FormState): PublicServiceProjectInput {
   return {
     yearGroup: form.yearGroup,
     title: { en: form.titleEn.trim(), id: form.titleId.trim() },
-    executingEntity: "",
     client: form.client.trim(),
     period: form.period.trim(),
     order: Number(form.order),

@@ -43,8 +43,18 @@ export function getUserFacingError(error: unknown): string {
       return "Too many requests. Please wait a moment and try again.";
     if (error.status >= 500)
       return "The RAMS API encountered a problem. Please try again.";
-    if (error.status === 400 || error.status === 422)
+    if (error.status === 400 || error.status === 422) {
+      if (error.details?.details) {
+        const issues = error.details.details;
+        if (Array.isArray(issues) && issues.length > 0) {
+          const messages = issues
+            .filter((i: { message?: string }) => i.message)
+            .map((i: { message: string }) => i.message);
+          if (messages.length > 0) return messages.join("; ");
+        }
+      }
       return error.message || "Please review the submitted information.";
+    }
     return error.message || "The request could not be completed.";
   }
 

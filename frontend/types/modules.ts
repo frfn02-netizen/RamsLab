@@ -440,7 +440,7 @@ export interface PublicServiceProject {
   _id: string;
   yearGroup: string;
   title: BilingualText;
-  executingEntity: string;
+  executingEntity?: string;
   client: string;
   period: string;
   order: number;
@@ -461,7 +461,7 @@ export interface PublicServiceProjectPageItem {
   id: string;
   yearGroup: string;
   title: BilingualText;
-  executingEntity: string;
+  executingEntity?: string;
   client: string;
   period: string;
   order: number;

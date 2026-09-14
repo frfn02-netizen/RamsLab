@@ -16,19 +16,6 @@ import type {
 import PageHero from "../page-hero";
 import PublicContainer from "../public-container";
 
-function formatPeriodYears(period?: string): string {
-  if (!period || typeof period !== "string") return "—";
-  const yearPattern = /\b(\d{4})\b/g;
-  const years: string[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = yearPattern.exec(period)) !== null) {
-    if (!years.includes(match[1])) years.push(match[1]);
-  }
-  if (years.length === 0) return "—";
-  if (years.length === 1) return years[0];
-  return `${years[0]} - ${years[years.length - 1]}`;
-}
-
 function ExpertCard({ expert }: { expert: Expert }) {
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -335,7 +322,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
                         {project.client}
                       </td>
                       <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
-                        {formatPeriodYears(project.period)}
+                        {project.period || "—"}
                       </td>
                     </tr>
                   ))}
@@ -368,7 +355,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
                           <dt className="font-semibold">
                             {t("projectsTablePeriod")}:
                           </dt>
-                          <dd>{formatPeriodYears(project.period)}</dd>
+                          <dd>{project.period || "—"}</dd>
                         </div>
                       </dl>
                     </div>
