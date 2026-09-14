@@ -26,7 +26,6 @@ type FormState = {
   yearGroup: string;
   titleEn: string;
   titleId: string;
-  executingEntity: string;
   client: string;
   period: string;
   order: string;
@@ -37,7 +36,6 @@ const emptyForm: FormState = {
   yearGroup: YEAR_GROUP_OPTIONS[0],
   titleEn: "",
   titleId: "",
-  executingEntity: "",
   client: "",
   period: "",
   order: "0",
@@ -48,7 +46,7 @@ function toInput(form: FormState): PublicServiceProjectInput {
   return {
     yearGroup: form.yearGroup,
     title: { en: form.titleEn.trim(), id: form.titleId.trim() },
-    executingEntity: form.executingEntity.trim(),
+    executingEntity: "",
     client: form.client.trim(),
     period: form.period.trim(),
     order: Number(form.order),
@@ -63,9 +61,6 @@ function validate(form: FormState) {
   }
   if (!form.titleId.trim()) {
     errors.titleId = "Indonesian title is required.";
-  }
-  if (!form.executingEntity.trim()) {
-    errors.executingEntity = "Executing entity is required.";
   }
   if (!form.client.trim()) {
     errors.client = "Client is required.";
@@ -95,7 +90,6 @@ export default function ProjectForm({ id }: { id?: string }) {
           yearGroup: project.yearGroup,
           titleEn: project.title.en,
           titleId: project.title.id,
-          executingEntity: project.executingEntity,
           client: project.client,
           period: project.period,
           order: String(project.order),
@@ -227,32 +221,15 @@ export default function ProjectForm({ id }: { id?: string }) {
                 />
               </Field>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2">
-              <Field
-                label="Executing Entity"
-                htmlFor="executingEntity"
-                error={errors.executingEntity}
-              >
-                <input
-                  id="executingEntity"
-                  type="text"
-                  className={inputClass}
-                  value={form.executingEntity}
-                  onChange={(e) =>
-                    updateField("executingEntity", e.target.value)
-                  }
-                />
-              </Field>
-              <Field label="Client" htmlFor="client" error={errors.client}>
-                <input
-                  id="client"
-                  type="text"
-                  className={inputClass}
-                  value={form.client}
-                  onChange={(e) => updateField("client", e.target.value)}
-                />
-              </Field>
-            </div>
+            <Field label="Client" htmlFor="client" error={errors.client}>
+              <input
+                id="client"
+                type="text"
+                className={inputClass}
+                value={form.client}
+                onChange={(e) => updateField("client", e.target.value)}
+              />
+            </Field>
             <Field label="Period" htmlFor="period" error={errors.period}>
               <input
                 id="period"
