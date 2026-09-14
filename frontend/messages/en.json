@@ -506,7 +506,6 @@
     "projectsSortNewest": "Newest first",
     "projectsSortOldest": "Oldest first",
     "projectsFilterYear": "All years",
-    "projectsFilterEntity": "All entities",
     "projectsFilterClient": "All clients",
     "projectsLoading": "Loading projects...",
     "projectsEmpty": "No projects found.",

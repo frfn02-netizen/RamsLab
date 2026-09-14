@@ -469,7 +469,6 @@ export interface PublicServiceProjectPageItem {
 
 export interface PublicServiceProjectFacets {
   yearGroups: string[];
-  entities: string[];
   clients: string[];
 }
 

@@ -674,10 +674,6 @@ export async function getPublicServiceProjectListPublicController(
         ? req.query.yearGroup.trim()
         : undefined;
 
-    const entity =
-      typeof req.query.entity === "string"
-        ? req.query.entity.trim()
-        : undefined;
     const client =
       typeof req.query.client === "string"
         ? req.query.client.trim()
@@ -710,7 +706,6 @@ export async function getPublicServiceProjectListPublicController(
     const result = await findPublicServiceProjectsWithFilters({
       search,
       yearGroup,
-      entity,
       client,
       sort,
       page,

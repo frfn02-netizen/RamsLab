@@ -422,7 +422,6 @@ export const deletePublicServiceProject = async (id: string) => {
 export type PublicProjectQuery = {
   search?: string;
   yearGroup?: string;
-  entity?: string;
   client?: string;
   sort?: "newest" | "oldest";
   page?: number;
@@ -435,7 +434,6 @@ export const getPublicServiceProjectsList = (
   const query = new URLSearchParams();
   if (params.search) query.set("search", params.search);
   if (params.yearGroup) query.set("yearGroup", params.yearGroup);
-  if (params.entity) query.set("entity", params.entity);
   if (params.client) query.set("client", params.client);
   if (params.sort) query.set("sort", params.sort);
   if (params.page) query.set("page", String(params.page));

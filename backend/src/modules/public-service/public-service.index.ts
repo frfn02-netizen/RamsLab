@@ -38,10 +38,6 @@ export async function createPublicServiceIndexes() {
     { name: "public_service_projects_yearGroup_index" },
   );
   await getPublicServiceProjectsCollection().createIndex(
-    { executingEntity: 1 },
-    { name: "public_service_projects_entity_index" },
-  );
-  await getPublicServiceProjectsCollection().createIndex(
     { client: 1 },
     { name: "public_service_projects_client_index" },
   );

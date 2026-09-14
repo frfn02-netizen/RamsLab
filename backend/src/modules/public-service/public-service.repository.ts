@@ -258,7 +258,6 @@ export async function deletePublicServiceProject(id: string): Promise<boolean> {
 export interface PublicServiceProjectQueryOptions {
   search?: string;
   yearGroup?: string;
-  entity?: string;
   client?: string;
   sort?: "newest" | "oldest";
   page?: number;
@@ -269,7 +268,6 @@ export interface PublicServiceProjectQueryOptions {
 
 export interface PublicServiceProjectFacets {
   yearGroups: string[];
-  entities: string[];
   clients: string[];
 }
 
@@ -303,10 +301,6 @@ export async function findPublicServiceProjectsWithFilters(
 
   if (options?.yearGroup) {
     filter.yearGroup = options.yearGroup;
-  }
-
-  if (options?.entity) {
-    filter.executingEntity = options.entity;
   }
 
   if (options?.client) {
@@ -343,9 +337,8 @@ export async function findPublicServiceProjectsWithFilters(
     facetsFilter.published = true;
   }
 
-  const [yearGroupValues, entityValues, clientValues] = await Promise.all([
+  const [yearGroupValues, clientValues] = await Promise.all([
     collection.distinct("yearGroup", facetsFilter),
-    collection.distinct("executingEntity", facetsFilter),
     collection.distinct("client", facetsFilter),
   ]);
 
@@ -356,7 +349,6 @@ export async function findPublicServiceProjectsWithFilters(
     limit,
     facets: {
       yearGroups: (yearGroupValues as string[]).sort(),
-      entities: (entityValues as string[]).sort(),
       clients: (clientValues as string[]).sort(),
     },
   };

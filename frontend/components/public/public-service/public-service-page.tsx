@@ -133,7 +133,6 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [yearGroup, setYearGroup] = useState<string | undefined>();
-  const [entity, setEntity] = useState<string | undefined>();
   const [client, setClient] = useState<string | undefined>();
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [page, setPage] = useState(1);
@@ -142,12 +141,12 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
   const [loading, setLoading] = useState(true);
   const [facets, setFacets] = useState<PublicServiceProjectFacets | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const queryRef = useRef({ search, yearGroup, entity, client, sort, page });
+  const queryRef = useRef({ search, yearGroup, client, sort, page });
   const localized = (value?: { en: string; id: string }) =>
     value?.[locale] || value?.en || value?.id || "";
 
   useEffect(() => {
-    queryRef.current = { search, yearGroup, entity, client, sort, page };
+    queryRef.current = { search, yearGroup, client, sort, page };
   });
 
   useEffect(() => {
@@ -159,7 +158,6 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
         const res = await getPublicServiceProjectsList({
           search: q.search,
           yearGroup: q.yearGroup,
-          entity: q.entity,
           client: q.client,
           sort: q.sort,
           page: q.page,
@@ -182,7 +180,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
     return () => {
       cancelled = true;
     };
-  }, [search, yearGroup, entity, client, sort, page]);
+  }, [search, yearGroup, client, sort, page]);
 
   function handleSearchChange(value: string) {
     setSearchInput(value);
@@ -235,23 +233,6 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
               {facets.yearGroups.map((yg) => (
                 <option key={yg} value={yg}>
                   {yg}
-                </option>
-              ))}
-            </select>
-          )}
-          {facets && facets.entities.length > 0 && (
-            <select
-              value={entity ?? ""}
-              onChange={(e) => {
-                setEntity(e.target.value || undefined);
-                setPage(1);
-              }}
-              className="rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
-            >
-              <option value="">{t("projectsFilterEntity")}</option>
-              {facets.entities.map((en) => (
-                <option key={en} value={en}>
-                  {en}
                 </option>
               ))}
             </select>
