@@ -31,7 +31,8 @@
     "technicalVisual": "Foto Prof. Ketut, kepala Laboratorium RAMS",
     "skipToContent": "Lewati ke konten",
     "primaryNav": "Navigasi utama",
-    "mobileNav": "Navigasi seluler"
+    "mobileNav": "Navigasi seluler",
+    "contactUs": "Hubungi Kami"
   },
   "language": {
     "label": "Bahasa",
@@ -167,6 +168,13 @@
     },
     "ctaTitle": "Memiliki tantangan keandalan, keselamatan, atau sistem maritim?",
     "ctaDescription": "Diskusikan tantangan riset, keandalan, keselamatan, atau sistem maritim bersama laboratorium.",
+    "video": {
+      "eyebrow": "VIDEO / TENTANG RAMS",
+      "title": "Mengenal Laboratorium RAMS",
+      "description": "Tonton pengenalan kami untuk mempelajari tentang riset, metode, dan sistem yang kami pelajari.",
+      "watchOnYouTube": "Tonton di YouTube",
+      "latestVideos": "Video Terbaru"
+    },
     "ecosystemTitle": "Bagian dari Ekosistem Riset ITS",
     "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
     "partners": {
@@ -492,7 +500,25 @@
     "noJobs": "Belum ada pekerjaan atau layanan yang dipublikasikan untuk layanan ini.",
     "profileLink": "Lihat profil",
     "openLabel": "Lihat layanan",
-    "closeLabel": "Tutup"
+    "closeLabel": "Tutup",
+    "projectsEyebrow": "Layanan Publik",
+    "projectsTitle": "Proyek Layanan Publik",
+    "projectsSearchPlaceholder": "Cari proyek...",
+    "projectsSortNewest": "Terbaru lebih dulu",
+    "projectsSortOldest": "Terlama lebih dulu",
+    "projectsFilterYear": "Semua tahun",
+    "projectsFilterEntity": "Semua entitas",
+    "projectsFilterClient": "Semua klien",
+    "projectsLoading": "Memuat proyek...",
+    "projectsEmpty": "Tidak ada proyek ditemukan.",
+    "projectsTableNo": "No.",
+    "projectsTableTitle": "Proyek / Ruang Lingkup Pekerjaan",
+    "projectsTableEntity": "Entitas Pelaksana",
+    "projectsTableClient": "Klien",
+    "projectsTablePeriod": "Periode",
+    "projectsPageOf": "Halaman {page} dari {totalPages}",
+    "projectsPrev": "Sebelumnya",
+    "projectsNext": "Selanjutnya"
   },
   "visual": {
     "profile": "Profil",

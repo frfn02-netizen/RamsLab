@@ -46,7 +46,7 @@ export default function PublicationsPage() {
           limit: 100,
         });
 
-        setPublications(result);
+        setPublications(result.data);
       } catch (reason) {
         setError(getUserFacingError(reason));
       } finally {

@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getPublicServicePage, getPublicExperts } from "@/lib/api/modules";
-import type { PublicServicePageData, Expert } from "@/types/modules";
+import {
+  getPublicExperts,
+  getPublicServiceProjectsList,
+} from "@/lib/api/modules";
+import type {
+  Expert,
+  PublicServiceProjectPageItem,
+  PublicServiceProjectFacets,
+} from "@/types/modules";
 import PageHero from "../page-hero";
 import PublicContainer from "../public-container";
-import RevealOnScroll from "../reveal-on-scroll";
 
 function ExpertCard({ expert }: { expert: Expert }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -58,19 +64,13 @@ export default function PublicServicePage() {
   const locale = useLocale() === "id" ? "id" : "en";
   const t = useTranslations("publicService");
   const common = useTranslations("common");
-  const [data, setData] = useState<PublicServicePageData | null>(null);
   const [experts, setExperts] = useState<Expert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const localized = (value?: { en: string; id: string }) =>
-    value?.[locale] || value?.en || value?.id || "";
 
   useEffect(() => {
-    Promise.all([getPublicServicePage(), getPublicExperts()])
-      .then(([serviceData, expertData]) => {
-        setData(serviceData);
-        setExperts(expertData);
-      })
+    getPublicExperts()
+      .then(setExperts)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
@@ -106,84 +106,10 @@ export default function PublicServicePage() {
                 </div>
               </section>
             )}
-
-            {data && data.services.length > 0 && (
-              <section>
-                <SectionTitle
-                  eyebrow={t("servicesEyebrow")}
-                  title={t("servicesTitle")}
-                />
-                <div className="mt-10 space-y-16">
-                  {data.services.map((service, index) => {
-                    const title = localized(service.title);
-                    const description = localized(service.description);
-                    const hasImages =
-                      service.images && service.images.length > 0;
-                    const isEven = index % 2 === 0;
-
-                    return (
-                      <RevealOnScroll key={service.id} stagger={80}>
-                        <article
-                          className={`grid items-start gap-10 lg:grid-cols-2 lg:gap-20 ${index > 0 ? "border-t border-[var(--border)] pt-16" : ""}`}
-                        >
-                          <div
-                            className={`${isEven ? "order-1" : "order-1 lg:order-2"}`}
-                          >
-                            <span className="font-display text-sm font-bold text-[var(--rams-red)]">
-                              {String(index + 1).padStart(2, "0")}
-                            </span>
-
-                            {title && (
-                              <h3 className="mt-4 font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-[var(--navy)] sm:text-4xl">
-                                {title}
-                              </h3>
-                            )}
-
-                            {description && (
-                              <p className="mt-6 max-w-xl text-base leading-7 text-[var(--gray)] sm:text-lg">
-                                {description}
-                              </p>
-                            )}
-                          </div>
-
-                          <div
-                            className={`${isEven ? "order-2" : "order-2 lg:order-1"}`}
-                          >
-                            {hasImages ? (
-                              <div className="grid grid-cols-2 gap-3">
-                                {service.images.map((url, imgIndex) => (
-                                  <div
-                                    key={`${service.id}-${imgIndex}`}
-                                    className="relative aspect-[4/3] overflow-hidden border border-[var(--border)]"
-                                  >
-                                    <Image
-                                      src={url}
-                                      alt={`${title || `Service ${index + 1}`} - Documentation ${imgIndex + 1}`}
-                                      fill
-                                      unoptimized
-                                      sizes="(max-width: 1024px) 50vw, 25vw"
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="flex aspect-[4/3] items-center justify-center border border-dashed border-[var(--border)] bg-[var(--background-light)]">
-                                <span className="font-display text-7xl font-bold tracking-tight text-[var(--navy)]/10">
-                                  {String(index + 1).padStart(2, "0")}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </article>
-                      </RevealOnScroll>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
           </>
         )}
+
+        <ProjectsSection locale={locale} />
       </PublicContainer>
     </main>
   );
@@ -197,5 +123,285 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
       </p>
       <h2 className="mt-3 text-3xl font-bold text-[var(--navy)]">{title}</h2>
     </div>
+  );
+}
+
+const PROJECTS_PER_PAGE = 10;
+
+function ProjectsSection({ locale }: { locale: "en" | "id" }) {
+  const t = useTranslations("publicService");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [yearGroup, setYearGroup] = useState<string | undefined>();
+  const [entity, setEntity] = useState<string | undefined>();
+  const [client, setClient] = useState<string | undefined>();
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [page, setPage] = useState(1);
+  const [items, setItems] = useState<PublicServiceProjectPageItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [facets, setFacets] = useState<PublicServiceProjectFacets | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryRef = useRef({ search, yearGroup, entity, client, sort, page });
+  const localized = (value?: { en: string; id: string }) =>
+    value?.[locale] || value?.en || value?.id || "";
+
+  useEffect(() => {
+    queryRef.current = { search, yearGroup, entity, client, sort, page };
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      setLoading(true);
+      try {
+        const q = queryRef.current;
+        const res = await getPublicServiceProjectsList({
+          search: q.search,
+          yearGroup: q.yearGroup,
+          entity: q.entity,
+          client: q.client,
+          sort: q.sort,
+          page: q.page,
+          limit: PROJECTS_PER_PAGE,
+        });
+        if (cancelled) return;
+        setItems(res.data ?? []);
+        setTotal(res.total ?? 0);
+        setFacets(res.facets ?? null);
+      } catch {
+        if (!cancelled) {
+          setItems([]);
+          setTotal(0);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [search, yearGroup, entity, client, sort, page]);
+
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearch(value.trim());
+      setPage(1);
+    }, 350);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PROJECTS_PER_PAGE));
+
+  return (
+    <section>
+      <SectionTitle eyebrow={t("projectsEyebrow")} title={t("projectsTitle")} />
+
+      <div className="mt-8 space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            placeholder={t("projectsSearchPlaceholder")}
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full rounded-md border border-[var(--border)] bg-white px-4 py-2.5 text-sm text-[var(--navy)] outline-none transition placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-red-100 sm:max-w-xs"
+          />
+          <select
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value as "newest" | "oldest");
+              setPage(1);
+            }}
+            className="rounded-md border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
+          >
+            <option value="newest">{t("projectsSortNewest")}</option>
+            <option value="oldest">{t("projectsSortOldest")}</option>
+          </select>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          {facets && facets.yearGroups.length > 0 && (
+            <select
+              value={yearGroup ?? ""}
+              onChange={(e) => {
+                setYearGroup(e.target.value || undefined);
+                setPage(1);
+              }}
+              className="rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
+            >
+              <option value="">{t("projectsFilterYear")}</option>
+              {facets.yearGroups.map((yg) => (
+                <option key={yg} value={yg}>
+                  {yg}
+                </option>
+              ))}
+            </select>
+          )}
+          {facets && facets.entities.length > 0 && (
+            <select
+              value={entity ?? ""}
+              onChange={(e) => {
+                setEntity(e.target.value || undefined);
+                setPage(1);
+              }}
+              className="rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
+            >
+              <option value="">{t("projectsFilterEntity")}</option>
+              {facets.entities.map((en) => (
+                <option key={en} value={en}>
+                  {en}
+                </option>
+              ))}
+            </select>
+          )}
+          {facets && facets.clients.length > 0 && (
+            <select
+              value={client ?? ""}
+              onChange={(e) => {
+                setClient(e.target.value || undefined);
+                setPage(1);
+              }}
+              className="rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
+            >
+              <option value="">{t("projectsFilterClient")}</option>
+              {facets.clients.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {loading ? (
+          <p className="py-8 text-sm font-semibold text-[var(--rams-gray)]">
+            {t("projectsLoading")}
+          </p>
+        ) : items.length === 0 ? (
+          <p className="py-8 text-sm font-semibold text-[var(--rams-gray)]">
+            {t("projectsEmpty")}
+          </p>
+        ) : (
+          <>
+            <div className="hidden overflow-x-auto border border-[var(--border)] bg-white md:block">
+              <table className="w-full min-w-[700px] text-left">
+                <thead className="border-b border-[var(--border)] bg-[var(--background-light)]">
+                  <tr>
+                    {[
+                      t("projectsTableNo"),
+                      t("projectsTableTitle"),
+                      t("projectsTableEntity"),
+                      t("projectsTableClient"),
+                      t("projectsTablePeriod"),
+                    ].map((heading) => (
+                      <th
+                        key={heading}
+                        className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-[var(--gray)]"
+                      >
+                        {heading}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {items.map((project, index) => (
+                    <tr
+                      key={project.id}
+                      className="transition hover:bg-[var(--background-light)]"
+                    >
+                      <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
+                        {(page - 1) * PROJECTS_PER_PAGE + index + 1}
+                      </td>
+                      <td className="px-5 py-4">
+                        <p className="font-semibold text-[var(--navy)]">
+                          {localized(project.title)}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
+                        {project.executingEntity}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
+                        {project.client}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-[var(--charcoal)]">
+                        {project.period}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="space-y-4 md:hidden">
+              {items.map((project, index) => (
+                <article
+                  key={project.id}
+                  className="border border-[var(--border)] bg-white p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-[var(--background-light)] text-xs font-bold text-[var(--charcoal)]">
+                      {(page - 1) * PROJECTS_PER_PAGE + index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-[var(--navy)]">
+                        {localized(project.title)}
+                      </h3>
+                      <dl className="mt-3 space-y-1 text-sm text-[var(--charcoal)]">
+                        <div className="flex gap-2">
+                          <dt className="font-semibold">
+                            {t("projectsTableEntity")}:
+                          </dt>
+                          <dd>{project.executingEntity}</dd>
+                        </div>
+                        <div className="flex gap-2">
+                          <dt className="font-semibold">
+                            {t("projectsTableClient")}:
+                          </dt>
+                          <dd>{project.client}</dd>
+                        </div>
+                        <div className="flex gap-2">
+                          <dt className="font-semibold">
+                            {t("projectsTablePeriod")}:
+                          </dt>
+                          <dd>{project.period}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-[var(--border)] pt-4">
+                <p className="text-sm text-[var(--gray)]">
+                  {t("projectsPageOf", { page, totalPages })}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)] disabled:opacity-40"
+                  >
+                    {t("projectsPrev")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)] disabled:opacity-40"
+                  >
+                    {t("projectsNext")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 }

@@ -16,11 +16,7 @@ import {
   PageHeader,
 } from "@/components/ui";
 import { getUserFacingError } from "@/lib/api/errors";
-import {
-  deleteResearchArea,
-  getResearchAreas,
-  updateResearchArea,
-} from "@/lib/api/modules";
+import { deleteResearchArea, getResearchAreas } from "@/lib/api/modules";
 import type { ResearchArea } from "@/types/modules";
 
 function Button({ variant, ...props }: ComponentProps<typeof RamsButton>) {
@@ -77,74 +73,6 @@ export default function ResearchAreasPage() {
       cancelled = true;
     };
   }, []);
-
-  async function togglePublished(area: ResearchArea) {
-    setBusyId(area._id);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const updated = await updateResearchArea(area._id, {
-        published: !area.published,
-      });
-
-      setAreas((current) =>
-        current.map((item) => (item._id === updated._id ? updated : item)),
-      );
-
-      setSuccess(
-        `${area.code} is now ${
-          updated.published ? "published" : "unpublished"
-        }.`,
-      );
-    } catch (reason) {
-      setError(getUserFacingError(reason));
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function move(area: ResearchArea, direction: -1 | 1) {
-    const index = areas.findIndex((item) => item._id === area._id);
-    const other = areas[index + direction];
-
-    if (!other) {
-      return;
-    }
-
-    setBusyId(area._id);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const [updatedArea, updatedOther] = await Promise.all([
-        updateResearchArea(area._id, {
-          order: other.order,
-        }),
-        updateResearchArea(other._id, {
-          order: area.order,
-        }),
-      ]);
-
-      setAreas((current) =>
-        current
-          .map((item) =>
-            item._id === updatedArea._id
-              ? updatedArea
-              : item._id === updatedOther._id
-                ? updatedOther
-                : item,
-          )
-          .sort((a, b) => a.order - b.order || a.code.localeCompare(b.code)),
-      );
-
-      setSuccess("Research area order updated.");
-    } catch (reason) {
-      setError(getUserFacingError(reason));
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   async function remove(area: ResearchArea) {
     if (!window.confirm(`Delete “${area.code}”? This cannot be undone.`)) {
@@ -214,30 +142,25 @@ export default function ResearchAreasPage() {
         ) : (
           <Card>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1100px] text-left">
+              <table className="w-full min-w-[900px] text-left">
                 <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
                   <tr>
-                    {[
-                      "Code",
-                      "Title",
-                      "Order",
-                      "Visibility",
-                      "Updated",
-                      "Action",
-                    ].map((heading) => (
-                      <th
-                        key={heading}
-                        scope="col"
-                        className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] last:text-center"
-                      >
-                        {heading}
-                      </th>
-                    ))}
+                    {["Code", "Title", "Visibility", "Updated", "Action"].map(
+                      (heading) => (
+                        <th
+                          key={heading}
+                          scope="col"
+                          className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] last:text-center"
+                        >
+                          {heading}
+                        </th>
+                      ),
+                    )}
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-black/8">
-                  {areas.map((area, index) => (
+                  {areas.map((area) => (
                     <tr key={area._id}>
                       <td className="px-5 py-4">
                         <Link
@@ -265,36 +188,6 @@ export default function ResearchAreasPage() {
                         </p>
                       </td>
 
-                      <td className="px-5 py-4 text-sm">
-                        {area.order}
-
-                        <div className="mt-2 flex gap-1">
-                          {user?.role === "ADMIN" && (
-                            <>
-                              <Button
-                                variant="secondary"
-                                className="min-h-8 px-2 text-xs"
-                                disabled={busyId !== null || index === 0}
-                                onClick={() => void move(area, -1)}
-                              >
-                                ↑
-                              </Button>
-
-                              <Button
-                                variant="secondary"
-                                className="min-h-8 px-2 text-xs"
-                                disabled={
-                                  busyId !== null || index === areas.length - 1
-                                }
-                                onClick={() => void move(area, 1)}
-                              >
-                                ↓
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-
                       <td className="px-5 py-4">
                         <Badge tone={area.published ? "green" : "neutral"}>
                           {area.published ? "Published" : "Draft"}
@@ -315,14 +208,6 @@ export default function ResearchAreasPage() {
                               >
                                 Edit
                               </LinkButton>
-
-                              <Button
-                                variant="secondary"
-                                disabled={busyId === area._id}
-                                onClick={() => void togglePublished(area)}
-                              >
-                                {area.published ? "Unpublish" : "Publish"}
-                              </Button>
 
                               <Button
                                 variant="danger"

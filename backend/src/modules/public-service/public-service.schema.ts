@@ -99,3 +99,31 @@ export type CreatePublicServiceInput = z.infer<
 export type UpdatePublicServiceInput = z.infer<
   typeof updatePublicServiceSchema
 >;
+
+const projectFields = {
+  yearGroup: z.string().trim().min(1).max(50),
+  title: requiredBilingualTextSchema,
+  executingEntity: z.string().trim().min(1).max(200),
+  client: z.string().trim().min(1).max(200),
+  period: z.string().trim().min(1).max(100),
+  order: z.number().int().min(0).max(100000).default(0),
+  published: z.boolean().default(false),
+};
+
+export const createPublicServiceProjectSchema = z.object(projectFields);
+export const updatePublicServiceProjectSchema = z.object({
+  yearGroup: projectFields.yearGroup.optional(),
+  title: projectFields.title.optional(),
+  executingEntity: projectFields.executingEntity.optional(),
+  client: projectFields.client.optional(),
+  period: projectFields.period.optional(),
+  order: projectFields.order.optional(),
+  published: z.boolean().optional(),
+});
+
+export type CreatePublicServiceProjectInput = z.infer<
+  typeof createPublicServiceProjectSchema
+>;
+export type UpdatePublicServiceProjectInput = z.infer<
+  typeof updatePublicServiceProjectSchema
+>;

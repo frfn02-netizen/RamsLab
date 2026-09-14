@@ -3,7 +3,10 @@
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import {
+  memo,
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -119,18 +122,18 @@ function PublicationFiltersPanel({
 
       <fieldset>
         <legend className="eyebrow">{t("topic")}</legend>
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 flex flex-wrap gap-2">
           {topics.length ? (
             topics.map((topic) => (
               <label
                 key={topic.value}
-                className="flex cursor-pointer items-start gap-3 text-sm text-[var(--slate)]"
+                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-sm transition hover:border-[var(--rams-red)]"
               >
                 <input
                   type="checkbox"
                   checked={filters.topics.includes(topic.value)}
                   onChange={() => toggle("topics", topic.value)}
-                  className="mt-0.5 h-4 w-4 accent-[var(--rams-red)]"
+                  className="h-4 w-4 accent-[var(--rams-red)]"
                 />
                 <span>{topic.label}</span>
               </label>
@@ -143,19 +146,19 @@ function PublicationFiltersPanel({
 
       <fieldset>
         <legend className="eyebrow">{t("method")}</legend>
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 flex flex-wrap gap-2">
           {methods.length ? (
             methods.map((method) => (
               <label
                 key={method}
-                className="flex cursor-pointer items-start gap-3 text-sm text-[var(--slate)]"
+                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-sm transition hover:border-[var(--rams-red)]"
               >
                 <input
                   id={`${prefix}-method-${slug(method)}`}
                   type="checkbox"
                   checked={filters.methods.includes(method)}
                   onChange={() => toggle("methods", method)}
-                  className="mt-0.5 h-4 w-4 accent-[var(--rams-red)]"
+                  className="h-4 w-4 accent-[var(--rams-red)]"
                 />
                 <span>{method}</span>
               </label>
@@ -179,15 +182,21 @@ function PublicationFiltersPanel({
   );
 }
 
-function PublicationCard({
+const PublicationCard = memo(function PublicationCard({
   project,
   t,
   active,
+  selected = false,
+  publicationId,
+  onSelect,
   staged = false,
 }: {
   project: PublicationProject;
   t: (key: string) => string;
   active: boolean;
+  selected?: boolean;
+  publicationId: string;
+  onSelect?: (id: string) => void;
   staged?: boolean;
 }) {
   const publicationUrl = project.pdfUrl
@@ -195,14 +204,55 @@ function PublicationCard({
     : null;
   const publicationLinkLabel = t("viewPdf");
 
+  const radioRef = useRef<HTMLInputElement>(null);
+
+  useLayoutEffect(() => {
+    const el = radioRef.current;
+    if (el && el.checked !== selected) {
+      el.checked = selected;
+    }
+  });
+
+  const handleRadioMouseDown = (
+    event: React.MouseEvent<HTMLInputElement>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleRadioChange = () => {
+    onSelect?.(publicationId);
+  };
+
+  const handleRadioClick = (
+    event: React.MouseEvent<HTMLInputElement>,
+  ) => {
+    event.stopPropagation();
+    if (selected) {
+      onSelect?.(publicationId);
+    }
+  };
+
   return (
     <article
       className={`group border bg-white p-6 transition-[opacity,transform,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none sm:p-7 ${staged && !active ? "pointer-events-none translate-y-3 border-[var(--border)] opacity-0" : active ? "translate-y-0 border-[var(--rams-red)]/55 opacity-100 shadow-[0_10px_28px_rgba(11,32,56,0.07)]" : "translate-y-3 border-[var(--border)] opacity-70"} hover:-translate-y-0.5 hover:border-[var(--rams-red)]/55 hover:shadow-[0_10px_28px_rgba(11,32,56,0.07)]`}
     >
       <div className="flex items-start justify-between gap-4">
-        <p className="eyebrow text-[var(--ais-blue)]">
-          {t("publicationRecord")}
-        </p>
+        <div className="flex items-center gap-3">
+          <input
+            ref={radioRef}
+            type="radio"
+            checked={selected}
+            onChange={handleRadioChange}
+            onClick={handleRadioClick}
+            onMouseDown={handleRadioMouseDown}
+            aria-label={project.title}
+            className={`h-4 w-4 accent-[var(--rams-red)] ${selected ? "ring-2 ring-[var(--rams-red)] ring-offset-2" : ""}`}
+          />
+          <p className="eyebrow text-[var(--ais-blue)]">
+            {t("publicationRecord")}
+          </p>
+        </div>
         <span className="border border-[var(--rams-red)]/25 px-2 py-1 font-mono text-[0.65rem] font-semibold text-[var(--rams-red)]">
           {project.year}
         </span>
@@ -249,9 +299,9 @@ function PublicationCard({
       </div>
     </article>
   );
-}
+});
 
-const PUBLIC_HEADER_HEIGHT_PX = 80;
+const PUBLIC_HEADER_HEIGHT_PX = 72;
 
 function useStickyPublicationProgress(
   sectionRef: RefObject<HTMLDivElement | null>,
@@ -388,6 +438,8 @@ function PublicationTimeline({
   streamRef,
   streamOffset,
   scrollProgress,
+  selectedPublicationId,
+  onSelectPublication,
 }: {
   groups: [number, PublicationProject[]][];
   t: (key: string) => string;
@@ -396,6 +448,8 @@ function PublicationTimeline({
   streamRef: RefObject<HTMLDivElement | null>;
   streamOffset: number;
   scrollProgress: number;
+  selectedPublicationId: string | null;
+  onSelectPublication: (id: string | null) => void;
 }) {
   const entries = useMemo(
     () =>
@@ -409,6 +463,20 @@ function PublicationTimeline({
     [entries],
   );
 
+  const selectedPubIdRef = useRef(selectedPublicationId);
+  useEffect(() => {
+    selectedPubIdRef.current = selectedPublicationId;
+  });
+
+  const selectPublication = useCallback(
+    (id: string) => {
+      onSelectPublication(
+        selectedPubIdRef.current === id ? null : id,
+      );
+    },
+    [onSelectPublication],
+  );
+
   return (
     <>
       <div className="flex justify-end lg:hidden">
@@ -416,7 +484,7 @@ function PublicationTimeline({
       </div>
       <div
         ref={streamViewportRef}
-        className="publications-stream-viewport relative mt-8 hidden min-h-0 flex-1 overflow-hidden lg:flex"
+        className="publications-stream-viewport relative mt-8 hidden min-h-0 min-w-0 flex-1 overflow-hidden lg:flex"
       >
         <div
           className="pointer-events-none absolute right-1 z-10 hidden -translate-y-1/2 lg:block"
@@ -451,6 +519,9 @@ function PublicationTimeline({
                           project={publication}
                           t={t}
                           active={index === activeIndex}
+                          selected={selectedPublicationId === publication._id}
+                          publicationId={publication._id}
+                          onSelect={selectPublication}
                         />
                       </div>
                     );
@@ -480,6 +551,9 @@ function PublicationTimeline({
                     t={t}
                     active
                     staged={false}
+                    selected={selectedPublicationId === publication._id}
+                    publicationId={publication._id}
+                    onSelect={selectPublication}
                   />
                 </div>
               ))}
@@ -502,6 +576,9 @@ export default function Publications() {
   const [error, setError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [selectedPublicationId, setSelectedPublicationId] = useState<
+    string | null
+  >(null);
   const stickySectionRef = useRef<HTMLDivElement>(null);
   const stickyViewportRef = useRef<HTMLDivElement>(null);
   const streamViewportRef = useRef<HTMLDivElement>(null);
@@ -535,7 +612,7 @@ export default function Publications() {
           sort: filters.sort,
         });
         if (!active) return;
-        setRecords(data);
+        setRecords(data.data ?? []);
       } catch {
         if (active) setError(true);
       } finally {
@@ -637,44 +714,44 @@ export default function Publications() {
             visibleRecords.length ? "publications-scroll-track relative" : ""
           }
         >
-          <div
-            ref={stickyViewportRef}
-            className={
-              visibleRecords.length
-                ? "publications-sticky-viewport lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:overflow-hidden"
-                : ""
-            }
-          >
-            <div className="publications-sticky-grid pt-10 lg:grid lg:h-[calc(100vh-5rem)] lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-14">
-              <div className="lg:hidden">
-                <button
-                  type="button"
-                  onClick={() => setMobileFiltersOpen(true)}
-                  className="flex w-full items-center justify-between border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--navy)] focus:outline-none focus:ring-2 focus:ring-[var(--rams-red)]/25"
-                >
-                  <span>{t("filterPublications")}</span>
-                  <span aria-hidden="true">＋</span>
-                </button>
-              </div>
-
-              <aside
-                className="hidden border-r border-[var(--border)] pr-8 lg:block"
-                aria-label={t("filterPublications")}
+          <div className="publications-sticky-grid pt-10 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:gap-8 lg:items-start">
+            <div className="lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(true)}
+                className="flex w-full items-center justify-between border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--navy)] focus:outline-none focus:ring-2 focus:ring-[var(--rams-red)]/25"
               >
-                <PublicationFiltersPanel
-                  filters={visibleFilters}
-                  years={years}
-                  topics={topicOptions}
-                  methods={methodOptions}
-                  t={t}
-                  onChange={updateFilters}
-                  onClear={clearFilters}
-                  prefix="desktop"
-                />
-              </aside>
+                <span>{t("filterPublications")}</span>
+                <span aria-hidden="true">＋</span>
+              </button>
+            </div>
 
-              <main className="mt-8 min-w-0 lg:mt-0 lg:flex lg:h-full lg:min-h-[fit-content] lg:flex-col">
-                <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end sm:justify-end">
+            <aside
+              className="hidden border-r border-[var(--border)] pr-8 lg:block lg:sticky lg:top-[4.5rem]"
+              aria-label={t("filterPublications")}
+            >
+              <PublicationFiltersPanel
+                filters={visibleFilters}
+                years={years}
+                topics={topicOptions}
+                methods={methodOptions}
+                t={t}
+                onChange={updateFilters}
+                onClear={clearFilters}
+                prefix="desktop"
+              />
+            </aside>
+
+            <div
+              ref={stickyViewportRef}
+              className={
+                visibleRecords.length
+                  ? "lg:sticky lg:top-[4.5rem] lg:h-[calc(100vh-4.5rem)] lg:overflow-hidden"
+                  : ""
+              }
+            >
+              <main className="mt-8 min-w-0 lg:mt-0 lg:flex lg:h-full lg:flex-col">
+                <div className="flex shrink-0 flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end sm:justify-end">
                   <label className="flex items-center gap-3 text-sm text-[var(--gray)]">
                     {t("sort")}
                     <select
@@ -745,6 +822,8 @@ export default function Publications() {
                     streamRef={streamRef}
                     streamOffset={streamOffset}
                     scrollProgress={publicationScrollProgress}
+                    selectedPublicationId={selectedPublicationId}
+                    onSelectPublication={setSelectedPublicationId}
                   />
                 )}
               </main>

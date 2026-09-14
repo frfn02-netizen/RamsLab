@@ -12,6 +12,7 @@ import { createSiteContentIndexes } from "./modules/site-content/site-content.in
 import { createPublicationIndexes } from "./modules/publications/publication.index.js";
 import { createStudentIndexes } from "./modules/students/student.index.js";
 import { createExpertIndexes } from "./modules/experts/expert.index.js";
+import { createVideoIndexes } from "./modules/videos/video.index.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ async function startServer() {
     await createPublicationIndexes();
     await createStudentIndexes();
     await createExpertIndexes();
+    await createVideoIndexes();
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 RAMS API running on http://0.0.0.0:${PORT}`);

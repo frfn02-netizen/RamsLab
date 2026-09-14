@@ -31,7 +31,8 @@
     "technicalVisual": "Portrait of Prof. Ketut, RAMS Laboratory head",
     "skipToContent": "Skip to content",
     "primaryNav": "Primary navigation",
-    "mobileNav": "Mobile navigation"
+    "mobileNav": "Mobile navigation",
+    "contactUs": "Contact Us"
   },
   "language": {
     "label": "Language",
@@ -167,6 +168,13 @@
     },
     "ctaTitle": "Have a reliability, safety, or marine systems challenge?",
     "ctaDescription": "Talk with the laboratory about a research, reliability, safety, or marine systems challenge.",
+    "video": {
+      "eyebrow": "VIDEO / ABOUT RAMS",
+      "title": "Get to Know RAMS Laboratory",
+      "description": "Watch our introduction to learn about the laboratory's research, methods, and the systems we study.",
+      "watchOnYouTube": "Watch on YouTube",
+      "latestVideos": "Latest Videos"
+    },
     "ecosystemTitle": "Part of the ITS Research Ecosystem",
     "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
     "partners": {
@@ -241,7 +249,7 @@
   },
   "research": {
     "heroEyebrow": "Research & methods",
-    "heroTitle": "Research that turns complex systems into better decisions.",
+    "heroTitle": "Research that turns complex systems into better decisions",
     "heroDescription": "RAMS research connects technical models with the operational questions faced by marine, offshore, and industrial organizations.",
     "heroCta": "Explore research areas",
     "heroImageAlt": "Marine systems research",
@@ -372,7 +380,7 @@
   },
   "team": {
     "heroEyebrow": "People & expertise",
-    "heroTitle": "A multidisciplinary research team.",
+    "heroTitle": "A multidisciplinary research team",
     "heroDescription": "RAMS Laboratory brings together laboratory leadership, lecturers, researchers, and engineering collaborators around dependable systems.",
     "headEyebrow": "LABORATORY HEAD",
     "headName": "Prof. Ketut",
@@ -436,7 +444,6 @@
     "collaborationCta": "Discuss a collaboration",
     "formEyebrow": "Start a conversation",
     "formTitle": "Tell us what you are working on.",
-    "formDescription": "This form is prepared for the future contact API. It currently validates locally and does not send a message.",
     "name": "Name",
     "institution": "Institution / Company",
     "topic": "Topic",
@@ -492,7 +499,25 @@
     "noJobs": "No jobs or services have been published for this service.",
     "profileLink": "View profile",
     "openLabel": "View service",
-    "closeLabel": "Close"
+    "closeLabel": "Close",
+    "projectsEyebrow": "Public Service",
+    "projectsTitle": "Public Service Projects",
+    "projectsSearchPlaceholder": "Search projects...",
+    "projectsSortNewest": "Newest first",
+    "projectsSortOldest": "Oldest first",
+    "projectsFilterYear": "All years",
+    "projectsFilterEntity": "All entities",
+    "projectsFilterClient": "All clients",
+    "projectsLoading": "Loading projects...",
+    "projectsEmpty": "No projects found.",
+    "projectsTableNo": "No.",
+    "projectsTableTitle": "Project / Scope of Work",
+    "projectsTableEntity": "Executing Entity",
+    "projectsTableClient": "Client",
+    "projectsTablePeriod": "Period",
+    "projectsPageOf": "Page {page} of {totalPages}",
+    "projectsPrev": "Previous",
+    "projectsNext": "Next"
   },
   "visual": {
     "profile": "Profile",

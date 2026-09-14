@@ -4,6 +4,7 @@ import {
   changePasswordController,
   loginController,
   logoutController,
+  registerController,
 } from "./auth.controller.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
@@ -28,6 +29,15 @@ router.post(
       `${req.ip ?? "unknown"}:${typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "unknown"}`,
   }),
   loginController,
+);
+router.post(
+  "/register",
+  createRateLimiter({
+    windowMs: SECURITY_LIMITS.loginWindowMs,
+    max: SECURITY_LIMITS.maxLoginAttemptsPerIp,
+    message: "Too many registration attempts from this address",
+  }),
+  registerController,
 );
 router.post("/change-password", authenticate, changePasswordController);
 router.post("/logout", logoutController);

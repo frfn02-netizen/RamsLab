@@ -71,7 +71,7 @@ export default function ResearchHighlightForm({ id }: { id?: string }) {
           getPublications({ limit: 200, sort: "newest" }),
           id ? getResearchHighlight(id) : Promise.resolve(null),
         ]);
-        setPublications(publicationList);
+        setPublications(publicationList.data);
         if (loaded) {
           setHighlight(loaded);
           setForm({

@@ -44,9 +44,7 @@ export default function ContactForm({
       <h2 className="mt-4 font-display text-3xl font-bold tracking-[-0.02em] text-[var(--navy)]">
         {t("formTitle")}
       </h2>
-      <p className="mt-3 text-sm leading-6 text-[var(--gray)]">
-        {t("formDescription")}
-      </p>
+      <p className="mt-3 text-sm leading-6 text-[var(--gray)]"></p>
       {submitted ? (
         <div
           className="mt-8 border border-[#D9E0E6] bg-[var(--background-light)] p-6"

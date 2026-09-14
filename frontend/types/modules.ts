@@ -44,6 +44,20 @@ export interface Publication {
   updatedAt: string;
 }
 
+export interface PublicationFacets {
+  years: number[];
+  topics: string[];
+  methods: string[];
+}
+
+export interface PublicationListResponse {
+  data: Publication[];
+  total: number;
+  page: number;
+  limit: number;
+  facets: PublicationFacets;
+}
+
 export const PUBLICATION_TYPES = [
   "Article",
   "Review",
@@ -420,4 +434,82 @@ export interface PublicServiceDetail {
   order: number;
   companies: PublicServiceCompany[];
   jobs: PublicServiceJob[];
+}
+
+export interface PublicServiceProject {
+  _id: string;
+  yearGroup: string;
+  title: BilingualText;
+  executingEntity: string;
+  client: string;
+  period: string;
+  order: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export type PublicServiceProjectInput = Omit<
+  PublicServiceProject,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+>;
+export type PublicServiceProjectUpdateInput =
+  Partial<PublicServiceProjectInput>;
+
+export interface PublicServiceProjectPageItem {
+  id: string;
+  yearGroup: string;
+  title: BilingualText;
+  executingEntity: string;
+  client: string;
+  period: string;
+  order: number;
+}
+
+export interface PublicServiceProjectFacets {
+  yearGroups: string[];
+  entities: string[];
+  clients: string[];
+}
+
+export interface PublicServiceProjectListResponse {
+  success: boolean;
+  data: PublicServiceProjectPageItem[];
+  total: number;
+  page: number;
+  limit: number;
+  facets: PublicServiceProjectFacets;
+}
+
+export interface HomepageVideo {
+  _id: string;
+  youtubeUrl: string;
+  youtubeVideoId: string;
+  title?: string | null;
+  thumbnailUrl?: string | null;
+  isFeatured: boolean;
+  order: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string | null;
+}
+
+export type HomepageVideoInput = Omit<
+  HomepageVideo,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy" | "youtubeVideoId"
+>;
+export type HomepageVideoUpdateInput = Partial<
+  Omit<HomepageVideoInput, "youtubeUrl"> & { youtubeUrl: string }
+>;
+
+export interface PublicHomepageVideo {
+  id: string;
+  youtubeUrl: string;
+  youtubeVideoId: string;
+  title?: string | null;
+  thumbnailUrl: string;
+  isFeatured: boolean;
+  order: number;
 }

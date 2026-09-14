@@ -58,8 +58,8 @@ export function HeadOfLaboratorySection({
 }: {
   content: HomepageContent;
 }) {
-  const locale = useLocale() === "id" ? "id" : "en";
   const t = useTranslations("home");
+  const locale = useLocale() === "id" ? "id" : "en";
   const localized = (value: { en: string; id: string }) => value[locale];
   const head = content.headOfLaboratory;
 

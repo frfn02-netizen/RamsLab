@@ -5,6 +5,7 @@ import { routing } from "./i18n/routing";
 const PRIVATE_PREFIXES = [
   "/api",
   "/dashboard",
+  "/alumni",
   "/admin",
   "/login",
   "/profile",

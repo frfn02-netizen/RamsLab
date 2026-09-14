@@ -14,9 +14,10 @@ import {
   getCurrentUser,
   login as loginRequest,
   logout as logoutRequest,
+  register as registerRequest,
 } from "@/lib/api/auth";
 import { onUnauthorized } from "@/lib/api/client";
-import type { AuthUser, LoginInput } from "@/types/auth";
+import type { AuthUser, LoginInput, RegisterInput } from "@/types/auth";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 interface AuthContextValue {
@@ -24,6 +25,7 @@ interface AuthContextValue {
   status: AuthStatus;
   isAuthenticated: boolean;
   login(input: LoginInput): Promise<AuthUser>;
+  register(input: RegisterInput): Promise<AuthUser>;
   logout(): Promise<void>;
   refresh(): Promise<void>;
 }
@@ -76,6 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return authenticatedUser;
   }, []);
 
+  const register = useCallback(async (input: RegisterInput) => {
+    const registeredUser = await registerRequest(input);
+    userRef.current = registeredUser;
+    setUser(registeredUser);
+    setStatus("authenticated");
+    return registeredUser;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await logoutRequest();
@@ -92,10 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       isAuthenticated: status === "authenticated",
       login,
+      register,
       logout,
       refresh,
     }),
-    [user, status, login, logout, refresh],
+    [user, status, login, register, logout, refresh],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

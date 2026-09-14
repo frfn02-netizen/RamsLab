@@ -1,6 +1,7 @@
 import {
   getPublicServiceExpertsCollection,
   getPublicServicesCollection,
+  getPublicServiceProjectsCollection,
 } from "./public-service.repository.js";
 
 export async function createPublicServiceIndexes() {
@@ -27,6 +28,22 @@ export async function createPublicServiceIndexes() {
   await getPublicServicesCollection().createIndex(
     { code: 1 },
     { name: "public_services_code_unique", unique: true, sparse: true },
+  );
+  await getPublicServiceProjectsCollection().createIndex(
+    { published: 1, order: 1 },
+    { name: "public_service_projects_listing_index" },
+  );
+  await getPublicServiceProjectsCollection().createIndex(
+    { yearGroup: 1 },
+    { name: "public_service_projects_yearGroup_index" },
+  );
+  await getPublicServiceProjectsCollection().createIndex(
+    { executingEntity: 1 },
+    { name: "public_service_projects_entity_index" },
+  );
+  await getPublicServiceProjectsCollection().createIndex(
+    { client: 1 },
+    { name: "public_service_projects_client_index" },
   );
   console.log("Public service indexes created");
 }

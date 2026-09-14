@@ -1,6 +1,7 @@
 import { apiRequest, apiRequestWithMeta } from "./client";
 import type {
   Alumni,
+  AlumniAuditLog,
   AlumniCreateInput,
   AlumniListParams,
   AlumniListResponse,
@@ -73,3 +74,15 @@ export function updateMyAlumni(input: AlumniUpdateInput) {
     body: JSON.stringify(input),
   });
 }
+
+export function getMyAuditLogs() {
+  return apiRequest<AlumniAuditLog[]>("/alumni/me/history");
+}
+
+export function getAlumniAuditLogs(id: string) {
+  return apiRequest<(AlumniAuditLog & { userName?: string; alumniFullName?: string })[]>(
+    `/alumni/${encodeURIComponent(id)}/history`,
+  );
+}
+
+export type { AlumniAuditLog } from "@/types/alumni";

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { MongoServerError, ObjectId } from "mongodb";
 import { ZodError } from "zod";
+import { SECURITY_LIMITS } from "../../config/security.js";
 import { findAlumniById } from "../alumni/alumni.repository.js";
 import { findDosenById } from "../dosen/dosen.repository.js";
 import { findStudentById } from "../students/student.repository.js";
@@ -12,24 +13,33 @@ import {
 import {
   createPublicServiceExpertSchema,
   createPublicServiceSchema,
+  createPublicServiceProjectSchema,
   updatePublicServiceExpertSchema,
   updatePublicServiceSchema,
+  updatePublicServiceProjectSchema,
 } from "./public-service.schema.js";
 import {
   createPublicService,
   createPublicServiceExpert,
+  createPublicServiceProject,
   deletePublicService,
   deletePublicServiceExpert,
+  deletePublicServiceProject,
   findAllPublicServiceExperts,
   findAllPublicServices,
+  findAllPublicServiceProjects,
   findPublicServiceById,
   findPublicServiceExpertById,
+  findPublicServiceProjectById,
+  findPublicServiceProjectsWithFilters,
   updatePublicService,
   updatePublicServiceExpert,
+  updatePublicServiceProject,
 } from "./public-service.repository.js";
 import type {
   PublicService,
   PublicServiceExpert,
+  PublicServiceProject,
 } from "./public-service.types.js";
 import { uploadPublicServiceImage } from "../../lib/cloudinary.js";
 
@@ -60,6 +70,26 @@ function adminService(service: PublicService) {
     ...service,
     _id: service._id?.toString(),
     updatedBy: service.updatedBy?.toString(),
+  };
+}
+
+function adminProject(project: PublicServiceProject) {
+  return {
+    ...project,
+    _id: project._id?.toString(),
+    updatedBy: project.updatedBy?.toString(),
+  };
+}
+
+function publicProject(project: PublicServiceProject) {
+  return {
+    id: project._id?.toString() ?? "",
+    yearGroup: project.yearGroup,
+    title: project.title,
+    executingEntity: project.executingEntity,
+    client: project.client,
+    period: project.period,
+    order: project.order,
   };
 }
 
@@ -475,5 +505,232 @@ export async function getPublicPublicServiceDetailController(
     return res
       .status(500)
       .json({ success: false, message: "Failed to fetch public service" });
+  }
+}
+
+export async function getPublicServiceProjectListController(
+  _req: Request,
+  res: Response,
+) {
+  try {
+    return res.json({
+      success: true,
+      data: (await findAllPublicServiceProjects()).map(adminProject),
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public service projects",
+    });
+  }
+}
+
+export async function getPublicServiceProjectController(
+  req: Request,
+  res: Response,
+) {
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid project ID" });
+  }
+  try {
+    const project = await findPublicServiceProjectById(id);
+    if (!project) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
+    }
+    return res.json({ success: true, data: adminProject(project) });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public service project",
+    });
+  }
+}
+
+export async function createPublicServiceProjectController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const project = await createPublicServiceProject(
+      createPublicServiceProjectSchema.parse(req.body),
+      req.user?.userId,
+    );
+    return res.status(201).json({ success: true, data: adminProject(project) });
+  } catch (error: unknown) {
+    if (validationError(error)) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.issues,
+      });
+    }
+    if (duplicateError(error)) {
+      return res.status(409).json({
+        success: false,
+        message: "Public service project code already exists",
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create public service project",
+    });
+  }
+}
+
+export async function updatePublicServiceProjectController(
+  req: Request,
+  res: Response,
+) {
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid project ID" });
+  }
+  try {
+    const project = await updatePublicServiceProject(
+      id,
+      updatePublicServiceProjectSchema.parse(req.body),
+      req.user?.userId,
+    );
+    if (!project) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
+    }
+    return res.json({ success: true, data: adminProject(project) });
+  } catch (error: unknown) {
+    if (validationError(error)) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.issues,
+      });
+    }
+    if (duplicateError(error)) {
+      return res.status(409).json({
+        success: false,
+        message: "Public service project code already exists",
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update public service project",
+    });
+  }
+}
+
+export async function deletePublicServiceProjectController(
+  req: Request,
+  res: Response,
+) {
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid project ID" });
+  }
+  try {
+    if (!(await deletePublicServiceProject(id))) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
+    }
+    return res.json({
+      success: true,
+      message: "Project deleted successfully",
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete public service project",
+    });
+  }
+}
+
+export async function getPublicServiceProjectListPublicController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const search =
+      typeof req.query.search === "string"
+        ? req.query.search.trim()
+        : undefined;
+    if (search && search.length > SECURITY_LIMITS.maxSearchLength) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query too long",
+      });
+    }
+
+    const yearGroup =
+      typeof req.query.yearGroup === "string"
+        ? req.query.yearGroup.trim()
+        : undefined;
+
+    const entity =
+      typeof req.query.entity === "string"
+        ? req.query.entity.trim()
+        : undefined;
+    const client =
+      typeof req.query.client === "string"
+        ? req.query.client.trim()
+        : undefined;
+
+    const sortParam = req.query.sort;
+    const sort =
+      sortParam === "oldest" || sortParam === "newest" ? sortParam : undefined;
+
+    const pageParam = req.query.page;
+    const page = pageParam === undefined ? 1 : Number(pageParam);
+    const limitParam = req.query.limit;
+    const limit = limitParam === undefined ? 20 : Number(limitParam);
+
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > SECURITY_LIMITS.maxPageNumber
+    ) {
+      return res.status(400).json({ success: false, message: "Invalid page" });
+    }
+    if (
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > SECURITY_LIMITS.maxPageSize
+    ) {
+      return res.status(400).json({ success: false, message: "Invalid limit" });
+    }
+
+    const result = await findPublicServiceProjectsWithFilters({
+      search,
+      yearGroup,
+      entity,
+      client,
+      sort,
+      page,
+      limit,
+      publishedOnly: true,
+      includeFacets: true,
+    });
+
+    return res.json({
+      success: true,
+      data: result.items.map(publicProject),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      facets: result.facets,
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch public service projects",
+    });
   }
 }

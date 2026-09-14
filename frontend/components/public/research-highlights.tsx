@@ -14,11 +14,7 @@ import { PublicError, PublicLoading } from "./public-states";
 const AUTOPLAY_MS = 6500;
 
 function Arrow({ direction }: { direction: "previous" | "next" }) {
-  return (
-    <span aria-hidden="true">
-      {direction === "previous" ? "\u2190" : "\u2192"}
-    </span>
-  );
+  return <span aria-hidden="true">{direction === "previous" ? "" : ""}</span>;
 }
 
 function buildMaritimeChartSvg(): string {
@@ -306,8 +302,8 @@ export default function ResearchHighlights() {
       <MaritimeChartPattern />
 
       {/* Content */}
-      <PublicContainer className="relative z-10 flex h-full flex-col justify-center py-8 sm:py-12 lg:py-16">
-        <div>
+      <PublicContainer className="relative z-10 flex h-full flex-col py-8 sm:py-12 lg:py-16">
+        <div className="flex flex-1 flex-col justify-center">
           <div
             key={item.id}
             className="research-highlight-enter max-w-3xl lg:max-w-[55%]"
@@ -340,59 +336,59 @@ export default function ResearchHighlights() {
                 rel="noopener noreferrer"
                 className="mt-10 inline-flex items-center gap-2 border-b-2 border-[var(--rams-red)] pb-1 text-sm font-bold text-white transition-colors hover:border-white"
               >
-                {t("researchHighlights.readPaper")} \u2192
+                {t("researchHighlights.readPaper")}
               </a>
             ) : null}
           </div>
+        </div>
 
+        <div
+          className="mt-8 flex items-center justify-between gap-5"
+          role="group"
+          aria-label={t("researchHighlights.controls")}
+        >
           <div
-            className="flex items-center justify-between gap-5"
-            role="group"
-            aria-label={t("researchHighlights.controls")}
+            className="flex items-center gap-2"
+            aria-label={t("researchHighlights.indicators")}
           >
-            <div
-              className="flex items-center gap-2"
-              aria-label={t("researchHighlights.indicators")}
+            {items.map((highlight, index) => (
+              <button
+                key={highlight.id}
+                type="button"
+                onClick={() => interact(index)}
+                aria-label={t("researchHighlights.goTo", {
+                  number: index + 1,
+                })}
+                aria-current={index === active ? "true" : undefined}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === active
+                    ? "w-10 bg-[var(--rams-red)]"
+                    : "w-2 bg-white/30 hover:bg-white/60"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-3 text-sm font-semibold text-white">
+            <button
+              type="button"
+              onClick={() => interact(active - 1)}
+              aria-label={t("researchHighlights.previous")}
+              className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
-              {items.map((highlight, index) => (
-                <button
-                  key={highlight.id}
-                  type="button"
-                  onClick={() => interact(index)}
-                  aria-label={t("researchHighlights.goTo", {
-                    number: index + 1,
-                  })}
-                  aria-current={index === active ? "true" : undefined}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === active
-                      ? "w-10 bg-[var(--rams-red)]"
-                      : "w-2 bg-white/30 hover:bg-white/60"
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-3 text-sm font-semibold text-white">
-              <button
-                type="button"
-                onClick={() => interact(active - 1)}
-                aria-label={t("researchHighlights.previous")}
-                className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-              >
-                <Arrow direction="previous" />
-              </button>
-              <span className="min-w-14 text-center tabular-nums text-white/70">
-                {String(active + 1).padStart(2, "0")} /{" "}
-                {String(items.length).padStart(2, "0")}
-              </span>
-              <button
-                type="button"
-                onClick={() => interact(active + 1)}
-                aria-label={t("researchHighlights.next")}
-                className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-              >
-                <Arrow direction="next" />
-              </button>
-            </div>
+              <Arrow direction="previous" />
+            </button>
+            <span className="min-w-14 text-center tabular-nums text-white/70">
+              {String(active + 1).padStart(2, "0")} /{" "}
+              {String(items.length).padStart(2, "0")}
+            </span>
+            <button
+              type="button"
+              onClick={() => interact(active + 1)}
+              aria-label={t("researchHighlights.next")}
+              className="flex h-10 w-10 items-center justify-center border border-white/20 text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            >
+              <Arrow direction="next" />
+            </button>
           </div>
         </div>
       </PublicContainer>

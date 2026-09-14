@@ -164,9 +164,9 @@ export async function findAllPublications(options?: {
   if (!options?.includeFacets) return { items, total, page, limit };
 
   const [years, topics, methods] = await Promise.all([
-    collection.distinct("year", filter),
-    collection.distinct("topics", filter),
-    collection.distinct("methods", filter),
+    collection.distinct("year"),
+    collection.distinct("topics"),
+    collection.distinct("methods"),
   ]);
   return {
     items,
