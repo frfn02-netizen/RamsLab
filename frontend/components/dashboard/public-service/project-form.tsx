@@ -155,6 +155,12 @@ export default function ProjectForm({ id }: { id?: string }) {
   return (
     <div className="p-5 sm:p-7 lg:p-9">
       <div className="mx-auto max-w-3xl space-y-7">
+        <Link
+          href="/dashboard/public-service"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--rams-gray)] hover:text-[var(--rams-charcoal)]"
+        >
+          <span aria-hidden="true">&larr;</span> Back to Public Service
+        </Link>
         <PageHeader
           eyebrow="CMS"
           title={id ? "Edit Project" : "New Project"}
