@@ -469,7 +469,7 @@ export default function PublicHome() {
                         src={area.downloadablePng ?? researchImages[index]}
                         alt={localized(area.title)}
                         fill
-                        unoptimized
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="public-image-zoom object-cover"
                       />
                     </div>

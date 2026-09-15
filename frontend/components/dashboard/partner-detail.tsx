@@ -422,7 +422,6 @@ export default function PartnerDetail({
                     src={partner.logo}
                     alt={`${partner.name} logo`}
                     fill
-                    unoptimized
                     className="object-contain p-1"
                   />
                 </div>

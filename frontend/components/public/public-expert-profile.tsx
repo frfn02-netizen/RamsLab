@@ -229,7 +229,6 @@ export default function PublicExpertProfile({ id }: { id: string }) {
                     src={profile.photo}
                     alt={profile.name}
                     fill
-                    unoptimized
                     priority
                     onError={() => setImageFailed(true)}
                     className="object-cover"

@@ -123,6 +123,7 @@ export default function HomeVideoSection() {
                   <img
                     src={featured.thumbnailUrl}
                     alt={featured.title || "YouTube video"}
+                    loading="lazy"
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                   />
                 </div>
@@ -184,6 +185,7 @@ export default function HomeVideoSection() {
                       <img
                         src={video.thumbnailUrl}
                         alt={video.title || "YouTube video"}
+                        loading="lazy"
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                       />
                     ) : (

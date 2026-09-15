@@ -253,7 +253,7 @@ export default function ResearchHighlights() {
             alt={imageAlt}
             fill
             sizes="100vw"
-            unoptimized
+            priority
             className="object-cover"
           />
         ) : (

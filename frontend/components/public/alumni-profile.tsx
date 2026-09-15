@@ -81,7 +81,6 @@ export default function AlumniProfile({ id }: { id: string }) {
                   src={profile.photo}
                   alt={profile.fullName}
                   fill
-                  unoptimized
                   onError={() => setImageFailed(true)}
                   className="object-cover"
                   sizes="(max-width: 640px) 100vw, 30vw"

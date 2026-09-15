@@ -499,7 +499,6 @@ export default function ExpertDetail({ id }: { id: string }) {
                       src={expert.photo}
                       alt={expert.name}
                       fill
-                      unoptimized
                       className="object-cover"
                       sizes="128px"
                     />

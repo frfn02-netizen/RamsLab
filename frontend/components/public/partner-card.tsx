@@ -16,7 +16,6 @@ export default function PartnerCard({ partner }: { partner: Partner }) {
               alt={partner.name}
               width={200}
               height={120}
-              unoptimized
               className="h-full w-full object-contain"
             />
           </div>

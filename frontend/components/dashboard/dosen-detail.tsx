@@ -114,7 +114,6 @@ export default function DosenDetail({ id }: { id: string }) {
                       src={dosen.photo}
                       alt={dosen.fullName}
                       fill
-                      unoptimized
                       className="object-cover"
                       sizes="128px"
                     />

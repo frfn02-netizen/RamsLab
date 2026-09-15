@@ -132,7 +132,6 @@ export default async function ResearchPage({
                             src={area.downloadablePng}
                             alt={title}
                             fill
-                            unoptimized
                             sizes="(max-width: 640px) 280px, 300px"
                             className="object-cover"
                           />

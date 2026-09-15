@@ -182,7 +182,6 @@ function PublicStudentProfile({ profile }: { profile: PublicPerson }) {
                     src={profile.photo}
                     alt={profile.fullName}
                     fill
-                    unoptimized
                     onError={() => setImageFailed(true)}
                     className="object-cover"
                     sizes="(max-width: 640px) 100vw, 30vw"
@@ -313,7 +312,6 @@ export default function PublicDosenProfile({ id }: { id: string }) {
                     src={profile.photo}
                     alt={profile.fullName}
                     fill
-                    unoptimized
                     priority
                     onError={() => setImageFailed(true)}
                     className="object-cover"

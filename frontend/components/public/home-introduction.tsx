@@ -81,7 +81,6 @@ export function HeadOfLaboratorySection({
                 alt={localized(head.image.alt ?? head.imageAlt)}
                 fill
                 sizes="(min-width: 1024px) 34vw, (min-width: 640px) 28rem, 100vw"
-                unoptimized
                 className="object-cover"
               />
             ) : (

@@ -96,6 +96,7 @@ export default async function AboutPage({
               src="/assets/research-marine.jpeg"
               alt={localized(content.hero.title)}
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
               className="public-image-zoom object-cover"
             />
           </div>
@@ -149,6 +150,7 @@ export default async function AboutPage({
                 src="/assets/engineers.jpg"
                 alt={localized(content.researchApproach.title)}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                 className="public-image-zoom object-cover"
               />
             </div>
@@ -222,6 +224,7 @@ export default async function AboutPage({
                 src="/assets/research-marine.jpeg"
                 alt={localized(content.marineContext.title)}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                 className="public-image-zoom object-cover"
               />
             </div>

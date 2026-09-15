@@ -282,7 +282,6 @@ function MarqueeItem({ partner }: { partner: Partner }) {
         alt={partner.name}
         width={200}
         height={80}
-        unoptimized
         className="h-16 w-auto object-contain sm:h-20 md:h-24 lg:h-28 xl:h-32"
       />
       <span className="hidden text-[0.7rem] font-medium tracking-wide text-[var(--gray)] sm:inline">

@@ -198,7 +198,6 @@ function PortraitTile({
           alt=""
           fill
           sizes={slot.sizes}
-          unoptimized
           className="home-people-portrait-out object-cover"
         />
       )}
@@ -209,7 +208,6 @@ function PortraitTile({
           alt={portrait.person.fullName}
           fill
           sizes={slot.sizes}
-          unoptimized
           className="home-people-portrait-in object-cover"
         />
       ) : (
@@ -426,8 +424,6 @@ export default function HomePeopleSection({
                   alt={centralAlt}
                   fill
                   sizes="(min-width: 1024px) 19vw, 46vw"
-                  unoptimized
-                  priority={false}
                   className="object-cover"
                 />
               ) : (

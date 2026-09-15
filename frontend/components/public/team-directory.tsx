@@ -64,7 +64,6 @@ export function ProfilePhoto({
           src={photo}
           alt={name}
           fill
-          unoptimized
           sizes={sizes}
           onError={() => setImageFailed(true)}
           className="public-image-zoom object-cover object-[center_24%]"

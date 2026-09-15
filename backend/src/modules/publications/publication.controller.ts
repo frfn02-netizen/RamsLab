@@ -508,6 +508,7 @@ export async function getPublicPublicationPdfController(
       pdfContentDisposition(publication.pdfFilename || "publication.pdf"),
     );
     res.setHeader("Content-Length", content.length);
+    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
     res.end(content);
     return undefined;
   } catch {
