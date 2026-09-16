@@ -14,7 +14,7 @@ import { PublicError, PublicLoading } from "./public-states";
 const AUTOPLAY_MS = 6500;
 
 function Arrow({ direction }: { direction: "previous" | "next" }) {
-  return <span aria-hidden="true">{direction === "previous" ? "" : ""}</span>;
+  return <span aria-hidden="true">{direction === "previous" ? "\u2039" : "\u203A"}</span>;
 }
 
 function buildMaritimeChartSvg(): string {

@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-providers";
 import {
   Badge,
+  Button as UiButton,
   Card,
   EmptyState,
   ErrorState,
   LinkButton,
   LoadingState,
   PageHeader,
+  inputClass,
 } from "@/components/ui";
 import { deleteStudent, getStudentList } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
@@ -18,15 +20,19 @@ import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-
 import DeleteButton from "@/components/dashboard/delete-button";
 
 const Button = DeleteButton;
-import type { Student } from "@/types/modules";
-import { useEffect, useState } from "react";
+import type { Student, StudentType } from "@/types/modules";
+import { useEffect, useMemo, useState } from "react";
 
-const typeLabel = (type: Student["studentType"]) =>
+const typeLabel = (type: StudentType) =>
   type === "PHD_STUDENT"
     ? "Ph.D. Student"
     : type === "MASTER_STUDENT"
       ? "Master Student"
-      : "Undergraduate Student";
+      : type === "INTERNSHIP_STUDENT"
+        ? "Vocational Intern"
+        : "Undergraduate Student";
+
+type VisibilityFilter = "all" | "public" | "hidden";
 
 export default function StudentsPage() {
   const { user } = useAuth();
@@ -36,6 +42,13 @@ export default function StudentsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Student | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<StudentType | "all">(
+    "all",
+  );
+  const [visibilityFilter, setVisibilityFilter] =
+    useState<VisibilityFilter>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +66,36 @@ export default function StudentsPage() {
       cancelled = true;
     };
   }, []);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return items.filter((item) => {
+      if (q) {
+        const nameMatch = item.fullName.toLowerCase().includes(q);
+        const programMatch = item.program?.toLowerCase().includes(q) ?? false;
+        const specMatch = item.specialization.some((s) =>
+          s.toLowerCase().includes(q),
+        );
+        if (!nameMatch && !programMatch && !specMatch) return false;
+      }
+      if (categoryFilter !== "all" && item.studentType !== categoryFilter)
+        return false;
+      if (visibilityFilter === "public" && !item.isPublic) return false;
+      if (visibilityFilter === "hidden" && item.isPublic) return false;
+      return true;
+    });
+  }, [items, searchQuery, categoryFilter, visibilityFilter]);
+
+  function resetFilters() {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setVisibilityFilter("all");
+  }
+
+  const hasActiveFilters =
+    searchQuery.trim() !== "" ||
+    categoryFilter !== "all" ||
+    visibilityFilter !== "all";
 
   async function remove(item: Student) {
     setDeletingId(item._id);
@@ -90,7 +133,7 @@ export default function StudentsPage() {
         <PageHeader
           eyebrow="People"
           title="Students"
-          description="Manage Ph.D., master, and undergraduate student profiles for the public People directory."
+          description="Manage Ph.D., master, undergraduate, and vocational intern profiles for the public People directory."
           action={
             user?.role === "ADMIN" ? (
               <LinkButton href="/dashboard/students/new">
@@ -122,81 +165,144 @@ export default function StudentsPage() {
             }
           />
         ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left">
-                <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
-                  <tr>
-                    {[
-                      "Name",
-                      "Type",
-                      "Program",
-                      "Specialization",
-                      "Visibility",
-                      "Action",
-                    ].map((heading) => (
-                      <th
-                        key={heading}
-                        scope="col"
-                        className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
-                      >
-                        {heading}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-black/8">
-                  {items.map((item) => (
-                    <tr key={item._id}>
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/dashboard/students/${item._id}`}
-                          className="font-semibold hover:text-[var(--rams-red)]"
-                        >
-                          {item.fullName}
-                        </Link>
-                      </td>
-                      <td className="px-5 py-4">
-                        <Badge tone="neutral">
-                          {typeLabel(item.studentType)}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-4 text-sm">
-                        {item.program ?? "—"}
-                      </td>
-                      <td className="px-5 py-4 text-sm">
-                        {item.specialization.join(" · ") || "—"}
-                      </td>
-                      <td className="px-5 py-4">
-                        <Badge tone={item.isPublic ? "green" : "neutral"}>
-                          {item.isPublic ? "Public" : "Private"}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex w-full items-center justify-center gap-3">
-                          <Link
-                            href={`/dashboard/students/${item._id}`}
-                            className="text-sm font-bold text-[var(--rams-red)]"
+          <>
+            <Card className="p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="search"
+                  placeholder="Search by name..."
+                  aria-label="Search students"
+                  className={`${inputClass} sm:max-w-xs`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <select
+                  aria-label="Category"
+                  className={inputClass}
+                  style={{ width: "auto", minWidth: "10rem" }}
+                  value={categoryFilter}
+                  onChange={(e) =>
+                    setCategoryFilter(e.target.value as StudentType | "all")
+                  }
+                >
+                  <option value="all">All categories</option>
+                  <option value="PHD_STUDENT">Ph.D. Student</option>
+                  <option value="MASTER_STUDENT">Master Student</option>
+                  <option value="UNDERGRADUATE_STUDENT">
+                    Undergraduate Student
+                  </option>
+                  <option value="INTERNSHIP_STUDENT">Vocational Intern</option>
+                </select>
+                <select
+                  aria-label="Visibility"
+                  className={inputClass}
+                  style={{ width: "auto", minWidth: "9rem" }}
+                  value={visibilityFilter}
+                  onChange={(e) =>
+                    setVisibilityFilter(e.target.value as VisibilityFilter)
+                  }
+                >
+                  <option value="all">All</option>
+                  <option value="public">Public</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+                {hasActiveFilters && (
+                  <UiButton variant="secondary" onClick={resetFilters}>
+                    Reset
+                  </UiButton>
+                )}
+              </div>
+            </Card>
+            {filtered.length === 0 ? (
+              <EmptyState
+                title="No students match the selected filters."
+                description="Try adjusting your search or filter criteria."
+                action={
+                  <UiButton variant="secondary" onClick={resetFilters}>
+                    Reset filters
+                  </UiButton>
+                }
+              />
+            ) : (
+              <Card>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[760px] text-left">
+                    <thead className="border-b border-black/8 bg-[var(--rams-gray-light)]">
+                      <tr>
+                        {[
+                          "Name",
+                          "Type",
+                          "Program",
+                          "Specialization",
+                          "Visibility",
+                          "Action",
+                        ].map((heading) => (
+                          <th
+                            key={heading}
+                            scope="col"
+                            className={`px-5 py-4 text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)] ${heading === "Action" ? "text-center" : ""}`}
                           >
-                            Edit
-                          </Link>
-                          {user?.role === "ADMIN" && (
-                            <Button
-                              variant="danger"
-                              disabled={deletingId === item._id}
-                              onClick={() => setPendingDelete(item)}
+                            {heading}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/8">
+                      {filtered.map((item) => (
+                        <tr key={item._id}>
+                          <td className="px-5 py-4">
+                            <Link
+                              href={`/dashboard/students/${item._id}`}
+                              className="font-semibold hover:text-[var(--rams-red)]"
                             >
-                              {deletingId === item._id ? "Deleting…" : "Delete"}
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+                              {item.fullName}
+                            </Link>
+                          </td>
+                          <td className="px-5 py-4">
+                            <Badge tone="neutral">
+                              {typeLabel(item.studentType)}
+                            </Badge>
+                          </td>
+                          <td className="px-5 py-4 text-sm">
+                            {item.program ?? "—"}
+                          </td>
+                          <td className="px-5 py-4 text-sm">
+                            {item.specialization.join(" · ") || "—"}
+                          </td>
+                          <td className="px-5 py-4">
+                            <Badge tone={item.isPublic ? "green" : "neutral"}>
+                              {item.isPublic ? "Public" : "Private"}
+                            </Badge>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex w-full items-center justify-center gap-3">
+                              <Link
+                                href={`/dashboard/students/${item._id}`}
+                                className="text-sm font-bold text-[var(--rams-red)]"
+                              >
+                                Edit
+                              </Link>
+                              {user?.role === "ADMIN" && (
+                                <Button
+                                  variant="danger"
+                                  disabled={deletingId === item._id}
+                                  onClick={() => setPendingDelete(item)}
+                                >
+                                  {deletingId === item._id
+                                    ? "Deleting…"
+                                    : "Delete"}
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            )}
+          </>
         )}
       </div>
     </div>

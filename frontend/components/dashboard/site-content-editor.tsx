@@ -900,6 +900,31 @@ function HomepageEditor() {
           </Section>
 
           <Section title="Ecosystem">
+            <div className="flex items-center gap-3">
+              <input
+                id="homepage-show-ecosystem"
+                type="checkbox"
+                className="h-4 w-4 rounded border-black/20 text-[var(--rams-red)] focus:ring-[var(--rams-red)]"
+                checked={content.showEcosystemOnHomepage ?? true}
+                onChange={(event) =>
+                  setContent((current) =>
+                    current
+                      ? {
+                          ...current,
+                          showEcosystemOnHomepage: event.target.checked,
+                        }
+                      : current,
+                  )
+                }
+              />
+              <label
+                htmlFor="homepage-show-ecosystem"
+                className="text-sm font-medium text-[var(--rams-charcoal)]"
+              >
+                Show on Homepage
+              </label>
+            </div>
+
             <BilingualField
               label="Section title"
               value={content.ecosystem.title}

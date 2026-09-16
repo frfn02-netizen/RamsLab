@@ -223,7 +223,7 @@ export type DosenInput = Omit<Dosen, "_id" | "createdAt" | "updatedAt">;
 export type DosenUpdateInput = Partial<Omit<DosenInput, "userId">>;
 
 export type StudentType =
-  "PHD_STUDENT" | "MASTER_STUDENT" | "UNDERGRADUATE_STUDENT";
+  "PHD_STUDENT" | "MASTER_STUDENT" | "UNDERGRADUATE_STUDENT" | "INTERNSHIP_STUDENT";
 export interface Student {
   _id: string;
   fullName: string;
@@ -234,6 +234,8 @@ export interface Student {
   bio?: string;
   linkedin?: string;
   isPublic: boolean;
+  internshipStartDate?: string;
+  internshipEndDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -274,6 +276,12 @@ export interface ResearchAreaText {
   id: string;
 }
 
+export type ImageLayoutMode = "preset" | "custom";
+export type ImagePreset = "landscape" | "wide" | "portrait" | "square";
+export type ImageFit = "cover" | "contain";
+export type ImagePosition = "center" | "top" | "bottom" | "left" | "right";
+export type CropAspectRatio = "4/3" | "16/9" | "1/1" | "3/4" | "9/16" | "custom";
+
 export interface ResearchArea {
   _id: string;
   code: string;
@@ -281,6 +289,18 @@ export interface ResearchArea {
   title: ResearchAreaText;
   description: ResearchAreaText;
   downloadablePng?: string;
+  imageLayout?: ImageLayoutMode;
+  imagePreset?: ImagePreset;
+  gridColumns?: number;
+  gridRows?: number;
+  imageFit?: ImageFit;
+  imagePosition?: ImagePosition;
+  cropAspectRatio?: CropAspectRatio;
+  cropPositionX?: number;
+  cropPositionY?: number;
+  cropScale?: number;
+  customWidth?: number;
+  customHeight?: number;
   order: number;
   published: boolean;
   createdAt: string;

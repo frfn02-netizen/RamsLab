@@ -19,6 +19,7 @@ const categoryLabels: Record<PublicDirectoryCategory, string> = {
   MAHASISWA: "PHD",
   MASTER: "MASTER",
   UNDERGRADUATE: "UNDERGRADUATE STUDENTS",
+  INTERNSHIP: "VOCATIONAL INTERNS",
   ALUMNI: "ALUMNI",
 };
 
@@ -26,6 +27,7 @@ const categoryOrder: Array<PublicDirectoryCategory | "STUDENTS"> = [
   "DOSEN",
   "STUDENTS",
   "UNDERGRADUATE",
+  "INTERNSHIP",
   "ALUMNI",
 ];
 
@@ -131,7 +133,7 @@ export function MemberCard({
   profileLabel: string;
   roleFallback: string;
 }) {
-  const isStudent = ["MAHASISWA", "MASTER", "UNDERGRADUATE"].includes(
+  const isStudent = ["MAHASISWA", "MASTER", "UNDERGRADUATE", "INTERNSHIP"].includes(
     member.category,
   );
 
@@ -190,6 +192,7 @@ export default function TeamDirectory() {
     MAHASISWA: [],
     MASTER: [],
     UNDERGRADUATE: [],
+    INTERNSHIP: [],
     ALUMNI: [],
   });
   const [activeCategory, setActiveCategory] = useState<

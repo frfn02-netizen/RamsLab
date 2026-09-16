@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -26,12 +27,28 @@ import {
   updateResearchArea,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import type { ResearchArea, ResearchAreaInput } from "@/types/modules";
+import type { ResearchArea, ResearchAreaInput, CropAspectRatio } from "@/types/modules";
 
 import { formToInput } from "./research-area-form";
+import ImageCropEditor, {
+  type CropSettings,
+  getDefaultCropSettings,
+} from "./image-crop-editor";
 
 type FormState = ReturnType<typeof formToInput> & {
   order: number;
+  imageLayout: "preset" | "custom";
+  imagePreset: "landscape" | "wide" | "portrait" | "square";
+  gridColumns: number;
+  gridRows: number;
+  imageFit: "cover" | "contain";
+  imagePosition: "center" | "top" | "bottom" | "left" | "right";
+  cropAspectRatio: CropAspectRatio;
+  cropPositionX: number;
+  cropPositionY: number;
+  cropScale: number;
+  customWidth?: number;
+  customHeight?: number;
 };
 
 function ResearchPngField({
@@ -120,6 +137,18 @@ function toForm(area: ResearchArea): FormState {
     description: {
       ...area.description,
     },
+    imageLayout: area.imageLayout ?? "preset",
+    imagePreset: area.imagePreset ?? "portrait",
+    gridColumns: area.gridColumns ?? 4,
+    gridRows: area.gridRows ?? 3,
+    imageFit: area.imageFit ?? "cover",
+    imagePosition: area.imagePosition ?? "center",
+    cropAspectRatio: area.cropAspectRatio ?? "4/3",
+    cropPositionX: area.cropPositionX ?? 50,
+    cropPositionY: area.cropPositionY ?? 50,
+    cropScale: area.cropScale ?? 1,
+    customWidth: area.customWidth,
+    customHeight: area.customHeight,
   };
 }
 
@@ -551,6 +580,52 @@ function ResearchEditForm({
             profile.
           </p>
         </section>
+
+        {form.downloadablePng && (
+          <section className="border-t border-black/8 pt-7">
+            <p className="mb-4 text-sm font-bold">Image Crop & Position</p>
+            <p className="mb-4 text-xs text-[var(--rams-gray)]">
+              Select an aspect ratio, drag the image to reposition, and use zoom
+              to scale. The original image is not modified.
+            </p>
+            <div className="space-y-5">
+              <Field label="Image Fit">
+                <select
+                  className={inputClass}
+                  value={form.imageFit}
+                  onChange={(event) =>
+                    update(
+                      "imageFit",
+                      event.target.value as "cover" | "contain",
+                    )
+                  }
+                >
+                  <option value="cover">Cover (fill frame, crop edges)</option>
+                  <option value="contain">Contain (fit inside, may letterbox)</option>
+                </select>
+              </Field>
+              <ImageCropEditor
+                url={form.downloadablePng}
+                value={{
+                  aspectRatio: form.cropAspectRatio,
+                  positionX: form.cropPositionX,
+                  positionY: form.cropPositionY,
+                  scale: form.cropScale,
+                  customWidth: form.customWidth,
+                  customHeight: form.customHeight,
+                }}
+                onChange={(settings: CropSettings) => {
+                  update("cropAspectRatio", settings.aspectRatio);
+                  update("cropPositionX", settings.positionX);
+                  update("cropPositionY", settings.positionY);
+                  update("cropScale", settings.scale);
+                  update("customWidth", settings.customWidth);
+                  update("customHeight", settings.customHeight);
+                }}
+              />
+            </div>
+          </section>
+        )}
 
         <div className="flex gap-3 border-t border-black/8 pt-7">
           <Button type="submit" disabled={saving}>

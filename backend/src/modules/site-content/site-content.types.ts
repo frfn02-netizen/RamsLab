@@ -67,6 +67,7 @@ export interface HomepageContent {
   headOfLaboratory?: HeadOfLaboratoryContent;
   showHeadOfLaboratoryOnHomepage?: boolean;
   showWhoWeAreOnHomepage?: boolean;
+  showEcosystemOnHomepage?: boolean;
 }
 
 export interface AboutContent {

@@ -69,6 +69,7 @@ export default function ExpertForm({ id }: { id?: string }) {
           ...result.MAHASISWA,
           ...result.MASTER,
           ...result.UNDERGRADUATE,
+          ...result.INTERNSHIP,
           ...result.ALUMNI,
         ]),
       )

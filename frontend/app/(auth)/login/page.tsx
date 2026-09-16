@@ -53,7 +53,7 @@ function LoginContent() {
     <main className="grid min-h-screen bg-white lg:grid-cols-2">
       <section className="relative isolate min-h-[21rem] overflow-hidden bg-[var(--navy)] text-white sm:min-h-[25rem] lg:min-h-screen">
         <Image
-          src="/assets/hero-marine.jpg"
+          src="/assets/vessel.jpeg"
           alt="Marine engineering research vessel"
           fill
           priority

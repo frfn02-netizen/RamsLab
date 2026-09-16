@@ -80,9 +80,9 @@ export function getMyAuditLogs() {
 }
 
 export function getAlumniAuditLogs(id: string) {
-  return apiRequest<(AlumniAuditLog & { userName?: string; alumniFullName?: string })[]>(
-    `/alumni/${encodeURIComponent(id)}/history`,
-  );
+  return apiRequest<
+    (AlumniAuditLog & { userName?: string; alumniFullName?: string })[]
+  >(`/alumni/${encodeURIComponent(id)}/history`);
 }
 
 export type { AlumniAuditLog } from "@/types/alumni";

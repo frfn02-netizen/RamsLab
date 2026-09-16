@@ -51,7 +51,25 @@ export async function createResearchArea(
 ): Promise<ResearchArea> {
   const now = new Date();
   const researchArea: ResearchArea = {
-    ...input,
+    code: input.code,
+    slug: input.slug,
+    title: input.title,
+    description: input.description,
+    downloadablePng: input.downloadablePng,
+    imageLayout: "preset",
+    imagePreset: "portrait",
+    gridColumns: 4,
+    gridRows: 3,
+    imageFit: "cover",
+    imagePosition: "center",
+    cropAspectRatio: "4/3",
+    cropPositionX: 50,
+    cropPositionY: 50,
+    cropScale: 1,
+    customWidth: undefined,
+    customHeight: undefined,
+    order: input.order,
+    published: input.published,
     createdAt: now,
     updatedAt: now,
     ...(updatedBy && ObjectId.isValid(updatedBy)

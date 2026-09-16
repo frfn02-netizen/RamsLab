@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { getPublicResearch, getPublicSiteContent } from "@/lib/api/modules";
 import type { PublicResearchArea } from "@/types/modules";
 import type { HomepageContent } from "@/types/site-content";
+import { getResearchImageStyles } from "@/lib/research-image";
 import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
 import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
@@ -175,7 +176,7 @@ function EcosystemCarousel({ cards }: { cards: EcosystemCard[] }) {
 
       <div className="ecosystem-carousel-viewport">
         {cards.map((card, i) => {
-          let rel = ((i - activeIndex) % count + count) % count;
+          let rel = (((i - activeIndex) % count) + count) % count;
           if (rel > count / 2) rel -= count;
           const pos = rel === 0 ? "center" : rel < 0 ? "left" : "right";
 
@@ -363,13 +364,17 @@ export default function PublicHome() {
       </section>
 
       {/* ECOSYSTEM */}
-      <section className="ecosystem-section bg-[var(--background-light)] py-20 sm:py-24">
-        <PublicContainer>
-          {contentLoading ? (
-            <PublicLoading label={common("loading")} />
-          ) : contentError || !content ? (
-            <PublicError message={common("requestUnavailable")} />
-          ) : (
+      {content &&
+        !contentLoading &&
+        !contentError &&
+        content.showEcosystemOnHomepage !== false && (
+        <section className="ecosystem-section bg-[var(--background-light)] py-20 sm:py-24">
+          <PublicContainer>
+            {contentLoading ? (
+              <PublicLoading label={common("loading")} />
+            ) : contentError || !content ? (
+              <PublicError message={common("requestUnavailable")} />
+            ) : (
             <>
               <RevealOnScroll className="text-center">
                 <div className="ecosystem-heading-wrap">
@@ -398,9 +403,7 @@ export default function PublicHome() {
                     logo: "/assets/logo ais part2.png",
                     logoAlt: brand("ais"),
                     name: brand("ais"),
-                    description: localized(
-                      content.ecosystem.aisDescription,
-                    ),
+                    description: localized(content.ecosystem.aisDescription),
                     href: "https://aisits.vercel.app/",
                   },
                   {
@@ -422,6 +425,7 @@ export default function PublicHome() {
           )}
         </PublicContainer>
       </section>
+      )}
 
       {/* RESEARCH AREAS */}
       <section className="bg-white py-20">
@@ -459,33 +463,47 @@ export default function PublicHome() {
                 className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
                 stagger={100}
               >
-                {researchAreas.slice(0, 4).map((area, index) => (
-                  <div
-                    key={area.code}
-                    className="public-card-interaction group border border-[var(--border)] bg-white p-1 hover:border-[var(--rams-red)]"
-                  >
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <Image
-                        src={area.downloadablePng ?? researchImages[index]}
-                        alt={localized(area.title)}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="public-image-zoom object-cover"
-                      />
-                    </div>
-                    <div className="p-6">
-                      <h3 className="public-card-title font-bold text-[var(--navy)]">
-                        {localized(area.title)}
-                      </h3>
-                      <Link
-                        href={`/research#${area.code.toLowerCase()}`}
-                        className="public-card-arrow mt-4 inline-block text-sm font-semibold text-[var(--rams-red)]"
+                {researchAreas.slice(0, 4).map((area, index) => {
+                  const imageStyles = getResearchImageStyles(area);
+                  return (
+                    <div
+                      key={area.code}
+                      className="public-card-interaction group border border-[var(--border)] bg-white p-1 hover:border-[var(--rams-red)]"
+                    >
+                      <div
+                        className="relative w-full overflow-hidden"
+                        style={{ aspectRatio: imageStyles.aspectRatio }}
                       >
-                        {common("explore")} →
-                      </Link>
+                        <Image
+                          src={area.downloadablePng ?? researchImages[index]}
+                          alt={localized(area.title)}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          className={
+                            imageStyles.fit === "contain"
+                              ? "object-contain public-image-zoom"
+                              : "public-image-zoom object-cover"
+                          }
+                          style={{
+                            objectPosition: imageStyles.objectPosition,
+                            transform: `scale(${imageStyles.scale})`,
+                          }}
+                        />
+                      </div>
+                      <div className="p-6">
+                        <h3 className="public-card-title font-bold text-[var(--navy)]">
+                          {localized(area.title)}
+                        </h3>
+                        <Link
+                          href={`/research#${area.code.toLowerCase()}`}
+                          className="public-card-arrow mt-4 inline-block text-sm font-semibold text-[var(--rams-red)]"
+                        >
+                          {common("explore")} →
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </RevealOnScroll>
             </>
           )}

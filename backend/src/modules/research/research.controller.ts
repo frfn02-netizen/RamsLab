@@ -128,18 +128,34 @@ export async function updateResearchAreaController(
       .json({ success: false, message: "Invalid research area ID" });
   try {
     const existing = await findResearchAreaById(id);
-    const area = await updateResearchArea(
-      id,
-      updateResearchAreaSchema.parse(req.body),
-      req.user?.userId,
-    );
-    if (!area)
+    if (!existing)
       return res
         .status(404)
         .json({ success: false, message: "Research area not found" });
+    const parsed = updateResearchAreaSchema.parse(req.body);
+    const updateData = {
+      ...parsed,
+      imageLayout: parsed.imageLayout ?? existing.imageLayout ?? "preset",
+      imagePreset: parsed.imagePreset ?? existing.imagePreset ?? "portrait",
+      gridColumns: parsed.gridColumns ?? existing.gridColumns ?? 4,
+      gridRows: parsed.gridRows ?? existing.gridRows ?? 3,
+      imageFit: parsed.imageFit ?? existing.imageFit ?? "cover",
+      imagePosition: parsed.imagePosition ?? existing.imagePosition ?? "center",
+      cropAspectRatio: parsed.cropAspectRatio ?? existing.cropAspectRatio ?? "4/3",
+      cropPositionX: parsed.cropPositionX ?? existing.cropPositionX ?? 50,
+      cropPositionY: parsed.cropPositionY ?? existing.cropPositionY ?? 50,
+      cropScale: parsed.cropScale ?? existing.cropScale ?? 1,
+      customWidth: parsed.customWidth ?? existing.customWidth,
+      customHeight: parsed.customHeight ?? existing.customHeight,
+    };
+    const area = await updateResearchArea(
+      id,
+      updateData,
+      req.user?.userId,
+    );
     if (
       existing?.downloadablePng &&
-      existing.downloadablePng !== area.downloadablePng
+      existing.downloadablePng !== area?.downloadablePng
     ) {
       try {
         await removeProfilePhoto(existing.downloadablePng);
@@ -147,7 +163,7 @@ export async function updateResearchAreaController(
         // Cleanup is best effort.
       }
     }
-    return res.json({ success: true, data: adminResearchArea(area) });
+    return res.json({ success: true, data: adminResearchArea(area!) });
   } catch (error: unknown) {
     if (validationError(error))
       return res.status(400).json({

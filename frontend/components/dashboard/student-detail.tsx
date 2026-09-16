@@ -29,7 +29,9 @@ const typeLabel = (type: StudentType) =>
     ? "Ph.D. Student"
     : type === "MASTER_STUDENT"
       ? "Master Student"
-      : "Undergraduate Student";
+      : type === "INTERNSHIP_STUDENT"
+        ? "Vocational Intern"
+        : "Undergraduate Student";
 
 export default function StudentDetail({ id }: { id: string }) {
   const { user } = useAuth();
@@ -48,6 +50,8 @@ export default function StudentDetail({ id }: { id: string }) {
     bio: "",
     linkedin: "",
     isPublic: true,
+    internshipStartDate: "",
+    internshipEndDate: "",
   });
 
   useEffect(() => {
@@ -66,6 +70,12 @@ export default function StudentDetail({ id }: { id: string }) {
             bio: result.bio ?? "",
             linkedin: safeLinkedin ?? "",
             isPublic: result.isPublic,
+            internshipStartDate: result.internshipStartDate
+              ? result.internshipStartDate.slice(0, 10)
+              : "",
+            internshipEndDate: result.internshipEndDate
+              ? result.internshipEndDate.slice(0, 10)
+              : "",
           });
         }
       })
@@ -95,6 +105,8 @@ export default function StudentDetail({ id }: { id: string }) {
         bio: form.bio || undefined,
         linkedin: form.linkedin || undefined,
         isPublic: form.isPublic,
+        internshipStartDate: form.internshipStartDate || undefined,
+        internshipEndDate: form.internshipEndDate || undefined,
       });
       const saved = photoFile
         ? await uploadStudentPhoto(id, photoFile)
@@ -211,6 +223,9 @@ export default function StudentDetail({ id }: { id: string }) {
                     <option value="UNDERGRADUATE_STUDENT">
                       Undergraduate Student
                     </option>
+                    <option value="INTERNSHIP_STUDENT">
+                      Vocational Intern
+                    </option>
                   </select>
                 </Field>
                 <Field label="Program">
@@ -246,6 +261,30 @@ export default function StudentDetail({ id }: { id: string }) {
                   onChange={(event) => update("linkedin", event.target.value)}
                 />
               </Field>
+              {form.studentType === "INTERNSHIP_STUDENT" && (
+                <>
+                  <Field label="PKL Start Date">
+                    <input
+                      type="date"
+                      className={inputClass}
+                      value={form.internshipStartDate}
+                      onChange={(event) =>
+                        update("internshipStartDate", event.target.value)
+                      }
+                    />
+                  </Field>
+                  <Field label="PKL End Date">
+                    <input
+                      type="date"
+                      className={inputClass}
+                      value={form.internshipEndDate}
+                      onChange={(event) =>
+                        update("internshipEndDate", event.target.value)
+                      }
+                    />
+                  </Field>
+                </>
+              )}
               <Field label="Bio">
                 <textarea
                   className={`${inputClass} min-h-28`}
@@ -302,6 +341,29 @@ export default function StudentDetail({ id }: { id: string }) {
                 {student.photo ? "Uploaded" : "Not provided"}
               </p>
             </div>
+            {student.studentType === "INTERNSHIP_STUDENT" &&
+              (student.internshipStartDate || student.internshipEndDate) && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                    PKL Period
+                  </p>
+                  <p className="mt-2">
+                    {student.internshipStartDate
+                      ? new Date(student.internshipStartDate).toLocaleDateString(
+                          "en-GB",
+                          { day: "numeric", month: "long", year: "numeric" },
+                        )
+                      : "—"}
+                    {" – "}
+                    {student.internshipEndDate
+                      ? new Date(student.internshipEndDate).toLocaleDateString(
+                          "en-GB",
+                          { day: "numeric", month: "long", year: "numeric" },
+                        )
+                      : "—"}
+                  </p>
+                </div>
+              )}
             <div className="sm:col-span-2">
               <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
                 Bio

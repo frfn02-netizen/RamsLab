@@ -27,6 +27,8 @@ export default function CreateStudent() {
     bio: "",
     linkedin: "",
     isPublic: true,
+    internshipStartDate: "",
+    internshipEndDate: "",
   });
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -58,6 +60,8 @@ export default function CreateStudent() {
         bio: form.bio || undefined,
         linkedin: form.linkedin || undefined,
         isPublic: form.isPublic,
+        internshipStartDate: form.internshipStartDate || undefined,
+        internshipEndDate: form.internshipEndDate || undefined,
       });
 
       if (photoFile) {
@@ -116,6 +120,9 @@ export default function CreateStudent() {
                   <option value="UNDERGRADUATE_STUDENT">
                     Undergraduate Student
                   </option>
+                  <option value="INTERNSHIP_STUDENT">
+                    Vocational Intern
+                  </option>
                 </select>
               </Field>
 
@@ -145,6 +152,31 @@ export default function CreateStudent() {
                 />
               </Field>
             </div>
+
+            {form.studentType === "INTERNSHIP_STUDENT" && (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="PKL Start Date">
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={form.internshipStartDate}
+                    onChange={(event) =>
+                      update("internshipStartDate", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="PKL End Date">
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={form.internshipEndDate}
+                    onChange={(event) =>
+                      update("internshipEndDate", event.target.value)
+                    }
+                  />
+                </Field>
+              </div>
+            )}
 
             <Field label="Specializations">
               <input

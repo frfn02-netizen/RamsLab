@@ -224,6 +224,11 @@ async function seedStudents() {
       "Reliability Engineering",
     ],
     ["RAMS Development PhD", STUDENT_TYPES.PHD_STUDENT, "Safety Systems"],
+    [
+      "RAMS Development Intern",
+      STUDENT_TYPES.INTERNSHIP_STUDENT,
+      "Marine Systems",
+    ],
   ] as const;
   const now = new Date();
   for (const [fullName, studentType, program] of students) {
@@ -234,6 +239,12 @@ async function seedStudents() {
       specialization: ["RAMS Development"],
       bio: `Development profile for ${fullName}.`,
       isPublic: true,
+      ...(studentType === STUDENT_TYPES.INTERNSHIP_STUDENT
+        ? {
+            internshipStartDate: new Date("2026-07-01"),
+            internshipEndDate: new Date("2026-12-31"),
+          }
+        : {}),
     };
     await getStudentCollection().updateOne(
       { fullName, studentType },

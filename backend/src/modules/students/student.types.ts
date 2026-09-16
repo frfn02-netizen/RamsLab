@@ -4,6 +4,7 @@ export const STUDENT_TYPES = {
   PHD_STUDENT: "PHD_STUDENT",
   MASTER_STUDENT: "MASTER_STUDENT",
   UNDERGRADUATE_STUDENT: "UNDERGRADUATE_STUDENT",
+  INTERNSHIP_STUDENT: "INTERNSHIP_STUDENT",
 } as const;
 
 export type StudentType = (typeof STUDENT_TYPES)[keyof typeof STUDENT_TYPES];
@@ -18,6 +19,8 @@ export interface Student {
   bio?: string;
   linkedin?: string;
   isPublic: boolean;
+  internshipStartDate?: Date;
+  internshipEndDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

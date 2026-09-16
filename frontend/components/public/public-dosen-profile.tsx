@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, type ReactNode } from "react";
+import { useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicDosenById } from "@/lib/api/modules";
 import type { PublicPerson } from "@/types/people";
@@ -151,12 +152,32 @@ function ProfileLinks({ links }: { links: Array<[string, string]> }) {
 
 function PublicStudentProfile({ profile }: { profile: PublicPerson }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const locale = useLocale() === "id" ? "id" : "en";
   const category =
     profile.category === "MAHASISWA"
       ? "PHD"
       : profile.category === "MASTER"
         ? "MASTER"
-        : "UNDERGRADUATE STUDENT";
+        : profile.category === "INTERNSHIP"
+          ? "VOCATIONAL INTERN"
+          : "UNDERGRADUATE STUDENT";
+
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return null;
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(dateStr));
+    } catch {
+      return null;
+    }
+  };
+
+  const pklStartDate = formatDate(profile.internshipStartDate);
+  const pklEndDate = formatDate(profile.internshipEndDate);
+  const hasPklPeriod = pklStartDate || pklEndDate;
 
   return (
     <main className="bg-[var(--paper)]">
@@ -204,6 +225,16 @@ function PublicStudentProfile({ profile }: { profile: PublicPerson }) {
                   <p className="mt-3 text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
                     {profile.specialization.join(" · ")}
                   </p>
+                )}
+                {hasPklPeriod && (
+                  <div className="mt-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--rams-red)]">
+                      {locale === "id" ? "Periode PKL" : "PKL Period"}
+                    </p>
+                    <p className="mt-1 text-base text-[var(--slate)]">
+                      {pklStartDate || "—"} – {pklEndDate || "—"}
+                    </p>
+                  </div>
                 )}
                 {profile.bio && (
                   <div className="mt-8 border-t border-[var(--border)] pt-6">

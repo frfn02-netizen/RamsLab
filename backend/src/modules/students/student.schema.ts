@@ -6,6 +6,7 @@ const studentType = z.enum([
   STUDENT_TYPES.PHD_STUDENT,
   STUDENT_TYPES.MASTER_STUDENT,
   STUDENT_TYPES.UNDERGRADUATE_STUDENT,
+  STUDENT_TYPES.INTERNSHIP_STUDENT,
 ]);
 
 export const createStudentSchema = z.object({
@@ -26,6 +27,8 @@ export const createStudentSchema = z.object({
     .max(500)
     .optional(),
   isPublic: z.boolean().default(true),
+  internshipStartDate: z.string().trim().optional(),
+  internshipEndDate: z.string().trim().optional(),
 });
 
 export const updateStudentSchema = createStudentSchema.partial();

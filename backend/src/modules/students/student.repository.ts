@@ -35,7 +35,17 @@ export async function createStudent(
   input: CreateStudentInput,
 ): Promise<Student> {
   const now = new Date();
-  const student: Student = { ...input, createdAt: now, updatedAt: now };
+  const student: Student = {
+    ...input,
+    internshipStartDate: input.internshipStartDate
+      ? new Date(input.internshipStartDate)
+      : undefined,
+    internshipEndDate: input.internshipEndDate
+      ? new Date(input.internshipEndDate)
+      : undefined,
+    createdAt: now,
+    updatedAt: now,
+  };
   const result = await getStudentCollection().insertOne(student);
   return { ...student, _id: result.insertedId };
 }
@@ -45,9 +55,20 @@ export async function updateStudent(
   input: UpdateStudentInput,
 ): Promise<Student | null> {
   if (!ObjectId.isValid(id)) return null;
+  const updateData: Record<string, unknown> = { ...input, updatedAt: new Date() };
+  if (input.internshipStartDate !== undefined) {
+    updateData.internshipStartDate = input.internshipStartDate
+      ? new Date(input.internshipStartDate)
+      : null;
+  }
+  if (input.internshipEndDate !== undefined) {
+    updateData.internshipEndDate = input.internshipEndDate
+      ? new Date(input.internshipEndDate)
+      : null;
+  }
   const result = await getStudentCollection().findOneAndUpdate(
     { _id: new ObjectId(id) },
-    { $set: { ...input, updatedAt: new Date() } },
+    { $set: updateData },
     { returnDocument: "after" },
   );
   return result;

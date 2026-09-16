@@ -71,6 +71,7 @@ export const homepageContentSchema = z.object({
   headOfLaboratory: headOfLaboratorySchema.optional(),
   showHeadOfLaboratoryOnHomepage: z.boolean().default(false),
   showWhoWeAreOnHomepage: z.boolean().default(false),
+  showEcosystemOnHomepage: z.boolean().default(true),
 });
 
 export const aboutContentSchema = z.object({

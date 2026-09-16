@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { getPublicHomepageVideos } from "@/lib/api/modules";
 import type { PublicHomepageVideo } from "@/types/modules";
@@ -46,6 +46,159 @@ function YoutubeFallbackVisual({ className }: { className?: string }) {
           RAMS Laboratory
         </p>
       </div>
+    </div>
+  );
+}
+
+function YoutubeCard({ video }: { video: PublicHomepageVideo }) {
+  return (
+    <a
+      href={video.youtubeUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="youtube-carousel-card group block border border-[var(--border)] bg-white transition-colors hover:border-[var(--rams-red)]"
+    >
+      <div className="relative aspect-video w-full overflow-hidden">
+        {video.thumbnailUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={video.thumbnailUrl}
+            alt={video.title || "YouTube video"}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <YoutubeFallbackVisual className="h-full w-full" />
+        )}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/10">
+          <PlayIcon className="h-10 w-14 drop-shadow-md" />
+        </div>
+      </div>
+      {video.title && (
+        <div className="px-4 py-3.5">
+          <h4 className="text-sm font-semibold leading-snug text-[var(--navy)] line-clamp-2">
+            {video.title}
+          </h4>
+        </div>
+      )}
+    </a>
+  );
+}
+
+function YoutubeCarousel({ videos }: { videos: PublicHomepageVideo[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useRef(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    prefersReducedMotion.current = mq.matches;
+    const handler = (e: MediaQueryListEvent) => {
+      prefersReducedMotion.current = e.matches;
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [updateScrollState, videos]);
+
+  const scrollStep = useCallback((direction: -1 | 1) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>(".youtube-carousel-card");
+    if (!card) return;
+    const step = card.offsetWidth + 20;
+    el.scrollBy({
+      left: direction * step,
+      behavior: prefersReducedMotion.current ? "auto" : "smooth",
+    });
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        scrollStep(-1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        scrollStep(1);
+      }
+    },
+    [scrollStep],
+  );
+
+  return (
+    <div
+      className="youtube-carousel-shell"
+      role="region"
+      aria-label="YouTube videos carousel"
+      onKeyDown={handleKeyDown}
+    >
+      <button
+        type="button"
+        onClick={() => scrollStep(-1)}
+        disabled={!canScrollLeft}
+        className="ecosystem-carousel-btn ecosystem-carousel-btn--prev"
+        aria-label="Previous videos"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-5 w-5"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      <div className="youtube-carousel-viewport" ref={scrollRef}>
+        <div className="youtube-carousel-track">
+          {videos.map((video) => (
+            <YoutubeCard key={video.id} video={video} />
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => scrollStep(1)}
+        disabled={!canScrollRight}
+        className="ecosystem-carousel-btn ecosystem-carousel-btn--next"
+        aria-label="Next videos"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-5 w-5"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
     </div>
   );
 }
@@ -170,41 +323,7 @@ export default function HomeVideoSection() {
             <h3 className="mb-6 text-xs font-bold uppercase tracking-[0.18em] text-[var(--gray)]">
               {t("latestVideos")}
             </h3>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {latest.map((video) => (
-                <a
-                  key={video.id}
-                  href={video.youtubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block border border-[var(--border)] bg-white transition-colors hover:border-[var(--rams-red)]"
-                >
-                  <div className="relative aspect-video w-full overflow-hidden">
-                    {video.thumbnailUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={video.thumbnailUrl}
-                        alt={video.title || "YouTube video"}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <YoutubeFallbackVisual className="h-full w-full" />
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/10">
-                      <PlayIcon className="h-10 w-14 drop-shadow-md" />
-                    </div>
-                  </div>
-                  {video.title && (
-                    <div className="px-4 py-3.5">
-                      <h4 className="text-sm font-semibold leading-snug text-[var(--navy)] line-clamp-2">
-                        {video.title}
-                      </h4>
-                    </div>
-                  )}
-                </a>
-              ))}
-            </div>
+            <YoutubeCarousel videos={latest} />
           </RevealOnScroll>
         )}
       </PublicContainer>

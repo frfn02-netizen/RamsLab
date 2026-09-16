@@ -149,6 +149,7 @@ function flattenPublicPeople(people: PublicPeopleResponse) {
     ...people.MAHASISWA,
     ...people.MASTER,
     ...people.UNDERGRADUATE,
+    ...people.INTERNSHIP,
     ...people.ALUMNI,
   ];
 }

@@ -900,6 +900,65 @@ body {
   }
 }
 
+/* ========================================
+   YOUTUBE CAROUSEL
+   ======================================== */
+
+.youtube-carousel-shell {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  column-gap: 20px;
+  width: 100%;
+}
+
+.youtube-carousel-viewport {
+  grid-column: 2;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.youtube-carousel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.youtube-carousel-track {
+  display: flex;
+  gap: 20px;
+}
+
+.youtube-carousel-card {
+  flex: 0 0 calc((100% - 40px) / 3);
+  scroll-snap-align: start;
+}
+
+/* Tablet: 2 cards */
+@media (max-width: 1024px) {
+  .youtube-carousel-card {
+    flex: 0 0 calc((100% - 20px) / 2);
+  }
+}
+
+/* Mobile: 1 card */
+@media (max-width: 640px) {
+  .youtube-carousel-shell {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    column-gap: 12px;
+  }
+  .youtube-carousel-card {
+    flex: 0 0 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .youtube-carousel-viewport {
+    scroll-behavior: auto !important;
+  }
+}
+
 .homepage-contact-form {
   border-radius: 0.4rem;
   box-shadow: 0 12px 30px rgba(11, 32, 56, 0.06);

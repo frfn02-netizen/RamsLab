@@ -177,7 +177,9 @@ export function toPublicStudentProfile(req: Request, member: Student) {
         ? ("MAHASISWA" as const)
         : member.studentType === "MASTER_STUDENT"
           ? ("MASTER" as const)
-          : ("UNDERGRADUATE" as const),
+          : member.studentType === "INTERNSHIP_STUDENT"
+            ? ("INTERNSHIP" as const)
+            : ("UNDERGRADUATE" as const),
     fullName: member.fullName,
     title: member.program,
     position: undefined,
@@ -185,5 +187,7 @@ export function toPublicStudentProfile(req: Request, member: Student) {
     photo: publicPhotoUrl(req, member.photo),
     bio: member.bio,
     linkedin: publicLinkedInUrl(member.linkedin),
+    internshipStartDate: member.internshipStartDate?.toISOString() ?? null,
+    internshipEndDate: member.internshipEndDate?.toISOString() ?? null,
   };
 }

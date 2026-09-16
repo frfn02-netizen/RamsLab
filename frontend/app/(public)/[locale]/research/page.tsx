@@ -10,6 +10,7 @@ import { localizedMetadata } from "@/lib/i18n/metadata";
 
 import type { Locale } from "@/i18n/routing";
 import type { PublicResearchArea } from "@/types/modules";
+import { getResearchImageStyles } from "@/lib/research-image";
 
 function cloudinaryDownloadUrl(url: string, filename: string): string {
   if (!url.includes("res.cloudinary.com/")) return url;
@@ -21,6 +22,38 @@ function cloudinaryDownloadUrl(url: string, filename: string): string {
 }
 
 export const dynamic = "force-dynamic";
+
+function ResearchAreaImage({
+  area,
+  title,
+  index,
+}: {
+  area: PublicResearchArea;
+  title: string;
+  index: number;
+}) {
+  const { aspectRatio, objectPosition, fit, scale } =
+    getResearchImageStyles(area);
+
+  return (
+    <div
+      className="relative mx-auto w-full max-w-[320px] overflow-hidden rounded-lg border border-[var(--border)] sm:max-w-[380px] lg:max-w-[420px]"
+      style={{ aspectRatio }}
+    >
+      <Image
+        src={area.downloadablePng!}
+        alt={title}
+        fill
+        sizes="(max-width: 640px) 280px, 300px"
+        className={fit === "contain" ? "object-contain" : "object-cover"}
+        style={{
+          objectPosition,
+          transform: `scale(${scale})`,
+        }}
+      />
+    </div>
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -127,17 +160,13 @@ export default async function ResearchPage({
                       className={`${isEven ? "order-1" : "order-1 lg:order-2"}`}
                     >
                       {area.downloadablePng ? (
-                        <div className="relative mx-auto aspect-[9/16] w-full max-w-[280px] overflow-hidden rounded-lg border border-[var(--border)] sm:max-w-[300px]">
-                          <Image
-                            src={area.downloadablePng}
-                            alt={title}
-                            fill
-                            sizes="(max-width: 640px) 280px, 300px"
-                            className="object-cover"
-                          />
-                        </div>
+                        <ResearchAreaImage
+                          area={area}
+                          title={title}
+                          index={index}
+                        />
                       ) : (
-                        <div className="mx-auto flex aspect-[9/16] w-full max-w-[280px] items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background-light)] sm:max-w-[300px]">
+                        <div className="mx-auto flex aspect-[3/4] w-full max-w-[280px] items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background-light)] sm:max-w-[300px]">
                           <span className="font-display text-7xl font-bold tracking-tight text-[var(--navy)]/10">
                             0{index + 1}
                           </span>

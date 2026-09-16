@@ -213,9 +213,7 @@ const PublicationCard = memo(function PublicationCard({
     }
   });
 
-  const handleRadioMouseDown = (
-    event: React.MouseEvent<HTMLInputElement>,
-  ) => {
+  const handleRadioMouseDown = (event: React.MouseEvent<HTMLInputElement>) => {
     event.preventDefault();
     event.stopPropagation();
   };
@@ -224,9 +222,7 @@ const PublicationCard = memo(function PublicationCard({
     onSelect?.(publicationId);
   };
 
-  const handleRadioClick = (
-    event: React.MouseEvent<HTMLInputElement>,
-  ) => {
+  const handleRadioClick = (event: React.MouseEvent<HTMLInputElement>) => {
     event.stopPropagation();
     if (selected) {
       onSelect?.(publicationId);
@@ -470,9 +466,7 @@ function PublicationTimeline({
 
   const selectPublication = useCallback(
     (id: string) => {
-      onSelectPublication(
-        selectedPubIdRef.current === id ? null : id,
-      );
+      onSelectPublication(selectedPubIdRef.current === id ? null : id);
     },
     [onSelectPublication],
   );

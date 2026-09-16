@@ -132,10 +132,7 @@ export default function PublicServiceAdminPage() {
               <>
                 <Card className="p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <label
-                      htmlFor="admin-ps-search"
-                      className="sr-only"
-                    >
+                    <label htmlFor="admin-ps-search" className="sr-only">
                       Search public service projects
                     </label>
                     <input
@@ -240,9 +237,7 @@ export default function PublicServiceAdminPage() {
                                   <Button
                                     variant="danger"
                                     disabled={busyId === project._id}
-                                    onClick={() =>
-                                      void removeProject(project)
-                                    }
+                                    onClick={() => void removeProject(project)}
                                   >
                                     Delete
                                   </Button>

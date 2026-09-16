@@ -63,6 +63,9 @@ export async function getPublicPeopleController(req: Request, res: Response) {
         UNDERGRADUATE: students
           .filter((student) => student.studentType === "UNDERGRADUATE_STUDENT")
           .map((student) => toPublicStudentProfile(req, student)),
+        INTERNSHIP: students
+          .filter((student) => student.studentType === "INTERNSHIP_STUDENT")
+          .map((student) => toPublicStudentProfile(req, student)),
         ALUMNI: alumni.map((member) => toPublicAlumniProfile(req, member)),
       },
     });

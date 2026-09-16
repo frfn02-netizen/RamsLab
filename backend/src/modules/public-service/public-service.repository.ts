@@ -309,6 +309,7 @@ export async function findPublicServiceProjectsWithFilters(
 
   const sortDirection: SortDirection = options?.sort === "oldest" ? 1 : -1;
   const sort: Record<string, SortDirection> = {
+    createdAt: sortDirection,
     order: 1,
     "title.en": 1,
   };
