@@ -14,7 +14,8 @@ export type ImageLayoutMode = "preset" | "custom";
 export type ImagePreset = "landscape" | "wide" | "portrait" | "square";
 export type ImageFit = "cover" | "contain";
 export type ImagePosition = "center" | "top" | "bottom" | "left" | "right";
-export type CropAspectRatio = "4/3" | "16/9" | "1/1" | "3/4" | "9/16" | "custom";
+export type CropAspectRatio =
+  "4/3" | "16/9" | "1/1" | "3/4" | "9/16" | "custom";
 
 export const IMAGE_LAYOUT_DEFAULTS = {
   imageLayout: "preset" as ImageLayoutMode,

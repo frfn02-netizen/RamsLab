@@ -141,18 +141,15 @@ export async function updateResearchAreaController(
       gridRows: parsed.gridRows ?? existing.gridRows ?? 3,
       imageFit: parsed.imageFit ?? existing.imageFit ?? "cover",
       imagePosition: parsed.imagePosition ?? existing.imagePosition ?? "center",
-      cropAspectRatio: parsed.cropAspectRatio ?? existing.cropAspectRatio ?? "4/3",
+      cropAspectRatio:
+        parsed.cropAspectRatio ?? existing.cropAspectRatio ?? "4/3",
       cropPositionX: parsed.cropPositionX ?? existing.cropPositionX ?? 50,
       cropPositionY: parsed.cropPositionY ?? existing.cropPositionY ?? 50,
       cropScale: parsed.cropScale ?? existing.cropScale ?? 1,
       customWidth: parsed.customWidth ?? existing.customWidth,
       customHeight: parsed.customHeight ?? existing.customHeight,
     };
-    const area = await updateResearchArea(
-      id,
-      updateData,
-      req.user?.userId,
-    );
+    const area = await updateResearchArea(id, updateData, req.user?.userId);
     if (
       existing?.downloadablePng &&
       existing.downloadablePng !== area?.downloadablePng

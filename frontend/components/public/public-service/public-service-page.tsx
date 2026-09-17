@@ -77,7 +77,7 @@ export default function PublicServicePage() {
   return (
     <main>
       <PageHero
-        eyebrow={t("eyebrow")}
+        eyebrow=""
         title={t("title")}
         description={t("description")}
       />
@@ -95,7 +95,7 @@ export default function PublicServicePage() {
             {experts.length > 0 && (
               <section>
                 <SectionTitle
-                  eyebrow={t("expertsEyebrow")}
+                  eyebrow=""
                   title={t("expertsTitle")}
                 />
                 <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -117,10 +117,8 @@ export default function PublicServicePage() {
 function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-3xl font-bold text-[var(--navy)]">{title}</h2>
+      {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">{eyebrow}</p> : null}
+      <h2 className={`${eyebrow ? "mt-3" : ""} text-3xl font-bold text-[var(--navy)]`}>{title}</h2>
     </div>
   );
 }
@@ -194,7 +192,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
 
   return (
     <section>
-      <SectionTitle eyebrow={t("projectsEyebrow")} title={t("projectsTitle")} />
+      <SectionTitle eyebrow="" title={t("projectsTitle")} />
 
       <div className="mt-8 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

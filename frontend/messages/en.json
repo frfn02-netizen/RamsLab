@@ -74,7 +74,7 @@
     "recordUpper": "RECORD",
     "recordsUpper": "RECORDS",
     "principles": "RAMS principles",
-    "principlesTitle": "The framework behind dependable systems."
+    "principlesTitle": "The framework behind dependable systems"
   },
   "home": {
     "welcome": {
@@ -166,6 +166,7 @@
       "maintenance": "Maintenance Management",
       "simulation": "Simulation & modeling"
     },
+    "ctaEyebrow": "COLLABORATE WITH US",
     "ctaTitle": "Have a reliability, safety, or marine systems challenge?",
     "ctaDescription": "Talk with the laboratory about a research, reliability, safety, or marine systems challenge.",
     "video": {
@@ -173,7 +174,10 @@
       "title": "Get to Know RAMS Laboratory",
       "description": "Watch our introduction to learn about the laboratory's research, methods, and the systems we study.",
       "watchOnYouTube": "Watch on YouTube",
-      "latestVideos": "Latest Videos"
+      "latestVideos": "Latest Videos",
+      "viewAll": "View all videos",
+      "loading": "Loading videos",
+      "error": "Videos are temporarily unavailable."
     },
     "ecosystemTitle": "Part of the ITS Research Ecosystem",
     "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
@@ -395,9 +399,20 @@
     "staffDescription": "RAMS brings together lecturers, researchers, and technical expertise across reliability, safety, maintenance, maritime systems, AIS, and simulation.",
     "loading": "Loading team profiles",
     "error": "Team profiles are temporarily unavailable.",
+    "lecturerPublications": {
+      "title": "Publications",
+      "loading": "Loading publications",
+      "error": "Publication records are temporarily unavailable.",
+      "emptyTitle": "No publications found",
+      "emptyDescription": "No publication records are currently associated with this lecturer.",
+      "authors": "Authors",
+      "sourceUnavailable": "Publication source unavailable",
+      "viewDoi": "View DOI",
+      "viewPdf": "View PDF"
+    },
     "emptyTitle": "No public team profiles",
     "emptyDescription": "Public lecturer and researcher profiles will appear here when available.",
-    "ctaTitle": "Start a conversation with the laboratory."
+    "ctaTitle": "Start a conversation with the laboratory"
   },
   "alumni": {
     "heroEyebrow": "Alumni network",
@@ -465,7 +480,7 @@
     }
   },
   "footer": {
-    "description": "Research and engineering for reliability, safety, management, and marine systems.",
+    "description": "Research and engineering for reliability, safety, management, and marine systems",
     "navigate": "Navigate",
     "ecosystem": "Our ecosystem",
     "contact": "Contact",
@@ -484,9 +499,14 @@
     "title": "Events",
     "description": "Published RAMS Laboratory events and institutional activities."
   },
+  "videos": {
+    "metaTitle": "Videos | RAMS Laboratory",
+    "eyebrow": "Videos",
+    "title": "Videos",
+    "description": "Watch our latest videos about research, methods, and systems at RAMS Laboratory."
+  },
   "publicService": {
     "metaTitle": "Public Service | RAMS Laboratory",
-    "eyebrow": "Public Service",
     "title": "Public Service",
     "description": "Expertise and public services managed by RAMS Laboratory.",
     "expertsEyebrow": "Our Experts",

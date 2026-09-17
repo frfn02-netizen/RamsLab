@@ -1,7 +1,11 @@
 import type { Request, Response } from "express";
 import { ZodError } from "zod";
 
-import { changePasswordSchema, loginSchema, registerSchema } from "./auth.schema.js";
+import {
+  changePasswordSchema,
+  loginSchema,
+  registerSchema,
+} from "./auth.schema.js";
 import { changePassword, login, register } from "./auth.service.js";
 import { verifyAccessToken } from "./auth.utils.js";
 import { incrementUserTokenVersion } from "../users/user.repository.js";

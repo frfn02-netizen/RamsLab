@@ -28,7 +28,7 @@ export default function PublicEventsPage() {
   return (
     <main>
       <PageHero
-        eyebrow={t("eyebrow")}
+        eyebrow=""
         title={t("title")}
         description={t("description")}
       />

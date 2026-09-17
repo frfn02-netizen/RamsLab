@@ -13,7 +13,11 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
   .object({
-    fullName: z.string().trim().min(2, "Full name must be at least 2 characters").max(200),
+    fullName: z
+      .string()
+      .trim()
+      .min(2, "Full name must be at least 2 characters")
+      .max(200),
     email: z.string().trim().email("Invalid email address").toLowerCase(),
     password: z
       .string()

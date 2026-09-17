@@ -148,6 +148,8 @@ export async function createDosen(input: CreateDosenInput): Promise<Dosen> {
 
     isPublic: input.isPublic,
 
+    publicationIds: (input.publicationIds ?? []).map((id) => new ObjectId(id)),
+
     createdAt: now,
 
     updatedAt: now,
@@ -175,8 +177,14 @@ export async function updateDosen(
 
   const collection = getDosenCollection();
 
+  const { publicationIds, ...rest } = input;
   const updateData = {
-    ...input,
+    ...rest,
+    // Only overwrite associations when the caller explicitly provides them,
+    // so unrelated PATCH requests never wipe the lecturer's publications.
+    ...(publicationIds !== undefined
+      ? { publicationIds: publicationIds.map((id) => new ObjectId(id)) }
+      : {}),
     updatedAt: new Date(),
   };
 
@@ -211,6 +219,24 @@ export async function deleteDosen(id: string): Promise<boolean> {
   });
 
   return result.deletedCount === 1;
+}
+// ========================================
+// REMOVE PUBLICATION REFERENCE
+// ========================================
+
+// Detaches a deleted Publication from every lecturer that references it.
+// Lecturer documents are never deleted here; only the association is removed.
+export async function removePublicationFromDosen(
+  publicationId: string,
+): Promise<void> {
+  if (!ObjectId.isValid(publicationId)) {
+    return;
+  }
+
+  await getDosenCollection().updateMany(
+    { publicationIds: new ObjectId(publicationId) },
+    { $pull: { publicationIds: new ObjectId(publicationId) } },
+  );
 }
 export async function countDosen(): Promise<number> {
   const collection = getDosenCollection();

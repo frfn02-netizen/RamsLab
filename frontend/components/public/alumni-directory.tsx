@@ -114,18 +114,14 @@ export default function AlumniDirectory() {
 
   return (
     <section className="bg-[var(--paper)]">
-      <PublicContainer className="py-20 sm:py-24">
-        <div className="flex flex-col gap-5 border-b border-[var(--border)] pb-10 sm:flex-row sm:items-end sm:justify-between">
+      <PublicContainer className="py-14 sm:py-16">
+        <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="eyebrow text-[var(--rams-red)]">
-              {t("directoryEyebrow")}
-            </p>
-
-            <h2 className="mt-4 font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy)] sm:text-4xl">
+            <h2 className="font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy)] sm:text-4xl">
               {t("directoryTitle")}
             </h2>
 
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--slate)]">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--slate)]">
               {t("directoryDescription")}
             </p>
           </div>
@@ -146,7 +142,7 @@ export default function AlumniDirectory() {
           </div>
         </div>
 
-        <div className="mt-10" aria-live="polite">
+        <div className="mt-6" aria-live="polite">
           {loading ? (
             <PublicLoading label={t("loading")} />
           ) : error ? (

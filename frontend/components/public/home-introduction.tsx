@@ -12,7 +12,7 @@ export default function HomeIntroduction() {
 
   return (
     <section
-      className="flex items-center bg-white py-24 sm:py-28 lg:py-36"
+      className="flex items-center bg-white py-14 sm:py-16 lg:py-20"
       aria-labelledby="welcome-title"
     >
       <PublicContainer className="w-full">
@@ -34,16 +34,16 @@ export default function HomeIntroduction() {
           </p>
           <h2
             id="welcome-title"
-            className="mx-auto mt-5 max-w-[74rem] font-display text-4xl font-bold leading-[1.08] text-[var(--rams-red)] sm:text-5xl lg:text-[3.25rem] xl:whitespace-nowrap xl:text-[2.75rem] 2xl:text-[3rem]"
+            className="mx-auto mt-3 max-w-[74rem] font-display text-4xl font-bold leading-[1.08] text-[var(--rams-red)] sm:text-5xl lg:text-[3.25rem] xl:whitespace-nowrap xl:text-[2.75rem] 2xl:text-[3rem]"
           >
             {t("welcome.title")}
           </h2>
-          <p className="mx-auto mt-7 max-w-4xl text-base leading-8 text-black sm:text-lg lg:text-xl lg:leading-9">
+          <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-black sm:text-lg lg:text-xl lg:leading-9">
             {t("welcome.description")}
           </p>
           <Link
             href="/about"
-            className="mt-10 inline-block bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]"
+            className="mt-8 inline-block bg-[var(--rams-red)] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red-dark)]"
           >
             Learn More About Us
           </Link>
@@ -69,11 +69,11 @@ export function HeadOfLaboratorySection({
 
   return (
     <section
-      className="border-y border-[var(--border)] bg-[var(--background-light)] py-24 sm:py-28 lg:py-32"
+      className="border-y border-[var(--border)] bg-[var(--background-light)] py-14 sm:py-16 lg:py-20"
       aria-labelledby="head-of-laboratory-title"
     >
       <PublicContainer>
-        <RevealOnScroll className="grid gap-12 lg:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-20">
+        <RevealOnScroll className="grid gap-8 lg:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-12">
           <div className="relative aspect-[4/5] w-full max-w-md overflow-hidden border border-[var(--border)] bg-[var(--navy)] shadow-[0_18px_45px_rgba(8,24,38,0.08)] lg:max-w-none">
             {head.image?.url ? (
               <Image
@@ -99,7 +99,7 @@ export function HeadOfLaboratorySection({
             <p className="eyebrow text-[var(--rams-red)]">
               {localized(head.eyebrow)}
             </p>
-            <p className="mt-6 text-base font-semibold leading-7 text-[var(--navy)] sm:text-lg">
+            <p className="mt-4 text-base font-semibold leading-7 text-[var(--navy)] sm:text-lg">
               {localized(head.role)}
             </p>
             <h2
@@ -108,8 +108,8 @@ export function HeadOfLaboratorySection({
             >
               {head.name}
             </h2>
-            <div className="mt-8 h-px w-24 bg-[var(--rams-red)]" />
-            <p className="mt-8 whitespace-pre-line text-base leading-8 text-[var(--charcoal)] sm:text-lg sm:leading-9">
+            <div className="mt-6 h-px w-24 bg-[var(--rams-red)]" />
+            <p className="mt-6 whitespace-pre-line text-base leading-8 text-[var(--charcoal)] sm:text-lg sm:leading-9">
               {localized(head.greeting)}
             </p>
           </div>

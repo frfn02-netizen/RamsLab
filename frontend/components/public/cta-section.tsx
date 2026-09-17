@@ -21,7 +21,7 @@ export default function CtaSection({
   const common = useTranslations("common");
   return (
     <section className="bg-[var(--navy)] text-white">
-      <PublicContainer className="py-16 sm:py-20">
+      <PublicContainer className="py-10 sm:py-14">
         <RevealOnScroll
           className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end"
           stagger={120}
@@ -30,7 +30,7 @@ export default function CtaSection({
             <p className="text-sm font-semibold text-[var(--ais-blue-light)]">
               {common("nextConversation")}
             </p>
-            <h2 className="mt-4 max-w-2xl font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+            <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
               {title}
             </h2>
             <p className="mt-4 max-w-xl leading-7 text-white/70">

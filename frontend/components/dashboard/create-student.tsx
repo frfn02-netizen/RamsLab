@@ -120,9 +120,7 @@ export default function CreateStudent() {
                   <option value="UNDERGRADUATE_STUDENT">
                     Undergraduate Student
                   </option>
-                  <option value="INTERNSHIP_STUDENT">
-                    Vocational Intern
-                  </option>
+                  <option value="INTERNSHIP_STUDENT">Vocational Intern</option>
                 </select>
               </Field>
 

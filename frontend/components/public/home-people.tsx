@@ -412,11 +412,11 @@ export default function HomePeopleSection({
 
   return (
     <section
-      className="bg-white py-20 sm:py-24 lg:py-28"
+      className="bg-white py-14 sm:py-16 lg:py-20"
       aria-labelledby="home-people-title"
     >
       <PublicContainer>
-        <RevealOnScroll className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.08fr)_minmax(18rem,0.62fr)] lg:gap-20">
+        <RevealOnScroll className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(18rem,0.62fr)] lg:gap-12">
           <div className="relative mx-auto aspect-[1.05/1] w-full max-w-[42rem]">
             <div className="absolute left-1/2 top-1/2 z-20 aspect-[4/5] h-[52%] -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-[var(--navy)] shadow-[0_22px_60px_rgba(8,24,38,0.18)]">
               {centralImage?.url ? (
@@ -457,13 +457,13 @@ export default function HomePeopleSection({
             <p className="eyebrow text-[var(--rams-red)]">{t("eyebrow")}</p>
             <h2
               id="home-people-title"
-              className="mt-4 font-display text-4xl font-bold leading-tight text-[var(--navy)] sm:text-5xl"
+              className="mt-3 font-display text-4xl font-bold leading-tight text-[var(--navy)] sm:text-5xl"
             >
               {t("title")}
             </h2>
             <Link
               href="/team"
-              className="mt-8 inline-flex items-center gap-3 border border-[var(--navy)] px-5 py-3 text-sm font-bold uppercase tracking-normal text-[var(--navy)] transition-colors hover:border-[var(--rams-red)] hover:bg-[var(--rams-red)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)]"
+              className="mt-6 inline-flex items-center gap-3 border border-[var(--navy)] px-5 py-3 text-sm font-bold uppercase tracking-normal text-[var(--navy)] transition-colors hover:border-[var(--rams-red)] hover:bg-[var(--rams-red)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)]"
             >
               {t("button")}
               <span aria-hidden="true">-&gt;</span>

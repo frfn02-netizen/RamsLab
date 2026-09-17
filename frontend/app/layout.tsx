@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-providers";
@@ -41,10 +40,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = (await headers()).get("x-rams-locale") === "id" ? "id" : "en";
 
   return (
-    <html lang={locale}>
+    <html lang="en">
       <body>
         <AuthProvider>{children}</AuthProvider>
 

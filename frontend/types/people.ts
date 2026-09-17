@@ -1,4 +1,5 @@
-export type PeopleCategory = "DOSEN" | "MAHASISWA" | "MASTER" | "UNDERGRADUATE" | "INTERNSHIP";
+export type PeopleCategory =
+  "DOSEN" | "MAHASISWA" | "MASTER" | "UNDERGRADUATE" | "INTERNSHIP";
 export type PublicDirectoryCategory = PeopleCategory | "ALUMNI";
 
 export interface PublicPerson {
@@ -38,6 +39,7 @@ export interface PublicPerson {
   graduationYear?: number;
   internshipStartDate?: string | null;
   internshipEndDate?: string | null;
+  publicationIds?: string[];
 }
 
 export interface PublicPeopleResponse {

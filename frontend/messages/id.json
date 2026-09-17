@@ -166,6 +166,7 @@
       "maintenance": "Manajemen pemeliharaan",
       "simulation": "Simulasi & pemodelan"
     },
+    "ctaEyebrow": "BERKOLABORASI BERSAMA KAMI",
     "ctaTitle": "Memiliki tantangan keandalan, keselamatan, atau sistem maritim?",
     "ctaDescription": "Diskusikan tantangan riset, keandalan, keselamatan, atau sistem maritim bersama laboratorium.",
     "video": {
@@ -173,7 +174,10 @@
       "title": "Mengenal Laboratorium RAMS",
       "description": "Tonton pengenalan kami untuk mempelajari tentang riset, metode, dan sistem yang kami pelajari.",
       "watchOnYouTube": "Tonton di YouTube",
-      "latestVideos": "Video Terbaru"
+      "latestVideos": "Video Terbaru",
+      "viewAll": "Lihat semua video",
+      "loading": "Memuat video",
+      "error": "Video sementara tidak tersedia."
     },
     "ecosystemTitle": "Bagian dari Ekosistem Riset ITS",
     "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
@@ -395,6 +399,17 @@
     "staffDescription": "RAMS mempertemukan dosen, peneliti, dan keahlian teknis dalam keandalan, keselamatan, pemeliharaan, sistem maritim, AIS, dan simulasi.",
     "loading": "Memuat profil tim",
     "error": "Profil tim sementara tidak tersedia.",
+    "lecturerPublications": {
+      "title": "Publikasi",
+      "loading": "Memuat publikasi",
+      "error": "Rekaman publikasi sementara tidak tersedia.",
+      "emptyTitle": "Publikasi tidak ditemukan",
+      "emptyDescription": "Belum ada rekaman publikasi yang terkait dengan dosen ini.",
+      "authors": "Penulis",
+      "sourceUnavailable": "Sumber publikasi belum tersedia",
+      "viewDoi": "Lihat DOI",
+      "viewPdf": "Lihat PDF"
+    },
     "emptyTitle": "Belum ada profil tim publik",
     "emptyDescription": "Profil dosen dan peneliti publik akan muncul di sini jika tersedia.",
     "ctaTitle": "Mulai percakapan dengan laboratorium."
@@ -484,6 +499,12 @@
     "eyebrow": "Acara",
     "title": "Acara",
     "description": "Acara dan kegiatan institusional Laboratorium RAMS yang telah dipublikasikan."
+  },
+  "videos": {
+    "metaTitle": "Video | Laboratorium RAMS",
+    "eyebrow": "Video",
+    "title": "Video",
+    "description": "Tonton video terbaru kami tentang penelitian, metode, dan sistem di Laboratorium RAMS."
   },
   "publicService": {
     "metaTitle": "Layanan Publik | Laboratorium RAMS",

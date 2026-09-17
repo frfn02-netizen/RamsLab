@@ -7,6 +7,7 @@ import type {
 } from "./publication.schema.js";
 import type { Publication } from "./publication.types.js";
 import type { JwtPayload } from "../auth/auth.types.js";
+import { removePublicationFromDosen } from "../dosen/dosen.repository.js";
 
 const PUBLICATIONS_COLLECTION = "publications";
 export const DEFAULT_PUBLICATION_TYPE = "Article";
@@ -255,5 +256,10 @@ export async function deletePublication(
   const result = await getPublicationsCollection().deleteOne(
     actorFilter(id, actor),
   );
+  if (result.deletedCount === 1) {
+    // Detach the deleted Publication from every lecturer. Lecturer
+    // documents and other lecturers' associations are left untouched.
+    await removePublicationFromDosen(id);
+  }
   return result.deletedCount === 1;
 }

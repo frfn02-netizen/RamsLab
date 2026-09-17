@@ -14,8 +14,13 @@ import {
   inputClass,
 } from "@/components/ui";
 import { getUserFacingError } from "@/lib/api/errors";
-import { getDosenById, updateDosen, uploadDosenPhoto } from "@/lib/api/modules";
-import type { Dosen, DosenEducation } from "@/types/modules";
+import {
+  getDosenById,
+  getPublications,
+  updateDosen,
+  uploadDosenPhoto,
+} from "@/lib/api/modules";
+import type { Dosen, DosenEducation, Publication } from "@/types/modules";
 
 type FormState = {
   fullName: string;
@@ -47,6 +52,7 @@ type FormState = {
   showNidn: boolean;
   showEmail: boolean;
   isPublic: boolean;
+  publicationIds: string[];
 };
 
 function fromDosen(d: Dosen): FormState {
@@ -80,7 +86,165 @@ function fromDosen(d: Dosen): FormState {
     showNidn: d.showNidn,
     showEmail: d.showEmail,
     isPublic: d.isPublic,
+    publicationIds: d.publicationIds ?? [],
   };
+}
+
+function normalizeAuthorName(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function publicationLabel(p: Publication) {
+  const source = [p.publicationType, p.journal].filter(Boolean).join(" · ");
+  return `${p.title} (${p.year}${source ? ", " + source : ""})`;
+}
+
+function DosenPublicationsSection({
+  fullName,
+  selectedIds,
+  onChange,
+}: {
+  fullName: string;
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [available, setAvailable] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const normalizedName = normalizeAuthorName(fullName);
+
+  useEffect(() => {
+    if (!normalizedName) {
+      setAvailable([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    const PAGE_LIMIT = 200;
+    (async () => {
+      const all: Publication[] = [];
+      let page = 1;
+      let total = Infinity;
+      while (all.length < total) {
+        const res = await getPublications({
+          page,
+          limit: PAGE_LIMIT,
+          sort: "newest",
+        });
+        if (cancelled) return;
+        const rows = res.data ?? [];
+        all.push(...rows);
+        total = res.total ?? all.length;
+        if (rows.length === 0 || all.length >= total) break;
+        page += 1;
+      }
+      if (cancelled) return;
+      setAvailable(
+        all.filter((pub) =>
+          (pub.authors ?? []).some(
+            (a) => normalizeAuthorName(a) === normalizedName,
+          ),
+        ),
+      );
+    })()
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [normalizedName]);
+
+  const addPublication = (id: string) => {
+    if (!selectedIds.includes(id)) {
+      onChange([...selectedIds, id]);
+    }
+    setDropdownOpen(false);
+  };
+
+  const removePublication = (id: string) => {
+    onChange(selectedIds.filter((x) => x !== id));
+  };
+
+  return (
+    <section className="space-y-3 border-t border-black/10 pt-5">
+      <h2 className="text-sm font-bold">Publications</h2>
+      {normalizedName ? (
+        <p className="text-xs text-[var(--rams-gray)]">
+          Publications where the lecturer&apos;s name matches as an author are
+          shown below.
+        </p>
+      ) : (
+        <p className="text-xs text-[var(--rams-gray)]">
+          Enter a full name above to search for matching publications.
+        </p>
+      )}
+
+      {selectedIds.length > 0 && (
+        <ul className="space-y-2">
+          {selectedIds.map((pubId) => {
+            const pub = available.find((p) => p._id === pubId);
+            return (
+              <li
+                key={pubId}
+                className="flex items-start justify-between gap-3 rounded border border-black/10 px-3 py-2 text-sm"
+              >
+                <span className="min-w-0 flex-1 text-[var(--slate)]">
+                  {pub ? publicationLabel(pub) : pubId}
+                </span>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs font-semibold text-red-700 hover:text-red-900"
+                  onClick={() => removePublication(pubId)}
+                >
+                  Remove
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {normalizedName && (
+        <div className="relative">
+          <button
+            type="button"
+            className={`w-full rounded border border-black/10 bg-white px-3 py-2 text-left text-sm ${inputClass} hover:border-[var(--rams-red)]`}
+            onClick={() => setDropdownOpen((v) => !v)}
+            disabled={loading}
+          >
+            {loading
+              ? "Searching publications…"
+              : "+ Add publication"}
+          </button>
+          {dropdownOpen && !loading && (
+            <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded border border-black/10 bg-white shadow-lg">
+              {available.length === 0 ? (
+                <li className="px-3 py-2 text-sm text-[var(--gray)]">
+                  No matching publications found
+                </li>
+              ) : (
+                available
+                  .filter((p) => !selectedIds.includes(p._id))
+                  .map((pub) => (
+                    <li key={pub._id}>
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--paper)]"
+                        onClick={() => addPublication(pub._id)}
+                      >
+                        {publicationLabel(pub)}
+                      </button>
+                    </li>
+                  ))
+              )}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }
 
 export default function EditDosen({ id }: { id: string }) {
@@ -172,6 +336,7 @@ export default function EditDosen({ id }: { id: string }) {
         showNidn: form.showNidn,
         showEmail: form.showEmail,
         isPublic: form.isPublic,
+        publicationIds: form.publicationIds,
       });
       if (photo) await uploadDosenPhoto(id, photo);
       router.push(`/dashboard/dosen/${result._id}`);
@@ -408,6 +573,13 @@ export default function EditDosen({ id }: { id: string }) {
                 </label>
               ))}
             </div>
+            <DosenPublicationsSection
+              fullName={form.fullName}
+              selectedIds={form.publicationIds}
+              onChange={(ids) =>
+                setForm((f) => (f ? { ...f, publicationIds: ids } : f))
+              }
+            />
             <Button type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save changes"}
             </Button>

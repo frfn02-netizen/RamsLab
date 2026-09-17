@@ -134,10 +134,7 @@ export default async function ResearchPage({
             </div>
           ) : researchAreas.length === 0 ? (
             <div className="border border-dashed border-[var(--border)] bg-[var(--background-light)] p-9 text-center">
-              <p className="eyebrow text-[var(--ais-blue)]">
-                {t("emptyLabel")}
-              </p>
-              <h2 className="mt-3 font-display text-xl font-semibold text-[var(--navy)]">
+              <h2 className="font-display text-xl font-semibold text-[var(--navy)]">
                 {t("emptyTitle")}
               </h2>
               <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">

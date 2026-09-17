@@ -15,6 +15,13 @@ const education = z.object({
   endYear: z.number().int().min(1900).max(2100).optional(),
 });
 
+// References to Publication records explicitly associated with the lecturer.
+// Only the IDs are stored; Publication documents remain canonical and are
+// never embedded or duplicated here.
+const publicationIdsField = z
+  .array(z.string().regex(/^[a-f\d]{24}$/i, "Invalid publication ID"))
+  .max(200);
+
 export const createDosenSchema = z.object({
   userId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid user ID"),
 
@@ -69,6 +76,8 @@ export const createDosenSchema = z.object({
   awardCount: z.number().int().min(0).max(100000).optional(),
 
   isPublic: z.boolean().default(true),
+
+  publicationIds: publicationIdsField.default([]),
 });
 
 export const updateDosenSchema = z.object({
@@ -105,6 +114,8 @@ export const updateDosenSchema = z.object({
   projectCount: z.number().int().min(0).max(100000).optional(),
   awardCount: z.number().int().min(0).max(100000).optional(),
   isPublic: z.boolean().optional(),
+
+  publicationIds: publicationIdsField.optional(),
 });
 
 export type CreateDosenInput = z.infer<typeof createDosenSchema>;

@@ -27,7 +27,11 @@ import {
   updateResearchArea,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import type { ResearchArea, ResearchAreaInput, CropAspectRatio } from "@/types/modules";
+import type {
+  ResearchArea,
+  ResearchAreaInput,
+  CropAspectRatio,
+} from "@/types/modules";
 
 import { formToInput } from "./research-area-form";
 import ImageCropEditor, {
@@ -601,7 +605,9 @@ function ResearchEditForm({
                   }
                 >
                   <option value="cover">Cover (fill frame, crop edges)</option>
-                  <option value="contain">Contain (fit inside, may letterbox)</option>
+                  <option value="contain">
+                    Contain (fit inside, may letterbox)
+                  </option>
                 </select>
               </Field>
               <ImageCropEditor

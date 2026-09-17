@@ -10,10 +10,35 @@ import {
   updateDosen,
 } from "./dosen.repository.js";
 import { deactivateUser, findUserById } from "../users/user.repository.js";
+import { getPublicationsCollection } from "../publications/publication.repository.js";
 import { removeDosenPhoto, saveDosenPhoto } from "./dosen-photo.js";
 import { toPublicDosenProfile } from "../public/public-profile.js";
 
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
+
+export const INVALID_PUBLICATION_REFERENCE =
+  "One or more publications do not exist";
+
+// Validates Lecturer → Publication associations: every ID must reference an
+// existing Publication. Duplicates are removed while preserving order.
+// Returns undefined when the caller did not provide any associations.
+async function resolvePublicationIds(
+  ids: string[] | undefined,
+): Promise<string[] | undefined> {
+  if (ids === undefined) return undefined;
+  const unique = [...new Set(ids.map((id) => new ObjectId(id).toHexString()))];
+  if (unique.length === 0) return [];
+  const found = await getPublicationsCollection()
+    .find(
+      { _id: { $in: unique.map((id) => new ObjectId(id)) } },
+      { projection: { _id: 1 } },
+    )
+    .toArray();
+  if (found.length !== unique.length) {
+    throw new Error(INVALID_PUBLICATION_REFERENCE);
+  }
+  return unique;
+}
 
 // ========================================
 // GET ALL DOSEN
@@ -200,7 +225,10 @@ export async function createDosenController(req: Request, res: Response) {
       });
     }
 
-    const dosen = await createDosen(input);
+    const dosen = await createDosen({
+      ...input,
+      publicationIds: (await resolvePublicationIds(input.publicationIds)) ?? [],
+    });
 
     return res.status(201).json({
       success: true,
@@ -212,6 +240,13 @@ export async function createDosenController(req: Request, res: Response) {
         success: false,
         message: "Validation failed",
         errors: error.issues,
+      });
+    }
+
+    if (error?.message === INVALID_PUBLICATION_REFERENCE) {
+      return res.status(400).json({
+        success: false,
+        message: INVALID_PUBLICATION_REFERENCE,
       });
     }
 
@@ -246,7 +281,10 @@ export async function updateDosenController(req: Request, res: Response) {
 
     const input = updateDosenSchema.parse(req.body);
 
-    const dosen = await updateDosen(id, input);
+    const dosen = await updateDosen(id, {
+      ...input,
+      publicationIds: await resolvePublicationIds(input.publicationIds),
+    });
 
     if (!dosen) {
       return res.status(404).json({
@@ -265,6 +303,13 @@ export async function updateDosenController(req: Request, res: Response) {
         success: false,
         message: "Validation failed",
         errors: error.issues,
+      });
+    }
+
+    if (error?.message === INVALID_PUBLICATION_REFERENCE) {
+      return res.status(400).json({
+        success: false,
+        message: INVALID_PUBLICATION_REFERENCE,
       });
     }
 

@@ -1,3 +1,4 @@
 .env*
 !*.env.example
 *_cookies.txt
+node_modules/

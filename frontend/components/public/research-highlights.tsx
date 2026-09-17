@@ -14,7 +14,11 @@ import { PublicError, PublicLoading } from "./public-states";
 const AUTOPLAY_MS = 6500;
 
 function Arrow({ direction }: { direction: "previous" | "next" }) {
-  return <span aria-hidden="true">{direction === "previous" ? "\u2039" : "\u203A"}</span>;
+  return (
+    <span aria-hidden="true">
+      {direction === "previous" ? "\u2039" : "\u203A"}
+    </span>
+  );
 }
 
 function buildMaritimeChartSvg(): string {
@@ -302,7 +306,7 @@ export default function ResearchHighlights() {
       <MaritimeChartPattern />
 
       {/* Content */}
-      <PublicContainer className="relative z-10 flex h-full flex-col py-8 sm:py-12 lg:py-16">
+      <PublicContainer className="relative z-10 flex h-full flex-col py-6 sm:py-10 lg:py-12">
         <div className="flex flex-1 flex-col justify-center">
           <div
             key={item.id}
@@ -317,10 +321,10 @@ export default function ResearchHighlights() {
                 {t("researchHighlights.question")}
               </p>
             </div>
-            <h2 className="mt-6 font-display text-4xl font-bold leading-[1.04] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+            <h2 className="mt-4 font-display text-4xl font-bold leading-[1.04] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
               {headline}
             </h2>
-            <div className="mt-8 max-w-2xl border-t border-white/20 pt-6">
+            <div className="mt-6 max-w-2xl border-t border-white/20 pt-4">
               <p className="text-base font-semibold leading-7 text-white/95">
                 {publication.title}
               </p>
@@ -334,7 +338,7 @@ export default function ResearchHighlights() {
                 href={getPublicPublicationPdfUrl(publication.id)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-10 inline-flex items-center gap-2 border-b-2 border-[var(--rams-red)] pb-1 text-sm font-bold text-white transition-colors hover:border-white"
+                className="mt-8 inline-flex items-center gap-2 border-b-2 border-[var(--rams-red)] pb-1 text-sm font-bold text-white transition-colors hover:border-white"
               >
                 {t("researchHighlights.readPaper")}
               </a>
@@ -343,7 +347,7 @@ export default function ResearchHighlights() {
         </div>
 
         <div
-          className="mt-8 flex items-center justify-between gap-5"
+          className="mt-6 flex items-center justify-between gap-5"
           role="group"
           aria-label={t("researchHighlights.controls")}
         >

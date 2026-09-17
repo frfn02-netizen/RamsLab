@@ -101,25 +101,23 @@ export default function HomeMaritimeCta() {
       </svg>
 
       {/* Content */}
-      <PublicContainer className="relative z-10 py-20 sm:py-24 lg:py-28">
+      <PublicContainer className="relative z-10 py-14 sm:py-16 lg:py-20">
         <RevealOnScroll className="text-center">
           <p className="eyebrow text-[var(--rams-red)]">
-            {t("ctaTitle").split("?")[0].includes("reliability")
-              ? "COLLABORATE WITH US"
-              : t("ctaTitle").split("?")[0]}
+            {t("ctaEyebrow")}
           </p>
 
-          <h2 className="mx-auto mt-5 max-w-3xl whitespace-pre-line font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="mx-auto mt-3 max-w-3xl whitespace-pre-line font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
             {t("ctaTitle")}
           </h2>
 
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
             {t("ctaDescription")}
           </p>
 
           <Link
             href="/contact"
-            className="mt-10 inline-block rounded bg-[var(--rams-red)] px-8 py-3.5 text-sm font-semibold tracking-wide text-white shadow-lg shadow-[var(--rams-red)]/20 transition hover:bg-[var(--rams-red-dark)] hover:shadow-xl hover:shadow-[var(--rams-red)]/30"
+            className="mt-8 inline-block rounded bg-[var(--rams-red)] px-8 py-3.5 text-sm font-semibold tracking-wide text-white shadow-lg shadow-[var(--rams-red)]/20 transition hover:bg-[var(--rams-red-dark)] hover:shadow-xl hover:shadow-[var(--rams-red)]/30"
           >
             Discuss a collaboration →
           </Link>

@@ -7,7 +7,9 @@ const bilingualTextSchema = z.object({
 
 export const imageLayoutSchema = z.object({
   imageLayout: z.enum(["preset", "custom"]).default("preset"),
-  imagePreset: z.enum(["landscape", "wide", "portrait", "square"]).default("portrait"),
+  imagePreset: z
+    .enum(["landscape", "wide", "portrait", "square"])
+    .default("portrait"),
   gridColumns: z.number().int().min(3).max(8).default(4),
   gridRows: z.number().int().min(2).max(6).default(3),
   imageFit: z.enum(["cover", "contain"]).default("cover"),
@@ -17,7 +19,9 @@ export const imageLayoutSchema = z.object({
 });
 
 export const cropSettingsSchema = z.object({
-  cropAspectRatio: z.enum(["4/3", "16/9", "1/1", "3/4", "9/16", "custom"]).default("4/3"),
+  cropAspectRatio: z
+    .enum(["4/3", "16/9", "1/1", "3/4", "9/16", "custom"])
+    .default("4/3"),
   cropPositionX: z.number().min(0).max(100).default(50),
   cropPositionY: z.number().min(0).max(100).default(50),
   cropScale: z.number().min(0.5).max(3).default(1),

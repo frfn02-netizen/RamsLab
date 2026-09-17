@@ -40,15 +40,13 @@ export default function ImageCropEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
-  const [customSize, setCustomSize] = useState(
-    value.aspectRatio === "custom",
-  );
+  const [customSize, setCustomSize] = useState(value.aspectRatio === "custom");
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
 
   const isCustom = value.aspectRatio === "custom" && customSize;
   const aspectRatio = isCustom
     ? getCustomRatio(value.customWidth, value.customHeight)
-    : ASPECT_RATIO_MAP[value.aspectRatio] ?? 4 / 3;
+    : (ASPECT_RATIO_MAP[value.aspectRatio] ?? 4 / 3);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -213,10 +211,42 @@ export default function ImageCropEditor({
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
             >
-              <line x1="33.33" y1="0" x2="33.33" y2="100" stroke="white" strokeWidth="0.3" strokeOpacity="0.5" />
-              <line x1="66.66" y1="0" x2="66.66" y2="100" stroke="white" strokeWidth="0.3" strokeOpacity="0.5" />
-              <line x1="0" y1="33.33" x2="100" y2="33.33" stroke="white" strokeWidth="0.3" strokeOpacity="0.5" />
-              <line x1="0" y1="66.66" x2="100" y2="66.66" stroke="white" strokeWidth="0.3" strokeOpacity="0.5" />
+              <line
+                x1="33.33"
+                y1="0"
+                x2="33.33"
+                y2="100"
+                stroke="white"
+                strokeWidth="0.3"
+                strokeOpacity="0.5"
+              />
+              <line
+                x1="66.66"
+                y1="0"
+                x2="66.66"
+                y2="100"
+                stroke="white"
+                strokeWidth="0.3"
+                strokeOpacity="0.5"
+              />
+              <line
+                x1="0"
+                y1="33.33"
+                x2="100"
+                y2="33.33"
+                stroke="white"
+                strokeWidth="0.3"
+                strokeOpacity="0.5"
+              />
+              <line
+                x1="0"
+                y1="66.66"
+                x2="100"
+                y2="66.66"
+                stroke="white"
+                strokeWidth="0.3"
+                strokeOpacity="0.5"
+              />
             </svg>
           )}
 
@@ -281,7 +311,9 @@ export default function ImageCropEditor({
               </Field>
             </div>
             <p className="text-[10px] text-[var(--rams-gray)]">
-              Ratio: {Math.round(value.customWidth ?? 1200)} / {Math.round(value.customHeight ?? 900)} = {(getCustomRatio(value.customWidth, value.customHeight)).toFixed(2)}
+              Ratio: {Math.round(value.customWidth ?? 1200)} /{" "}
+              {Math.round(value.customHeight ?? 900)} ={" "}
+              {getCustomRatio(value.customWidth, value.customHeight).toFixed(2)}
             </p>
           </div>
         )}
@@ -346,7 +378,8 @@ export default function ImageCropEditor({
 
         <div className="space-y-1 border-t border-black/8 pt-4">
           <p className="text-[10px] text-[var(--rams-gray)]">
-            Position: {Math.round(value.positionX)}%, {Math.round(value.positionY)}%
+            Position: {Math.round(value.positionX)}%,{" "}
+            {Math.round(value.positionY)}%
           </p>
           <p className="text-[10px] text-[var(--rams-gray)]">
             Scale: {value.scale.toFixed(2)}x
@@ -366,10 +399,7 @@ export default function ImageCropEditor({
   );
 }
 
-function getCustomRatio(
-  w: number | undefined,
-  h: number | undefined,
-): number {
+function getCustomRatio(w: number | undefined, h: number | undefined): number {
   const width = w ?? 0;
   const height = h ?? 0;
   if (width > 0 && height > 0) {

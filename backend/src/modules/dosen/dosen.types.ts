@@ -71,6 +71,14 @@ export interface Dosen {
 
   isPublic: boolean;
 
+  /**
+   * Explicitly associated Publication IDs. Lecturers reference Publications;
+   * Publications remain the canonical records and are never embedded here.
+   * Absent (undefined) on legacy records; an empty array means explicitly
+   * no associations.
+   */
+  publicationIds?: ObjectId[];
+
   createdAt: Date;
 
   updatedAt: Date;

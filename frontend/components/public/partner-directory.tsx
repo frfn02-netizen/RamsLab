@@ -37,10 +37,10 @@ export default function PartnerDirectory() {
 
   return (
     <div>
-      <RevealOnScroll className="flex items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
+      <RevealOnScroll className="flex items-end justify-between gap-4 border-b border-[var(--border)] pb-4">
         <div>
           <p className="eyebrow text-[var(--gray)]">{t("directory")}</p>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--navy)]">
+          <h2 className="mt-2 font-display text-3xl font-semibold text-[var(--navy)]">
             {t("selected")}
           </h2>
         </div>
@@ -49,7 +49,7 @@ export default function PartnerDirectory() {
         </span>
       </RevealOnScroll>
 
-      <div className="mt-8">
+      <div className="mt-6">
         {loading ? (
           <PublicLoading label={t("loading")} />
         ) : error ? (

@@ -55,7 +55,10 @@ export async function updateStudent(
   input: UpdateStudentInput,
 ): Promise<Student | null> {
   if (!ObjectId.isValid(id)) return null;
-  const updateData: Record<string, unknown> = { ...input, updatedAt: new Date() };
+  const updateData: Record<string, unknown> = {
+    ...input,
+    updatedAt: new Date(),
+  };
   if (input.internshipStartDate !== undefined) {
     updateData.internshipStartDate = input.internshipStartDate
       ? new Date(input.internshipStartDate)

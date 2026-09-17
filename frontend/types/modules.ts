@@ -209,6 +209,7 @@ export interface Dosen {
   projectCount?: number;
   awardCount?: number;
   isPublic: boolean;
+  publicationIds?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -223,7 +224,10 @@ export type DosenInput = Omit<Dosen, "_id" | "createdAt" | "updatedAt">;
 export type DosenUpdateInput = Partial<Omit<DosenInput, "userId">>;
 
 export type StudentType =
-  "PHD_STUDENT" | "MASTER_STUDENT" | "UNDERGRADUATE_STUDENT" | "INTERNSHIP_STUDENT";
+  | "PHD_STUDENT"
+  | "MASTER_STUDENT"
+  | "UNDERGRADUATE_STUDENT"
+  | "INTERNSHIP_STUDENT";
 export interface Student {
   _id: string;
   fullName: string;
@@ -280,7 +284,8 @@ export type ImageLayoutMode = "preset" | "custom";
 export type ImagePreset = "landscape" | "wide" | "portrait" | "square";
 export type ImageFit = "cover" | "contain";
 export type ImagePosition = "center" | "top" | "bottom" | "left" | "right";
-export type CropAspectRatio = "4/3" | "16/9" | "1/1" | "3/4" | "9/16" | "custom";
+export type CropAspectRatio =
+  "4/3" | "16/9" | "1/1" | "3/4" | "9/16" | "custom";
 
 export interface ResearchArea {
   _id: string;

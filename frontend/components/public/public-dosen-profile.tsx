@@ -2,12 +2,78 @@
 
 import Image from "next/image";
 import { useEffect, useState, type ReactNode } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getPublicDosenById } from "@/lib/api/modules";
+import {
+  getPublication,
+  getPublications,
+  getPublicDosenById,
+  getPublicPublicationPdfUrl,
+} from "@/lib/api/modules";
+import type { Publication } from "@/types/modules";
 import type { PublicPerson } from "@/types/people";
 import PublicContainer from "./public-container";
-import { PublicError, PublicLoading } from "./public-states";
+import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
+
+const PUBLICATIONS_PAGE_SIZE = 200;
+
+export function normalizeAuthorName(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function publicationKey(publication: Publication) {
+  const normalizedDoi = (publication.doi ?? "").trim().toLowerCase();
+  if (normalizedDoi) return `doi:${normalizedDoi}`;
+  return [
+    publication.year,
+    normalizeAuthorName(publication.title),
+    (publication.authors ?? []).map(normalizeAuthorName).join("|"),
+  ].join(":");
+}
+
+export function filterLecturerPublications(
+  publications: Publication[],
+  fullName: string | null | undefined,
+) {
+  const normalizedName = normalizeAuthorName(fullName);
+  if (!normalizedName) return [];
+
+  const seen = new Set<string>();
+  return publications.filter((publication) => {
+    const isLecturerAuthor = (publication.authors ?? []).some(
+      (author) => normalizeAuthorName(author) === normalizedName,
+    );
+    if (!isLecturerAuthor) return false;
+
+    const key = publicationKey(publication);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function getLecturerPublications(fullName: string) {
+  if (!normalizeAuthorName(fullName)) return [];
+  const publications: Publication[] = [];
+  let page = 1;
+  let total = Infinity;
+
+  while (publications.length < total) {
+    const response = await getPublications({
+      page,
+      limit: PUBLICATIONS_PAGE_SIZE,
+      sort: "newest",
+    });
+    const pageRecords = response.data ?? [];
+    publications.push(...pageRecords);
+    total = response.total ?? publications.length;
+
+    if (pageRecords.length === 0 || publications.length >= total) break;
+    page += 1;
+  }
+
+  return filterLecturerPublications(publications, fullName);
+}
 
 function initials(name: string) {
   return name
@@ -147,6 +213,141 @@ function ProfileLinks({ links }: { links: Array<[string, string]> }) {
         </a>
       ))}
     </div>
+  );
+}
+
+function LecturerPublications({
+  fullName,
+  publicationIds,
+}: {
+  fullName: string;
+  publicationIds?: string[];
+}) {
+  const t = useTranslations("team.lecturerPublications");
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+
+    (async () => {
+      try {
+        // If explicit associations are provided, fetch those publications by ID.
+        // This takes precedence over name-based matching.
+        if (publicationIds !== undefined) {
+          if (publicationIds.length === 0) {
+            if (!cancelled) setPublications([]);
+            return;
+          }
+          const results = await Promise.allSettled(
+            publicationIds.map((id) => getPublication(id)),
+          );
+          if (!cancelled) {
+            setPublications(
+              results
+                .filter(
+                  (r): r is PromiseFulfilledResult<Publication> =>
+                    r.status === "fulfilled",
+                )
+                .map((r) => r.value),
+            );
+          }
+          return;
+        }
+        // Legacy fallback: no explicit associations on record, fall back to
+        // name-based matching across the entire publication catalogue.
+        const records = await getLecturerPublications(fullName);
+        if (!cancelled) setPublications(records);
+      } catch {
+        if (!cancelled) setError(true);
+      }
+    })()
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fullName, publicationIds, reloadToken]);
+
+  return (
+    <ProfileSection title={t("title")}>
+      {loading ? (
+        <PublicLoading label={t("loading")} />
+      ) : error ? (
+        <PublicError
+          message={t("error")}
+          onRetry={() => setReloadToken((value) => value + 1)}
+        />
+      ) : publications.length === 0 ? (
+        <PublicEmpty
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
+        />
+      ) : (
+        <div className="space-y-4">
+          {publications.map((publication) => {
+            const source = [publication.publicationType, publication.journal]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <article
+                key={publicationKey(publication)}
+                className="border border-[var(--border)] bg-white p-5 sm:p-6"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                  <h3 className="font-display text-xl font-semibold leading-tight text-[var(--navy)]">
+                    {publication.title}
+                  </h3>
+                  <span className="font-mono text-xs font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
+                    {publication.year}
+                  </span>
+                </div>
+                <p className="mt-4 text-sm font-semibold text-[var(--gray)]">
+                  {t("authors")}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-[var(--slate)]">
+                  {(publication.authors ?? []).join(", ")}
+                </p>
+                <p className="mt-4 text-sm leading-6 text-[var(--slate)]">
+                  {source || t("sourceUnavailable")}
+                </p>
+                {(publication.doi?.trim() || publication.pdfUrl) && (
+                  <div className="mt-5 flex flex-wrap gap-4 border-t border-[var(--border)] pt-4 text-sm font-semibold">
+                    {publication.doi?.trim() && (
+                      <a
+                        href={`https://doi.org/${encodeURI(publication.doi.trim())}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
+                      >
+                        {t("viewDoi")}
+                      </a>
+                    )}
+                    {publication.pdfUrl && (
+                      <a
+                        href={getPublicPublicationPdfUrl(publication._id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
+                      >
+                        {t("viewPdf")}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </ProfileSection>
   );
 }
 
@@ -400,6 +601,13 @@ export default function PublicDosenProfile({ id }: { id: string }) {
         <div className="mt-16 grid gap-14 lg:grid-cols-[minmax(0,65%)_minmax(240px,35%)] lg:gap-16">
           <EducationTimeline education={profile.education ?? []} />
           <AcademicProfiles links={academicLinks} />
+        </div>
+
+        <div className="mt-16 max-w-4xl">
+          <LecturerPublications
+            fullName={profile.fullName}
+            publicationIds={profile.publicationIds}
+          />
         </div>
 
         <aside className="mt-16 border-t border-[var(--border)] pt-6 text-sm leading-7 text-[var(--gray)]">

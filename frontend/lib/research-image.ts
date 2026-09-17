@@ -101,8 +101,22 @@ export interface ResearchImageStyles {
 
 export function getResearchImageStyles(
   area: Pick<
-    | { cropAspectRatio?: CropAspectRatio; cropPositionX?: number; cropPositionY?: number; cropScale?: number; imageFit?: string; customWidth?: number; customHeight?: number },
-    "cropAspectRatio" | "cropPositionX" | "cropPositionY" | "cropScale" | "imageFit" | "customWidth" | "customHeight"
+    {
+      cropAspectRatio?: CropAspectRatio;
+      cropPositionX?: number;
+      cropPositionY?: number;
+      cropScale?: number;
+      imageFit?: string;
+      customWidth?: number;
+      customHeight?: number;
+    },
+    | "cropAspectRatio"
+    | "cropPositionX"
+    | "cropPositionY"
+    | "cropScale"
+    | "imageFit"
+    | "customWidth"
+    | "customHeight"
   >,
 ): ResearchImageStyles {
   const cropAR = area.cropAspectRatio ?? "4/3";

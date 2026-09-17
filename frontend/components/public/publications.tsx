@@ -100,7 +100,7 @@ function PublicationFiltersPanel({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <label htmlFor={`${prefix}-year`} className="eyebrow">
           {t("year")}
@@ -478,7 +478,7 @@ function PublicationTimeline({
       </div>
       <div
         ref={streamViewportRef}
-        className="publications-stream-viewport relative mt-8 hidden min-h-0 min-w-0 flex-1 overflow-hidden lg:flex"
+        className="publications-stream-viewport relative mt-6 hidden min-h-0 min-w-0 flex-1 overflow-hidden lg:flex"
       >
         <div
           className="pointer-events-none absolute right-1 z-10 hidden -translate-y-1/2 lg:block"
@@ -526,7 +526,7 @@ function PublicationTimeline({
           </div>
         </div>
       </div>
-      <div className="relative mt-8 pl-10 sm:pl-14 lg:hidden">
+      <div className="relative mt-6 pl-10 sm:pl-14 lg:hidden">
         <div className="absolute bottom-0 left-3 top-1 w-px bg-[var(--border)]" />
         {groups.map(([year, items]) => (
           <section key={year} className="relative mb-10 last:mb-0">
@@ -689,13 +689,13 @@ export default function Publications() {
 
   return (
     <section className="bg-[var(--background-light)]">
-      <PublicContainer className="py-12 sm:py-16 lg:py-20">
-        <header className="max-w-3xl border-b border-[var(--border)] pb-10">
+      <PublicContainer className="py-8 sm:py-10 lg:py-12">
+        <header className="max-w-3xl border-b border-[var(--border)] pb-6">
           <p className="eyebrow">{t("heroEyebrow")}</p>
-          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-[-0.04em] text-[var(--navy)] sm:text-5xl">
+          <h1 className="mt-3 font-display text-4xl font-semibold leading-tight tracking-[-0.04em] text-[var(--navy)] sm:text-5xl">
             {t("heroTitle")}
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--slate)] sm:text-lg">
+          <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--slate)] sm:text-lg">
             {t("heroDescription")}
           </p>
         </header>
@@ -707,7 +707,7 @@ export default function Publications() {
             visibleRecords.length ? "publications-scroll-track relative" : ""
           }
         >
-          <div className="publications-sticky-grid pt-10 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:gap-8 lg:items-start">
+          <div className="publications-sticky-grid pt-6 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:gap-8 lg:items-start">
             <div className="lg:hidden">
               <button
                 type="button"
@@ -720,19 +720,21 @@ export default function Publications() {
             </div>
 
             <aside
-              className="hidden border-r border-[var(--border)] pr-8 lg:block lg:sticky lg:top-[4.5rem]"
+              className="hidden border-r border-[var(--border)] pr-8 lg:block lg:sticky lg:top-[4.5rem] lg:self-start"
               aria-label={t("filterPublications")}
             >
-              <PublicationFiltersPanel
-                filters={visibleFilters}
-                years={years}
-                topics={topicOptions}
-                methods={methodOptions}
-                t={t}
-                onChange={updateFilters}
-                onClear={clearFilters}
-                prefix="desktop"
-              />
+              <div className="lg:max-h-[calc(100vh-4.5rem-2rem)] lg:overflow-y-auto">
+                <PublicationFiltersPanel
+                  filters={visibleFilters}
+                  years={years}
+                  topics={topicOptions}
+                  methods={methodOptions}
+                  t={t}
+                  onChange={updateFilters}
+                  onClear={clearFilters}
+                  prefix="desktop"
+                />
+              </div>
             </aside>
 
             <div
@@ -743,7 +745,7 @@ export default function Publications() {
                   : ""
               }
             >
-              <main className="mt-8 min-w-0 lg:mt-0 lg:flex lg:h-full lg:flex-col">
+                <main className="mt-6 min-w-0 lg:mt-0 lg:flex lg:h-full lg:flex-col">
                 <div className="flex shrink-0 flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end sm:justify-end">
                   <label className="flex items-center gap-3 text-sm text-[var(--gray)]">
                     {t("sort")}
@@ -787,10 +789,7 @@ export default function Publications() {
                   </div>
                 ) : visibleRecords.length === 0 ? (
                   <div className="mt-8 border border-dashed border-[var(--border)] bg-white p-10 text-center">
-                    <p className="eyebrow text-[var(--ais-blue)]">
-                      {t("emptyEyebrow")}
-                    </p>
-                    <h2 className="mt-3 font-display text-2xl font-semibold text-[var(--navy)]">
+                    <h2 className="font-display text-2xl font-semibold text-[var(--navy)]">
                       {t("emptyTitle")}
                     </h2>
                     <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">

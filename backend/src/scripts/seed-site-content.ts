@@ -287,7 +287,7 @@ export const contentByKey = {
   }),
   footer: footerContentSchema.parse({
     description: text(
-      "Research and engineering for reliability, safety, management, and marine systems.",
+      "Research and engineering for reliability, safety, management, and marine systems",
       "Riset dan rekayasa untuk keandalan, keselamatan, kemudahan pemeliharaan, dan sistem maritim.",
     ),
     email: text("jtsp@its.ac.id", "jtsp@its.ac.id"),

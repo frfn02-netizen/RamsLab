@@ -905,6 +905,7 @@ body {
    ======================================== */
 
 .youtube-carousel-shell {
+  --carousel-accent: var(--rams-red);
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) 48px;
   align-items: center;
@@ -914,31 +915,27 @@ body {
 
 .youtube-carousel-viewport {
   grid-column: 2;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.youtube-carousel-viewport::-webkit-scrollbar {
-  display: none;
-}
-
-.youtube-carousel-track {
-  display: flex;
-  gap: 20px;
+  overflow: hidden;
+  position: relative;
 }
 
 .youtube-carousel-card {
-  flex: 0 0 calc((100% - 40px) / 3);
-  scroll-snap-align: start;
+  flex: 0 0 360px;
+  flex-shrink: 0;
+}
+
+.youtube-marquee-track {
+  --youtube-gap: 28px;
+  display: flex;
+  gap: var(--youtube-gap);
+  width: max-content;
+  will-change: transform;
 }
 
 /* Tablet: 2 cards */
 @media (max-width: 1024px) {
   .youtube-carousel-card {
-    flex: 0 0 calc((100% - 20px) / 2);
+    flex: 0 0 calc((var(--youtube-viewport-width, 800px) - var(--youtube-gap, 28px)) / 2);
   }
 }
 
@@ -949,13 +946,16 @@ body {
     column-gap: 12px;
   }
   .youtube-carousel-card {
-    flex: 0 0 100%;
+    flex: 0 0 var(--youtube-viewport-width, 100%);
+  }
+  .youtube-marquee-track {
+    --youtube-gap: 16px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .youtube-carousel-viewport {
-    scroll-behavior: auto !important;
+  .youtube-marquee-track {
+    will-change: auto;
   }
 }
 

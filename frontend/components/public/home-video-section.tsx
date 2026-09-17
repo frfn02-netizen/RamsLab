@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { getPublicHomepageVideos } from "@/lib/api/modules";
 import type { PublicHomepageVideo } from "@/types/modules";
 import PublicContainer from "./public-container";
@@ -85,77 +86,313 @@ function YoutubeCard({ video }: { video: PublicHomepageVideo }) {
   );
 }
 
-function YoutubeCarousel({ videos }: { videos: PublicHomepageVideo[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = useRef(false);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+function YoutubeCarousel({
+  videos,
+  ariaLabel,
+}: {
+  videos: PublicHomepageVideo[];
+  ariaLabel: string;
+}) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(0);
+  const loopWidthRef = useRef(0);
+  const rafRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const runningRef = useRef(false);
+  const pausedRef = useRef(false);
+  const hoverRef = useRef(false);
+  const focusRef = useRef(false);
+  const manualTransitionRef = useRef(false);
+  const manualEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    prefersReducedMotion.current = mq.matches;
-    const handler = (e: MediaQueryListEvent) => {
-      prefersReducedMotion.current = e.matches;
-    };
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+  const reducedMotion = useSyncExternalStore(
+    (callback) => {
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mq.addEventListener("change", callback);
+      return () => mq.removeEventListener("change", callback);
+    },
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false,
+  );
+
+  const getMeasurements = useCallback(() => {
+    const track = trackRef.current;
+    if (!track || videos.length === 0) return null;
+    const cards = track.querySelectorAll<HTMLElement>(
+      ".youtube-carousel-card",
+    );
+    if (cards.length === 0) return null;
+    const gap = parseFloat(getComputedStyle(track).gap) || 0;
+    const cardWidth = cards[0].offsetWidth;
+    const setWidth = videos.length * cardWidth + (videos.length - 1) * gap;
+    return { cardWidth, gap, setWidth };
+  }, [videos.length]);
+
+  const applyOffset = useCallback((offset: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    offsetRef.current = offset;
+    track.style.transform = `translateX(${offset}px)`;
   }, []);
 
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  const normalizeOffset = useCallback(() => {
+    const lw = loopWidthRef.current;
+    if (lw <= 0) return;
+    let o = offsetRef.current;
+    while (o > 0) o -= lw;
+    while (o < -2 * lw) o += lw;
+    if (o !== offsetRef.current) applyOffset(o);
+  }, [applyOffset]);
+
+  const startMarquee = useCallback(() => {
+    if (
+      runningRef.current ||
+      manualTransitionRef.current ||
+      reducedMotion ||
+      videos.length === 0
+    ) {
+      return;
+    }
+
+    runningRef.current = true;
+    lastTimeRef.current = performance.now();
+
+    const tick = (now: DOMHighResTimeStamp) => {
+      if (!runningRef.current) return;
+
+      if (!pausedRef.current && !hoverRef.current && !focusRef.current) {
+        const dt = (now - lastTimeRef.current) / 1000;
+        offsetRef.current += 35 * dt;
+
+        const lw = loopWidthRef.current;
+        if (lw > 0) {
+          if (offsetRef.current > 0) {
+            offsetRef.current -= lw;
+          } else if (offsetRef.current < -2 * lw) {
+            offsetRef.current += lw;
+          }
+        }
+
+        const track = trackRef.current;
+        if (track) {
+          track.style.transition = "none";
+          track.style.transform = `translateX(${offsetRef.current}px)`;
+        }
+      }
+
+      lastTimeRef.current = now;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+  }, [reducedMotion, videos.length]);
+
+  const stopMarquee = useCallback(() => {
+    runningRef.current = false;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    rafRef.current = 0;
   }, []);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    window.addEventListener("resize", updateScrollState);
-    return () => {
-      el.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
-    };
-  }, [updateScrollState, videos]);
+  const resumeMarquee = useCallback(() => {
+    manualTransitionRef.current = false;
+    pausedRef.current = false;
+    runningRef.current = false;
+    lastTimeRef.current = performance.now();
 
-  const scrollStep = useCallback((direction: -1 | 1) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>(".youtube-carousel-card");
-    if (!card) return;
-    const step = card.offsetWidth + 20;
-    el.scrollBy({
-      left: direction * step,
-      behavior: prefersReducedMotion.current ? "auto" : "smooth",
+    const rafId = requestAnimationFrame(() => {
+      startMarquee();
     });
+
+    rafRef.current = rafId;
+  }, [startMarquee]);
+
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+
+    const sync = (initial = false) => {
+      const m = getMeasurements();
+      if (m && m.setWidth > 0) {
+        loopWidthRef.current = m.setWidth;
+        if (initial) {
+          applyOffset(-m.setWidth);
+        } else {
+          normalizeOffset();
+        }
+      }
+      vp.style.setProperty("--youtube-viewport-width", `${vp.clientWidth}px`);
+    };
+
+    sync(true);
+
+    const ro = new ResizeObserver(() => sync(false));
+    ro.observe(vp);
+    return () => ro.disconnect();
+  }, [getMeasurements, applyOffset, normalizeOffset]);
+
+  useEffect(() => {
+    if (!reducedMotion && videos.length > 0) startMarquee();
+    return () => stopMarquee();
+  }, [reducedMotion, videos.length, startMarquee, stopMarquee]);
+
+  const readCurrentOffset = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return offsetRef.current;
+    const cs = getComputedStyle(track).transform;
+    if (!cs || cs === "none") return offsetRef.current;
+    const m = cs.match(/matrix\(([^)]+)\)/);
+    if (m) {
+      const v = m[1].split(",").map(Number);
+      return v[4] || 0;
+    }
+    return offsetRef.current;
+  }, []);
+
+  const startManualTransition = useCallback(
+    (targetOffset: number) => {
+      const track = trackRef.current;
+      if (!track) return;
+
+      stopMarquee();
+
+      if (manualEndTimerRef.current) {
+        clearTimeout(manualEndTimerRef.current);
+        manualEndTimerRef.current = null;
+      }
+
+      manualTransitionRef.current = true;
+      pausedRef.current = true;
+
+      track.style.transition =
+        "transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1)";
+      track.style.transform = `translateX(${targetOffset}px)`;
+      offsetRef.current = targetOffset;
+
+      let completed = false;
+
+      const finishTransition = () => {
+        if (completed) return;
+        completed = true;
+
+        track.removeEventListener("transitionend", handleTransitionEnd);
+
+        if (manualEndTimerRef.current) {
+          clearTimeout(manualEndTimerRef.current);
+          manualEndTimerRef.current = null;
+        }
+
+        track.style.transition = "none";
+        normalizeOffset();
+        resumeMarquee();
+      };
+
+      const handleTransitionEnd = (event: TransitionEvent) => {
+        if (
+          event.target === track &&
+          event.propertyName === "transform"
+        ) {
+          finishTransition();
+        }
+      };
+
+      track.addEventListener("transitionend", handleTransitionEnd);
+
+      manualEndTimerRef.current = setTimeout(() => {
+        finishTransition();
+      }, 550);
+    },
+    [stopMarquee, normalizeOffset, resumeMarquee],
+  );
+
+  const move = useCallback(
+    (direction: 1 | -1) => {
+      if (manualTransitionRef.current) return;
+
+      const m = getMeasurements();
+      if (!m) return;
+
+      const lw = loopWidthRef.current || m.setWidth;
+      if (lw <= 0) return;
+
+      const currentOffset = readCurrentOffset();
+      const step = m.cardWidth + m.gap;
+      let targetOffset = currentOffset + direction * step;
+
+      if (targetOffset > 0) {
+        targetOffset -= lw;
+      } else if (targetOffset < -2 * lw) {
+        targetOffset += lw;
+      }
+
+      startManualTransition(targetOffset);
+    },
+    [getMeasurements, readCurrentOffset, startManualTransition],
+  );
+
+  const handlePointerEnter = useCallback(() => {
+    hoverRef.current = true;
+  }, []);
+
+  const handlePointerLeave = useCallback(() => {
+    hoverRef.current = false;
+  }, []);
+
+  const handleFocusIn = useCallback(() => {
+    focusRef.current = true;
+  }, []);
+
+  const handleFocusOut = useCallback(() => {
+    setTimeout(() => {
+      if (
+        shellRef.current &&
+        !shellRef.current.contains(document.activeElement)
+      ) {
+        focusRef.current = false;
+      }
+    }, 0);
   }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        scrollStep(-1);
+        move(-1);
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        scrollStep(1);
+        move(1);
       }
     },
-    [scrollStep],
+    [move],
   );
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (manualEndTimerRef.current) clearTimeout(manualEndTimerRef.current);
+    };
+  }, []);
+
+  if (videos.length === 0) return null;
 
   return (
     <div
+      ref={shellRef}
       className="youtube-carousel-shell"
       role="region"
-      aria-label="YouTube videos carousel"
+      aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onFocus={handleFocusIn}
+      onBlur={handleFocusOut}
     >
       <button
         type="button"
-        onClick={() => scrollStep(-1)}
-        disabled={!canScrollLeft}
+        onClick={() => move(-1)}
         className="ecosystem-carousel-btn ecosystem-carousel-btn--prev"
         aria-label="Previous videos"
       >
@@ -172,18 +409,17 @@ function YoutubeCarousel({ videos }: { videos: PublicHomepageVideo[] }) {
         </svg>
       </button>
 
-      <div className="youtube-carousel-viewport" ref={scrollRef}>
-        <div className="youtube-carousel-track">
-          {videos.map((video) => (
-            <YoutubeCard key={video.id} video={video} />
+      <div ref={viewportRef} className="youtube-carousel-viewport">
+        <div ref={trackRef} className="youtube-marquee-track">
+          {[...videos, ...videos, ...videos].map((video, index) => (
+            <YoutubeCard key={`${video.id}-${index}`} video={video} />
           ))}
         </div>
       </div>
 
       <button
         type="button"
-        onClick={() => scrollStep(1)}
-        disabled={!canScrollRight}
+        onClick={() => move(1)}
         className="ecosystem-carousel-btn ecosystem-carousel-btn--next"
         aria-label="Next videos"
       >
@@ -218,10 +454,10 @@ export default function HomeVideoSection() {
 
   if (loading) {
     return (
-      <section className="bg-[var(--background-light)] py-20 sm:py-24">
+      <section className="bg-[var(--background-light)] py-14 sm:py-16">
         <PublicContainer>
           <div className="flex min-h-[20rem] items-center justify-center">
-            <p className="text-sm text-[var(--gray)]">Loading videos…</p>
+            <p className="text-sm text-[var(--gray)]">{t("loading")}…</p>
           </div>
         </PublicContainer>
       </section>
@@ -230,12 +466,10 @@ export default function HomeVideoSection() {
 
   if (error) {
     return (
-      <section className="bg-[var(--background-light)] py-20 sm:py-24">
+      <section className="bg-[var(--background-light)] py-14 sm:py-16">
         <PublicContainer>
           <div className="flex min-h-[12rem] items-center justify-center">
-            <p className="text-sm text-[var(--gray)]">
-              Unable to load videos at this time.
-            </p>
+            <p className="text-sm text-[var(--gray)]">{t("error")}</p>
           </div>
         </PublicContainer>
       </section>
@@ -244,63 +478,32 @@ export default function HomeVideoSection() {
 
   if (videos.length === 0) return null;
 
-  const featured = videos.find((v) => v.isFeatured) ?? videos[0];
-  const latest = videos.filter((v) => v.id !== featured.id);
-
   return (
-    <section className="bg-[var(--background-light)] py-20 sm:py-24">
+    <section className="bg-[var(--background-light)] py-14 sm:py-16">
       <PublicContainer>
-        <RevealOnScroll className="mb-12 max-w-2xl">
+        <RevealOnScroll className="mb-8 max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--rams-red)]">
             {t("eyebrow")}
           </p>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-[var(--navy)] sm:text-4xl">
+          <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-[var(--navy)] sm:text-4xl">
             {t("title")}
           </h2>
-          <p className="mt-4 text-base leading-7 text-[var(--gray)] sm:text-lg">
+          <p className="mt-3 text-base leading-7 text-[var(--gray)] sm:text-lg">
             {t("description")}
           </p>
         </RevealOnScroll>
 
         <RevealOnScroll>
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_1fr]">
-            <a
-              href={featured.youtubeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative block overflow-hidden border border-[var(--border)] bg-white"
-            >
-              {featured.thumbnailUrl ? (
-                <div className="relative aspect-video w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={featured.thumbnailUrl}
-                    alt={featured.title || "YouTube video"}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                  />
-                </div>
-              ) : (
-                <YoutubeFallbackVisual className="aspect-video w-full" />
-              )}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/10">
-                <PlayIcon className="h-14 w-18 drop-shadow-md sm:h-16 sm:w-20" />
-              </div>
-            </a>
-
-            <div className="flex flex-col justify-center">
-              {featured.title && (
-                <h3 className="font-display text-xl font-bold text-[var(--navy)] sm:text-2xl">
-                  {featured.title}
-                </h3>
-              )}
-              <a
-                href={featured.youtubeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--rams-red-dark)] sm:mt-6"
+          <div className="mb-4 flex items-end justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gray)]">
+              {t("latestVideos")}
+            </h3>
+            {videos.length > 10 && (
+              <Link
+                href="/videos"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--rams-red-dark)]"
               >
-                {t("watchOnYouTube")}
+                {t("viewAll")}
                 <svg
                   viewBox="0 0 16 16"
                   fill="none"
@@ -308,24 +511,19 @@ export default function HomeVideoSection() {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="h-3.5 w-3.5"
+                  className="h-3 w-3"
                   aria-hidden="true"
                 >
                   <path d="M1 8h14M9 2l6 6-6 6" />
                 </svg>
-              </a>
-            </div>
+              </Link>
+            )}
           </div>
+          <YoutubeCarousel
+            videos={videos}
+            ariaLabel={t("latestVideos")}
+          />
         </RevealOnScroll>
-
-        {latest.length > 0 && (
-          <RevealOnScroll className="mt-14">
-            <h3 className="mb-6 text-xs font-bold uppercase tracking-[0.18em] text-[var(--gray)]">
-              {t("latestVideos")}
-            </h3>
-            <YoutubeCarousel videos={latest} />
-          </RevealOnScroll>
-        )}
       </PublicContainer>
     </section>
   );

@@ -38,13 +38,10 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
         current={t("heroEyebrow")}
       />
       <section className="bg-[var(--paper)]">
-        <PublicContainer className="py-16 sm:py-20">
-          <RevealOnScroll className="mb-10 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
+        <PublicContainer className="py-10 sm:py-14">
+          <RevealOnScroll className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-4">
             <div>
-              <p className="eyebrow text-[var(--gray)]">
-                {university ? t("universityEyebrow") : t("industrialEyebrow")}
-              </p>
-              <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--navy)]">
+              <h2 className="font-display text-3xl font-semibold text-[var(--navy)]">
                 {university ? t("universityTitle") : t("industrialTitle")}
               </h2>
             </div>
@@ -53,7 +50,7 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
             </span>
           </RevealOnScroll>
 
-          <RevealOnScroll className="mb-8 flex flex-wrap gap-4 text-sm font-semibold">
+          <RevealOnScroll className="mb-6 flex flex-wrap gap-4 text-sm font-semibold">
             <Link href="/partners" className="text-[var(--rams-red)]">
               ← Back
             </Link>

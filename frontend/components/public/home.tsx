@@ -145,7 +145,7 @@ function EcosystemCarousel({ cards }: { cards: EcosystemCard[] }) {
 
   return (
     <div
-      className="ecosystem-carousel-shell mt-12"
+      className="ecosystem-carousel-shell mt-8"
       role="region"
       aria-label="Research ecosystem carousel"
       onKeyDown={handleKeyDown}
@@ -322,13 +322,13 @@ export default function PublicHome() {
         )}
 
       {/* PRINCIPLES */}
-      <section className="bg-white py-20">
+      <section className="bg-white py-14">
         <PublicContainer>
-          <RevealOnScroll className="mb-10 max-w-2xl">
+          <RevealOnScroll className="mb-6 max-w-2xl">
             <p className="eyebrow text-[var(--rams-red)]">
               {common("principles")}
             </p>
-            <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl">
+            <h2 className="mt-2 font-display text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl">
               {common("principlesTitle")}
             </h2>
           </RevealOnScroll>
@@ -368,67 +368,69 @@ export default function PublicHome() {
         !contentLoading &&
         !contentError &&
         content.showEcosystemOnHomepage !== false && (
-        <section className="ecosystem-section bg-[var(--background-light)] py-20 sm:py-24">
-          <PublicContainer>
-            {contentLoading ? (
-              <PublicLoading label={common("loading")} />
-            ) : contentError || !content ? (
-              <PublicError message={common("requestUnavailable")} />
-            ) : (
-            <>
-              <RevealOnScroll className="text-center">
-                <div className="ecosystem-heading-wrap">
-                  <h2 className="font-display text-3xl font-bold text-[var(--navy)] sm:text-4xl">
-                    {localized(content.ecosystem.title)}
-                  </h2>
-                </div>
-              </RevealOnScroll>
-              <EcosystemCarousel
-                cards={[
-                  {
-                    key: "rams",
-                    logo: "/assets/rams-logo.png",
-                    logoAlt: brand("laboratory"),
-                    name: brand("laboratory"),
-                    description: localized(
-                      content.ecosystem.ramsDescription ?? {
-                        en: brand("technicalLine"),
-                        id: brand("technicalLine"),
+          <section className="ecosystem-section bg-[var(--background-light)] py-14 sm:py-16">
+            <PublicContainer>
+              {contentLoading ? (
+                <PublicLoading label={common("loading")} />
+              ) : contentError || !content ? (
+                <PublicError message={common("requestUnavailable")} />
+              ) : (
+                <>
+                  <RevealOnScroll className="text-center">
+                    <div className="ecosystem-heading-wrap">
+                      <h2 className="font-display text-3xl font-bold text-[var(--navy)] sm:text-4xl">
+                        {localized(content.ecosystem.title)}
+                      </h2>
+                    </div>
+                  </RevealOnScroll>
+                  <EcosystemCarousel
+                    cards={[
+                      {
+                        key: "rams",
+                        logo: "/assets/rams-logo.png",
+                        logoAlt: brand("laboratory"),
+                        name: brand("laboratory"),
+                        description: localized(
+                          content.ecosystem.ramsDescription ?? {
+                            en: brand("technicalLine"),
+                            id: brand("technicalLine"),
+                          },
+                        ),
+                        href: "https://rams.co.id/",
                       },
-                    ),
-                    href: null,
-                  },
-                  {
-                    key: "ais",
-                    logo: "/assets/logo ais part2.png",
-                    logoAlt: brand("ais"),
-                    name: brand("ais"),
-                    description: localized(content.ecosystem.aisDescription),
-                    href: "https://aisits.vercel.app/",
-                  },
-                  {
-                    key: "pui",
-                    logo: "/assets/logo pu-kekal part2.png",
-                    logoAlt: brand("pui"),
-                    name: brand("pui"),
-                    description: localized(
-                      content.ecosystem.puiKekalDescription ?? {
-                        en: "",
-                        id: "",
+                      {
+                        key: "ais",
+                        logo: "/assets/logo ais part2.png",
+                        logoAlt: brand("ais"),
+                        name: brand("ais"),
+                        description: localized(
+                          content.ecosystem.aisDescription,
+                        ),
+                        href: "https://aisits.vercel.app/",
                       },
-                    ),
-                    href: "https://www.youtube.com/watch?v=9ry3kKPBAyg&t=72s",
-                  },
-                ]}
-              />
-            </>
-          )}
-        </PublicContainer>
-      </section>
-      )}
+                      {
+                        key: "pui",
+                        logo: "/assets/logo pu-kekal part2.png",
+                        logoAlt: brand("pui"),
+                        name: brand("pui"),
+                        description: localized(
+                          content.ecosystem.puiKekalDescription ?? {
+                            en: "",
+                            id: "",
+                          },
+                        ),
+                        href: "https://www.youtube.com/watch?v=9ry3kKPBAyg&t=72s",
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </PublicContainer>
+          </section>
+        )}
 
       {/* RESEARCH AREAS */}
-      <section className="bg-white py-20">
+      <section className="bg-white py-14">
         <PublicContainer>
           {contentLoading || researchLoading ? (
             <PublicLoading label={common("loading")} />
@@ -448,7 +450,7 @@ export default function PublicHome() {
                   <h2 className="font-display text-4xl font-bold text-[var(--navy)]">
                     {research("title")}
                   </h2>
-                  <p className="mt-4 text-lg text-[var(--gray)]">
+                  <p className="mt-3 text-lg text-[var(--gray)]">
                     {research("description")}
                   </p>
                 </div>
@@ -460,7 +462,7 @@ export default function PublicHome() {
                 </Link>
               </RevealOnScroll>
               <RevealOnScroll
-                className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
+                className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
                 stagger={100}
               >
                 {researchAreas.slice(0, 4).map((area, index) => {

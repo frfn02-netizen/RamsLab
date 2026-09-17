@@ -150,6 +150,10 @@ export function toPublicDosenProfile(req: Request, member: Dosen) {
     photo: publicPhotoUrl(req, member.photo),
     bio: member.bio,
     linkedin: publicLinkedInUrl(member.linkedin),
+    // Explicit Publication associations. Left undefined for legacy records
+    // so the public profile can fall back to name-based matching; an
+    // explicitly saved (possibly empty) array takes precedence.
+    publicationIds: member.publicationIds?.map((id) => id.toString()),
   };
 }
 

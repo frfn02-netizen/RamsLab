@@ -109,7 +109,7 @@ export function ProfileLinks({
   label: string;
 }) {
   return (
-    <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--border)] pt-4 text-sm font-semibold">
+    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--border)] pt-3 text-sm font-semibold">
       {member.linkedin && (
         <a
           href={member.linkedin}
@@ -133,9 +133,12 @@ export function MemberCard({
   profileLabel: string;
   roleFallback: string;
 }) {
-  const isStudent = ["MAHASISWA", "MASTER", "UNDERGRADUATE", "INTERNSHIP"].includes(
-    member.category,
-  );
+  const isStudent = [
+    "MAHASISWA",
+    "MASTER",
+    "UNDERGRADUATE",
+    "INTERNSHIP",
+  ].includes(member.category);
 
   return (
     <article className="group flex h-full min-w-0 flex-col">
@@ -146,7 +149,7 @@ export function MemberCard({
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 25vw, 20vw"
         />
       </div>
-      <div className="flex flex-1 flex-col items-center pt-5 text-center">
+      <div className="flex flex-1 flex-col items-center pt-4 text-center">
         <h3
           className={`font-display max-w-full text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]`}
         >
@@ -164,7 +167,7 @@ export function MemberCard({
           </p>
         )}
         {member.linkedin && member.category !== "DOSEN" && !isStudent && (
-          <div className="mt-auto pt-5">
+          <div className="mt-auto pt-4">
             <ProfileLinks member={member} label={profileLabel} />
           </div>
         )}
@@ -255,10 +258,10 @@ export default function TeamDirectory() {
 
   return (
     <section className="team-directory bg-[var(--paper)]">
-      <PublicContainer className="py-20 sm:py-24">
+      <PublicContainer className="pt-6 pb-10 sm:pt-8 sm:pb-12">
         <nav
           aria-label="People categories"
-          className="flex flex-wrap gap-2 border-b border-[var(--border)] pb-4"
+          className="flex flex-wrap gap-2 border-b border-[var(--border)] pb-3"
         >
           {categoryOrder.map((category) => (
             <button
@@ -278,12 +281,11 @@ export default function TeamDirectory() {
           ))}
         </nav>
 
-        <div className="mt-12 flex flex-col gap-5 border-b border-[var(--border)] pb-10 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-5 flex flex-col gap-3 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="eyebrow text-[var(--rams-red)]">{categoryLabel}</p>
             <h2
               id="people-category-heading"
-              className="mt-4 font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy)] sm:text-4xl"
+              className="font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy)] sm:text-4xl"
             >
               {categoryLabel}
             </h2>
@@ -303,7 +305,7 @@ export default function TeamDirectory() {
           </div>
         </div>
 
-        <div className="mt-10" aria-live="polite">
+        <div className="mt-4" aria-live="polite">
           {loading ? (
             <PublicLoading label={t("loading")} />
           ) : error ? (
@@ -311,7 +313,7 @@ export default function TeamDirectory() {
           ) : null}
 
           {!loading && !error && activeCategory === "STUDENTS" && (
-            <div className="mt-16 space-y-16 border-t border-[var(--border)] pt-12">
+            <div className="mt-6 space-y-8 border-t border-[var(--border)] pt-5">
               {graduatedStudentCategories.map(({ key, label }) => {
                 const categoryMembers = membersFor(key);
                 return (
@@ -327,7 +329,7 @@ export default function TeamDirectory() {
                     </h3>
                     {categoryMembers.length > 0 ? (
                       <RevealOnScroll
-                        className="mt-8 grid gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                        className="mt-6 grid gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                         stagger={90}
                       >
                         {categoryMembers.map((member) => (
@@ -355,15 +357,15 @@ export default function TeamDirectory() {
             activeCategory !== "STUDENTS" &&
             members.length > 0 && (
               <div
-                className={`${activeCategory === "DOSEN" && !search ? "mt-16 border-t border-[var(--border)] pt-12" : ""}`}
+                className={`${activeCategory === "DOSEN" && !search ? "mt-6 border-t border-[var(--border)] pt-5" : ""}`}
               >
                 {activeCategory === "DOSEN" && !search && (
-                  <p className="mb-8 text-sm leading-6 text-[var(--slate)]">
+                  <p className="mb-5 text-sm leading-6 text-[var(--slate)]">
                     {t("staffDescription")}
                   </p>
                 )}
                 <RevealOnScroll
-                  className="grid gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                  className="grid gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                   stagger={90}
                 >
                   {members.map((member) => (

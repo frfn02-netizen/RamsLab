@@ -349,10 +349,13 @@ export default function StudentDetail({ id }: { id: string }) {
                   </p>
                   <p className="mt-2">
                     {student.internshipStartDate
-                      ? new Date(student.internshipStartDate).toLocaleDateString(
-                          "en-GB",
-                          { day: "numeric", month: "long", year: "numeric" },
-                        )
+                      ? new Date(
+                          student.internshipStartDate,
+                        ).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
                       : "—"}
                     {" – "}
                     {student.internshipEndDate

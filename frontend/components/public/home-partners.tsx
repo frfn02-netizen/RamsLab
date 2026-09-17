@@ -45,16 +45,13 @@ export default function HomePartnersSection() {
         aria-hidden="true"
       />
 
-      <div className="relative z-10 pt-16 sm:pt-20">
+      <div className="relative z-10 pt-10 sm:pt-14">
         <PublicContainer>
           <RevealOnScroll className="text-center">
-            <p className="eyebrow text-[var(--rams-red)]">
-              {t("partners.sectionEyebrow")}
-            </p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-[var(--navy)] sm:text-4xl">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--navy)] sm:text-4xl">
               {t("partners.title")}
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-[var(--gray)] sm:text-lg">
+            <p className="mx-auto mt-3 max-w-2xl text-base text-[var(--gray)] sm:text-lg">
               {t("partners.description")}
             </p>
           </RevealOnScroll>
@@ -62,7 +59,7 @@ export default function HomePartnersSection() {
 
         {/* Industrial Partners — RIGHT → LEFT */}
         {industrial.length > 0 && (
-          <RevealOnScroll className="mt-12">
+          <RevealOnScroll className="mt-8">
             <p className="mb-5 text-center text-xl font-bold uppercase tracking-widest text-[var(--gray)]">
               {t("partners.industrialTitle")}
             </p>
@@ -76,7 +73,7 @@ export default function HomePartnersSection() {
 
         {/* University Partners — LEFT → RIGHT */}
         {university.length > 0 && (
-          <RevealOnScroll className="mt-10">
+          <RevealOnScroll className="mt-8">
             <p className="mb-5 text-center text-xl font-bold uppercase tracking-widest text-[var(--gray)]">
               {t("partners.universityTitle")}
             </p>
@@ -89,7 +86,7 @@ export default function HomePartnersSection() {
         )}
 
         {/* View all partners CTA with decorative maritime lines */}
-        <RevealOnScroll className="relative z-10 mt-14 pb-4 sm:mt-16">
+        <RevealOnScroll className="relative z-10 mt-10 pb-4 sm:mt-12">
           <div className="partners-cta-decor flex items-center justify-center">
             <svg
               className="mr-3 hidden h-2 w-2 text-[var(--rams-red)] sm:block"
