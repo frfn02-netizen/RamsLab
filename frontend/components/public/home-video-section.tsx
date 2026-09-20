@@ -76,8 +76,8 @@ function YoutubeCard({ video }: { video: PublicHomepageVideo }) {
         </div>
       </div>
       {video.title && (
-        <div className="px-4 py-3.5">
-          <h4 className="text-sm font-semibold leading-snug text-[var(--navy)] line-clamp-2">
+        <div className="px-5 py-4">
+          <h4 className="text-[0.95rem] font-semibold leading-snug text-[var(--navy)] line-clamp-2">
             {video.title}
           </h4>
         </div>

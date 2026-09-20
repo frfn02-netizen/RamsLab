@@ -920,7 +920,7 @@ body {
 }
 
 .youtube-carousel-card {
-  flex: 0 0 360px;
+  flex: 0 0 500px;
   flex-shrink: 0;
 }
 
@@ -930,6 +930,13 @@ body {
   gap: var(--youtube-gap);
   width: max-content;
   will-change: transform;
+}
+
+/* Desktop medium */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .youtube-carousel-card {
+    flex: 0 0 440px;
+  }
 }
 
 /* Tablet: 2 cards */
@@ -946,7 +953,7 @@ body {
     column-gap: 12px;
   }
   .youtube-carousel-card {
-    flex: 0 0 var(--youtube-viewport-width, 100%);
+    flex: 0 0 300px;
   }
   .youtube-marquee-track {
     --youtube-gap: 16px;
