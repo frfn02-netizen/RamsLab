@@ -165,7 +165,10 @@ async function requestEnvelope<T>(
       signal: controller.signal,
     });
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
+    const isTimeout =
+      error instanceof Error &&
+      (error.name === "AbortError" || error.name === "TimeoutError");
+    if (isTimeout) {
       throw new ApiError("The request timed out. Please try again.", 0);
     }
     throw new ApiError("Unable to connect to the RAMS API.", 0);

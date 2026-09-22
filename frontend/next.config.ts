@@ -1,8 +1,11 @@
-
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
+const basePath = process.env.BASE_PATH || "";
+
 const nextConfig: NextConfig = {
+  basePath,
+  assetPrefix: basePath,
 
   images: {
     remotePatterns: [
@@ -25,6 +28,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  rewrites: async () => ({
+    beforeFiles: [
+      { source: "/", destination: "/en" },
+    ],
+    afterFiles: [],
+    fallback: [],
+  }),
 
   experimental: {
     useTypeScriptCli: false,

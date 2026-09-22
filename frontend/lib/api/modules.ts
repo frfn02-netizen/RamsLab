@@ -430,7 +430,7 @@ export type PublicProjectQuery = {
 
 export const getPublicServiceProjectsList = (
   params: PublicProjectQuery = {},
-) => {
+): Promise<PublicServiceProjectListResponse> => {
   const query = new URLSearchParams();
   if (params.search) query.set("search", params.search);
   if (params.yearGroup) query.set("yearGroup", params.yearGroup);
@@ -439,12 +439,9 @@ export const getPublicServiceProjectsList = (
   if (params.page) query.set("page", String(params.page));
   if (params.limit) query.set("limit", String(params.limit));
   const qs = query.toString();
-  return fetch(
-    `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"}/public/public-service-projects${qs ? `?${qs}` : ""}`,
-  ).then(async (r) => {
-    if (!r.ok) throw new Error("Failed to fetch public service projects");
-    return (await r.json()) as PublicServiceProjectListResponse;
-  });
+  return apiRequestWithMeta(
+    `/public/public-service-projects${qs ? `?${qs}` : ""}`,
+  ) as unknown as Promise<PublicServiceProjectListResponse>;
 };
 
 export const getPartners = (type: PartnerType) =>
