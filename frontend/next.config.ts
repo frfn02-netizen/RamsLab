@@ -13,8 +13,11 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
+  trailingSlash: true,  // tambahkan ini secara eksplisit
 
   images: {
+    unoptimized: true,   // tambahkan ini
+
     remotePatterns: [
       {
         protocol: "https",
