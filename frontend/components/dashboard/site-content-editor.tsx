@@ -33,6 +33,7 @@ import type {
   HeadOfLaboratoryContent,
   HeroImagePosition,
   HomepageContent,
+  PublicServiceContent,
   SiteContentImage,
 } from "@/types/site-content";
 
@@ -1752,6 +1753,158 @@ function FooterEditor() {
   );
 }
 
+function PublicServiceEditor() {
+  const [content, setContent] = useState<PublicServiceContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminSiteContent("public-service")
+      .then((result) => {
+        if (!cancelled) {
+          setContent(result.content);
+          setLastUpdated(result.updatedAt);
+        }
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setError(getUserFacingError(reason));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const setHero = (
+    field: "eyebrow" | "title" | "description",
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) =>
+      current
+        ? {
+            ...current,
+            hero: {
+              ...current.hero,
+              [field]: {
+                ...current.hero[field],
+                [locale]: value,
+              },
+            },
+          }
+        : current,
+    );
+
+  const setSection = (
+    section: "services" | "experts",
+    locale: "en" | "id",
+    value: string,
+  ) =>
+    setContent((current) =>
+      current
+        ? {
+            ...current,
+            [section]: {
+              ...current[section],
+              title: {
+                ...current[section].title,
+                [locale]: value,
+              },
+            },
+          }
+        : current,
+    );
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!content) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const result = await updateAdminSiteContent("public-service", content);
+
+      setContent(result.content);
+      setLastUpdated(result.updatedAt);
+      setSuccess(true);
+    } catch (reason) {
+      setError(getUserFacingError(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <EditorShell
+      title="Public Service"
+      description="Edit the public service page hero and section titles."
+      lastUpdated={lastUpdated}
+      loading={loading}
+      error={error}
+      saving={saving}
+      success={success}
+      onSubmit={save}
+    >
+      {content && (
+        <>
+          <Section title="Hero">
+            <BilingualField
+              label="Eyebrow"
+              value={content.hero.eyebrow}
+              onChange={(locale, value) => setHero("eyebrow", locale, value)}
+            />
+            <BilingualField
+              label="Title"
+              value={content.hero.title}
+              onChange={(locale, value) => setHero("title", locale, value)}
+            />
+            <BilingualField
+              label="Description"
+              value={content.hero.description}
+              onChange={(locale, value) =>
+                setHero("description", locale, value)
+              }
+              multiline
+            />
+          </Section>
+
+          <Section title="Section Titles">
+            <BilingualField
+              label="Services title"
+              value={content.services.title}
+              onChange={(locale, value) =>
+                setSection("services", locale, value)
+              }
+            />
+            <BilingualField
+              label="Experts title"
+              value={content.experts.title}
+              onChange={(locale, value) => setSection("experts", locale, value)}
+            />
+          </Section>
+        </>
+      )}
+    </EditorShell>
+  );
+}
+
 export default function SiteContentEditor({ keyName }: { keyName: string }) {
   if (keyName === "homepage") {
     return <HomepageEditor />;
@@ -1767,6 +1920,10 @@ export default function SiteContentEditor({ keyName }: { keyName: string }) {
 
   if (keyName === "footer") {
     return <FooterEditor />;
+  }
+
+  if (keyName === "public-service") {
+    return <PublicServiceEditor />;
   }
 
   return (

@@ -50,7 +50,7 @@ export const createAlumniSchema = z.object({
 
   photo: z.string().trim().optional(),
 
-  graduationYear: z.number().int().min(1900).max(2100),
+  angkatan: z.number().int().min(1).max(99),
 
   program: z.string().trim().min(1, "Program is required").max(200),
 
@@ -65,6 +65,8 @@ export const createAlumniSchema = z.object({
     ALUMNI_STATUS.SEEKING_JOB,
     ALUMNI_STATUS.OTHER,
   ]),
+
+  otherStatus: z.string().trim().max(200).optional(),
 
   currentCompany: z.string().trim().max(200).optional(),
 
@@ -102,7 +104,7 @@ export const updateAlumniSchema = z.object({
 
   photo: z.string().trim().optional(),
 
-  graduationYear: z.number().int().min(1900).max(2100).optional(),
+  angkatan: z.number().int().min(1).max(99).optional(),
 
   program: z.string().trim().min(1, "Program is required").optional(),
 
@@ -119,6 +121,8 @@ export const updateAlumniSchema = z.object({
       ALUMNI_STATUS.OTHER,
     ])
     .optional(),
+
+  otherStatus: z.string().trim().max(200).optional(),
 
   currentCompany: z.string().trim().optional(),
 
@@ -146,7 +150,7 @@ export const updateAlumniSchema = z.object({
 export const updateMyAlumniSchema = z.object({
   fullName: z.string().trim().min(2, "Full name is required").optional(),
 
-  graduationYear: z.number().int().min(1900).max(2100).optional(),
+  angkatan: z.number().int().min(1).max(99).optional(),
 
   photo: z.string().trim().optional(),
 
@@ -163,6 +167,8 @@ export const updateMyAlumniSchema = z.object({
       ALUMNI_STATUS.OTHER,
     ])
     .optional(),
+
+  otherStatus: z.string().trim().max(200).optional(),
 
   currentCompany: z.string().trim().optional(),
 
@@ -185,7 +191,7 @@ export const createAlumniShellSchema = z.object({
 
 export const completeMyAlumniSchema = updateMyAlumniSchema.extend({
   nim: z.string().trim().min(1, "NIM is required").max(50).optional(),
-  graduationYear: z.number().int().min(1900).max(2100).optional(),
+  angkatan: z.number().int().min(1).max(99).optional(),
 });
 
 export type CreateAlumniInput = z.infer<typeof createAlumniSchema>;

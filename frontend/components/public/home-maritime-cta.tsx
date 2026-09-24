@@ -103,9 +103,7 @@ export default function HomeMaritimeCta() {
       {/* Content */}
       <PublicContainer className="relative z-10 py-14 sm:py-16 lg:py-20">
         <RevealOnScroll className="text-center">
-          <p className="eyebrow text-[var(--rams-red)]">
-            {t("ctaEyebrow")}
-          </p>
+          <p className="eyebrow text-[var(--rams-red)]">{t("ctaEyebrow")}</p>
 
           <h2 className="mx-auto mt-3 max-w-3xl whitespace-pre-line font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
             {t("ctaTitle")}

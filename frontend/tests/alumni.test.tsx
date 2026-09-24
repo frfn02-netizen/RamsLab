@@ -18,7 +18,7 @@ const record: Alumni = {
   userId: "user-1",
   fullName: "Marine Researcher",
   nim: "NIM-1",
-  graduationYear: 2024,
+  angkatan: 24,
   program: "Marine Engineering",
   currentStatus: "WORKING",
   currentCompany: "RAMS Lab",
@@ -46,7 +46,7 @@ describe("Alumni list", () => {
     await waitFor(() =>
       expect(screen.getByText("Marine Researcher")).toBeInTheDocument(),
     );
-    expect(screen.getByRole("link", { name: "View" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute(
       "href",
       "/dashboard/alumni/alumni-1",
     );

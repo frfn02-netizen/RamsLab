@@ -110,7 +110,9 @@ function DosenPublicationsSection({
 }) {
   const [available, setAvailable] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const normalizedName = normalizeAuthorName(fullName);
 
   useEffect(() => {
@@ -120,6 +122,7 @@ function DosenPublicationsSection({
     }
     let cancelled = false;
     setLoading(true);
+    setFetchError(null);
     const PAGE_LIMIT = 200;
     (async () => {
       const all: Publication[] = [];
@@ -135,26 +138,44 @@ function DosenPublicationsSection({
         const rows = res.data ?? [];
         all.push(...rows);
         total = res.total ?? all.length;
+        if (process.env.NODE_ENV !== "production") {
+          console.debug(
+            `[Publications] page=${page} fetched=${rows.length} accumulated=${all.length}/${total} lecturer="${fullName}"`,
+          );
+        }
         if (rows.length === 0 || all.length >= total) break;
         page += 1;
       }
       if (cancelled) return;
-      setAvailable(
-        all.filter((pub) =>
-          (pub.authors ?? []).some(
-            (a) => normalizeAuthorName(a) === normalizedName,
-          ),
+      const matched = all.filter((pub) =>
+        (pub.authors ?? []).some(
+          (a) => normalizeAuthorName(a) === normalizedName,
         ),
       );
+      if (process.env.NODE_ENV !== "production") {
+        console.debug(
+          `[Publications] matched=${matched.length} of ${all.length} total publications for lecturer="${fullName}" (normalized="${normalizedName}")`,
+        );
+      }
+      setAvailable(matched);
     })()
-      .catch(() => {})
+      .catch((err) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[Publications] Failed to fetch publications:", err);
+        }
+        if (!cancelled) {
+          setFetchError(
+            err instanceof Error ? err.message : "Failed to load publications",
+          );
+        }
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [normalizedName]);
+  }, [normalizedName, retryCount]);
 
   const addPublication = (id: string) => {
     if (!selectedIds.includes(id)) {
@@ -211,14 +232,27 @@ function DosenPublicationsSection({
           <button
             type="button"
             className={`w-full rounded border border-black/10 bg-white px-3 py-2 text-left text-sm ${inputClass} hover:border-[var(--rams-red)]`}
-            onClick={() => setDropdownOpen((v) => !v)}
+            onClick={() => {
+              if (fetchError && !loading) {
+                setRetryCount((c) => c + 1);
+              } else {
+                setDropdownOpen((v) => !v);
+              }
+            }}
             disabled={loading}
           >
             {loading
               ? "Searching publications…"
-              : "+ Add publication"}
+              : fetchError
+                ? "Retry loading publications"
+                : "+ Add publication"}
           </button>
-          {dropdownOpen && !loading && (
+          {fetchError && !loading && (
+            <p className="mt-1 text-xs text-red-600">
+              {fetchError}. Click the button above to retry.
+            </p>
+          )}
+          {dropdownOpen && !loading && !fetchError && (
             <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded border border-black/10 bg-white shadow-lg">
               {available.length === 0 ? (
                 <li className="px-3 py-2 text-sm text-[var(--gray)]">

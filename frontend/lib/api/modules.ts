@@ -71,6 +71,8 @@ export const getPublicDosenById = (id: string) =>
   apiRequest<PublicPerson>(`/public/people/${encodeURIComponent(id)}`);
 export const getPublicAlumniList = () =>
   apiRequest<PublicAlumniResponse>("/public/alumni");
+export const getPublicAlumniById = (id: string) =>
+  apiRequest<PublicPerson>(`/public/alumni/${encodeURIComponent(id)}`);
 export const getDosenById = (id: string) =>
   apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`);
 export const createDosen = (input: DosenInput) =>

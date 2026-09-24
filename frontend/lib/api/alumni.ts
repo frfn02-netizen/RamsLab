@@ -60,6 +60,12 @@ export function setAlumniActive(id: string, isActive: boolean) {
     { method: "PATCH", body: JSON.stringify({ isActive }) },
   );
 }
+export function reviewAlumni(id: string, action: "APPROVE" | "REJECT") {
+  return apiRequest<Alumni>(`/alumni/${encodeURIComponent(id)}/review`, {
+    method: "PATCH",
+    body: JSON.stringify({ action }),
+  });
+}
 export async function deleteAlumni(id: string) {
   await apiRequestWithMeta(`/alumni/${encodeURIComponent(id)}`, {
     method: "DELETE",

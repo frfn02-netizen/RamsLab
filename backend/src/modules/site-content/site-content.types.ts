@@ -5,6 +5,7 @@ export const SITE_CONTENT_KEYS = [
   "about",
   "contact",
   "footer",
+  "public-service",
 ] as const;
 export type SiteContentKey = (typeof SITE_CONTENT_KEYS)[number];
 
@@ -24,7 +25,11 @@ export interface SiteContentDocument {
 }
 
 export type SiteContentContent =
-  HomepageContent | AboutContent | ContactContent | FooterContent;
+  | HomepageContent
+  | AboutContent
+  | ContactContent
+  | FooterContent
+  | PublicServiceContent;
 
 export interface HomepagePrinciple {
   key: "R" | "A" | "M" | "S";
@@ -155,4 +160,18 @@ export interface FooterContent {
   addressLines: [BilingualText, BilingualText, BilingualText, BilingualText];
   copyright: BilingualText;
   institution: BilingualText;
+}
+
+export interface PublicServiceContent {
+  hero: {
+    eyebrow: BilingualText;
+    title: BilingualText;
+    description: BilingualText;
+  };
+  services: {
+    title: BilingualText;
+  };
+  experts: {
+    title: BilingualText;
+  };
 }

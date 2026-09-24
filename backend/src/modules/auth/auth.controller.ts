@@ -137,20 +137,49 @@ export async function changePasswordController(req: Request, res: Response) {
       return res
         .status(401)
         .json({ success: false, message: "Authentication required" });
-    const input = changePasswordSchema.parse(req.body);
-    await changePassword(
-      req.user.userId,
-      input.currentPassword,
-      input.newPassword,
-    );
+
+    let input;
+    try {
+      input = changePasswordSchema.parse(req.body);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: "Please correct the highlighted fields",
+          errors: error.issues.map(({ path, message }) => ({ path, message })),
+        });
+      }
+      throw error;
+    }
+
+    try {
+      await changePassword(
+        req.user.userId,
+        input.currentPassword,
+        input.newPassword,
+      );
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Current password is invalid"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Current password is incorrect",
+        });
+      }
+      throw error;
+    }
+
     return res.json({
       success: true,
       message: "Password changed successfully",
     });
   } catch {
-    return res
-      .status(400)
-      .json({ success: false, message: "Unable to change password" });
+    return res.status(500).json({
+      success: false,
+      message: "Unable to change password",
+    });
   }
 }
 

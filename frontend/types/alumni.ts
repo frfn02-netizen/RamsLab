@@ -1,5 +1,6 @@
 export type AlumniStatus =
   "WORKING" | "STUDYING" | "ENTREPRENEUR" | "SEEKING_JOB" | "OTHER";
+export type AlumniReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface Alumni {
   _id: string;
@@ -9,13 +10,14 @@ export interface Alumni {
   nim: string;
   photo?: string;
 
-  graduationYear: number;
+  angkatan: number;
   program: string;
 
   phone?: string;
   location?: string;
 
   currentStatus: AlumniStatus;
+  otherStatus?: string;
   currentCompany?: string;
   currentPosition?: string;
 
@@ -26,6 +28,7 @@ export interface Alumni {
   educationHistory: EducationHistory[];
 
   isPublic: boolean;
+  reviewStatus?: AlumniReviewStatus;
   profileCompleted?: boolean;
   accountEmail?: string;
   accountActive?: boolean;

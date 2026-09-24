@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "@/i18n/navigation";
+import { usePathname } from "@/i18n/navigation";
+import { useRamsLabRouter } from "./rams-lab-router";
 import { useSearchParams } from "next/navigation";
 import {
   memo,
@@ -562,7 +563,7 @@ function PublicationTimeline({
 export default function Publications() {
   const t = useTranslations("publications");
   const pathname = usePathname();
-  const router = useRouter();
+  const router = useRamsLabRouter();
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const [records, setRecords] = useState<PublicationProject[]>([]);
@@ -745,7 +746,7 @@ export default function Publications() {
                   : ""
               }
             >
-                <main className="mt-6 min-w-0 lg:mt-0 lg:flex lg:h-full lg:flex-col">
+              <main className="mt-6 min-w-0 lg:mt-0 lg:flex lg:h-full lg:flex-col">
                 <div className="flex shrink-0 flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end sm:justify-end">
                   <label className="flex items-center gap-3 text-sm text-[var(--gray)]">
                     {t("sort")}

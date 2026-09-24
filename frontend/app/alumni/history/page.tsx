@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -64,17 +65,19 @@ export default function AlumniHistoryPage() {
     <div className="min-h-screen bg-[var(--paper)]">
       <div className="border-b border-[var(--border)] bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 sm:px-8">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="font-display text-lg font-semibold tracking-[-0.02em] text-[var(--navy)]"
-            >
-              RAMS Platform
-            </Link>
-            <span className="text-sm font-semibold text-[var(--rams-red)]">
-              Alumni Portal
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image
+              src="/assets/rams-logo.png"
+              alt="RAMS"
+              width={64}
+              height={64}
+              className="h-16 w-auto"
+              priority
+            />
+            <span className="font-display text-lg font-semibold tracking-[-0.02em] text-[var(--rams-red)]">
+              RAMS
             </span>
-          </div>
+          </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/alumni/dashboard"

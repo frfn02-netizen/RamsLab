@@ -28,7 +28,6 @@ export async function generateMetadata({
 
 export default function TeamPage() {
   const t = useTranslations("team");
-  const home = useTranslations("home");
 
   return (
     <>
@@ -43,9 +42,9 @@ export default function TeamPage() {
 
       <CtaSection
         title={t("ctaTitle")}
-        description={home("ctaDescription")}
-        primary={home("primaryCta")}
-        secondary={home("researchLink")}
+        description={t("ctaDescription")}
+        primary={t("ctaPrimary")}
+        primaryHref="/contact"
       />
     </>
   );

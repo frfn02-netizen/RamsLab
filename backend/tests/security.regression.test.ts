@@ -27,7 +27,7 @@ describe("security regressions", () => {
         userId: "000000000000000000000001",
         fullName: "Test Alumni",
         nim: "TEST",
-        graduationYear: 2020,
+        angkatan: 20,
         program: "Test",
         currentStatus: "WORKING",
       },
@@ -40,7 +40,7 @@ describe("security regressions", () => {
         password: "a-secure-test-password",
         fullName: "Test Alumni",
         nim: "TEST",
-        graduationYear: 2020,
+        angkatan: 20,
         program: "Test",
         currentStatus: "WORKING",
       },
@@ -89,7 +89,7 @@ describe("security regressions", () => {
         userId: "000000000000000000000001",
         fullName: "Test Alumni",
         nim: "TEST",
-        graduationYear: 2020,
+        angkatan: 20,
         program: "Test",
         currentStatus: "WORKING",
         careerHistory: [],
@@ -105,7 +105,7 @@ describe("security regressions", () => {
         password: "a-secure-test-password",
         fullName: "Test Alumni",
         nim: "TEST",
-        graduationYear: 2020,
+        angkatan: 20,
         program: "Test",
         currentStatus: "WORKING",
         linkedin: maliciousUrl,
@@ -124,7 +124,7 @@ describe("security regressions", () => {
       fullName: "Public Alumni",
       nim: "PRIVATE-NIM",
       location: "Private Location",
-      graduationYear: 2020,
+      angkatan: 2020,
       program: "Marine Engineering",
       currentStatus: "WORKING",
       currentCompany: "RAMS",
@@ -144,7 +144,7 @@ describe("security regressions", () => {
     expect(profile).not.toHaveProperty("phone");
     expect(profile).toMatchObject({
       fullName: "Public Alumni",
-      graduationYear: 2020,
+      angkatan: 2020,
     });
   });
 });

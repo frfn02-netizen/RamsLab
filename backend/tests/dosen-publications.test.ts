@@ -99,10 +99,7 @@ beforeAll(async () => {
     "Vitest Coauthor",
     "External Researcher",
   ]);
-  await createPublication(`${titlePrefix} B`, [
-    "Other Person",
-    "Jane Doe",
-  ]);
+  await createPublication(`${titlePrefix} B`, ["Other Person", "Jane Doe"]);
   await createPublication(`${titlePrefix} C`, [
     "Vitest Lecturer",
     "R. Firmansyah",
@@ -157,9 +154,7 @@ describe("Dosen publication associations", () => {
   it("updates associations without wiping other lecturer fields", async () => {
     const created = await createDosen("update", "Vitest Lecturer", {
       bio: "Original biography",
-      education: [
-        { degree: "PhD", field: "Marine", institution: "ITS" },
-      ],
+      education: [{ degree: "PhD", field: "Marine", institution: "ITS" }],
     });
     expect(created.status).toBe(201);
     const id = created.body.data._id as string;

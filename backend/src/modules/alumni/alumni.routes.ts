@@ -17,6 +17,7 @@ import {
   setAlumniActiveController,
   getMyAlumniAuditLogsController,
   getAlumniAuditLogsController,
+  reviewAlumniController,
 } from "./alumni.controller.js";
 
 const router = Router();
@@ -69,6 +70,12 @@ router.patch(
   authenticate,
   requireRole("ADMIN"),
   setAlumniActiveController,
+);
+router.patch(
+  "/:id/review",
+  authenticate,
+  requireRole("ADMIN"),
+  reviewAlumniController,
 );
 router.post(
   "/me/photo",

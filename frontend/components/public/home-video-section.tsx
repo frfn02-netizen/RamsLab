@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useSyncExternalStore,
+  useRef,
+  useState,
+} from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicHomepageVideos } from "@/lib/api/modules";
@@ -120,9 +126,7 @@ function YoutubeCarousel({
   const getMeasurements = useCallback(() => {
     const track = trackRef.current;
     if (!track || videos.length === 0) return null;
-    const cards = track.querySelectorAll<HTMLElement>(
-      ".youtube-carousel-card",
-    );
+    const cards = track.querySelectorAll<HTMLElement>(".youtube-carousel-card");
     if (cards.length === 0) return null;
     const gap = parseFloat(getComputedStyle(track).gap) || 0;
     const cardWidth = cards[0].offsetWidth;
@@ -291,10 +295,7 @@ function YoutubeCarousel({
       };
 
       const handleTransitionEnd = (event: TransitionEvent) => {
-        if (
-          event.target === track &&
-          event.propertyName === "transform"
-        ) {
+        if (event.target === track && event.propertyName === "transform") {
           finishTransition();
         }
       };
@@ -519,10 +520,7 @@ export default function HomeVideoSection() {
               </Link>
             )}
           </div>
-          <YoutubeCarousel
-            videos={videos}
-            ariaLabel={t("latestVideos")}
-          />
+          <YoutubeCarousel videos={videos} ariaLabel={t("latestVideos")} />
         </RevealOnScroll>
       </PublicContainer>
     </section>

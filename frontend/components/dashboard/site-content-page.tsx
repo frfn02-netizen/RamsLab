@@ -34,6 +34,10 @@ const pageDetails: Record<
     description:
       "Footer description, contact details, address, copyright, and institution copy.",
   },
+  "public-service": {
+    title: "Public Service",
+    description: "Hero, services, and public service copy.",
+  },
 };
 
 export default function SiteContentPage() {

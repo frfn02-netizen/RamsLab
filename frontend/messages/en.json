@@ -147,8 +147,7 @@
       "goTo": "Go to research highlight {number}"
     },
     "researchTitle": "Methods for decisions that matter.",
-    "researchDescription": "Six connected areas frame the laboratory’s work across maritime, offshore, and industrial systems.",
-    "researchLink": "View all research",
+    "researchDescription": "Six connected areas frame the laboratory's work across maritime, offshore, and industrial systems.",
     "partnersEyebrow": "Partners & projects",
     "partnersTitle": "Connected to applied work.",
     "partnersDescription": "Published partner and project records are sourced from the RAMS Platform API.",
@@ -182,8 +181,6 @@
     "ecosystemTitle": "Part of the ITS Research Ecosystem",
     "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
     "partners": {
-      "sectionEyebrow": "Our Partners",
-      "title": "Selected Partners",
       "description": "We collaborate with leading universities and industrial partners to advance research in reliability, safety, and marine systems.",
       "industrialTitle": "Industrial Partners",
       "universityTitle": "University Partners",
@@ -412,7 +409,9 @@
     },
     "emptyTitle": "No public team profiles",
     "emptyDescription": "Public lecturer and researcher profiles will appear here when available.",
-    "ctaTitle": "Start a conversation with the laboratory"
+    "ctaTitle": "Connect with our people",
+    "ctaDescription": "Meet the researchers and experts behind RAMS Laboratory and explore opportunities for collaboration.",
+    "ctaPrimary": "Get in touch"
   },
   "alumni": {
     "heroEyebrow": "Alumni network",
@@ -433,7 +432,7 @@
     "noMatchingDescription": "Try adjusting your search.",
     "backToAlumni": "Back to Alumni",
     "detailCategory": "ALUMNI",
-    "entryYear": "Entry",
+    "angkatan": "P",
     "bioLabel": "BIO",
     "ctaTitle": "Stay connected with the laboratory."
   },
@@ -509,8 +508,7 @@
     "metaTitle": "Public Service | RAMS Laboratory",
     "title": "Public Service",
     "description": "Expertise and public services managed by RAMS Laboratory.",
-    "expertsEyebrow": "Our Experts",
-    "expertsTitle": "Our Experts",
+    "industrialPartnersTitle": "Industrial Partners",
     "servicesEyebrow": "Public Services",
     "servicesTitle": "Public Services",
     "companies": "Companies",

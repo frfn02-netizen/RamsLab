@@ -1,4 +1,5 @@
-export type SiteContentKey = "homepage" | "about" | "contact" | "footer";
+export type SiteContentKey =
+  "homepage" | "about" | "contact" | "footer" | "public-service";
 
 export interface BilingualText {
   en: string;
@@ -138,11 +139,26 @@ export interface FooterContent {
   institution: BilingualText;
 }
 
+export interface PublicServiceContent {
+  hero: {
+    eyebrow: BilingualText;
+    title: BilingualText;
+    description: BilingualText;
+  };
+  services: {
+    title: BilingualText;
+  };
+  experts: {
+    title: BilingualText;
+  };
+}
+
 export interface SiteContentMap {
   homepage: HomepageContent;
   about: AboutContent;
   contact: ContactContent;
   footer: FooterContent;
+  "public-service": PublicServiceContent;
 }
 
 export interface SiteContentEnvelope<

@@ -54,6 +54,10 @@ function RegisterContent() {
         password,
         confirmPassword,
       });
+      window.sessionStorage.setItem(
+        "rams_alumni_registration_notice",
+        "Account created successfully. Please complete your alumni profile. Your profile will be reviewed by an administrator before publication.",
+      );
       router.replace("/alumni/dashboard");
     } catch (reason) {
       setError(getUserFacingError(reason));

@@ -265,10 +265,9 @@ function LecturerPublications({
       } catch {
         if (!cancelled) setError(true);
       }
-    })()
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    })().finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
     return () => {
       cancelled = true;

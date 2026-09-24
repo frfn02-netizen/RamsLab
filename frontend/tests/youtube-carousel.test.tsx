@@ -57,16 +57,22 @@ beforeEach(() => {
     removeChangeListener: vi.fn(),
     dispatchEvent: vi.fn(),
   }));
-  vi.stubGlobal("ResizeObserver", class {
-    observe = vi.fn();
-    unobserve = vi.fn();
-    disconnect = vi.fn();
-  });
-  vi.stubGlobal("IntersectionObserver", class {
-    observe = vi.fn();
-    unobserve = vi.fn();
-    disconnect = vi.fn();
-  });
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    },
+  );
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    },
+  );
   vi.stubGlobal("getComputedStyle", () => ({
     gap: "28px",
   }));
@@ -264,9 +270,7 @@ describe("7. Auto-scroll resumes after manual navigation", () => {
       vi.advanceTimersByTime(4500);
     });
 
-    expect(
-      document.querySelector(".youtube-marquee-track"),
-    ).toBeTruthy();
+    expect(document.querySelector(".youtube-marquee-track")).toBeTruthy();
   });
 });
 
@@ -391,8 +395,16 @@ describe("12. Reduced-motion", () => {
 describe("13. Video links remain correct", () => {
   it("each card links to the correct YouTube URL", async () => {
     const videos = [
-      video({ id: "v1", title: "Video One", youtubeUrl: "https://youtube.com/watch?v=abc" }),
-      video({ id: "v2", title: "Video Two", youtubeUrl: "https://youtube.com/watch?v=xyz" }),
+      video({
+        id: "v1",
+        title: "Video One",
+        youtubeUrl: "https://youtube.com/watch?v=abc",
+      }),
+      video({
+        id: "v2",
+        title: "Video Two",
+        youtubeUrl: "https://youtube.com/watch?v=xyz",
+      }),
     ];
     mockGetPublicHomepageVideos.mockResolvedValue(videos);
 

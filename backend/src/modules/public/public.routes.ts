@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   getPublicIndustrialPartnersController,
   getPublicAlumniController,
+  getPublicAlumniByIdController,
   getPublicProjectController,
   getPublicProjectsController,
   getPublicPeopleController,
@@ -73,6 +74,7 @@ router.get("/publications", getPublicPublicationListController);
 router.get("/research-highlights", getPublicResearchHighlightListController);
 
 router.get("/alumni", getPublicAlumniController);
+router.get("/alumni/:id", getPublicAlumniByIdController);
 
 router.get("/events", getPublicEventListController);
 

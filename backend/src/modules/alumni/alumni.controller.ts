@@ -10,6 +10,7 @@ import {
   updateAlumni,
   updateMyAlumni,
   getAlumniList,
+  reviewAlumni,
 } from "./alumni.service.js";
 
 import { createAdminAlumni } from "./admin-alumni.service.js";
@@ -18,7 +19,11 @@ import {
   findAuditLogsWithUserNames,
 } from "./alumni-audit.repository.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
-import { deactivateUser, setUserActive } from "../users/user.repository.js";
+import {
+  deactivateUser,
+  setUserActive,
+  getUsersCollection,
+} from "../users/user.repository.js";
 import {
   removeProfilePhoto,
   uploadProfilePhoto,
@@ -168,9 +173,19 @@ export async function getMyAlumniController(req: Request, res: Response) {
       });
     }
 
+    const users = getUsersCollection();
+    const user = await users.findOne({
+      _id: new ObjectId(req.user.userId),
+    });
+
     return res.json({
       success: true,
-      data: alumni,
+      data: {
+        ...alumni,
+        accountEmail: user?.email,
+        accountActive: user?.isActive,
+        mustChangePassword: user?.mustChangePassword ?? false,
+      },
     });
   } catch {
     return res.status(400).json({
@@ -303,6 +318,29 @@ export async function setAlumniActiveController(req: Request, res: Response) {
       .status(404)
       .json({ success: false, message: "Account not found" });
   return res.json({ success: true, data: { isActive: active } });
+}
+
+export async function reviewAlumniController(req: Request, res: Response) {
+  const id =
+    typeof req.params.id === "string" ? req.params.id : req.params.id?.[0];
+  if (!id)
+    return res
+      .status(400)
+      .json({ success: false, message: "Alumni ID is required" });
+
+  const action = req.body?.action;
+  if (action !== "APPROVE" && action !== "REJECT")
+    return res
+      .status(400)
+      .json({ success: false, message: "Review action is required" });
+
+  const alumni = await reviewAlumni(id, action === "APPROVE");
+  if (!alumni)
+    return res
+      .status(404)
+      .json({ success: false, message: "Alumni not found" });
+
+  return res.json({ success: true, data: alumni });
 }
 export async function getAlumniListController(req: Request, res: Response) {
   try {

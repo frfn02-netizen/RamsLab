@@ -19,6 +19,7 @@ import {
   type UpdateMyAlumniInput,
 } from "./alumni.schema.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
+import { ALUMNI_REVIEW_STATUS } from "./alumni.types.js";
 
 export async function createAlumni(input: CreateAlumniInput) {
   const data = createAlumniSchema.parse(input);
@@ -63,7 +64,7 @@ export async function createAlumni(input: CreateAlumniInput) {
 
     photo: data.photo,
 
-    graduationYear: data.graduationYear,
+    angkatan: data.angkatan,
 
     program: data.program,
 
@@ -72,6 +73,8 @@ export async function createAlumni(input: CreateAlumniInput) {
     location: data.location,
 
     currentStatus: data.currentStatus,
+
+    otherStatus: data.otherStatus,
 
     currentCompany: data.currentCompany,
 
@@ -85,9 +88,12 @@ export async function createAlumni(input: CreateAlumniInput) {
 
     educationHistory: data.educationHistory,
 
-    isPublic: data.isPublic,
+    // Publication is an administrator decision, never a client-controlled
+    // side effect of account creation.
+    isPublic: false,
+    reviewStatus: ALUMNI_REVIEW_STATUS.PENDING,
     profileCompleted: Boolean(
-      data.fullName && data.nim && data.graduationYear && data.photo,
+      data.fullName && data.nim && data.angkatan && data.photo,
     ),
 
     createdAt: now,
@@ -110,12 +116,13 @@ export async function createAlumniShell(userId: string) {
   const alumni = {
     userId: new ObjectId(userId),
     fullName: "",
-    graduationYear: undefined,
+    angkatan: undefined,
     program: "",
     currentStatus: "OTHER" as const,
     careerHistory: [],
     educationHistory: [],
     isPublic: false,
+    reviewStatus: ALUMNI_REVIEW_STATUS.PENDING,
     profileCompleted: false,
     createdAt: now,
     updatedAt: now,
@@ -163,9 +170,13 @@ export async function updateAlumni(id: string, input: UpdateAlumniInput) {
 
   const updateData = {
     ...data,
+    // Any alumni-authored change must be reviewed again before it can be
+    // returned from a public endpoint. `isPublic` remains the visibility
+    // preference, but approval is the server-enforced publication gate.
+    reviewStatus: ALUMNI_REVIEW_STATUS.PENDING,
     ...(data.fullName &&
     existing?.nim &&
-    data.graduationYear &&
+    data.angkatan &&
     (data.photo !== undefined || existing?.photo)
       ? { profileCompleted: true }
       : {}),
@@ -178,6 +189,29 @@ export async function updateAlumni(id: string, input: UpdateAlumniInput) {
     },
     {
       $set: updateData,
+    },
+  );
+
+  return findAlumniById(id);
+}
+
+export async function reviewAlumni(id: string, approved: boolean) {
+  if (!ObjectId.isValid(id)) return null;
+
+  const reviewStatus = approved
+    ? ALUMNI_REVIEW_STATUS.APPROVED
+    : ALUMNI_REVIEW_STATUS.REJECTED;
+
+  await getAlumniCollection().updateOne(
+    { _id: new ObjectId(id) },
+    {
+      $set: {
+        reviewStatus,
+        // Approval is the explicit publication action. Rejection always
+        // removes the record from public visibility.
+        isPublic: approved,
+        updatedAt: new Date(),
+      },
     },
   );
 
@@ -201,7 +235,7 @@ export async function updateMyAlumni(
     ...data,
     ...((data.fullName || existing?.fullName) &&
     (data.nim || existing?.nim) &&
-    (data.graduationYear || existing?.graduationYear) &&
+    (data.angkatan || existing?.angkatan) &&
     (data.photo || existing?.photo)
       ? { profileCompleted: true }
       : {}),

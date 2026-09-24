@@ -148,7 +148,6 @@
     },
     "researchTitle": "Metode untuk keputusan yang berarti.",
     "researchDescription": "Enam bidang yang saling terhubung membingkai pekerjaan laboratorium pada sistem maritim, lepas pantai, dan industri.",
-    "researchLink": "Lihat semua riset",
     "partnersEyebrow": "Mitra & proyek",
     "partnersTitle": "Terhubung dengan pekerjaan terapan.",
     "partnersDescription": "Rekaman mitra dan proyek terbit bersumber dari API RAMS Platform.",
@@ -412,7 +411,9 @@
     },
     "emptyTitle": "Belum ada profil tim publik",
     "emptyDescription": "Profil dosen dan peneliti publik akan muncul di sini jika tersedia.",
-    "ctaTitle": "Mulai percakapan dengan laboratorium."
+    "ctaTitle": "Terhubung dengan orang-orang kami",
+    "ctaDescription": "Temukan peneliti dan ahli di balik Laboratorium RAMS serta jelajahi peluang kolaborasi.",
+    "ctaPrimary": "Hubungi kami"
   },
   "alumni": {
     "heroEyebrow": "Jejaring alumni",
@@ -433,7 +434,7 @@
     "noMatchingDescription": "Coba sesuaikan pencarian Anda.",
     "backToAlumni": "Kembali ke Alumni",
     "detailCategory": "ALUMNI",
-    "entryYear": "Angkatan",
+    "angkatan": "P",
     "bioLabel": "BIO",
     "ctaTitle": "Tetap terhubung dengan laboratorium."
   },
@@ -511,8 +512,7 @@
     "eyebrow": "Layanan Publik",
     "title": "Layanan Publik",
     "description": "Keahlian dan layanan publik yang dikelola oleh Laboratorium RAMS.",
-    "expertsEyebrow": "Pakar Kami",
-    "expertsTitle": "Pakar Kami",
+    "industrialPartnersTitle": "Mitra Industri",
     "servicesEyebrow": "Layanan Publik",
     "servicesTitle": "Layanan Publik",
     "companies": "Perusahaan",

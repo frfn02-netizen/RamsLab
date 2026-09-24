@@ -169,7 +169,7 @@ export function toPublicAlumniProfile(req: Request, member: Alumni) {
     photo: publicPhotoUrl(req, member.photo),
     bio: member.bio,
     linkedin: publicLinkedInUrl(member.linkedin),
-    graduationYear: member.graduationYear,
+    angkatan: member.angkatan,
   };
 }
 

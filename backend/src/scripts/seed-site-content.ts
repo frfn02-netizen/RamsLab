@@ -10,6 +10,7 @@ import {
   contactContentSchema,
   footerContentSchema,
   homepageContentSchema,
+  publicServiceContentSchema,
 } from "../modules/site-content/site-content.schema.js";
 import {
   SITE_CONTENT_KEYS,
@@ -306,6 +307,25 @@ export const contentByKey = {
       "Institut Teknologi Sepuluh Nopember · Surabaya",
       "Institut Teknologi Sepuluh Nopember · Surabaya",
     ),
+  }),
+  "public-service": publicServiceContentSchema.parse({
+    hero: {
+      eyebrow: text("Public Service", "Layanan Publik"),
+      title: text(
+        "Reliability, availability, safety & marine systems expertise.",
+        "Keahlian keandalan, ketersediaan, keselamatan & sistem maritim.",
+      ),
+      description: text(
+        "Our laboratory offers research collaboration, industrial consulting, and engineering services for maritime and industrial systems.",
+        "Laboratorium kami menawarkan kolaborasi riset, konsultasi industri, dan layanan rekayasa untuk sistem maritim dan industri.",
+      ),
+    },
+    services: {
+      title: text("Our Services", "Layanan Kami"),
+    },
+    experts: {
+      title: text("Our Experts", "Para Ahli Kami"),
+    },
   }),
 };
 

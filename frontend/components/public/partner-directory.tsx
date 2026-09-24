@@ -9,7 +9,8 @@ import PartnerCard from "./partner-card";
 import RevealOnScroll from "./reveal-on-scroll";
 import { PublicError, PublicLoading } from "./public-states";
 
-const FEATURED_PER_CATEGORY = 3;
+const FEATURED_UNIVERSITY = 6;
+const FEATURED_INDUSTRIAL = 3;
 
 export default function PartnerDirectory() {
   const t = useTranslations("partners");
@@ -32,8 +33,8 @@ export default function PartnerDirectory() {
   }, []);
 
   const totalPublished = academic.length + industrial.length;
-  const featuredAcademic = academic.slice(0, FEATURED_PER_CATEGORY);
-  const featuredIndustrial = industrial.slice(0, FEATURED_PER_CATEGORY);
+  const featuredAcademic = academic.slice(0, FEATURED_UNIVERSITY);
+  const featuredIndustrial = industrial.slice(0, FEATURED_INDUSTRIAL);
 
   return (
     <div>

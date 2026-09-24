@@ -100,8 +100,9 @@ describe("Alumni API", () => {
         userId: TEST_USER_ID,
         fullName: TEST_FULL_NAME,
         nim: TEST_NIM,
-        graduationYear: 2026,
+        angkatan: 26,
         program: "Informatics Engineering",
+        photo: "https://example.com/vitest-alumni.jpg",
         phone: "081234567890",
         location: "Surabaya",
         currentStatus: "WORKING",
@@ -121,6 +122,9 @@ describe("Alumni API", () => {
     expect(response.body.data.fullName).toBe(TEST_FULL_NAME);
 
     expect(response.body.data.nim).toBe(TEST_NIM);
+
+    expect(response.body.data.isPublic).toBe(false);
+    expect(response.body.data.reviewStatus).toBe("PENDING");
 
     alumniId = response.body.data._id;
   });
@@ -259,6 +263,68 @@ describe("Alumni API", () => {
     expect(response.body.data.location).toBe("Jakarta");
   });
 
+  it("does not publish a pending profile even when an alumni sends isPublic true", async () => {
+    const update = await request(app)
+      .patch("/api/alumni/me")
+      .set("Cookie", `rams_access_token=${alumniToken}`)
+      .send({ isPublic: true });
+
+    expect(update.status).toBe(200);
+    expect(update.body.data.reviewStatus).toBe("PENDING");
+
+    const publicList = await request(app).get("/api/public/alumni");
+    expect(publicList.status).toBe(200);
+    expect(
+      publicList.body.data.some(
+        (alumni: { id: string }) => alumni.id === alumniId,
+      ),
+    ).toBe(false);
+  });
+
+  it("allows an admin to approve and publish a completed alumni profile", async () => {
+    const review = await request(app)
+      .patch(`/api/alumni/${alumniId}/review`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ action: "APPROVE" });
+
+    expect(review.status).toBe(200);
+    expect(review.body.data.reviewStatus).toBe("APPROVED");
+    expect(review.body.data.isPublic).toBe(true);
+
+    const publicList = await request(app).get("/api/public/alumni");
+    expect(
+      publicList.body.data.some(
+        (alumni: { id: string }) => alumni.id === alumniId,
+      ),
+    ).toBe(true);
+
+    const publicDetail = await request(app).get(
+      `/api/public/alumni/${alumniId}`,
+    );
+    expect(publicDetail.status).toBe(200);
+    expect(publicDetail.body.data.category).toBe("ALUMNI");
+  });
+
+  it("removes a rejected alumni from public list and detail responses", async () => {
+    const review = await request(app)
+      .patch(`/api/alumni/${alumniId}/review`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ action: "REJECT" });
+
+    expect(review.status).toBe(200);
+    expect(review.body.data.reviewStatus).toBe("REJECTED");
+    expect(review.body.data.isPublic).toBe(false);
+
+    expect(
+      (await request(app).get("/api/public/alumni")).body.data.some(
+        (alumni: { id: string }) => alumni.id === alumniId,
+      ),
+    ).toBe(false);
+    expect(
+      (await request(app).get(`/api/public/alumni/${alumniId}`)).status,
+    ).toBe(404);
+  });
+
   it("should update alumni as admin", async () => {
     const response = await request(app)
       .patch(`/api/alumni/${alumniId}`)
@@ -299,7 +365,7 @@ it("should not allow alumni to modify academic identity fields", async () => {
     .set("Cookie", `rams_access_token=${alumniToken}`)
     .send({
       nim: "MALICIOUS-NIM-999",
-      graduationYear: 2099,
+      angkatan: 99,
       program: "Unauthorized Program",
     });
 
@@ -309,7 +375,7 @@ it("should not allow alumni to modify academic identity fields", async () => {
 
   expect(response.body.data.nim).toBe(TEST_NIM);
 
-  expect(response.body.data.graduationYear).not.toBe(2099);
+  expect(response.body.data.angkatan).not.toBe(99);
 
   expect(response.body.data.program).not.toBe("Unauthorized Program");
 });

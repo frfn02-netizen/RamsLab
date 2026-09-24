@@ -36,7 +36,7 @@ export interface PublicPerson {
   photo?: string;
   bio?: string;
   linkedin?: string;
-  graduationYear?: number;
+  angkatan?: number;
   internshipStartDate?: string | null;
   internshipEndDate?: string | null;
   publicationIds?: string[];

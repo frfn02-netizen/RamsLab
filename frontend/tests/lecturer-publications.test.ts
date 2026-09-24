@@ -79,19 +79,31 @@ describe("2. Eligible publications", () => {
     publication({
       _id: "pub1",
       title: "TEST - Maritime Risk Assessment",
-      authors: ["TEST - Prof. Budi Santoso", "External Author One", "External Author Two"],
+      authors: [
+        "TEST - Prof. Budi Santoso",
+        "External Author One",
+        "External Author Two",
+      ],
       doi: "10.9999/test-maritime-risk",
     }),
     publication({
       _id: "pub2",
       title: "TEST - Advanced Marine Systems",
-      authors: ["External Author One", "TEST - Dr. Aria Putra", "External Author Three"],
+      authors: [
+        "External Author One",
+        "TEST - Dr. Aria Putra",
+        "External Author Three",
+      ],
       doi: "10.9999/test-marine-systems",
     }),
     publication({
       _id: "pub3",
       title: "TEST - Collaborative Ocean Research",
-      authors: ["TEST - Prof. Budi Santoso", "TEST - Dr. Aria Putra", "External Author Four"],
+      authors: [
+        "TEST - Prof. Budi Santoso",
+        "TEST - Dr. Aria Putra",
+        "External Author Four",
+      ],
       doi: "10.9999/test-collaborative-ocean",
     }),
     publication({
@@ -109,17 +121,26 @@ describe("2. Eligible publications", () => {
   ];
 
   it("Prof. Budi Santoso gets only pub1 and pub3", () => {
-    const result = filterLecturerPublications(publications, "TEST - Prof. Budi Santoso");
+    const result = filterLecturerPublications(
+      publications,
+      "TEST - Prof. Budi Santoso",
+    );
     expect(result.map((p) => p._id).sort()).toEqual(["pub1", "pub3"]);
   });
 
   it("Dr. Aria Putra gets pub2, pub3, pub5", () => {
-    const result = filterLecturerPublications(publications, "TEST - Dr. Aria Putra");
+    const result = filterLecturerPublications(
+      publications,
+      "TEST - Dr. Aria Putra",
+    );
     expect(result.map((p) => p._id).sort()).toEqual(["pub2", "pub3", "pub5"]);
   });
 
   it("Maria Putra gets only pub4", () => {
-    const result = filterLecturerPublications(publications, "TEST - Maria Putra");
+    const result = filterLecturerPublications(
+      publications,
+      "TEST - Maria Putra",
+    );
     expect(result.map((p) => p._id)).toEqual(["pub4"]);
   });
 });
@@ -143,13 +164,19 @@ describe("3. False positive protection", () => {
   ];
 
   it("Maria Putra does NOT match Dr. Aria Putra", () => {
-    const result = filterLecturerPublications(publications, "TEST - Maria Putra");
+    const result = filterLecturerPublications(
+      publications,
+      "TEST - Maria Putra",
+    );
     expect(result.map((p) => p._id)).toEqual(["maria-pub"]);
     expect(result.map((p) => p._id)).not.toContain("aria-pub");
   });
 
   it("Dr. Aria Putra does NOT match Maria Putra", () => {
-    const result = filterLecturerPublications(publications, "TEST - Dr. Aria Putra");
+    const result = filterLecturerPublications(
+      publications,
+      "TEST - Dr. Aria Putra",
+    );
     expect(result.map((p) => p._id)).toEqual(["aria-pub"]);
     expect(result.map((p) => p._id)).not.toContain("maria-pub");
   });
@@ -182,7 +209,10 @@ describe("4. Whitespace normalization", () => {
         authors: ["TEST - Dr. Aria Putra"],
       }),
     ];
-    const result = filterLecturerPublications(pubs, "  TEST - Dr.   Aria   Putra  ");
+    const result = filterLecturerPublications(
+      pubs,
+      "  TEST - Dr.   Aria   Putra  ",
+    );
     expect(result.map((p) => p._id)).toEqual(["input-ws"]);
   });
 });
@@ -199,7 +229,10 @@ describe("5. Multiple authors", () => {
         authors: ["Author A", "TEST - Prof. Budi Santoso", "Author C"],
       }),
     ];
-    const result = filterLecturerPublications(pubs, "TEST - Prof. Budi Santoso");
+    const result = filterLecturerPublications(
+      pubs,
+      "TEST - Prof. Budi Santoso",
+    );
     expect(result).toHaveLength(1);
     expect(result[0]._id).toBe("multi");
   });
@@ -211,7 +244,10 @@ describe("5. Multiple authors", () => {
         authors: ["Author A", "Author B"],
       }),
     ];
-    const result = filterLecturerPublications(pubs, "TEST - Prof. Budi Santoso");
+    const result = filterLecturerPublications(
+      pubs,
+      "TEST - Prof. Budi Santoso",
+    );
     expect(result).toHaveLength(0);
   });
 });
@@ -234,7 +270,10 @@ describe("6. Deduplication", () => {
         authors: ["TEST - Prof. Budi Santoso"],
       }),
     ];
-    const result = filterLecturerPublications(pubs, "TEST - Prof. Budi Santoso");
+    const result = filterLecturerPublications(
+      pubs,
+      "TEST - Prof. Budi Santoso",
+    );
     expect(result).toHaveLength(1);
   });
 
@@ -287,7 +326,9 @@ describe("6. Deduplication", () => {
 
 describe("7. Empty and edge cases", () => {
   it("returns empty array for empty publications list", () => {
-    expect(filterLecturerPublications([], "TEST - Prof. Budi Santoso")).toEqual([]);
+    expect(filterLecturerPublications([], "TEST - Prof. Budi Santoso")).toEqual(
+      [],
+    );
   });
 
   it("returns empty array for empty name", () => {
@@ -302,13 +343,19 @@ describe("7. Empty and edge cases", () => {
 
   it("handles publications with empty authors array", () => {
     const pubs = [publication({ authors: [] })];
-    const result = filterLecturerPublications(pubs, "TEST - Prof. Budi Santoso");
+    const result = filterLecturerPublications(
+      pubs,
+      "TEST - Prof. Budi Santoso",
+    );
     expect(result).toHaveLength(0);
   });
 
   it("handles publication with undefined authors", () => {
     const pubs = [publication({ authors: undefined as unknown as string[] })];
-    const result = filterLecturerPublications(pubs, "TEST - Prof. Budi Santoso");
+    const result = filterLecturerPublications(
+      pubs,
+      "TEST - Prof. Budi Santoso",
+    );
     expect(result).toHaveLength(0);
   });
 });
@@ -325,7 +372,10 @@ describe("8. Case sensitivity", () => {
         authors: ["test - prof. budi santoso"],
       }),
     ];
-    const result = filterLecturerPublications(pubs, "TEST - Prof. Budi Santoso");
+    const result = filterLecturerPublications(
+      pubs,
+      "TEST - Prof. Budi Santoso",
+    );
     expect(result).toHaveLength(1);
     expect(result[0]._id).toBe("case-test");
   });
@@ -402,27 +452,21 @@ describe("10. Original test patterns (backward compatibility)", () => {
 
 describe("11. testfiturbaru matching", () => {
   it("lecturer 'testfiturbaru' matches author 'testfiturbaru'", () => {
-    const pubs = [
-      publication({ _id: "tfb1", authors: ["testfiturbaru"] }),
-    ];
+    const pubs = [publication({ _id: "tfb1", authors: ["testfiturbaru"] })];
     const result = filterLecturerPublications(pubs, "testfiturbaru");
     expect(result).toHaveLength(1);
     expect(result[0]._id).toBe("tfb1");
   });
 
   it("case normalization: 'testfiturbaru' matches author 'TESTFITURBARU'", () => {
-    const pubs = [
-      publication({ _id: "tfb2", authors: ["TESTFITURBARU"] }),
-    ];
+    const pubs = [publication({ _id: "tfb2", authors: ["TESTFITURBARU"] })];
     const result = filterLecturerPublications(pubs, "testfiturbaru");
     expect(result).toHaveLength(1);
     expect(result[0]._id).toBe("tfb2");
   });
 
   it("whitespace normalization: '  testfiturbaru  ' matches author 'testfiturbaru'", () => {
-    const pubs = [
-      publication({ _id: "tfb3", authors: ["testfiturbaru"] }),
-    ];
+    const pubs = [publication({ _id: "tfb3", authors: ["testfiturbaru"] })];
     const result = filterLecturerPublications(pubs, "  testfiturbaru  ");
     expect(result).toHaveLength(1);
     expect(result[0]._id).toBe("tfb3");
@@ -489,7 +533,9 @@ describe("12. Pagination fetches all pages", () => {
     });
 
     // Simulate the same pagination logic used in edit-dosen.tsx and public-dosen-profile.tsx
-    async function fetchAllMatching(getPublicationsFn: typeof mockGetPublications) {
+    async function fetchAllMatching(
+      getPublicationsFn: typeof mockGetPublications,
+    ) {
       const all: Publication[] = [];
       let page = 1;
       let total = Infinity;
@@ -507,7 +553,8 @@ describe("12. Pagination fetches all pages", () => {
       }
       return all.filter((pub) =>
         (pub.authors ?? []).some(
-          (a) => normalizeAuthorName(a) === normalizeAuthorName("testfiturbaru"),
+          (a) =>
+            normalizeAuthorName(a) === normalizeAuthorName("testfiturbaru"),
         ),
       );
     }
@@ -521,19 +568,23 @@ describe("12. Pagination fetches all pages", () => {
 
   it("frontend never requests limit > 200 (backend maxPageSize)", () => {
     const limits: number[] = [];
-    const mockGetPublications = vi.fn().mockImplementation(async (opts: any) => {
-      limits.push(opts.limit);
-      return {
-        data: [],
-        total: 0,
-        page: 1,
-        limit: opts.limit,
-        facets: { years: [], topics: [], methods: [], publicationTypes: [] },
-      };
-    });
+    const mockGetPublications = vi
+      .fn()
+      .mockImplementation(async (opts: any) => {
+        limits.push(opts.limit);
+        return {
+          data: [],
+          total: 0,
+          page: 1,
+          limit: opts.limit,
+          facets: { years: [], topics: [], methods: [], publicationTypes: [] },
+        };
+      });
 
     // Replicate the DosenPublicationsSection fetch logic
-    async function fetchPublications(getPublicationsFn: typeof mockGetPublications) {
+    async function fetchPublications(
+      getPublicationsFn: typeof mockGetPublications,
+    ) {
       const PAGE_LIMIT = 200;
       const all: Publication[] = [];
       let page = 1;

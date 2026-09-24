@@ -5,6 +5,7 @@ import {
   findAllSiteContent,
   findSiteContentByKey,
   updateSiteContent,
+  upsertSiteContent,
 } from "./site-content.repository.js";
 import {
   SITE_CONTENT_KEYS,
@@ -27,6 +28,26 @@ function isSiteContentKey(value: unknown): value is SiteContentKey {
     SITE_CONTENT_KEYS.includes(value as SiteContentKey)
   );
 }
+
+const defaultSiteContentByKey: Partial<
+  Record<SiteContentKey, SiteContentContent>
+> = {
+  "public-service": {
+    hero: {
+      eyebrow: { en: "Public Service", id: "Layanan Publik" },
+      title: {
+        en: "Reliability, availability, safety & marine systems expertise.",
+        id: "Keahlian keandalan, ketersediaan, keselamatan & sistem maritim.",
+      },
+      description: {
+        en: "Our laboratory offers research collaboration, industrial consulting, and engineering services for maritime and industrial systems.",
+        id: "Laboratorium kami menawarkan kolaborasi riset, konsultasi industri, dan layanan rekayasa untuk sistem maritim dan industri.",
+      },
+    },
+    services: { title: { en: "Our Services", id: "Layanan Kami" } },
+    experts: { title: { en: "Our Experts", id: "Para Ahli Kami" } },
+  },
+};
 
 function adminRepresentation(document: SiteContentDocument) {
   return {
@@ -63,11 +84,20 @@ export async function getSiteContentController(req: Request, res: Response) {
       .status(400)
       .json({ success: false, message: "Invalid site content key" });
   try {
-    const document = await findSiteContentByKey(key);
-    if (!document)
-      return res
-        .status(404)
-        .json({ success: false, message: "Site content not found" });
+    let document = await findSiteContentByKey(key);
+    if (!document) {
+      const defaults = defaultSiteContentByKey[key];
+      if (!defaults)
+        return res
+          .status(404)
+          .json({ success: false, message: "Site content not found" });
+      await upsertSiteContent(key, defaults);
+      document = await findSiteContentByKey(key);
+      if (!document)
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to create site content" });
+    }
     return res.json({ success: true, data: adminRepresentation(document) });
   } catch {
     return res
@@ -166,11 +196,20 @@ export async function getPublicSiteContentController(
       .status(400)
       .json({ success: false, message: "Invalid site content key" });
   try {
-    const document = await findSiteContentByKey(key);
-    if (!document)
-      return res
-        .status(404)
-        .json({ success: false, message: "Site content not found" });
+    let document = await findSiteContentByKey(key);
+    if (!document) {
+      const defaults = defaultSiteContentByKey[key];
+      if (!defaults)
+        return res
+          .status(404)
+          .json({ success: false, message: "Site content not found" });
+      await upsertSiteContent(key, defaults);
+      document = await findSiteContentByKey(key);
+      if (!document)
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to create site content" });
+    }
     return res.json({ success: true, data: document.content });
   } catch {
     return res

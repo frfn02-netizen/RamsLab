@@ -46,7 +46,7 @@ export default function AlumniPage() {
         title={t("ctaTitle")}
         description={home("ctaDescription")}
         primary={home("primaryCta")}
-        secondary={home("researchLink")}
+        primaryHref="/research"
       />
     </>
   );

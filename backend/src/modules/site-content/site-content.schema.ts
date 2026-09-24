@@ -145,14 +145,32 @@ export const footerContentSchema = z.object({
   institution: bilingualTextSchema,
 });
 
+export const publicServiceContentSchema = z.object({
+  hero: z.object({
+    eyebrow: bilingualTextSchema,
+    title: bilingualTextSchema,
+    description: bilingualTextSchema,
+  }),
+  services: z.object({
+    title: bilingualTextSchema,
+  }),
+  experts: z.object({
+    title: bilingualTextSchema,
+  }),
+});
+
 export const siteContentSchemas = {
   homepage: homepageContentSchema,
   about: aboutContentSchema,
   contact: contactContentSchema,
   footer: footerContentSchema,
+  "public-service": publicServiceContentSchema,
 };
 
 export type HomepageContentInput = z.infer<typeof homepageContentSchema>;
 export type AboutContentInput = z.infer<typeof aboutContentSchema>;
 export type ContactContentInput = z.infer<typeof contactContentSchema>;
 export type FooterContentInput = z.infer<typeof footerContentSchema>;
+export type PublicServiceContentInput = z.infer<
+  typeof publicServiceContentSchema
+>;

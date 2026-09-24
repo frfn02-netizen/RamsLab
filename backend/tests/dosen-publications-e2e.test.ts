@@ -146,28 +146,61 @@ describe("1. Dummy data creation", () => {
   it("creates 5 publications with the specified authors", async () => {
     const p1 = await createPublication(
       `${TITLE_PREFIX} Maritime Risk Assessment`,
-      ["TEST - Prof. Budi Santoso", "External Author One", "External Author Two"],
-      { year: 2026, publicationType: "Journal Article", journal: "TEST Journal of Maritime Engineering", doi: "10.9999/test-maritime-risk" },
+      [
+        "TEST - Prof. Budi Santoso",
+        "External Author One",
+        "External Author Two",
+      ],
+      {
+        year: 2026,
+        publicationType: "Journal Article",
+        journal: "TEST Journal of Maritime Engineering",
+        doi: "10.9999/test-maritime-risk",
+      },
     );
     const p2 = await createPublication(
       `${TITLE_PREFIX} Advanced Marine Systems`,
       ["External Author One", "TEST - Dr. Aria Putra", "External Author Three"],
-      { year: 2025, publicationType: "Conference Paper", journal: "TEST International Maritime Conference", doi: "10.9999/test-marine-systems" },
+      {
+        year: 2025,
+        publicationType: "Conference Paper",
+        journal: "TEST International Maritime Conference",
+        doi: "10.9999/test-marine-systems",
+      },
     );
     const p3 = await createPublication(
       `${TITLE_PREFIX} Collaborative Ocean Research`,
-      ["TEST - Prof. Budi Santoso", "TEST - Dr. Aria Putra", "External Author Four"],
-      { year: 2024, publicationType: "Journal Article", journal: "TEST Ocean Research Journal", doi: "10.9999/test-collaborative-ocean" },
+      [
+        "TEST - Prof. Budi Santoso",
+        "TEST - Dr. Aria Putra",
+        "External Author Four",
+      ],
+      {
+        year: 2024,
+        publicationType: "Journal Article",
+        journal: "TEST Ocean Research Journal",
+        doi: "10.9999/test-collaborative-ocean",
+      },
     );
     const p4 = await createPublication(
       `${TITLE_PREFIX} Maria Putra False Positive`,
       ["TEST - Maria Putra", "External Author Five"],
-      { year: 2023, publicationType: "Journal Article", journal: "TEST Research Journal", doi: "10.9999/test-maria-putra" },
+      {
+        year: 2023,
+        publicationType: "Journal Article",
+        journal: "TEST Research Journal",
+        doi: "10.9999/test-maria-putra",
+      },
     );
     const p5 = await createPublication(
       `${TITLE_PREFIX} Whitespace Matching`,
       ["TEST - Dr. Aria   Putra", "External Author Six"],
-      { year: 2022, publicationType: "Journal Article", journal: "TEST Marine Technology Journal", doi: "10.9999/test-whitespace" },
+      {
+        year: 2022,
+        publicationType: "Journal Article",
+        journal: "TEST Marine Technology Journal",
+        doi: "10.9999/test-whitespace",
+      },
     );
     expect(publicationIds).toHaveLength(5);
   });
@@ -198,9 +231,13 @@ describe("2. Publication associations CRUD", () => {
   });
 
   it("creates a lecturer with valid publicationIds", async () => {
-    const response = await createDosen("with-pubs", "TEST - With Publications", {
-      publicationIds: [publicationIds[0], publicationIds[2]],
-    });
+    const response = await createDosen(
+      "with-pubs",
+      "TEST - With Publications",
+      {
+        publicationIds: [publicationIds[0], publicationIds[2]],
+      },
+    );
     expect(response.status).toBe(201);
     expect(response.body.data.publicationIds).toHaveLength(2);
   });
@@ -279,7 +316,13 @@ describe("2. Publication associations CRUD", () => {
     const aria = await request(app)
       .patch(`/api/dosen/${dosenIds[1]}`)
       .set("Cookie", `rams_access_token=${adminToken}`)
-      .send({ publicationIds: [publicationIds[1], publicationIds[2], publicationIds[4]] });
+      .send({
+        publicationIds: [
+          publicationIds[1],
+          publicationIds[2],
+          publicationIds[4],
+        ],
+      });
     expect(aria.status).toBe(200);
     expect(aria.body.data.publicationIds).toContain(publicationIds[2]);
   });
@@ -358,21 +401,21 @@ describe("2. Publication associations CRUD", () => {
 describe("3. Public profile", () => {
   it("exposes publicationIds on the public lecturer profile", async () => {
     // dosenIds[0] = Prof. Budi Santoso, should have publicationIds[0]
-    const profile = await request(app).get(
-      `/api/public/people/${dosenIds[0]}`,
-    );
+    const profile = await request(app).get(`/api/public/people/${dosenIds[0]}`);
     expect(profile.status).toBe(200);
     expect(profile.body.data.publicationIds).toEqual([publicationIds[0]]);
   });
 
   it("exposes publicationIds for the second lecturer", async () => {
     // dosenIds[1] = Dr. Aria Putra, should have publicationIds[1], [2], [4]
-    const profile = await request(app).get(
-      `/api/public/people/${dosenIds[1]}`,
-    );
+    const profile = await request(app).get(`/api/public/people/${dosenIds[1]}`);
     expect(profile.status).toBe(200);
     expect(profile.body.data.publicationIds).toEqual(
-      expect.arrayContaining([publicationIds[1], publicationIds[2], publicationIds[4]]),
+      expect.arrayContaining([
+        publicationIds[1],
+        publicationIds[2],
+        publicationIds[4],
+      ]),
     );
     expect(profile.body.data.publicationIds).toHaveLength(3);
   });
@@ -385,9 +428,7 @@ describe("3. Public profile", () => {
 describe("4. False positive protection", () => {
   it("TEST - Maria Putra does not receive publications for TEST - Dr. Aria Putra", async () => {
     // dosenIds[2] = TEST - Maria Putra – no publications assigned
-    const profile = await request(app).get(
-      `/api/public/people/${dosenIds[2]}`,
-    );
+    const profile = await request(app).get(`/api/public/people/${dosenIds[2]}`);
     expect(profile.status).toBe(200);
     // Should be empty or undefined – never contain Aria's publications
     const ids = profile.body.data.publicationIds ?? [];
@@ -415,9 +456,7 @@ describe("4. False positive protection", () => {
 describe("5. Persistence across reloads", () => {
   it("selected publications remain after reload", async () => {
     // Reload Dr. Aria Putra's profile
-    const profile = await request(app).get(
-      `/api/public/people/${dosenIds[1]}`,
-    );
+    const profile = await request(app).get(`/api/public/people/${dosenIds[1]}`);
     expect(profile.status).toBe(200);
     expect(profile.body.data.publicationIds).toHaveLength(3);
     expect(profile.body.data.publicationIds).toContain(publicationIds[1]);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import {
   Button,
   Card,
@@ -21,8 +21,12 @@ export default function ChangePasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const submittingRef = useRef(false);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -35,6 +39,7 @@ export default function ChangePasswordPage() {
       setError(getUserFacingError(reason));
     } finally {
       setSaving(false);
+      submittingRef.current = false;
     }
   }
   return (

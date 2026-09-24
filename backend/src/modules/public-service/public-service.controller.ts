@@ -105,7 +105,10 @@ async function publicExpert(req: Request, expert: PublicServiceExpert) {
   }
   if (expert.peopleRef?.kind === "ALUMNI") {
     const member = await findAlumniById(expert.peopleRef.id.toString());
-    person = member?.isPublic ? toPublicAlumniProfile(req, member) : null;
+    person =
+      member?.isPublic && member.reviewStatus === "APPROVED"
+        ? toPublicAlumniProfile(req, member)
+        : null;
   }
   if (!person) return null;
   return {

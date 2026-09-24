@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicPeopleList } from "@/lib/api/modules";
@@ -92,7 +93,7 @@ export function RoleLine({
   fallback: string;
 }) {
   const role = [member.title, member.position].filter(Boolean).join(" · ");
-  const year = member.graduationYear ? ` · ${member.graduationYear}` : "";
+  const year = member.angkatan ? ` · P${member.angkatan}` : "";
   if (!role) return null;
   return (
     <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-[var(--rams-red)]">
@@ -101,36 +102,11 @@ export function RoleLine({
   );
 }
 
-export function ProfileLinks({
-  member,
-  label,
-}: {
-  member: PublicPerson;
-  label: string;
-}) {
-  return (
-    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--border)] pt-3 text-sm font-semibold">
-      {member.linkedin && (
-        <a
-          href={member.linkedin}
-          target="_blank"
-          rel="noreferrer"
-          className="public-card-arrow text-[var(--rams-red)]"
-        >
-          {label} <span aria-hidden="true">→</span>
-        </a>
-      )}
-    </div>
-  );
-}
-
 export function MemberCard({
   member,
-  profileLabel,
   roleFallback,
 }: {
   member: PublicPerson;
-  profileLabel: string;
   roleFallback: string;
 }) {
   const isStudent = [
@@ -139,6 +115,9 @@ export function MemberCard({
     "UNDERGRADUATE",
     "INTERNSHIP",
   ].includes(member.category);
+
+  const isAlumni = member.category === "ALUMNI";
+  const company = isAlumni ? member.specialization[0] : undefined;
 
   return (
     <article className="group flex h-full min-w-0 flex-col">
@@ -154,23 +133,40 @@ export function MemberCard({
           className={`font-display max-w-full text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]`}
         >
           <Link
-            href={`/team/${member.id}`}
+            href={isAlumni ? `/alumni/${member.id}` : `/team/${member.id}`}
             className="hover:text-[var(--rams-red)]"
           >
             {member.fullName}
           </Link>
+          {isAlumni && member.angkatan && (
+            <span className="ml-2 inline font-mono text-xl font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
+              P{member.angkatan}
+            </span>
+          )}
         </h3>
-        {!isStudent && <RoleLine member={member} fallback={roleFallback} />}
-        {!isStudent && member.specialization.length > 0 && (
-          <p className="mt-2 text-sm leading-6 text-[var(--slate)]">
-            {member.specialization.join(" · ")}
+
+        {isAlumni && member.position && (
+          <p className="mt-2 text-sm font-semibold leading-6 text-[var(--navy)]">
+            {member.position}
           </p>
         )}
-        {member.linkedin && member.category !== "DOSEN" && !isStudent && (
-          <div className="mt-auto pt-4">
-            <ProfileLinks member={member} label={profileLabel} />
-          </div>
+
+        {isAlumni && company && (
+          <p className="mt-1 text-sm leading-6 text-[var(--slate)]">
+            {company}
+          </p>
         )}
+
+        {!isAlumni && (!isStudent || member.category === "INTERNSHIP") && (
+          <RoleLine member={member} fallback={roleFallback} />
+        )}
+        {!isAlumni &&
+          (!isStudent || member.category === "INTERNSHIP") &&
+          member.specialization.length > 0 && (
+            <p className="mt-2 text-sm leading-6 text-[var(--slate)]">
+              {member.specialization.join(" · ")}
+            </p>
+          )}
       </div>
     </article>
   );
@@ -190,6 +186,7 @@ function searchableText(member: PublicPerson) {
 
 export default function TeamDirectory() {
   const t = useTranslations("team");
+  const searchParams = useSearchParams();
   const [people, setPeople] = useState<PublicPeopleResponse>({
     DOSEN: [],
     MAHASISWA: [],
@@ -200,7 +197,18 @@ export default function TeamDirectory() {
   });
   const [activeCategory, setActiveCategory] = useState<
     PublicDirectoryCategory | "STUDENTS"
-  >("DOSEN");
+  >(() => {
+    const param = searchParams.get("category");
+    if (
+      param &&
+      [...categoryOrder, "MAHASISWA", "MASTER"].includes(
+        param as PublicDirectoryCategory | "STUDENTS",
+      )
+    ) {
+      return param as PublicDirectoryCategory | "STUDENTS";
+    }
+    return "DOSEN";
+  });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -336,7 +344,6 @@ export default function TeamDirectory() {
                           <MemberCard
                             key={member.id}
                             member={member}
-                            profileLabel={t("profileLink")}
                             roleFallback={t("roleFallback")}
                           />
                         ))}
@@ -372,7 +379,6 @@ export default function TeamDirectory() {
                     <MemberCard
                       key={member.id}
                       member={member}
-                      profileLabel={t("profileLink")}
                       roleFallback={t("roleFallback")}
                     />
                   ))}

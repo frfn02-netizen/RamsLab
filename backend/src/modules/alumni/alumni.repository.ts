@@ -50,6 +50,7 @@ export async function findPublicAlumni(): Promise<Alumni[]> {
   return getAlumniCollection()
     .find({
       isPublic: true,
+      reviewStatus: "APPROVED",
       profileCompleted: true,
       userId: { $in: users.map((user) => user._id) },
     })

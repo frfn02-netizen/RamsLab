@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || "";
+const basePath =
+  process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || "";
 // Env vars are always strings; Next.js requires real booleans for these options.
 const trailingSlashValue = process.env.TRALING_SLASH_CONFIG === "true";
 const unoptimizedValue = process.env.UNOPTIMIZED_IMG_CONFIG === "true";
@@ -15,10 +16,10 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
-  trailingSlash: trailingSlashValue,  // tambahkan ini secara eksplisit
+  trailingSlash: trailingSlashValue, // tambahkan ini secara eksplisit
 
   images: {
-    unoptimized: unoptimizedValue,   // tambahkan ini
+    unoptimized: unoptimizedValue, // tambahkan ini
 
     remotePatterns: [
       {
@@ -42,9 +43,7 @@ const nextConfig: NextConfig = {
   },
 
   rewrites: async () => ({
-    beforeFiles: [
-      { source: "/", destination: "/en" },
-    ],
+    beforeFiles: [{ source: "/", destination: "/en" }],
     afterFiles: [],
     fallback: [],
   }),

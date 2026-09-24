@@ -177,7 +177,7 @@ async function seedAlumniProfile(userId: ObjectId) {
     userId,
     fullName: "RAMS Development Alumni",
     nim: "RAMS-ALUMNI-001",
-    graduationYear: 2024,
+    angkatan: 24,
     program: "Marine Engineering",
     currentStatus: ALUMNI_STATUS.WORKING,
     currentCompany: "RAMS Development Engineering",

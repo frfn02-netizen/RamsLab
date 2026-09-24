@@ -107,7 +107,11 @@ export async function getPublicDosenByIdController(
     }
 
     const alumni = await findAlumniById(id);
-    if (alumni?.isPublic && alumni.profileCompleted) {
+    if (
+      alumni?.isPublic &&
+      alumni.profileCompleted &&
+      alumni.reviewStatus === "APPROVED"
+    ) {
       return res.json({
         success: true,
         data: toPublicAlumniProfile(req, alumni),
@@ -124,6 +128,32 @@ export async function getPublicDosenByIdController(
       message: "Failed to fetch public profile",
     });
   }
+}
+
+export async function getPublicAlumniByIdController(
+  req: Request,
+  res: Response,
+) {
+  const id = req.params.id as string;
+  if (!ObjectId.isValid(id)) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Public alumni profile not found" });
+  }
+
+  const alumni = await findAlumniById(id);
+  if (
+    !alumni ||
+    !alumni.isPublic ||
+    !alumni.profileCompleted ||
+    alumni.reviewStatus !== "APPROVED"
+  ) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Public alumni profile not found" });
+  }
+
+  return res.json({ success: true, data: toPublicAlumniProfile(req, alumni) });
 }
 
 export async function getPublicAlumniController(req: Request, res: Response) {

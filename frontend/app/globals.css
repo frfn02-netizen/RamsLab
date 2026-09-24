@@ -942,7 +942,10 @@ body {
 /* Tablet: 2 cards */
 @media (max-width: 1024px) {
   .youtube-carousel-card {
-    flex: 0 0 calc((var(--youtube-viewport-width, 800px) - var(--youtube-gap, 28px)) / 2);
+    flex: 0 0
+      calc(
+        (var(--youtube-viewport-width, 800px) - var(--youtube-gap, 28px)) / 2
+      );
   }
 }
 

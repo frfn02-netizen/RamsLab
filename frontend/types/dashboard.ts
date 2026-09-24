@@ -10,5 +10,6 @@ export interface DashboardStats {
   publishedResearchAreas: number;
   unpublishedResearchAreas: number;
   latestSiteContentUpdatedAt: string | null;
-  latestSiteContentKey: "homepage" | "about" | "contact" | "footer" | null;
+  latestSiteContentKey:
+    "homepage" | "about" | "contact" | "footer" | "public-service" | null;
 }

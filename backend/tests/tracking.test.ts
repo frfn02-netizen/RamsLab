@@ -57,7 +57,7 @@ beforeAll(async () => {
     userId: TEST_USER_ID,
     fullName: "Vitest Tracking Alumni",
     nim: TEST_NIM,
-    graduationYear: 2026,
+    angkatan: 26,
     program: "Informatics Engineering",
     currentStatus: "WORKING",
     isPublic: true,

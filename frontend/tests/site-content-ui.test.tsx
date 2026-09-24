@@ -46,12 +46,17 @@ describe("site content dashboard", () => {
     updateAdminSiteContent.mockResolvedValue(record);
     render(<SiteContentEditor keyName="homepage" />);
     await waitFor(() =>
-      expect(screen.getByDisplayValue("English")).toBeInTheDocument(),
+      expect(screen.getByDisplayValue("Reliability")).toBeInTheDocument(),
     );
-    expect(screen.getByDisplayValue("Indonesia")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Keandalan")).toBeInTheDocument();
     screen.getByRole("button", { name: "Save content" }).click();
-    await waitFor(() =>
-      expect(updateAdminSiteContent).toHaveBeenCalledWith("homepage", content),
-    );
+    await waitFor(() => {
+      expect(updateAdminSiteContent).toHaveBeenCalledTimes(1);
+      const [key, saved] = updateAdminSiteContent.mock.calls[0];
+      expect(key).toBe("homepage");
+      expect(saved.principles).toEqual(content.principles);
+      expect(saved.ecosystem.title).toEqual(content.ecosystem.title);
+      expect(saved.headOfLaboratory).toBeDefined();
+    });
   });
 });

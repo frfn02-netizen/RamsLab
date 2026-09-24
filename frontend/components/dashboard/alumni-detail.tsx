@@ -13,7 +13,12 @@ import {
   LoadingState,
   inputClass,
 } from "@/components/ui";
-import { getAlumniById, setAlumniActive, updateAlumni } from "@/lib/api/alumni";
+import {
+  getAlumniById,
+  reviewAlumni,
+  setAlumniActive,
+  updateAlumni,
+} from "@/lib/api/alumni";
 import { getTrackingByAlumniId } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import { safeHttpUrl } from "@/lib/safe-url";
@@ -53,10 +58,11 @@ export default function AlumniDetail({ id }: { id: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accountUpdating, setAccountUpdating] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
-    graduationYear: "",
+    angkatan: "",
     program: "",
     currentStatus: "WORKING" as AlumniStatus,
     phone: "",
@@ -91,7 +97,7 @@ export default function AlumniDetail({ id }: { id: string }) {
 
           setForm({
             fullName: profile.fullName,
-            graduationYear: String(profile.graduationYear),
+            angkatan: String(profile.angkatan),
             program: profile.program,
             currentStatus: profile.currentStatus,
             phone: profile.phone ?? "",
@@ -132,7 +138,7 @@ export default function AlumniDetail({ id }: { id: string }) {
     try {
       const result = await updateAlumni(id, {
         fullName: form.fullName,
-        graduationYear: Number(form.graduationYear),
+        angkatan: Number(form.angkatan),
         program: form.program,
         currentStatus: form.currentStatus,
         phone: form.phone || undefined,
@@ -169,6 +175,18 @@ export default function AlumniDetail({ id }: { id: string }) {
     }
   }
 
+  async function review(action: "APPROVE" | "REJECT") {
+    setReviewing(true);
+    setError(null);
+    try {
+      setAlumni(await reviewAlumni(id, action));
+    } catch (reason) {
+      setError(getUserFacingError(reason));
+    } finally {
+      setReviewing(false);
+    }
+  }
+
   if (!alumni && !error) {
     return (
       <div className="p-5 sm:p-7 lg:p-9">
@@ -183,7 +201,7 @@ export default function AlumniDetail({ id }: { id: string }) {
         <ErrorState message={error} />
 
         <Link
-          href="/dashboard/alumni"
+          href="/team"
           className="mt-5 inline-block text-sm font-bold text-[var(--rams-red)]"
         >
           ← Back to alumni
@@ -216,6 +234,21 @@ export default function AlumniDetail({ id }: { id: string }) {
           </Badge>
           <Badge tone={alumni.isPublic ? "green" : "neutral"}>
             {alumni.isPublic ? "Public" : "Private"}
+          </Badge>
+          <Badge
+            tone={
+              alumni.reviewStatus === "APPROVED"
+                ? "green"
+                : alumni.reviewStatus === "REJECTED"
+                  ? "amber"
+                  : "neutral"
+            }
+          >
+            {alumni.reviewStatus === "APPROVED"
+              ? "Approved"
+              : alumni.reviewStatus === "REJECTED"
+                ? "Rejected"
+                : "Pending review"}
           </Badge>
           {alumni.accountEmail && (
             <span className="text-sm text-[var(--rams-gray)]">
@@ -250,7 +283,7 @@ export default function AlumniDetail({ id }: { id: string }) {
             </h1>
 
             <p className="mt-2 text-[var(--rams-gray)]">
-              {alumni.program} · Class of {alumni.graduationYear}
+              {alumni.program} · P{alumni.angkatan}
             </p>
           </div>
 
@@ -266,6 +299,19 @@ export default function AlumniDetail({ id }: { id: string }) {
                   : alumni.accountActive === false
                     ? "Enable account"
                     : "Disable account"}
+              </Button>
+              <Button
+                disabled={reviewing || !alumni.profileCompleted}
+                onClick={() => void review("APPROVE")}
+              >
+                {reviewing ? "Reviewing…" : "Approve & publish"}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={reviewing}
+                onClick={() => void review("REJECT")}
+              >
+                Reject
               </Button>
               <Button
                 variant="secondary"
@@ -300,17 +346,15 @@ export default function AlumniDetail({ id }: { id: string }) {
                   />
                 </Field>
 
-                <Field label="Graduation year">
+                <Field label="P (Angkatan)">
                   <input
                     required
                     type="number"
-                    min="1900"
-                    max="2100"
+                    min="1"
+                    max="99"
                     className={inputClass}
-                    value={form.graduationYear}
-                    onChange={(event) =>
-                      update("graduationYear", event.target.value)
-                    }
+                    value={form.angkatan}
+                    onChange={(event) => update("angkatan", event.target.value)}
                   />
                 </Field>
 
@@ -404,6 +448,21 @@ export default function AlumniDetail({ id }: { id: string }) {
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <Card className="space-y-6 p-6">
+              {alumni.photo && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
+                    Profile photo
+                  </p>
+                  <a
+                    href={alumni.photo}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-sm font-bold text-[var(--rams-red)]"
+                  >
+                    View uploaded photo ↗
+                  </a>
+                </div>
+              )}
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
                   Current role

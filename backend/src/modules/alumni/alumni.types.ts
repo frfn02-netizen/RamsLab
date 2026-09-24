@@ -10,6 +10,15 @@ export const ALUMNI_STATUS = {
 
 export type AlumniStatus = (typeof ALUMNI_STATUS)[keyof typeof ALUMNI_STATUS];
 
+export const ALUMNI_REVIEW_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+} as const;
+
+export type AlumniReviewStatus =
+  (typeof ALUMNI_REVIEW_STATUS)[keyof typeof ALUMNI_REVIEW_STATUS];
+
 export interface CareerHistory {
   company: string;
   position: string;
@@ -37,7 +46,7 @@ export interface Alumni {
 
   photo?: string;
 
-  graduationYear?: number;
+  angkatan?: number;
 
   program: string;
 
@@ -46,6 +55,8 @@ export interface Alumni {
   location?: string;
 
   currentStatus: AlumniStatus;
+
+  otherStatus?: string;
 
   currentCompany?: string;
 
@@ -60,6 +71,7 @@ export interface Alumni {
   educationHistory: EducationHistory[];
 
   isPublic: boolean;
+  reviewStatus?: AlumniReviewStatus;
   profileCompleted: boolean;
   accountEmail?: string;
   accountActive?: boolean;

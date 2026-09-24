@@ -29,9 +29,9 @@ export async function createAlumniIndexes() {
   );
 
   await collection.createIndex(
-    { graduationYear: 1 },
+    { angkatan: 1 },
     {
-      name: "alumni_graduation_year_index",
+      name: "alumni_angkatan_index",
     },
   );
 

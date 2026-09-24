@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { getPublicAlumniList } from "@/lib/api/modules";
 import type { PublicPerson } from "@/types/people";
 import PublicContainer from "./public-container";
@@ -21,17 +22,8 @@ function searchableText(member: PublicPerson) {
     .toLowerCase();
 }
 
-function AlumniCard({
-  member,
-  profileLabel,
-}: {
-  member: PublicPerson;
-  profileLabel: string;
-}) {
-  const programLine = [member.program, member.graduationYear]
-    .filter(Boolean)
-    .join(" · ");
-
+export function AlumniCard({ member }: { member: PublicPerson }) {
+  const t = useTranslations("alumni");
   const company = member.specialization[0];
 
   return (
@@ -44,18 +36,21 @@ function AlumniCard({
         />
       </div>
 
-      <h3 className="mx-auto mt-5 line-clamp-2 min-h-[3.25rem] max-w-full font-display text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">
-        <a
+      <h3 className="mx-auto mt-5 line-clamp-2 min-h-[3.25rem] max-w-full font-display text-xl font-semibold leading-tight tracking-[-0.025em] text-[var(--navy)]">
+        <Link
           href={`/alumni/${member.id}`}
           className="hover:text-[var(--rams-red)]"
         >
-          {member.fullName}
-        </a>
+          <span className="transition-colors group-hover:text-[var(--rams-red)]">
+            {member.fullName}
+          </span>
+        </Link>
+        {member.angkatan && (
+          <span className="ml-2 inline font-mono text-xl font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
+            P{member.angkatan}
+          </span>
+        )}
       </h3>
-
-      <p className="mx-auto mt-3 max-w-full font-mono text-[0.7rem] font-bold uppercase leading-relaxed tracking-[0.08em] text-[var(--rams-red)]">
-        {programLine || "Alumni"}
-      </p>
 
       <div className="mx-auto mt-4 max-w-full space-y-1 text-sm leading-6 text-[var(--slate)]">
         {member.position && (
@@ -63,6 +58,19 @@ function AlumniCard({
         )}
 
         {company && <p>{company}</p>}
+
+        {member.linkedin && (
+          <p className="mt-2">
+            <a
+              href={member.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--rams-red)] hover:text-[var(--navy)]"
+            >
+              {t("profileLink")} <span aria-hidden="true">→</span>
+            </a>
+          </p>
+        )}
       </div>
     </article>
   );
@@ -160,11 +168,7 @@ export default function AlumniDirectory() {
               stagger={90}
             >
               {filteredRecords.map((member) => (
-                <AlumniCard
-                  key={member.id}
-                  member={member}
-                  profileLabel={t("profileLink")}
-                />
+                <AlumniCard key={member.id} member={member} />
               ))}
             </RevealOnScroll>
           )}

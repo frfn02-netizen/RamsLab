@@ -27,11 +27,7 @@ export default function PublicEventsPage() {
 
   return (
     <main>
-      <PageHero
-        eyebrow=""
-        title={t("title")}
-        description={t("description")}
-      />
+      <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="max-w-4xl py-16 sm:py-20">
         {loading ? (
           <p className="text-sm font-semibold text-[var(--rams-gray)]">

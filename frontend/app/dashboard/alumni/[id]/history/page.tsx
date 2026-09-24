@@ -59,7 +59,7 @@ export default function AdminAlumniAuditHistoryPage({
     <div className="p-5 sm:p-7 lg:p-9">
       <div className="mx-auto max-w-3xl space-y-7">
         <Link
-          href={`/dashboard/alumni/${id}`}
+          href={`/team${id}`}
           className="text-sm font-bold text-[var(--rams-red)]"
         >
           ← Back to alumni

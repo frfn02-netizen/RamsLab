@@ -23,11 +23,7 @@ export default function PublicVideosPage() {
 
   return (
     <main>
-      <PageHero
-        eyebrow=""
-        title={t("title")}
-        description={t("description")}
-      />
+      <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="py-10 sm:py-14">
         {loading ? (
           <p className="text-sm font-semibold text-[var(--gray)]">

@@ -6,21 +6,25 @@ export function PageHeader({
   title,
   description,
   action,
+  titleClassName,
 }: {
   eyebrow?: string | null;
   title: string;
   description?: string;
   action?: ReactNode;
+  titleClassName?: string;
 }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        {eyebrow !== null && (
+        {/* {eyebrow !== null && (
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
             {eyebrow ?? "RAMS Platform"}
           </p>
-        )}
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--rams-charcoal)]">
+        )} */}
+        <h1
+          className={`mt-2 text-3xl font-bold tracking-tight text-[var(--rams-charcoal)]${titleClassName ? ` ${titleClassName}` : ""}`}
+        >
           {title}
         </h1>
         {description && (
