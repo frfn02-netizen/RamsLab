@@ -6,6 +6,7 @@ import Image from "next/image";
 import PublicContainer from "@/components/public/public-container";
 import { PublicError } from "@/components/public/public-states";
 import { getPublicSiteContent } from "@/lib/api/modules";
+import { assetPath } from "@/lib/asset-path";
 import { localizedMetadata } from "@/lib/i18n/metadata";
 import type { Locale } from "@/i18n/routing";
 import RevealOnScroll from "@/components/public/reveal-on-scroll";
@@ -93,7 +94,7 @@ export default async function AboutPage({
 
           <div className="group relative h-[400px] w-full overflow-hidden rounded-lg">
             <Image
-              src="/assets/research-marine.jpeg"
+              src={assetPath("/assets/research-marine.jpeg")}
               alt={localized(content.hero.title)}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
@@ -147,7 +148,7 @@ export default async function AboutPage({
           >
             <div className="group relative h-[400px] w-full overflow-hidden rounded-lg">
               <Image
-                src="/assets/engineers.jpg"
+                src={assetPath("/assets/engineers.jpg")}
                 alt={localized(content.researchApproach.title)}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
@@ -221,7 +222,7 @@ export default async function AboutPage({
 
             <div className="group relative h-[300px] w-full overflow-hidden rounded-lg">
               <Image
-                src="/assets/research-marine.jpeg"
+                src={assetPath("/assets/research-marine.jpeg")}
                 alt={localized(content.marineContext.title)}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"

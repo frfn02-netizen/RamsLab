@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicResearch, getPublicSiteContent } from "@/lib/api/modules";
+import { assetPath } from "@/lib/asset-path";
 import type { PublicResearchArea } from "@/types/modules";
 import type { HomepageContent } from "@/types/site-content";
 import { getResearchImageStyles } from "@/lib/research-image";
@@ -19,10 +20,10 @@ import HomeIntroduction, { HeadOfLaboratorySection } from "./home-introduction";
 import HomePeopleSection from "./home-people";
 
 const researchImages = [
-  "/assets/offshore.jpg",
-  "/assets/vessel.jpeg",
-  "/assets/port.jpeg",
-  "/assets/upscalemedia-transformed.jpeg",
+  assetPath("/assets/offshore.jpg"),
+  assetPath("/assets/vessel.jpeg"),
+  assetPath("/assets/port.jpeg"),
+  assetPath("/assets/upscalemedia-transformed.jpeg"),
 ] as const;
 
 type EcosystemCard = {
@@ -387,7 +388,7 @@ export default function PublicHome() {
                     cards={[
                       {
                         key: "rams",
-                        logo: "/assets/rams-logo.png",
+                        logo: assetPath("/assets/rams-logo.png"),
                         logoAlt: brand("laboratory"),
                         name: brand("laboratory"),
                         description: localized(
@@ -400,7 +401,7 @@ export default function PublicHome() {
                       },
                       {
                         key: "ais",
-                        logo: "/assets/logo ais part2.png",
+                        logo: assetPath("/assets/logo ais part2.png"),
                         logoAlt: brand("ais"),
                         name: brand("ais"),
                         description: localized(
@@ -410,7 +411,7 @@ export default function PublicHome() {
                       },
                       {
                         key: "pui",
-                        logo: "/assets/logo pu-kekal part2.png",
+                        logo: assetPath("/assets/logo pu-kekal part2.png"),
                         logoAlt: brand("pui"),
                         name: brand("pui"),
                         description: localized(

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-providers";
+import { assetPath } from "@/lib/asset-path";
 
 export const metadata: Metadata = {
   title: {
@@ -17,8 +18,8 @@ export const metadata: Metadata = {
   ),
 
   icons: {
-    icon: "/assets/rams-logo.png",
-    apple: "/assets/rams-logo.png",
+    icon: assetPath("/assets/rams-logo.png"),
+    apple: assetPath("/assets/rams-logo.png"),
   },
 
   robots: {

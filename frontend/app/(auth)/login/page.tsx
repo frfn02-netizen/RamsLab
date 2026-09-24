@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
 import { getUserFacingError } from "@/lib/api/errors";
+import { assetPath } from "@/lib/asset-path";
 import { Button, inputClass } from "@/components/ui";
 import type { AuthUser } from "@/types/auth";
 
@@ -53,7 +54,7 @@ function LoginContent() {
     <main className="grid min-h-screen bg-white lg:grid-cols-2">
       <section className="relative isolate min-h-[21rem] overflow-hidden bg-[var(--navy)] text-white sm:min-h-[25rem] lg:min-h-screen">
         <Image
-          src="/assets/vessel.jpeg"
+          src={assetPath("/assets/vessel.jpeg")}
           alt="Marine engineering research vessel"
           fill
           priority
@@ -69,7 +70,7 @@ function LoginContent() {
             <div>
               <div className="relative h-24 w-24 bg-white p-2 sm:h-28 sm:w-28">
                 <Image
-                  src="/assets/rams-logo.png"
+                  src={assetPath("/assets/rams-logo.png")}
                   alt="RAMS Laboratory"
                   fill
                   sizes="100%"

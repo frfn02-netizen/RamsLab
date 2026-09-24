@@ -1,11 +1,18 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
-const basePath = process.env.BASE_PATH || "";
+const basePath =
+  process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || "";
 
 const nextConfig: NextConfig = {
   basePath,
   assetPrefix: basePath,
+
+  // Keep lib/asset-path.ts in sync with basePath even when only the legacy
+  // BASE_PATH variable is set.
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
 
   images: {
     remotePatterns: [

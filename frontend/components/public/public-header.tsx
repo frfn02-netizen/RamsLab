@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { assetPath } from "@/lib/asset-path";
 import LanguageSwitcher from "./language-switcher";
 import { useHeroContext } from "./hero-context";
 
@@ -50,7 +51,7 @@ export default function PublicHeader() {
           {/* buat gedein logo rams yang di navbar */}
           <div className="relative h-[80px] w-[80px] shrink-0 sm:h-[94px] sm:w-[94px]">
             <Image
-              src="/assets/rams-logo.png"
+              src={assetPath("/assets/rams-logo.png")}
               alt=""
               fill
               sizes="94px"

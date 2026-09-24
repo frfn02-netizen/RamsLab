@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
+import { assetPath } from "@/lib/asset-path";
 import { hasPermission } from "@/lib/authz";
 import type { ReactNode } from "react";
 
@@ -123,7 +124,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-3">
           <span className="relative h-10 w-12 shrink-0 rounded-sm bg-white p-1">
             <Image
-              src="/assets/rams-logo.png"
+              src={assetPath("/assets/rams-logo.png")}
               alt="RAMS Laboratory"
               fill
               sizes="48px"

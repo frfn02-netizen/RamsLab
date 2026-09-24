@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getPublicSiteContent } from "@/lib/api/modules";
+import { assetPath } from "@/lib/asset-path";
 import type { FooterContent } from "@/types/site-content";
 import PublicContainer from "./public-container";
 
@@ -136,7 +137,7 @@ export default function PublicFooter() {
             <div className="flex items-center gap-4">
               <div className="relative h-16 w-16 shrink-0 sm:h-[4.5rem] sm:w-[4.5rem]">
                 <Image
-                  src="/assets/rams-logo.png"
+                  src={assetPath("/assets/rams-logo.png")}
                   alt={brand("laboratory")}
                   fill
                   sizes="72px"
