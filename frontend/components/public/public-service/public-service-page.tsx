@@ -1,86 +1,56 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
-  getPublicExperts,
+  getPublicPartners,
   getPublicServiceProjectsList,
 } from "@/lib/api/modules";
 import type {
-  Expert,
+  Partner,
   PublicServiceProjectPageItem,
   PublicServiceProjectFacets,
 } from "@/types/modules";
 import PageHero from "../page-hero";
 import PublicContainer from "../public-container";
 
-function ExpertCard({ expert }: { expert: Expert }) {
-  const [imageFailed, setImageFailed] = useState(false);
-
-  return (
-    <Link
-      href={`/experts/${expert._id}`}
-      className="group flex h-full min-w-0 flex-col border border-[var(--border)] bg-white transition hover:border-[var(--rams-red)] hover:shadow-md"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-[var(--navy)]">
-        {expert.photo && !imageFailed ? (
-          <Image
-            src={expert.photo}
-            alt={expert.name}
-            fill
-            onError={() => setImageFailed(true)}
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          />
-        ) : (
-          <div className="grid h-full place-items-center text-5xl font-semibold text-white/85">
-            {expert.name
-              .split(/\s+/)
-              .filter(Boolean)
-              .slice(0, 2)
-              .map((w) => w[0]?.toUpperCase())
-              .join("")}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col items-center p-5 text-center">
-        <h3 className="font-display text-lg font-semibold leading-tight tracking-[-0.02em] text-[var(--navy)] transition-colors group-hover:text-[var(--rams-red)]">
-          {expert.name}
-        </h3>
-        {expert.specialization.length > 0 && (
-          <p className="mt-2 text-sm leading-5 text-[var(--gray)]">
-            {expert.specialization.join(", ")}
-          </p>
-        )}
-      </div>
-    </Link>
-  );
-}
-
 export default function PublicServicePage() {
   const locale = useLocale() === "id" ? "id" : "en";
   const t = useTranslations("publicService");
   const common = useTranslations("common");
-  const [experts, setExperts] = useState<Expert[]>([]);
+  const [industrialPartners, setIndustrialPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const [row1, row2] = useMemo(() => {
+    const mid = Math.ceil(industrialPartners.length / 2);
+    return [industrialPartners.slice(0, mid), industrialPartners.slice(mid)];
+  }, [industrialPartners]);
+
   useEffect(() => {
-    getPublicExperts()
-      .then(setExperts)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    getPublicPartners("INDUSTRIAL")
+      .then((result) => {
+        if (!cancelled) setIndustrialPartners(result);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
     <main>
-      <PageHero
-        eyebrow=""
-        title={t("title")}
-        description={t("description")}
-      />
+      <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="space-y-16 py-16 sm:py-20">
         {loading ? (
           <p className="text-sm font-semibold text-[var(--rams-gray)]">
@@ -92,16 +62,24 @@ export default function PublicServicePage() {
           </p>
         ) : (
           <>
-            {experts.length > 0 && (
+            {industrialPartners.length > 0 && (
               <section>
-                <SectionTitle
-                  eyebrow=""
-                  title={t("expertsTitle")}
-                />
-                <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {experts.map((expert) => (
-                    <ExpertCard key={expert._id} expert={expert} />
-                  ))}
+                <SectionTitle eyebrow="" title={t("industrialPartnersTitle")} />
+                <div className="space-y-10">
+                  {row1.length > 0 && (
+                    <MarqueeRow
+                      partners={row1}
+                      direction="left"
+                      ariaLabel={t("industrialPartnersTitle")}
+                    />
+                  )}
+                  {row2.length > 0 && (
+                    <MarqueeRow
+                      partners={row2}
+                      direction="right"
+                      ariaLabel={t("industrialPartnersTitle")}
+                    />
+                  )}
                 </div>
               </section>
             )}
@@ -117,8 +95,201 @@ export default function PublicServicePage() {
 function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div>
-      {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">{eyebrow}</p> : null}
-      <h2 className={`${eyebrow ? "mt-3" : ""} text-3xl font-bold text-[var(--navy)]`}>{title}</h2>
+      {eyebrow ? (
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
+          {eyebrow}
+        </p>
+      ) : null}
+      <h2
+        className={`${eyebrow ? "mt-3" : ""} text-3xl font-bold text-[var(--navy)]`}
+      >
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+/* ========================================
+   MARQUEE ROW (requestAnimationFrame)
+   ======================================== */
+
+function MarqueeRow({
+  partners,
+  direction,
+  ariaLabel,
+}: {
+  partners: Partner[];
+  direction: "left" | "right";
+  ariaLabel: string;
+}) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [oneSetWidth, setOneSetWidth] = useState(0);
+  const offsetRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const prevTimeRef = useRef<number | null>(null);
+  const pausedRef = useRef(false);
+
+  const PX_PER_SEC = 12;
+
+  const measure = useCallback(() => {
+    if (!trackRef.current) return;
+    const w = trackRef.current.scrollWidth / 2;
+    if (w > 0) setOneSetWidth(w);
+  }, []);
+
+  useEffect(() => {
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (trackRef.current) ro.observe(trackRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure, partners]);
+
+  useEffect(() => {
+    if (oneSetWidth <= 0) return;
+
+    const initial = direction === "left" ? 0 : -oneSetWidth;
+    offsetRef.current = initial;
+    prevTimeRef.current = null;
+
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translate3d(${initial}px,0,0)`;
+    }
+
+    function tick(now: number) {
+      if (pausedRef.current) {
+        prevTimeRef.current = null;
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (prevTimeRef.current === null) {
+        prevTimeRef.current = now;
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      const dt = (now - prevTimeRef.current) / 1000;
+      prevTimeRef.current = now;
+
+      const delta = PX_PER_SEC * dt;
+      let off = offsetRef.current;
+
+      if (direction === "left") {
+        off -= delta;
+        if (off <= -oneSetWidth) off += oneSetWidth;
+      } else {
+        off += delta;
+        if (off >= 0) off -= oneSetWidth;
+      }
+
+      offsetRef.current = off;
+
+      if (trackRef.current) {
+        trackRef.current.style.transform = `translate3d(${off}px,0,0)`;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [oneSetWidth, direction]);
+
+  return (
+    <div
+      className="partner-marquee-row group relative mt-8"
+      role="region"
+      aria-label={ariaLabel}
+      onMouseEnter={() => (pausedRef.current = true)}
+      onMouseLeave={() => (pausedRef.current = false)}
+    >
+      <div
+        className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 sm:w-24"
+        style={{
+          background: "linear-gradient(to right, var(--paper), transparent)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 sm:w-24"
+        style={{
+          background: "linear-gradient(to left, var(--paper), transparent)",
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="overflow-hidden" ref={viewportRef}>
+        <div ref={trackRef} className="flex w-max will-change-transform">
+          {[...partners, ...partners].map((partner, i) => (
+            <MarqueeItem key={`${partner._id}-${i}`} partner={partner} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ========================================
+   MARQUEE ITEM
+   ======================================== */
+
+function MarqueeItem({ partner }: { partner: Partner }) {
+  const label = partner.website
+    ? `${partner.name} — ${partner.website}`
+    : partner.name;
+
+  const inner = partner.logo ? (
+    <div className="flex flex-col items-center gap-2">
+      <Image
+        src={partner.logo}
+        alt={partner.name}
+        width={200}
+        height={80}
+        className="h-10 w-auto object-contain sm:h-14 md:h-16 lg:h-20 xl:h-24"
+      />
+      <span className="hidden text-[0.65rem] font-medium tracking-wide text-[var(--gray)] sm:inline">
+        {partner.name}
+      </span>
+    </div>
+  ) : (
+    <div className="flex flex-col items-center gap-2">
+      <div className="flex h-10 w-28 items-center justify-center rounded border border-[var(--border)] bg-white px-3 text-[0.65rem] font-bold leading-tight text-[var(--navy)] sm:h-14 sm:w-32 md:h-16 md:w-40 lg:h-20 lg:w-48 xl:h-24 xl:w-56">
+        {partner.name}
+      </div>
+      <span className="hidden text-[0.65rem] font-medium tracking-wide text-[var(--gray)] sm:inline">
+        {partner.name}
+      </span>
+    </div>
+  );
+
+  const sharedClass =
+    "flex-shrink-0 px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12 flex items-center justify-center transition duration-300 hover:scale-105";
+
+  if (partner.website) {
+    return (
+      <a
+        href={partner.website}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        className={sharedClass}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <div className={sharedClass} aria-label={partner.name}>
+      {inner}
     </div>
   );
 }

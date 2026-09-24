@@ -21,14 +21,15 @@ export default function HomePartnersSection() {
       .finally(() => setLoading(false));
   }, []);
 
-  const industrial = useMemo(
-    () => partners.filter((p) => p.type === "INDUSTRIAL"),
-    [partners],
-  );
   const university = useMemo(
     () => partners.filter((p) => p.type === "UNIVERSITY"),
     [partners],
   );
+
+  const [row1, row2] = useMemo(() => {
+    const mid = Math.ceil(university.length / 2);
+    return [university.slice(0, mid), university.slice(mid)];
+  }, [university]);
 
   if (loading || partners.length === 0) return null;
 
@@ -48,40 +49,34 @@ export default function HomePartnersSection() {
       <div className="relative z-10 pt-10 sm:pt-14">
         <PublicContainer>
           <RevealOnScroll className="text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--navy)] sm:text-4xl">
-              {t("partners.title")}
-            </h2>
             <p className="mx-auto mt-3 max-w-2xl text-base text-[var(--gray)] sm:text-lg">
               {t("partners.description")}
             </p>
           </RevealOnScroll>
         </PublicContainer>
 
-        {/* Industrial Partners — RIGHT → LEFT */}
-        {industrial.length > 0 && (
-          <RevealOnScroll className="mt-8">
-            <p className="mb-5 text-center text-xl font-bold uppercase tracking-widest text-[var(--gray)]">
-              {t("partners.industrialTitle")}
-            </p>
-            <MarqueeRow
-              partners={industrial}
-              direction="left"
-              ariaLabel={t("partners.industrialTitle")}
-            />
-          </RevealOnScroll>
-        )}
-
-        {/* University Partners — LEFT → RIGHT */}
+        {/* University Partners — 2-row marquee */}
         {university.length > 0 && (
           <RevealOnScroll className="mt-8">
             <p className="mb-5 text-center text-xl font-bold uppercase tracking-widest text-[var(--gray)]">
               {t("partners.universityTitle")}
             </p>
-            <MarqueeRow
-              partners={university}
-              direction="right"
-              ariaLabel={t("partners.universityTitle")}
-            />
+            <div className="space-y-10">
+              {row1.length > 0 && (
+                <MarqueeRow
+                  partners={row1}
+                  direction="right"
+                  ariaLabel={t("partners.universityTitle")}
+                />
+              )}
+              {row2.length > 0 && (
+                <MarqueeRow
+                  partners={row2}
+                  direction="left"
+                  ariaLabel={t("partners.universityTitle")}
+                />
+              )}
+            </div>
           </RevealOnScroll>
         )}
 
@@ -297,7 +292,7 @@ function MarqueeItem({ partner }: { partner: Partner }) {
   );
 
   const sharedClass =
-    "flex-shrink-0 px-7 sm:px-9 md:px-11 lg:px-14 xl:px-16 flex items-center justify-center transition duration-300 hover:scale-105";
+    "flex-shrink-0 px-9 sm:px-12 md:px-14 lg:px-16 xl:px-20 flex items-center justify-center transition duration-300 hover:scale-105";
 
   if (partner.website) {
     return (
