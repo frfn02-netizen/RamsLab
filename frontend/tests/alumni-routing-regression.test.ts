@@ -85,6 +85,26 @@ describe("proxy middleware – alumni routing", () => {
   });
 });
 
+describe("proxy middleware – trailing slash (trailingSlash: true deployments)", () => {
+  it.each([
+    "/alumni/",
+    "/alumni/login/",
+    "/alumni/register/",
+    "/alumni/dashboard/",
+    "/alumni/history/",
+  ])("keeps %s as private", (pathname) => {
+    const request = makeRequest(pathname);
+    const response = proxy(request);
+    expect(response.headers.get("x-intl-middleware")).toBeNull();
+  });
+
+  it("still sends /alumni/{id}/ through i18n middleware", () => {
+    const request = makeRequest("/alumni/6ab0d6de07058c3a572ea486/");
+    const response = proxy(request);
+    expect(response.headers.get("x-intl-middleware")).toBe("true");
+  });
+});
+
 describe("proxy middleware – alumni detail IDs go through i18n", () => {
   it.each([
     "/alumni/abc123",

@@ -28,6 +28,14 @@ function hasPrefix(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
+// With `trailingSlash: true` (used by the /rams-lab deployment) Next.js hands
+// the proxy "/alumni/register/", which must still match "/alumni/register".
+function stripTrailingSlash(pathname: string) {
+  return pathname.length > 1 && pathname.endsWith("/")
+    ? pathname.slice(0, -1)
+    : pathname;
+}
+
 function rewriteRamsLab(request: NextRequest) {
   const url = request.nextUrl.clone();
   const pathname = url.pathname;
@@ -78,7 +86,7 @@ export default function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (PRIVATE_ALUMNI_PATHS.includes(pathname)) {
+  if (PRIVATE_ALUMNI_PATHS.includes(stripTrailingSlash(pathname))) {
     return NextResponse.next();
   }
 
