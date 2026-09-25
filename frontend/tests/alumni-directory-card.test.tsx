@@ -117,7 +117,7 @@ describe("AlumniCard – Class Of line", () => {
     });
     render(<AlumniCard member={member} />);
 
-    expect(screen.getByText("P20")).toBeInTheDocument();
+    expect(screen.getByText(/P20/)).toBeInTheDocument();
   });
 
   it("does not render P prefix when angkatan is missing", () => {
@@ -227,7 +227,7 @@ describe("AlumniCard – angkatan displays as P prefix", () => {
     });
     render(<AlumniCard member={member} />);
 
-    expect(screen.getByText("P25")).toBeInTheDocument();
+    expect(screen.getByText(/P25/)).toBeInTheDocument();
     expect(screen.queryByText(/entryYear/i)).not.toBeInTheDocument();
   });
 });

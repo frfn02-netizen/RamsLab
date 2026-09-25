@@ -45,12 +45,13 @@ export function AlumniCard({ member }: { member: PublicPerson }) {
             {member.fullName}
           </span>
         </Link>
-        {member.angkatan && (
-          <span className="ml-2 inline font-mono text-xl font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
-            P{member.angkatan}
-          </span>
-        )}
       </h3>
+
+      {member.angkatan && (
+        <p className="mx-auto mt-2 font-mono text-sm font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
+          {t("classOf")} P{member.angkatan}
+        </p>
+      )}
 
       <div className="mx-auto mt-4 max-w-full space-y-1 text-sm leading-6 text-[var(--slate)]">
         {member.position && (

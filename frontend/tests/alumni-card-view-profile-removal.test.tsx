@@ -150,7 +150,7 @@ describe("MemberCard – Alumni on People/Team page", () => {
     });
     render(<MemberCard member={member} roleFallback="Role" />);
 
-    expect(screen.getByText("P20")).toBeInTheDocument();
+    expect(screen.getByText(/P20/)).toBeInTheDocument();
   });
 
   it("does not render P prefix when angkatan is missing", () => {
@@ -222,7 +222,7 @@ describe("MemberCard – Alumni on People/Team page", () => {
     });
     render(<MemberCard member={member} roleFallback="Role" />);
 
-    expect(screen.getByText("P25")).toBeInTheDocument();
+    expect(screen.getByText(/P25/)).toBeInTheDocument();
     expect(screen.queryByText(/entryYear/i)).not.toBeInTheDocument();
   });
 });

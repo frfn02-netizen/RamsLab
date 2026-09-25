@@ -106,7 +106,7 @@ export default function AlumniProfile({ id }: { id: string }) {
 
                 {profile.angkatan && (
                   <p className="mt-6 font-mono text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
-                    P{profile.angkatan}
+                    {t("classOf")} P{profile.angkatan}
                   </p>
                 )}
 

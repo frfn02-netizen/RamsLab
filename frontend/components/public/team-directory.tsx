@@ -109,6 +109,7 @@ export function MemberCard({
   member: PublicPerson;
   roleFallback: string;
 }) {
+  const t = useTranslations("alumni");
   const isStudent = [
     "MAHASISWA",
     "MASTER",
@@ -138,12 +139,13 @@ export function MemberCard({
           >
             {member.fullName}
           </Link>
-          {isAlumni && member.angkatan && (
-            <span className="ml-2 inline font-mono text-xl font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
-              P{member.angkatan}
-            </span>
-          )}
         </h3>
+
+        {isAlumni && member.angkatan && (
+          <p className="mt-2 font-mono text-sm font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
+            {t("classOf")} P{member.angkatan}
+          </p>
+        )}
 
         {isAlumni && member.position && (
           <p className="mt-2 text-sm font-semibold leading-6 text-[var(--navy)]">
