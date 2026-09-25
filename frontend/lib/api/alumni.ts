@@ -2,7 +2,6 @@ import { apiRequest, apiRequestWithMeta } from "./client";
 import type {
   Alumni,
   AlumniAuditLog,
-  AlumniCreateInput,
   AlumniListParams,
   AlumniListResponse,
   AlumniUpdateInput,
@@ -28,18 +27,6 @@ export async function getAlumniList(
 export function getAlumniById(id: string) {
   return apiRequest<Alumni>(`/alumni/${encodeURIComponent(id)}`);
 }
-export function createAlumni(input: AlumniCreateInput) {
-  return apiRequest<Alumni>("/alumni", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-export function createAdminAlumni(input: Record<string, unknown>) {
-  return apiRequest<{ user: unknown; alumni: Alumni }>("/alumni/admin", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
 export function uploadMyAlumniPhoto(file: File) {
   return apiRequest<Alumni>("/alumni/me/photo", {
     method: "POST",
@@ -60,10 +47,16 @@ export function setAlumniActive(id: string, isActive: boolean) {
     { method: "PATCH", body: JSON.stringify({ isActive }) },
   );
 }
-export function reviewAlumni(id: string, action: "APPROVE" | "REJECT") {
+export function reviewAlumni(
+  id: string,
+  action: "APPROVE" | "REJECT",
+  reason?: string,
+) {
   return apiRequest<Alumni>(`/alumni/${encodeURIComponent(id)}/review`, {
     method: "PATCH",
-    body: JSON.stringify({ action }),
+    body: JSON.stringify(
+      reason === undefined ? { action } : { action, reason },
+    ),
   });
 }
 export async function deleteAlumni(id: string) {

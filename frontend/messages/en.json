@@ -569,5 +569,14 @@
     "deleting": "Deleting…",
     "saving": "Saving…",
     "permission": "You do not have permission to manage publications."
+  },
+  "alumniReview": {
+    "statusTitle": "Profile Status",
+    "statusPending": "Pending review",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "rejectedTitle": "Profile rejected",
+    "reasonLabel": "Reason from reviewer",
+    "resubmitHint": "Please update your profile based on the feedback above and save your changes to resubmit it for review."
   }
 }

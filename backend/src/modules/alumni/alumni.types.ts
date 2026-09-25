@@ -72,6 +72,9 @@ export interface Alumni {
 
   isPublic: boolean;
   reviewStatus?: AlumniReviewStatus;
+  // Reviewer note. Only an administrator sets it through the reject action;
+  // it is cleared when the profile is approved or re-queued for review.
+  reviewNote?: string | null;
   profileCompleted: boolean;
   accountEmail?: string;
   accountActive?: boolean;

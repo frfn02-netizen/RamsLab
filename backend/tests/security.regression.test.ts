@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ObjectId } from "mongodb";
-import { createAdminAlumniSchema } from "../src/modules/alumni/admin-alumni.schema.js";
 import {
-  createAlumniSchema,
   updateAlumniSchema,
   updateMyAlumniSchema,
 } from "../src/modules/alumni/alumni.schema.js";
@@ -20,31 +18,6 @@ const maliciousUrl = "javascript:alert(1)";
 
 describe("security regressions", () => {
   it.each([
-    [
-      "alumni create",
-      createAlumniSchema,
-      {
-        userId: "000000000000000000000001",
-        fullName: "Test Alumni",
-        nim: "TEST",
-        angkatan: 20,
-        program: "Test",
-        currentStatus: "WORKING",
-      },
-    ],
-    [
-      "admin alumni create",
-      createAdminAlumniSchema,
-      {
-        email: "test@example.local",
-        password: "a-secure-test-password",
-        fullName: "Test Alumni",
-        nim: "TEST",
-        angkatan: 20,
-        program: "Test",
-        currentStatus: "WORKING",
-      },
-    ],
     ["alumni update", updateAlumniSchema, {}],
     ["alumni self update", updateMyAlumniSchema, {}],
   ])(
@@ -82,35 +55,6 @@ describe("security regressions", () => {
       },
     ],
     ["student update", updateStudentSchema, { linkedin: maliciousUrl }],
-    [
-      "alumni create",
-      createAlumniSchema,
-      {
-        userId: "000000000000000000000001",
-        fullName: "Test Alumni",
-        nim: "TEST",
-        angkatan: 20,
-        program: "Test",
-        currentStatus: "WORKING",
-        careerHistory: [],
-        educationHistory: [],
-        linkedin: maliciousUrl,
-      },
-    ],
-    [
-      "admin alumni create",
-      createAdminAlumniSchema,
-      {
-        email: "test@example.local",
-        password: "a-secure-test-password",
-        fullName: "Test Alumni",
-        nim: "TEST",
-        angkatan: 20,
-        program: "Test",
-        currentStatus: "WORKING",
-        linkedin: maliciousUrl,
-      },
-    ],
     ["alumni update", updateAlumniSchema, { linkedin: maliciousUrl }],
     ["alumni self update", updateMyAlumniSchema, { linkedin: maliciousUrl }],
   ])("rejects dangerous LinkedIn URLs in %s", (_name, schema, input) => {

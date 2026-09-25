@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import RejectAlumniModal from "@/components/dashboard/reject-alumni-modal";
 import {
   Badge,
   Button,
@@ -21,6 +22,10 @@ import {
 } from "@/lib/api/alumni";
 import { getTrackingByAlumniId } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import {
+  formatMissingPublishFields,
+  getMissingPublishFields,
+} from "@/lib/alumni-publish";
 import { safeHttpUrl } from "@/lib/safe-url";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
 import type { AlumniTracking } from "@/types/modules";
@@ -59,6 +64,7 @@ export default function AlumniDetail({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [accountUpdating, setAccountUpdating] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -175,15 +181,22 @@ export default function AlumniDetail({ id }: { id: string }) {
     }
   }
 
-  async function review(action: "APPROVE" | "REJECT") {
+  async function review(action: "APPROVE" | "REJECT", rejectReason?: string) {
     setReviewing(true);
     setError(null);
     try {
-      setAlumni(await reviewAlumni(id, action));
+      setAlumni(
+        action === "REJECT"
+          ? await reviewAlumni(id, "REJECT", rejectReason)
+          : await reviewAlumni(id, "APPROVE"),
+      );
     } catch (reason) {
       setError(getUserFacingError(reason));
     } finally {
       setReviewing(false);
+      // The modal closes for both outcomes so the page-level error (e.g. a
+      // server refusal) is never hidden behind it.
+      setRejectOpen(false);
     }
   }
 
@@ -214,6 +227,8 @@ export default function AlumniDetail({ id }: { id: string }) {
     return null;
   }
 
+  const missingFields = getMissingPublishFields(alumni);
+
   return (
     <div className="p-5 sm:p-7 lg:p-9">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -229,12 +244,8 @@ export default function AlumniDetail({ id }: { id: string }) {
           <Badge tone={alumni.accountActive === false ? "amber" : "green"}>
             {alumni.accountActive === false ? "Disabled" : "Active"}
           </Badge>
-          <Badge tone={alumni.profileCompleted ? "green" : "amber"}>
-            {alumni.profileCompleted ? "Complete" : "Incomplete"}
-          </Badge>
-          <Badge tone={alumni.isPublic ? "green" : "neutral"}>
-            {alumni.isPublic ? "Public" : "Private"}
-          </Badge>
+          {/* Review status is the workflow state; profile completeness is
+              only ever shown as supporting information below. */}
           <Badge
             tone={
               alumni.reviewStatus === "APPROVED"
@@ -250,15 +261,27 @@ export default function AlumniDetail({ id }: { id: string }) {
                 ? "Rejected"
                 : "Pending review"}
           </Badge>
+          <Badge tone={alumni.isPublic ? "green" : "neutral"}>
+            {alumni.isPublic ? "Public" : "Private"}
+          </Badge>
           {alumni.accountEmail && (
             <span className="text-sm text-[var(--rams-gray)]">
               {alumni.accountEmail}
             </span>
           )}
         </div>
-        {!alumni.profileCompleted && (
+        {missingFields.length > 0 && (
           <p className="border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-            Profile incomplete. The alumni has not completed their profile yet.
+            Missing before publish:{" "}
+            <strong>{formatMissingPublishFields(missingFields)}</strong>. The
+            review status stays &ldquo;
+            {alumni.reviewStatus === "APPROVED"
+              ? "Approved"
+              : alumni.reviewStatus === "REJECTED"
+                ? "Rejected"
+                : "Pending review"}
+            &rdquo; and Approve &amp; publish is refused by the server until the
+            alumni fills them in.
           </p>
         )}
 
@@ -300,8 +323,10 @@ export default function AlumniDetail({ id }: { id: string }) {
                     ? "Enable account"
                     : "Disable account"}
               </Button>
+              {/* Enabled even when publish fields are missing: the backend
+                  validates the approval and returns the missing fields. */}
               <Button
-                disabled={reviewing || !alumni.profileCompleted}
+                disabled={reviewing}
                 onClick={() => void review("APPROVE")}
               >
                 {reviewing ? "Reviewing…" : "Approve & publish"}
@@ -309,7 +334,7 @@ export default function AlumniDetail({ id }: { id: string }) {
               <Button
                 variant="secondary"
                 disabled={reviewing}
-                onClick={() => void review("REJECT")}
+                onClick={() => setRejectOpen(true)}
               >
                 Reject
               </Button>
@@ -618,6 +643,14 @@ export default function AlumniDetail({ id }: { id: string }) {
               )}
             </Card>
           </div>
+        )}
+
+        {rejectOpen && (
+          <RejectAlumniModal
+            submitting={reviewing}
+            onCancel={() => setRejectOpen(false)}
+            onConfirm={(reason) => void review("REJECT", reason)}
+          />
         )}
       </div>
     </div>

@@ -5,8 +5,6 @@ import { requireRole } from "../../middlewares/role.middlewares.js";
 import { authenticate } from "../../middlewares/auth.middlewares.js";
 
 import {
-  createAlumniController,
-  createAdminAlumniController,
   deleteAlumniController,
   getAlumniListController,
   getAlumniController,
@@ -21,19 +19,6 @@ import {
 } from "./alumni.controller.js";
 
 const router = Router();
-
-// ========================================
-// ADMIN
-// ========================================
-
-router.post("/", authenticate, requireRole("ADMIN"), createAlumniController);
-
-router.post(
-  "/admin",
-  authenticate,
-  requireRole("ADMIN"),
-  createAdminAlumniController,
-);
 
 // ========================================
 // ADMIN + DOSEN

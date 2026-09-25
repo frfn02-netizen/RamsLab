@@ -11,7 +11,6 @@ import {
   Card,
   EmptyState,
   ErrorState,
-  LinkButton,
   LoadingState,
   PageHeader,
   Pagination,
@@ -19,10 +18,30 @@ import {
 } from "@/components/ui";
 import { deleteAlumni, getAlumniList } from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
+import {
+  formatMissingPublishFields,
+  getMissingPublishFields,
+} from "@/lib/alumni-publish";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { Alumni } from "@/types/alumni";
 
 const limit = 10;
+
+function reviewState(item: Alumni) {
+  if (item.reviewStatus === "APPROVED") {
+    return { label: "Approved", tone: "green" } as const;
+  }
+  if (item.reviewStatus === "REJECTED") {
+    return { label: "Rejected", tone: "amber" } as const;
+  }
+  return { label: "Pending review", tone: "neutral" } as const;
+}
+
+function missingPublishText(item: Alumni) {
+  const missing = getMissingPublishFields(item);
+  if (missing.length === 0) return null;
+  return `Missing: ${formatMissingPublishFields(missing)}`;
+}
 
 export default function AlumniPage() {
   const { user } = useAuth();
@@ -124,11 +143,6 @@ export default function AlumniPage() {
           eyebrow="People"
           title="Alumni"
           description="Browse alumni profiles and their current professional journey."
-          action={
-            user?.role === "ADMIN" ? (
-              <LinkButton href="/dashboard/alumni/new">Add alumni</LinkButton>
-            ) : undefined
-          }
         />
 
         <Card className="p-4">
@@ -171,13 +185,6 @@ export default function AlumniPage() {
                   search
                     ? `No alumni matched “${search}”.`
                     : "There are no alumni records available yet."
-                }
-                action={
-                  user?.role === "ADMIN" ? (
-                    <LinkButton href="/dashboard/alumni/new">
-                      Create the first profile
-                    </LinkButton>
-                  ) : undefined
                 }
               />
             ) : (
@@ -250,16 +257,17 @@ export default function AlumniPage() {
                           </td>
                           <td className="px-5 py-4">
                             <div className="space-y-1">
-                              <Badge
-                                tone={item.profileCompleted ? "green" : "amber"}
-                              >
-                                {item.profileCompleted
-                                  ? "Complete"
-                                  : "Incomplete"}
+                              <Badge tone={reviewState(item).tone}>
+                                {reviewState(item).label}
                               </Badge>
                               <Badge tone={item.isPublic ? "green" : "neutral"}>
                                 {item.isPublic ? "Public" : "Private"}
                               </Badge>
+                              {missingPublishText(item) && (
+                                <p className="text-xs text-[var(--rams-gray)]">
+                                  {missingPublishText(item)}
+                                </p>
+                              )}
                             </div>
                           </td>
 

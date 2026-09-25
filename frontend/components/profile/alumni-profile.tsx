@@ -17,6 +17,7 @@ import {
 import { getMyAlumni, updateMyAlumni } from "@/lib/api/alumni";
 import { uploadMyAlumniPhoto } from "@/lib/api/alumni";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
+import AlumniReviewStatus from "@/components/profile/alumni-review-status";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
 import SuccessToast from "@/components/dashboard/success-toast";
@@ -64,6 +65,7 @@ export default function AlumniProfile() {
     fullName: "",
     nim: "",
     angkatan: "",
+    program: "",
     phone: "",
     location: "",
     currentStatus: "" as AlumniStatus | "",
@@ -111,6 +113,7 @@ export default function AlumniProfile() {
             fullName: result.fullName,
             nim: result.nim ?? "",
             angkatan: result.angkatan ? String(result.angkatan) : "",
+            program: result.program ?? "",
             phone: result.phone ?? "",
             location: result.location ?? "",
             currentStatus: result.currentStatus ?? "",
@@ -145,12 +148,12 @@ export default function AlumniProfile() {
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
-    const isNewProfile = profile === null;
     try {
       let result = await updateMyAlumni({
         fullName: form.fullName,
         nim: form.nim || undefined,
         angkatan: form.angkatan ? Number(form.angkatan) : undefined,
+        program: form.program || undefined,
         phone: form.phone || undefined,
         location: form.location || undefined,
         currentStatus: (form.currentStatus as AlumniStatus) || undefined,
@@ -168,10 +171,22 @@ export default function AlumniProfile() {
       setPhotoFile(null);
       setProfile(result);
       setProfileLoaded(true);
+      // Re-sync from the server response: the backend owns academic identity
+      // (it may keep an existing NIM / batch / program), so the form must
+      // always show what is actually stored instead of the typed value.
+      setForm((current) => ({
+        ...current,
+        fullName: result.fullName ?? current.fullName,
+        nim: result.nim ?? current.nim,
+        angkatan: result.angkatan ? String(result.angkatan) : current.angkatan,
+        program: result.program ?? current.program,
+      }));
+      // The backend decides completeness; never claim a profile is complete
+      // while the server still reports missing required fields.
       setSuccessMessage(
-        isNewProfile
+        result.profileCompleted
           ? "Profile completed successfully"
-          : "Profile updated successfully",
+          : "Profile saved. Your profile is pending review.",
       );
     } catch (reason) {
       setError(getUserFacingError(reason));
@@ -250,11 +265,21 @@ export default function AlumniProfile() {
 
           {error && <ErrorState message={error} />}
 
+          {profile && (
+            <AlumniReviewStatus
+              reviewStatus={profile.reviewStatus}
+              reviewNote={profile.reviewNote}
+            />
+          )}
+
           <Card className="p-5 sm:p-6">
             <form onSubmit={save} className="space-y-6">
               {/* Profile Photo Section */}
               <section>
-                <SectionHeader title="Profile Photo" subtitle="Optional" />
+                <SectionHeader
+                  title="Profile Photo"
+                  subtitle="Required before an admin can publish your profile."
+                />
                 <ProfilePhotoField
                   initialUrl={profile?.photo}
                   onFileChange={setPhotoFile}
@@ -331,6 +356,18 @@ export default function AlumniProfile() {
                 />
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <Field label="Program *" htmlFor="program">
+                      <input
+                        id="program"
+                        required
+                        className={profileInputClass}
+                        placeholder="e.g. Naval Architecture"
+                        value={form.program}
+                        onChange={(event) =>
+                          update("program", event.target.value)
+                        }
+                      />
+                    </Field>
                     <Field label="NIM *" htmlFor="nim">
                       <input
                         id="nim"

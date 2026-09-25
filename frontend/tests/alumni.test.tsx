@@ -113,4 +113,62 @@ describe("Alumni list", () => {
       screen.queryByRole("link", { name: "Add alumni" }),
     ).not.toBeInTheDocument();
   });
+
+  it("does not render admin create-alumni actions for an admin", async () => {
+    auth.role = "ADMIN";
+    getAlumniList.mockResolvedValue({ data: [], total: 0 });
+    render(<AlumniPage />);
+    await waitFor(() =>
+      expect(
+        screen.getByText("There are no alumni records available yet."),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByRole("link", { name: "Add alumni" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Create the first profile" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the review state and the missing publish fields per row", async () => {
+    const approved: Alumni = {
+      ...record,
+      _id: "alumni-approved",
+      fullName: "Approved Alum",
+      photo: "https://example.com/approved.jpg",
+      reviewStatus: "APPROVED",
+      isPublic: true,
+    };
+    const pending: Alumni = {
+      ...record,
+      _id: "alumni-pending",
+      fullName: "Pending Alum",
+      nim: "",
+      program: "",
+      photo: undefined,
+      reviewStatus: undefined,
+      isPublic: false,
+    };
+    getAlumniList.mockResolvedValue({
+      data: [approved, pending],
+      total: 2,
+    });
+    render(<AlumniPage />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Approved Alum")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Pending Alum")).toBeInTheDocument();
+
+    expect(screen.getByText("Approved")).toBeInTheDocument();
+    expect(screen.getByText("Public")).toBeInTheDocument();
+    expect(screen.getByText("Pending review")).toBeInTheDocument();
+    expect(screen.getByText("Private")).toBeInTheDocument();
+    expect(
+      screen.getByText("Missing: program, NIM, photo"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Complete")).not.toBeInTheDocument();
+    expect(screen.queryByText("Incomplete")).not.toBeInTheDocument();
+  });
 });

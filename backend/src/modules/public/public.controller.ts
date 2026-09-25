@@ -20,6 +20,7 @@ import {
   findPublicAlumni,
   findAlumniById,
 } from "../alumni/alumni.repository.js";
+import { isProfileComplete } from "../alumni/alumni-completeness.js";
 import {
   findAllStudents,
   findStudentById,
@@ -109,7 +110,7 @@ export async function getPublicDosenByIdController(
     const alumni = await findAlumniById(id);
     if (
       alumni?.isPublic &&
-      alumni.profileCompleted &&
+      isProfileComplete(alumni) &&
       alumni.reviewStatus === "APPROVED"
     ) {
       return res.json({
@@ -145,7 +146,7 @@ export async function getPublicAlumniByIdController(
   if (
     !alumni ||
     !alumni.isPublic ||
-    !alumni.profileCompleted ||
+    !isProfileComplete(alumni) ||
     alumni.reviewStatus !== "APPROVED"
   ) {
     return res

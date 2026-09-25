@@ -27,7 +27,9 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
 }));
 vi.mock("next/image", () => ({
-  default: (props: any) => <img {...props} />,
+  default: ({ alt, ...props }: { alt: string; [key: string]: unknown }) => (
+    <img alt={alt} {...props} />
+  ),
 }));
 vi.mock("@/components/dashboard/profile-photo-field", () => ({
   default: ({ onFileChange }: { onFileChange: (f: File | null) => void }) => (
@@ -65,9 +67,13 @@ beforeEach(() => {
 });
 
 describe("AlumniProfile – save notifications", () => {
-  it("shows 'Profile completed successfully' for first-time profile save", async () => {
+  it("shows 'Profile completed successfully' when the backend reports the profile complete", async () => {
     getMyAlumni.mockRejectedValue(new Error("Not found"));
-    updateMyAlumni.mockResolvedValue({ ...existingProfile, _id: "new-1" });
+    updateMyAlumni.mockResolvedValue({
+      ...existingProfile,
+      _id: "new-1",
+      profileCompleted: true,
+    });
 
     render(<AlumniProfile />);
 
@@ -77,6 +83,9 @@ describe("AlumniProfile – save notifications", () => {
 
     fireEvent.change(screen.getByLabelText(/full name/i), {
       target: { value: "New Alumni" },
+    });
+    fireEvent.change(screen.getByLabelText(/program/i), {
+      target: { value: "Marine Engineering" },
     });
     fireEvent.change(screen.getByLabelText(/nim/i), {
       target: { value: "NIM-NEW" },
@@ -95,11 +104,17 @@ describe("AlumniProfile – save notifications", () => {
         screen.getByText("Profile completed successfully"),
       ).toBeInTheDocument(),
     );
+    expect(
+      screen.queryByText("Profile saved. Your profile is pending review."),
+    ).not.toBeInTheDocument();
   });
 
-  it("shows 'Profile updated successfully' for existing profile save", async () => {
+  it("does not claim the profile is complete while the backend still reports it incomplete", async () => {
     getMyAlumni.mockResolvedValue(existingProfile);
-    updateMyAlumni.mockResolvedValue(existingProfile);
+    updateMyAlumni.mockResolvedValue({
+      ...existingProfile,
+      profileCompleted: false,
+    });
 
     render(<AlumniProfile />);
 
@@ -111,9 +126,12 @@ describe("AlumniProfile – save notifications", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Profile updated successfully"),
+        screen.getByText("Profile saved. Your profile is pending review."),
       ).toBeInTheDocument(),
     );
+    expect(
+      screen.queryByText("Profile completed successfully"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows error notification when save fails", async () => {
@@ -151,7 +169,7 @@ describe("AlumniProfile – save notifications", () => {
     await waitFor(() => expect(updateMyAlumni).toHaveBeenCalled());
 
     expect(
-      screen.queryByText("Profile updated successfully"),
+      screen.queryByText("Profile saved. Your profile is pending review."),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText("Profile completed successfully"),

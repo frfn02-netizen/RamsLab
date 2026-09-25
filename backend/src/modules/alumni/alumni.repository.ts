@@ -3,6 +3,7 @@ import { Collection, ObjectId } from "mongodb";
 import { getDatabase } from "../../config/database.js";
 
 import type { Alumni } from "./alumni.types.js";
+import { isProfileComplete } from "./alumni-completeness.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
 const ALUMNI_COLLECTION = "alumni";
@@ -47,7 +48,7 @@ export async function findPublicAlumni(): Promise<Alumni[]> {
     .find({ role: "ALUMNI", isActive: true })
     .project({ _id: 1 })
     .toArray();
-  return getAlumniCollection()
+  const candidates = await getAlumniCollection()
     .find({
       isPublic: true,
       reviewStatus: "APPROVED",
@@ -57,6 +58,10 @@ export async function findPublicAlumni(): Promise<Alumni[]> {
     .sort({ fullName: 1 })
     .limit(SECURITY_LIMITS.maxListResults)
     .toArray();
+
+  // `profileCompleted` is a stored, write-time flag; re-check the live fields
+  // so publication always follows the single completeness contract.
+  return candidates.filter((alumni) => isProfileComplete(alumni));
 }
 
 export interface AlumniListParams {

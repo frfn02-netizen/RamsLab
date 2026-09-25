@@ -38,52 +38,6 @@ const educationHistorySchema = z.object({
 });
 
 // ========================================
-// CREATE
-// ========================================
-
-export const createAlumniSchema = z.object({
-  userId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid user ID"),
-
-  fullName: z.string().trim().min(2, "Full name is required").max(200),
-
-  nim: z.string().trim().min(1, "NIM is required").max(50),
-
-  photo: z.string().trim().optional(),
-
-  angkatan: z.number().int().min(1).max(99),
-
-  program: z.string().trim().min(1, "Program is required").max(200),
-
-  phone: z.string().trim().max(50).optional(),
-
-  location: z.string().trim().max(200).optional(),
-
-  currentStatus: z.enum([
-    ALUMNI_STATUS.WORKING,
-    ALUMNI_STATUS.STUDYING,
-    ALUMNI_STATUS.ENTREPRENEUR,
-    ALUMNI_STATUS.SEEKING_JOB,
-    ALUMNI_STATUS.OTHER,
-  ]),
-
-  otherStatus: z.string().trim().max(200).optional(),
-
-  currentCompany: z.string().trim().max(200).optional(),
-
-  currentPosition: z.string().trim().max(200).optional(),
-
-  linkedin: optionalLinkedInSchema,
-
-  bio: z.string().trim().max(1000).optional(),
-
-  careerHistory: z.array(careerHistorySchema).max(50).default([]),
-
-  educationHistory: z.array(educationHistorySchema).max(50).default([]),
-
-  isPublic: z.boolean().default(false),
-});
-
-// ========================================
 // ADMIN UPDATE
 // ========================================
 //
@@ -143,14 +97,19 @@ export const updateAlumniSchema = z.object({
 // ALUMNI SELF UPDATE
 // ========================================
 //
-// Alumni users must not modify identity/
-// academic master data.
+// Alumni users must not modify identity
+// and academic master data (nim / angkatan /
+// program): the service ignores them once a
+// value exists, so a profile shell can be
+// completed exactly once.
 //
 
 export const updateMyAlumniSchema = z.object({
   fullName: z.string().trim().min(2, "Full name is required").optional(),
 
   angkatan: z.number().int().min(1).max(99).optional(),
+
+  program: z.string().trim().min(1, "Program is required").max(200).optional(),
 
   photo: z.string().trim().optional(),
 
@@ -189,13 +148,27 @@ export const createAlumniShellSchema = z.object({
   userId: z.string().regex(/^[a-f\d]{24}$/i),
 });
 
+// ========================================
+// REVIEW ACTION (admin only)
+// ========================================
+//
+// `reason` is only meaningful for a rejection. It is trimmed here so a
+// whitespace-only payload never reaches the service as a real reason.
+//
+
+export const reviewAlumniSchema = z.object({
+  action: z.enum(["APPROVE", "REJECT"]),
+
+  reason: z.string().trim().max(1000).optional(),
+});
+
 export const completeMyAlumniSchema = updateMyAlumniSchema.extend({
   nim: z.string().trim().min(1, "NIM is required").max(50).optional(),
   angkatan: z.number().int().min(1).max(99).optional(),
 });
 
-export type CreateAlumniInput = z.infer<typeof createAlumniSchema>;
-
 export type UpdateAlumniInput = z.infer<typeof updateAlumniSchema>;
 
 export type UpdateMyAlumniInput = z.infer<typeof updateMyAlumniSchema>;
+
+export type ReviewAlumniInput = z.infer<typeof reviewAlumniSchema>;

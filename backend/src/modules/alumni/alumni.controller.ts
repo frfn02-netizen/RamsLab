@@ -1,9 +1,8 @@
 import type { Request, Response } from "express";
-import { MongoServerError, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { ZodError } from "zod";
 
 import {
-  createAlumni,
   deleteAlumni,
   getAlumniById,
   getAlumniByUserId,
@@ -13,12 +12,13 @@ import {
   reviewAlumni,
 } from "./alumni.service.js";
 
-import { createAdminAlumni } from "./admin-alumni.service.js";
+import { reviewAlumniSchema } from "./alumni.schema.js";
 import {
   findAuditLogsByAlumniId,
   findAuditLogsWithUserNames,
 } from "./alumni-audit.repository.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
+import { HttpError } from "../../middlewares/error.middleware.js";
 import {
   deactivateUser,
   setUserActive,
@@ -29,62 +29,6 @@ import {
   uploadProfilePhoto,
 } from "../../lib/cloudinary.js";
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
-
-export async function createAlumniController(req: Request, res: Response) {
-  try {
-    const alumni = await createAlumni(req.body);
-
-    return res.status(201).json({
-      success: true,
-      data: alumni,
-    });
-  } catch {
-    return res.status(400).json({
-      success: false,
-      message: "Failed to create alumni",
-    });
-  }
-}
-
-export async function createAdminAlumniController(req: Request, res: Response) {
-  try {
-    const result = await createAdminAlumni(req.body);
-
-    return res.status(201).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return res.status(400).json({
-        success: false,
-        message: "Please correct the highlighted account fields",
-        errors: error.issues.map(({ path, message }) => ({ path, message })),
-      });
-    }
-    if (
-      error instanceof Error &&
-      (error.message === "Email already exists" ||
-        error.message === "Email is already registered")
-    ) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-    if (error instanceof MongoServerError && error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-    console.error("Failed to create admin alumni account", error);
-    return res.status(500).json({
-      success: false,
-      message: "Unable to create the alumni account right now",
-    });
-  }
-}
 
 export async function getAlumniController(req: Request, res: Response) {
   try {
@@ -217,7 +161,12 @@ export async function updateMyAlumniController(req: Request, res: Response) {
       success: true,
       data: alumni,
     });
-  } catch {
+  } catch (reason) {
+    // Validation and domain errors carry the field the client has to fix, so
+    // they go through the global error handler instead of a generic message.
+    if (reason instanceof HttpError || reason instanceof ZodError) {
+      throw reason;
+    }
     return res.status(400).json({
       success: false,
       message: "Failed to update profile",
@@ -334,7 +283,28 @@ export async function reviewAlumniController(req: Request, res: Response) {
       .status(400)
       .json({ success: false, message: "Review action is required" });
 
-  const alumni = await reviewAlumni(id, action === "APPROVE");
+  const parsed = reviewAlumniSchema.safeParse({ action, reason: req.body?.reason });
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid review request",
+    });
+  }
+
+  const reason = parsed.data.reason;
+  // Whitespace-only reasons are trimmed to an empty string by the schema, so
+  // this rejects them here instead of storing a blank note.
+  if (parsed.data.action === "REJECT" && !reason) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Rejection reason is required." });
+  }
+
+  const alumni = await reviewAlumni(
+    id,
+    parsed.data.action === "APPROVE",
+    reason,
+  );
   if (!alumni)
     return res
       .status(404)

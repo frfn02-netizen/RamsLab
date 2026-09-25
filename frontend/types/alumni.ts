@@ -29,6 +29,7 @@ export interface Alumni {
 
   isPublic: boolean;
   reviewStatus?: AlumniReviewStatus;
+  reviewNote?: string | null;
   profileCompleted?: boolean;
   accountEmail?: string;
   accountActive?: boolean;
@@ -65,7 +66,6 @@ export interface AlumniListResponse {
   total: number;
 }
 
-export type AlumniCreateInput = Omit<Alumni, "_id" | "createdAt" | "updatedAt">;
 export type AlumniUpdateInput = Partial<
   Omit<Alumni, "_id" | "userId" | "createdAt" | "updatedAt">
 >;

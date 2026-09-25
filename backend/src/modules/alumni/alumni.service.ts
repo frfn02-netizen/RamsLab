@@ -3,111 +3,25 @@ import {
   deleteAlumni as deleteAlumniRecord,
   getAlumniCollection,
   findAlumniById,
-  findAlumniByNim,
   findAlumniByUserId,
   findAlumniList,
 } from "./alumni.repository.js";
 import { getUsersCollection } from "../users/user.repository.js";
-import { USER_ROLES } from "../users/user.types.js";
 import {
-  createAlumniSchema,
   completeMyAlumniSchema,
   updateAlumniSchema,
   updateMyAlumniSchema,
-  type CreateAlumniInput,
   type UpdateAlumniInput,
   type UpdateMyAlumniInput,
 } from "./alumni.schema.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
-import { ALUMNI_REVIEW_STATUS } from "./alumni.types.js";
-
-export async function createAlumni(input: CreateAlumniInput) {
-  const data = createAlumniSchema.parse(input);
-
-  const users = getUsersCollection();
-
-  const alumniCollection = getAlumniCollection();
-  const userId = new ObjectId(data.userId);
-
-  const existingUser = await users.findOne({
-    _id: userId,
-  });
-
-  if (!existingUser) {
-    throw new Error("User not found");
-  }
-
-  if (existingUser.role !== USER_ROLES.ALUMNI) {
-    throw new Error("User must have ALUMNI role");
-  }
-
-  const existingAlumni = await findAlumniByUserId(userId);
-
-  if (existingAlumni) {
-    throw new Error("Alumni profile already exists");
-  }
-
-  const existingNim = await findAlumniByNim(data.nim);
-
-  if (existingNim) {
-    throw new Error("NIM already exists");
-  }
-
-  const now = new Date();
-
-  const alumni = {
-    userId,
-
-    fullName: data.fullName,
-
-    nim: data.nim,
-
-    photo: data.photo,
-
-    angkatan: data.angkatan,
-
-    program: data.program,
-
-    phone: data.phone,
-
-    location: data.location,
-
-    currentStatus: data.currentStatus,
-
-    otherStatus: data.otherStatus,
-
-    currentCompany: data.currentCompany,
-
-    currentPosition: data.currentPosition,
-
-    linkedin: data.linkedin,
-
-    bio: data.bio,
-
-    careerHistory: data.careerHistory,
-
-    educationHistory: data.educationHistory,
-
-    // Publication is an administrator decision, never a client-controlled
-    // side effect of account creation.
-    isPublic: false,
-    reviewStatus: ALUMNI_REVIEW_STATUS.PENDING,
-    profileCompleted: Boolean(
-      data.fullName && data.nim && data.angkatan && data.photo,
-    ),
-
-    createdAt: now,
-
-    updatedAt: now,
-  };
-
-  const result = await alumniCollection.insertOne(alumni);
-
-  return {
-    ...alumni,
-    _id: result.insertedId,
-  };
-}
+import { HttpError } from "../../middlewares/error.middleware.js";
+import { ALUMNI_REVIEW_STATUS, type Alumni } from "./alumni.types.js";
+import {
+  formatMissingPublishFields,
+  getMissingPublishFields,
+  isProfileComplete,
+} from "./alumni-completeness.js";
 
 export async function createAlumniShell(userId: string) {
   if (!ObjectId.isValid(userId)) throw new Error("Invalid user ID");
@@ -170,16 +84,13 @@ export async function updateAlumni(id: string, input: UpdateAlumniInput) {
 
   const updateData = {
     ...data,
-    // Any alumni-authored change must be reviewed again before it can be
-    // returned from a public endpoint. `isPublic` remains the visibility
+    // Any change to an alumni record has to be reviewed again before it can
+    // be returned from a public endpoint. `isPublic` remains the visibility
     // preference, but approval is the server-enforced publication gate.
     reviewStatus: ALUMNI_REVIEW_STATUS.PENDING,
-    ...(data.fullName &&
-    existing?.nim &&
-    data.angkatan &&
-    (data.photo !== undefined || existing?.photo)
-      ? { profileCompleted: true }
-      : {}),
+    // Recompute from the merged document so an admin edit can never leave a
+    // stale "complete" flag behind.
+    profileCompleted: isProfileComplete({ ...existing, ...data }),
     updatedAt: new Date(),
   };
 
@@ -195,8 +106,37 @@ export async function updateAlumni(id: string, input: UpdateAlumniInput) {
   return findAlumniById(id);
 }
 
-export async function reviewAlumni(id: string, approved: boolean) {
+export async function reviewAlumni(
+  id: string,
+  approved: boolean,
+  reason?: string,
+) {
   if (!ObjectId.isValid(id)) return null;
+
+  const existing = await findAlumniById(id);
+  if (!existing) return null;
+
+  const reviewNote = typeof reason === "string" ? reason.trim() : "";
+
+  // A rejection must always tell the alumni what to fix, so the service —
+  // not only the controller — refuses an empty or whitespace-only reason.
+  if (!approved && !reviewNote) {
+    throw new HttpError(400, "Rejection reason is required.");
+  }
+
+  // The backend is the source of truth for publication. An approval that
+  // would publish a profile with missing required data is refused with the
+  // exact fields, and neither `reviewStatus` nor `isPublic` is touched.
+  if (approved) {
+    const missing = getMissingPublishFields(existing);
+    if (missing.length > 0) {
+      throw new HttpError(
+        400,
+        `Cannot publish this profile yet: missing ${formatMissingPublishFields(missing)}.`,
+        { missing },
+      );
+    }
+  }
 
   const reviewStatus = approved
     ? ALUMNI_REVIEW_STATUS.APPROVED
@@ -210,12 +150,89 @@ export async function reviewAlumni(id: string, approved: boolean) {
         // Approval is the explicit publication action. Rejection always
         // removes the record from public visibility.
         isPublic: approved,
+        // Approving clears the note so a past rejection is never reported as
+        // an active one against a published profile.
+        reviewNote: approved ? null : reviewNote,
         updatedAt: new Date(),
       },
     },
   );
 
   return findAlumniById(id);
+}
+
+// Academic identity may be claimed once by the alumni (a registration shell
+// holds no NIM / batch / program yet) and is immutable afterwards: only an
+// administrator can correct it afterwards.
+const ACADEMIC_IDENTITY_FIELDS = ["nim", "angkatan", "program"] as const;
+
+// Fields that represent alumni-authored profile content. `isPublic` is a
+// visibility preference, not content, so toggling it never re-queues a
+// profile for review.
+const PROFILE_CONTENT_FIELDS = [
+  "fullName",
+  "nim",
+  "program",
+  "angkatan",
+  "photo",
+  "phone",
+  "location",
+  "currentStatus",
+  "otherStatus",
+  "currentCompany",
+  "currentPosition",
+  "linkedin",
+  "bio",
+  "careerHistory",
+  "educationHistory",
+] as const;
+
+type AcademicIdentity = Partial<
+  Pick<Alumni, (typeof ACADEMIC_IDENTITY_FIELDS)[number]>
+>;
+
+function comparable(value: unknown) {
+  return value === undefined || value === null ? "" : value;
+}
+
+function stripAcademicOverwrites<T extends AcademicIdentity>(
+  data: T,
+  existing: AcademicIdentity | null,
+): T {
+  const safeData = { ...data };
+  for (const field of ACADEMIC_IDENTITY_FIELDS) {
+    if (safeData[field] !== undefined && comparable(existing?.[field]) !== "") {
+      delete safeData[field];
+    }
+  }
+  return safeData;
+}
+
+function hasProfileChanges(
+  data: Record<string, unknown>,
+  existing: object | null,
+): boolean {
+  const stored = existing as Record<string, unknown> | null;
+  return PROFILE_CONTENT_FIELDS.some((field) => {
+    if (data[field] === undefined) return false;
+    return (
+      JSON.stringify(comparable(data[field])) !==
+      JSON.stringify(comparable(stored?.[field]))
+    );
+  });
+}
+
+// `graduationYear` was renamed to `angkatan` (batch number instead of calendar
+// year) and the old payloads are silently stripped by zod, which made a save
+// look successful while nothing was written. Fail loudly instead.
+function rejectRenamedLegacyField(input: unknown) {
+  if (input && typeof input === "object" && "graduationYear" in input) {
+    throw new HttpError(
+      400,
+      "graduationYear no longer exists; use angkatan (batch number between 1 and 99). Reload the page to load the latest form.",
+      { field: "graduationYear" },
+    );
+  }
 }
 
 export async function updateMyAlumni(
@@ -226,18 +243,37 @@ export async function updateMyAlumni(
     throw new Error("Invalid user ID");
   }
 
+  rejectRenamedLegacyField(input);
+
   const data = completeMyAlumniSchema.parse(input);
 
   const alumniCollection = getAlumniCollection();
   const existing = await findAlumniByUserId(new ObjectId(userId));
 
+  const safeData = stripAcademicOverwrites(data, existing);
+  const contentChanged = hasProfileChanges(safeData, existing);
+  const previousStatus = existing?.reviewStatus;
+
+  // Saving a profile that was rejected, already approved, or (for records
+  // created before reviewStatus existed) never reviewed puts it back in the
+  // review queue, so edited data is never published without a new approval.
+  const requeue = contentChanged || previousStatus === undefined;
+
   const updateData = {
-    ...data,
-    ...((data.fullName || existing?.fullName) &&
-    (data.nim || existing?.nim) &&
-    (data.angkatan || existing?.angkatan) &&
-    (data.photo || existing?.photo)
-      ? { profileCompleted: true }
+    ...safeData,
+    profileCompleted: isProfileComplete({ ...existing, ...safeData }),
+    ...(requeue
+      ? {
+          reviewStatus: ALUMNI_REVIEW_STATUS.PENDING,
+          ...(previousStatus === ALUMNI_REVIEW_STATUS.APPROVED ||
+          previousStatus === ALUMNI_REVIEW_STATUS.REJECTED
+            ? { isPublic: false }
+            : {}),
+          // The note described the previous review round. Once the alumni
+          // resubmits, it is no longer an active rejection and must not be
+          // shown as one.
+          reviewNote: null,
+        }
       : {}),
     updatedAt: new Date(),
   };

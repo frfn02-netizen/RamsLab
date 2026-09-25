@@ -573,5 +573,14 @@
     "deleting": "Menghapus…",
     "saving": "Menyimpan…",
     "permission": "Anda tidak memiliki izin untuk mengelola publikasi."
+  },
+  "alumniReview": {
+    "statusTitle": "Status Profil",
+    "statusPending": "Menunggu review",
+    "statusApproved": "Disetujui",
+    "statusRejected": "Ditolak",
+    "rejectedTitle": "Profil ditolak",
+    "reasonLabel": "Alasan dari reviewer",
+    "resubmitHint": "Silakan perbaiki profil sesuai catatan di atas lalu simpan perubahan untuk mengirimkannya kembali ke proses review."
   }
 }
