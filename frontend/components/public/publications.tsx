@@ -1,7 +1,6 @@
 "use client";
 
-import { usePathname } from "@/i18n/navigation";
-import { useRamsLabRouter } from "./rams-lab-router";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import {
   memo,
@@ -563,7 +562,7 @@ function PublicationTimeline({
 export default function Publications() {
   const t = useTranslations("publications");
   const pathname = usePathname();
-  const router = useRamsLabRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const [records, setRecords] = useState<PublicationProject[]>([]);

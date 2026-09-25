@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { assetPath } from "@/lib/asset-path";
@@ -130,7 +130,9 @@ export default function PublicHeader() {
                 : "border-l border-[var(--border)]"
             }`}
           >
-            <LanguageSwitcher dark={isAtTop} />
+            <Suspense>
+              <LanguageSwitcher dark={isAtTop} />
+            </Suspense>
           </div>
         </nav>
 
@@ -230,7 +232,9 @@ export default function PublicHeader() {
                 : "border-t border-[var(--border)]"
             }`}
           >
-            <LanguageSwitcher dark={isAtTop} />
+            <Suspense>
+              <LanguageSwitcher dark={isAtTop} />
+            </Suspense>
           </div>
         </nav>
       )}
