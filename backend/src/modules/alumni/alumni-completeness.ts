@@ -1,12 +1,14 @@
 import type { Alumni } from "./alumni.types.js";
 
-// Single source of truth for "may this alumni profile be published".
+// Single source of truth for "which publish fields are still missing".
 //
-// Every gate must use these helpers so the platform never ends up with two
-// definitions of "complete":
-// - `profileCompleted` (informational badge, recomputed on each write)
-// - `PATCH /:id/review` approval validation (server-side publication gate)
-// - `/api/public/alumni` list and detail responses
+// Informational only: publication follows `reviewStatus` + `isPublic`, so an
+// approved profile is never hidden or refused because a field is empty
+// (product decision by Pak Dhimas). These helpers still drive:
+// - `profileCompleted`, the recomputed informational flag written on each save
+// - the "missing fields" hints shown in the admin and alumni UI
+//
+// Keep the frontend copy (frontend/lib/alumni-publish.ts) identical.
 export const PUBLISH_REQUIRED_FIELDS = [
   "fullName",
   "program",

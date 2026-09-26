@@ -3,7 +3,6 @@ import { Collection, ObjectId } from "mongodb";
 import { getDatabase } from "../../config/database.js";
 
 import type { Alumni } from "./alumni.types.js";
-import { isProfileComplete } from "./alumni-completeness.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
 const ALUMNI_COLLECTION = "alumni";
@@ -48,20 +47,19 @@ export async function findPublicAlumni(): Promise<Alumni[]> {
     .find({ role: "ALUMNI", isActive: true })
     .project({ _id: 1 })
     .toArray();
-  const candidates = await getAlumniCollection()
+
+  // Publication follows the workflow state only: approval + visibility of an
+  // active account. `profileCompleted` is informational and must never hide a
+  // profile that an admin already approved (Pak Dhimas' requirement).
+  return getAlumniCollection()
     .find({
       isPublic: true,
       reviewStatus: "APPROVED",
-      profileCompleted: true,
       userId: { $in: users.map((user) => user._id) },
     })
     .sort({ fullName: 1 })
     .limit(SECURITY_LIMITS.maxListResults)
     .toArray();
-
-  // `profileCompleted` is a stored, write-time flag; re-check the live fields
-  // so publication always follows the single completeness contract.
-  return candidates.filter((alumni) => isProfileComplete(alumni));
 }
 
 export interface AlumniListParams {

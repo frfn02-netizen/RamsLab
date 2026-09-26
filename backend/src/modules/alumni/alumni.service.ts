@@ -17,11 +17,7 @@ import {
 import { SECURITY_LIMITS } from "../../config/security.js";
 import { HttpError } from "../../middlewares/error.middleware.js";
 import { ALUMNI_REVIEW_STATUS, type Alumni } from "./alumni.types.js";
-import {
-  formatMissingPublishFields,
-  getMissingPublishFields,
-  isProfileComplete,
-} from "./alumni-completeness.js";
+import { isProfileComplete } from "./alumni-completeness.js";
 
 export async function createAlumniShell(userId: string) {
   if (!ObjectId.isValid(userId)) throw new Error("Invalid user ID");
@@ -124,20 +120,10 @@ export async function reviewAlumni(
     throw new HttpError(400, "Rejection reason is required.");
   }
 
-  // The backend is the source of truth for publication. An approval that
-  // would publish a profile with missing required data is refused with the
-  // exact fields, and neither `reviewStatus` nor `isPublic` is touched.
-  if (approved) {
-    const missing = getMissingPublishFields(existing);
-    if (missing.length > 0) {
-      throw new HttpError(
-        400,
-        `Cannot publish this profile yet: missing ${formatMissingPublishFields(missing)}.`,
-        { missing },
-      );
-    }
-  }
-
+  // Approval is never blocked by profile completeness (product decision by
+  // Pak Dhimas): an incomplete profile may be approved and published, and
+  // `profileCompleted` stays a recomputed informational flag. `reviewStatus`
+  // + `isPublic` remain the only publication state.
   const reviewStatus = approved
     ? ALUMNI_REVIEW_STATUS.APPROVED
     : ALUMNI_REVIEW_STATUS.REJECTED;

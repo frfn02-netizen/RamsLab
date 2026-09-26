@@ -49,7 +49,6 @@ vi.mock("next/image", () => ({
 }));
 
 import AlumniDetail from "@/components/dashboard/alumni-detail";
-import { ApiError } from "@/lib/api/errors";
 
 const pendingProfile: Alumni = {
   _id: "alumni-1",
@@ -91,22 +90,24 @@ describe("Alumni detail – review state", () => {
     expect(screen.queryByText("Incomplete")).not.toBeInTheDocument();
     expect(screen.queryByText("Complete")).not.toBeInTheDocument();
 
-    const gap = screen.getByText(/Missing before publish/i);
+    const gap = screen.getByText(/Missing fields/i);
     expect(gap).toHaveTextContent("NIM");
     expect(gap).toHaveTextContent("photo");
     expect(gap).toHaveTextContent("program");
     expect(gap).not.toHaveTextContent("angkatan");
     expect(gap).not.toHaveTextContent("full name");
+    // The note is informational: it must not claim approval is blocked.
+    expect(gap).toHaveTextContent(/not blocked/i);
+    expect(gap).not.toHaveTextContent(/refused by the server/i);
   });
 
-  it("does not block the approve button on the client and surfaces the server refusal", async () => {
+  it("lets an admin approve an incomplete profile", async () => {
     getAlumniById.mockResolvedValue(pendingProfile);
-    reviewAlumni.mockRejectedValue(
-      new ApiError(
-        "Cannot publish this profile yet: missing NIM, program, photo.",
-        400,
-      ),
-    );
+    reviewAlumni.mockResolvedValue({
+      ...pendingProfile,
+      reviewStatus: "APPROVED",
+      isPublic: true,
+    });
 
     render(<AlumniDetail id="alumni-1" />);
 
@@ -118,11 +119,14 @@ describe("Alumni detail – review state", () => {
     fireEvent.click(approveButton);
 
     await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Cannot publish this profile yet: missing NIM, program, photo.",
-      ),
+      expect(reviewAlumni).toHaveBeenCalledWith("alumni-1", "APPROVE"),
     );
-    expect(reviewAlumni).toHaveBeenCalledWith("alumni-1", "APPROVE");
+    await waitFor(() =>
+      expect(screen.getByText("Approved")).toBeInTheDocument(),
+    );
+    expect(screen.getAllByText("Public").length).toBeGreaterThan(0);
+    // The profile stayed incomplete, yet it is published.
+    expect(screen.getByText(/Missing fields/i)).toBeInTheDocument();
   });
 
   it("publishes a complete profile once the backend approves it", async () => {
@@ -147,8 +151,47 @@ describe("Alumni detail – review state", () => {
       expect(screen.getByText("Approved")).toBeInTheDocument(),
     );
     expect(screen.getAllByText("Public").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Missing fields/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps Program out of the admin edit form and out of its payload", async () => {
+    getAlumniById.mockResolvedValue({
+      ...pendingProfile,
+      program: "Naval Architecture",
+      reviewStatus: "APPROVED",
+      isPublic: true,
+      profileCompleted: true,
+    });
+    updateAlumni.mockResolvedValue({
+      ...pendingProfile,
+      fullName: "Renamed By Admin",
+      program: "Naval Architecture",
+      reviewStatus: "APPROVED",
+      isPublic: true,
+      profileCompleted: true,
+    });
+
+    render(<AlumniDetail id="alumni-1" />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /edit profile/i }),
+    );
+
+    // No Program input, and the stored program is not editable anywhere.
+    expect(screen.queryByText("Program")).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/Missing before publish/i),
+      screen.queryByDisplayValue("Naval Architecture"),
     ).not.toBeInTheDocument();
+    expect(screen.getByText(/Naval Architecture · P34/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByDisplayValue("Half Filled Alumni"), {
+      target: { value: "Renamed By Admin" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => expect(updateAlumni).toHaveBeenCalled());
+    const payload = updateAlumni.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("program");
+    expect(payload.fullName).toBe("Renamed By Admin");
   });
 });

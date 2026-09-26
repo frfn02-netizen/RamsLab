@@ -131,14 +131,20 @@ describe("Alumni API", () => {
     const legacyAccount = await request(app)
       .post("/api/alumni/admin")
       .set("Cookie", `rams_access_token=${adminToken}`)
-      .send({ email: "legacy.admin.alumni@test.local", password: "LegacyPass1!" });
+      .send({
+        email: "legacy.admin.alumni@test.local",
+        password: "LegacyPass1!",
+      });
 
     expect(legacyAccount.status).toBe(404);
 
     const legacyUser = await request(app)
       .post("/api/users/alumni")
       .set("Cookie", `rams_access_token=${adminToken}`)
-      .send({ email: "legacy.admin.alumni@test.local", password: "LegacyPass1!" });
+      .send({
+        email: "legacy.admin.alumni@test.local",
+        password: "LegacyPass1!",
+      });
 
     expect(legacyUser.status).toBe(404);
   });
@@ -158,9 +164,7 @@ describe("Alumni API", () => {
 
     const userId = new ObjectId(registered.body.user.id as string);
 
-    const shells = await getAlumniCollection()
-      .find({ userId })
-      .toArray();
+    const shells = await getAlumniCollection().find({ userId }).toArray();
 
     expect(shells).toHaveLength(1);
     expect(shells[0]?.reviewStatus).toBe("PENDING");
@@ -352,9 +356,7 @@ describe("Alumni API", () => {
 
     expect(review.status).toBe(200);
     expect(review.body.data.reviewStatus).toBe("REJECTED");
-    expect(review.body.data.reviewNote).toBe(
-      "Profile is not publishable yet.",
-    );
+    expect(review.body.data.reviewNote).toBe("Profile is not publishable yet.");
     expect(review.body.data.isPublic).toBe(false);
 
     expect(
@@ -596,30 +598,31 @@ describe("alumni review workflow", () => {
     expect(tampered.body.data.nim).toBe(`WF-${workflowSequence}`);
   });
 
-  it("refuses to approve a profile with missing publish fields and leaves it pending", async () => {
+  it("approves and publishes an incomplete profile", async () => {
     const { alumniId, token } = await createWorkflowAlumni();
 
-    await saveProfile(token, {
+    const saved = await saveProfile(token, {
       fullName: "Missing Photo Alumni",
       nim: `WF-PHOTO-${workflowSequence}`,
       angkatan: 30,
       program: "Ocean Engineering",
     });
 
+    expect(saved.status).toBe(200);
+    // Completeness stays informational: it must not gate the approval.
+    expect(saved.body.data.profileCompleted).toBe(false);
+
     const review = await approveProfile(alumniId);
 
-    expect(review.status).toBe(400);
-    expect(review.body.success).toBe(false);
-    expect(review.body.message).toMatch(/missing/i);
-    expect(review.body.message).toMatch(/photo/i);
-    expect(review.body.details.missing).toEqual(["photo"]);
+    expect(review.status).toBe(200);
+    expect(review.body.data.reviewStatus).toBe("APPROVED");
+    expect(review.body.data.isPublic).toBe(true);
+    expect(review.body.data.profileCompleted).toBe(false);
+    expect(await isPublicAlumni(alumniId)).toBe(true);
 
-    const stored = await getAlumniCollection().findOne({
-      _id: new ObjectId(alumniId),
-    });
-    expect(stored?.reviewStatus).toBe("PENDING");
-    expect(stored?.isPublic).toBe(false);
-    expect(await isPublicAlumni(alumniId)).toBe(false);
+    const detail = await request(app).get(`/api/public/alumni/${alumniId}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.data.fullName).toBe("Missing Photo Alumni");
   });
 
   it("approves and publishes a complete profile", async () => {
@@ -701,29 +704,38 @@ describe("alumni review workflow", () => {
     expect(await isPublicAlumni(alumniId)).toBe(true);
   });
 
-  it("requires program for publication and lets the alumni fill it", async () => {
+  it("publishes a profile without program and lets the alumni fill it later", async () => {
     const { alumniId, token } = await createWorkflowAlumni();
 
-    await saveProfile(token, {
+    const saved = await saveProfile(token, {
       fullName: "No Program Alumni",
       nim: `WF-PROG-${workflowSequence}`,
       angkatan: 32,
       photo: `https://example.com/program-${workflowSequence}.jpg`,
     });
 
-    const blocked = await approveProfile(alumniId);
-    expect(blocked.status).toBe(400);
-    expect(blocked.body.message).toMatch(/program/i);
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.profileCompleted).toBe(false);
 
+    // Approval is never blocked by completeness (Pak Dhimas' requirement).
+    const approved = await approveProfile(alumniId);
+    expect(approved.status).toBe(200);
+    expect(approved.body.data.reviewStatus).toBe("APPROVED");
+    expect(approved.body.data.isPublic).toBe(true);
+    expect(await isPublicAlumni(alumniId)).toBe(true);
+    expect(
+      (await request(app).get(`/api/public/alumni/${alumniId}`)).status,
+    ).toBe(200);
+
+    // Program can still be claimed later: the informational flag flips to
+    // complete, and the content edit re-queues the profile for review.
     const filled = await saveProfile(token, {
       program: "Mechanical Engineering",
     });
     expect(filled.status).toBe(200);
     expect(filled.body.data.profileCompleted).toBe(true);
-
-    const approved = await approveProfile(alumniId);
-    expect(approved.status).toBe(200);
-    expect(approved.body.data.reviewStatus).toBe("APPROVED");
+    expect(filled.body.data.reviewStatus).toBe("PENDING");
+    expect(filled.body.data.isPublic).toBe(false);
   });
 
   it("rejects the renamed graduationYear payload instead of dropping it silently", async () => {
@@ -741,7 +753,7 @@ describe("alumni review workflow", () => {
     expect(stored.body.data.angkatan).toBeFalsy();
   });
 
-  it("recomputes profileCompleted when a publish field disappears", async () => {
+  it("keeps an approved profile public while profileCompleted is recomputed", async () => {
     const { alumniId, token } = await createWorkflowAlumni();
 
     await completeProfile(token);
@@ -755,7 +767,8 @@ describe("alumni review workflow", () => {
     ).toBe(200);
 
     // Corrupt the stored document behind the API: the flag is stale but the
-    // field is gone. Publication must follow the fields, not the flag.
+    // field is gone. Publication follows `reviewStatus` + `isPublic`, never
+    // the completeness flag, so the profile stays visible.
     await getAlumniCollection().updateOne(
       { _id: new ObjectId(alumniId) },
       { $set: { program: "" } },
@@ -767,8 +780,8 @@ describe("alumni review workflow", () => {
     expect(corrupted?.reviewStatus).toBe("APPROVED");
     expect(
       (await request(app).get(`/api/public/alumni/${alumniId}`)).status,
-    ).toBe(404);
-    expect(await isPublicAlumni(alumniId)).toBe(false);
+    ).toBe(200);
+    expect(await isPublicAlumni(alumniId)).toBe(true);
 
     // The next write recomputes the informational flag from the fields.
     const saved = await saveProfile(token, {
@@ -941,14 +954,10 @@ describe("alumni rejection reason", () => {
     const detail = await request(app).get(`/api/public/alumni/${id}`);
     expect(detail.status).toBe(200);
     expect(JSON.stringify(detail.body)).not.toContain("reviewNote");
-    expect(JSON.stringify(detail.body)).not.toContain(
-      "Internal reviewer note",
-    );
+    expect(JSON.stringify(detail.body)).not.toContain("Internal reviewer note");
 
     const list = await request(app).get("/api/public/alumni");
     expect(JSON.stringify(list.body)).not.toContain("reviewNote");
-    expect(JSON.stringify(list.body)).not.toContain(
-      "Internal reviewer note",
-    );
+    expect(JSON.stringify(list.body)).not.toContain("Internal reviewer note");
   });
 });

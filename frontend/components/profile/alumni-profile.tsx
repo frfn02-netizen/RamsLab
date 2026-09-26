@@ -377,7 +377,7 @@ export default function AlumniProfile() {
                         onChange={(event) => update("nim", event.target.value)}
                       />
                     </Field>
-                    <Field label="P (Angkatan) *" htmlFor="angkatan">
+                    <Field label=" Angkatan *" htmlFor="angkatan">
                       <input
                         id="angkatan"
                         required

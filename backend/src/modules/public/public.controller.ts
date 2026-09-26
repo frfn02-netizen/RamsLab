@@ -20,7 +20,6 @@ import {
   findPublicAlumni,
   findAlumniById,
 } from "../alumni/alumni.repository.js";
-import { isProfileComplete } from "../alumni/alumni-completeness.js";
 import {
   findAllStudents,
   findStudentById,
@@ -108,11 +107,9 @@ export async function getPublicDosenByIdController(
     }
 
     const alumni = await findAlumniById(id);
-    if (
-      alumni?.isPublic &&
-      isProfileComplete(alumni) &&
-      alumni.reviewStatus === "APPROVED"
-    ) {
+    // Publication = approval + visibility. Completeness (`profileCompleted`)
+    // is informational and never hides an approved profile.
+    if (alumni?.isPublic && alumni.reviewStatus === "APPROVED") {
       return res.json({
         success: true,
         data: toPublicAlumniProfile(req, alumni),
@@ -143,12 +140,7 @@ export async function getPublicAlumniByIdController(
   }
 
   const alumni = await findAlumniById(id);
-  if (
-    !alumni ||
-    !alumni.isPublic ||
-    !isProfileComplete(alumni) ||
-    alumni.reviewStatus !== "APPROVED"
-  ) {
+  if (!alumni || !alumni.isPublic || alumni.reviewStatus !== "APPROVED") {
     return res
       .status(404)
       .json({ success: false, message: "Public alumni profile not found" });

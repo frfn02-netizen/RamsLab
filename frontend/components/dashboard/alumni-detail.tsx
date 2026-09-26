@@ -69,7 +69,6 @@ export default function AlumniDetail({ id }: { id: string }) {
   const [form, setForm] = useState({
     fullName: "",
     angkatan: "",
-    program: "",
     currentStatus: "WORKING" as AlumniStatus,
     phone: "",
     location: "",
@@ -104,7 +103,6 @@ export default function AlumniDetail({ id }: { id: string }) {
           setForm({
             fullName: profile.fullName,
             angkatan: String(profile.angkatan),
-            program: profile.program,
             currentStatus: profile.currentStatus,
             phone: profile.phone ?? "",
             location: profile.location ?? "",
@@ -145,7 +143,6 @@ export default function AlumniDetail({ id }: { id: string }) {
       const result = await updateAlumni(id, {
         fullName: form.fullName,
         angkatan: Number(form.angkatan),
-        program: form.program,
         currentStatus: form.currentStatus,
         phone: form.phone || undefined,
         location: form.location || undefined,
@@ -272,16 +269,11 @@ export default function AlumniDetail({ id }: { id: string }) {
         </div>
         {missingFields.length > 0 && (
           <p className="border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-            Missing before publish:{" "}
-            <strong>{formatMissingPublishFields(missingFields)}</strong>. The
-            review status stays &ldquo;
-            {alumni.reviewStatus === "APPROVED"
-              ? "Approved"
-              : alumni.reviewStatus === "REJECTED"
-                ? "Rejected"
-                : "Pending review"}
-            &rdquo; and Approve &amp; publish is refused by the server until the
-            alumni fills them in.
+            Missing fields:{" "}
+            <strong>{formatMissingPublishFields(missingFields)}</strong>.
+            Approve &amp; publish is not blocked by them &mdash; they only keep
+            the informational completeness status off until the alumni fills
+            them in.
           </p>
         )}
 
@@ -323,8 +315,8 @@ export default function AlumniDetail({ id }: { id: string }) {
                     ? "Enable account"
                     : "Disable account"}
               </Button>
-              {/* Enabled even when publish fields are missing: the backend
-                  validates the approval and returns the missing fields. */}
+              {/* Always available: an incomplete profile may be approved and
+                  published (only a rejection has to carry a reason). */}
               <Button
                 disabled={reviewing}
                 onClick={() => void review("APPROVE")}
@@ -362,16 +354,10 @@ export default function AlumniDetail({ id }: { id: string }) {
                   />
                 </Field>
 
-                <Field label="Program">
-                  <input
-                    required
-                    className={inputClass}
-                    value={form.program}
-                    onChange={(event) => update("program", event.target.value)}
-                  />
-                </Field>
-
-                <Field label="P (Angkatan)">
+                {/* Program is intentionally not editable here: only the
+                    alumni owns that value through their own form. It stays in
+                    the database and in the read-only header below. */}
+                <Field label="Angkatan">
                   <input
                     required
                     type="number"

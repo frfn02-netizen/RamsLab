@@ -1,8 +1,9 @@
 // Mirror of backend/src/modules/alumni/alumni-completeness.ts.
 //
-// The backend stays the source of truth: approval and the public endpoints
-// validate these fields server-side. This copy only tells admins and alumni
-// *which* fields are still missing, so keep both lists identical.
+// Informational only: the backend publishes on `reviewStatus` + `isPublic`,
+// so an approved profile is never hidden because a field is empty. This copy
+// tells admins and alumni *which* fields are still missing, so keep both
+// lists identical.
 export const PUBLISH_REQUIRED_FIELDS = [
   "fullName",
   "program",

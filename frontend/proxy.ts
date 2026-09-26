@@ -66,6 +66,7 @@ function rewriteRamsLab(request: NextRequest) {
 
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const normalizedPathname = stripTrailingSlash(pathname);
 
   /*
    * When Next.js is built with:
@@ -86,7 +87,7 @@ export default function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (PRIVATE_ALUMNI_PATHS.includes(stripTrailingSlash(pathname))) {
+  if (PRIVATE_ALUMNI_PATHS.includes(normalizedPathname)) {
     return NextResponse.next();
   }
 
