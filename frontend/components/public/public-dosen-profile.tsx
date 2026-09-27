@@ -10,6 +10,10 @@ import {
   getPublicDosenById,
   getPublicPublicationPdfUrl,
 } from "@/lib/api/modules";
+import {
+  matchesAnyAuthor,
+  normalizeAuthorName,
+} from "@/lib/publication-author-match";
 import type { Publication } from "@/types/modules";
 import type { PublicPerson } from "@/types/people";
 import PublicContainer from "./public-container";
@@ -17,9 +21,7 @@ import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
 
 const PUBLICATIONS_PAGE_SIZE = 200;
 
-export function normalizeAuthorName(value: string | null | undefined) {
-  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-}
+export { normalizeAuthorName };
 
 function publicationKey(publication: Publication) {
   const normalizedDoi = (publication.doi ?? "").trim().toLowerCase();
@@ -35,15 +37,11 @@ export function filterLecturerPublications(
   publications: Publication[],
   fullName: string | null | undefined,
 ) {
-  const normalizedName = normalizeAuthorName(fullName);
-  if (!normalizedName) return [];
+  if (!normalizeAuthorName(fullName)) return [];
 
   const seen = new Set<string>();
   return publications.filter((publication) => {
-    const isLecturerAuthor = (publication.authors ?? []).some(
-      (author) => normalizeAuthorName(author) === normalizedName,
-    );
-    if (!isLecturerAuthor) return false;
+    if (!matchesAnyAuthor(fullName, publication.authors)) return false;
 
     const key = publicationKey(publication);
     if (seen.has(key)) return false;

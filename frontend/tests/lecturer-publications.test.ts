@@ -644,3 +644,83 @@ describe("13. API error handling", () => {
     expect(matched).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 14. Shared author matching helper (single source of truth)
+// ---------------------------------------------------------------------------
+
+describe("14. Shared author matching helper", () => {
+  const FULL_NAME = "Prof. Dr. Ketut Buda Artana, S.T., M.Sc.";
+
+  const records = [
+    publication({ _id: "exact", title: "Exact paper", authors: [FULL_NAME] }),
+    publication({
+      _id: "short",
+      title: "Short paper",
+      authors: ["External Author", "Ketut Buda"],
+    }),
+    publication({
+      _id: "initials",
+      title: "Initials paper",
+      authors: ["K.B. Artana", "External Author"],
+    }),
+    publication({
+      _id: "unrelated",
+      title: "Unrelated paper",
+      authors: ["John Smith"],
+    }),
+    publication({
+      _id: "single-token",
+      title: "Single token paper",
+      authors: ["Ketut Santoso"],
+    }),
+    publication({
+      _id: "surname-only",
+      title: "Surname only paper",
+      authors: ["Artana"],
+    }),
+  ];
+
+  function matchedIds(fullName: string) {
+    return filterLecturerPublications(records, fullName).map((p) => p._id);
+  }
+
+  it("matches an exact name", () => {
+    expect(matchedIds(FULL_NAME)).toContain("exact");
+  });
+
+  it("matches the shortened form without degrees", () => {
+    expect(matchedIds(FULL_NAME)).toContain("short");
+  });
+
+  it("matches an initials form", () => {
+    expect(matchedIds(FULL_NAME)).toContain("initials");
+  });
+
+  it("ignores unrelated authors", () => {
+    expect(matchedIds(FULL_NAME)).not.toContain("unrelated");
+  });
+
+  it("ignores authors that share only one common token", () => {
+    expect(matchedIds(FULL_NAME)).not.toContain("single-token");
+    expect(matchedIds(FULL_NAME)).not.toContain("surname-only");
+  });
+
+  it("returns only the publications that belong to the lecturer", () => {
+    expect(matchedIds(FULL_NAME).sort()).toEqual(["exact", "initials", "short"]);
+  });
+
+  it("keeps the deduplicated result for repeated publications", () => {
+    const duplicated = [
+      publication({ _id: "first", doi: "10.1000/artana", authors: ["Ketut Buda"] }),
+      publication({
+        _id: "second",
+        doi: "10.1000/ARTANA",
+        authors: ["K.B. Artana"],
+      }),
+    ];
+    expect(
+      filterLecturerPublications(duplicated, FULL_NAME).map((p) => p._id),
+    ).toEqual(["first"]);
+  });
+});

@@ -20,6 +20,10 @@ import {
   updateDosen,
   uploadDosenPhoto,
 } from "@/lib/api/modules";
+import {
+  matchesAnyAuthor,
+  normalizeAuthorName,
+} from "@/lib/publication-author-match";
 import type { Dosen, DosenEducation, Publication } from "@/types/modules";
 
 type FormState = {
@@ -90,10 +94,6 @@ function fromDosen(d: Dosen): FormState {
   };
 }
 
-function normalizeAuthorName(value: string | null | undefined) {
-  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 function publicationLabel(p: Publication) {
   const source = [p.publicationType, p.journal].filter(Boolean).join(" · ");
   return `${p.title} (${p.year}${source ? ", " + source : ""})`;
@@ -148,9 +148,7 @@ function DosenPublicationsSection({
       }
       if (cancelled) return;
       const matched = all.filter((pub) =>
-        (pub.authors ?? []).some(
-          (a) => normalizeAuthorName(a) === normalizedName,
-        ),
+        matchesAnyAuthor(fullName, pub.authors),
       );
       if (process.env.NODE_ENV !== "production") {
         console.debug(
