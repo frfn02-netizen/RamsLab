@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getPublicEvents } from "@/lib/api/modules";
+import { assetPath } from "@/lib/asset-path";
 import type { PublicEvent } from "@/types/modules";
 import PublicContainer from "../public-container";
 import PageHero from "../page-hero";
@@ -29,6 +30,19 @@ export default function PublicEventsPage() {
     <main>
       <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="max-w-4xl py-16 sm:py-20">
+        <div className="relative mb-10 aspect-video w-full overflow-hidden border border-[var(--border)] bg-[var(--rams-gray-light)] shadow-[0_8px_24px_rgba(11,32,56,0.05)]">
+          <video
+            className="h-full w-full object-cover"
+            src={assetPath("/assets/0722.mp4")}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+        </div>
         {loading ? (
           <p className="text-sm font-semibold text-[var(--rams-gray)]">
             {common("loading")}
