@@ -118,6 +118,25 @@ function AcademicLinkIcon() {
   );
 }
 
+function PdfIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7l-4-4Z" />
+      <path d="M14 3v4h4" />
+      <path d="M9 13h6M9 17h4" />
+    </svg>
+  );
+}
+
 function ProfileSection({
   title,
   children,
@@ -298,25 +317,51 @@ function LecturerPublications({
                 key={publicationKey(publication)}
                 className="border border-[var(--border)] bg-white p-5 sm:p-6"
               >
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-                  <h3 className="font-display text-xl font-semibold leading-tight text-[var(--navy)]">
+                <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                  <h3 className="min-w-0 flex-1 break-words font-display text-xl font-semibold leading-tight text-[var(--navy)]">
                     {publication.title}
                   </h3>
-                  <span className="font-mono text-xs font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
+                  <span className="shrink-0 border border-[var(--rams-red)]/25 px-2 py-1 font-mono text-[0.65rem] font-bold leading-none text-[var(--rams-red)]">
                     {publication.year}
                   </span>
                 </div>
-                <p className="mt-4 text-sm font-semibold text-[var(--gray)]">
-                  {t("authors")}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-[var(--slate)]">
-                  {(publication.authors ?? []).join(", ")}
-                </p>
-                <p className="mt-4 text-sm leading-6 text-[var(--slate)]">
-                  {source || t("sourceUnavailable")}
-                </p>
+
+                <div className="mt-4">
+                  <p className="font-mono text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
+                    {t("authors")}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--slate)] break-words">
+                    {(publication.authors ?? []).join(" · ")}
+                  </p>
+                </div>
+
+                {source ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    {publication.publicationType && (
+                      <span className="border border-[var(--border)] bg-[var(--background-light)] px-2 py-1 font-mono text-[0.65rem] font-semibold uppercase leading-none tracking-[0.08em] text-[var(--navy)]">
+                        {publication.publicationType}
+                      </span>
+                    )}
+                    {publication.publicationType && publication.journal && (
+                      <span
+                        className="h-3.5 w-px bg-[var(--border)]"
+                        aria-hidden="true"
+                      />
+                    )}
+                    {publication.journal && (
+                      <span className="min-w-0 text-sm leading-6 text-[var(--slate)]">
+                        {publication.journal}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-[var(--slate)]">
+                    {t("sourceUnavailable")}
+                  </p>
+                )}
+
                 {(publication.doi?.trim() || publication.pdfUrl) && (
-                  <div className="mt-5 flex flex-wrap gap-4 border-t border-[var(--border)] pt-4 text-sm font-semibold">
+                  <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[var(--border)] pt-4 text-sm font-semibold">
                     {publication.doi?.trim() && (
                       <a
                         href={`https://doi.org/${encodeURI(publication.doi.trim())}`}
@@ -332,9 +377,11 @@ function LecturerPublications({
                         href={getPublicPublicationPdfUrl(publication._id)}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[var(--rams-red)] transition-colors hover:text-[var(--navy)]"
+                        className="inline-flex items-center gap-1.5 text-[var(--rams-red)] transition-colors hover:text-[var(--rams-red-dark)]"
                       >
-                        {t("viewPdf")}
+                        <PdfIcon />
+                        <span>{t("viewPdf")}</span>
+                        <span aria-hidden="true">→</span>
                       </a>
                     )}
                   </div>
@@ -600,7 +647,7 @@ export default function PublicDosenProfile({ id }: { id: string }) {
           <AcademicProfiles links={academicLinks} />
         </div>
 
-        <div className="mt-16 max-w-4xl">
+        <div className="mt-16">
           <LecturerPublications
             fullName={profile.fullName}
             publicationIds={profile.publicationIds}
