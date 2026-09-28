@@ -19,6 +19,7 @@ import { uploadMyAlumniPhoto } from "@/lib/api/alumni";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
 import AlumniReviewStatus from "@/components/profile/alumni-review-status";
 import { getUserFacingError } from "@/lib/api/errors";
+import { applyYearToAngkatanDraft } from "@/lib/alumni-angkatan-suggestion";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
 import SuccessToast from "@/components/dashboard/success-toast";
 
@@ -65,6 +66,7 @@ export default function AlumniProfile() {
     fullName: "",
     nim: "",
     angkatan: "",
+    tahunAngkatan: "",
     program: "",
     phone: "",
     location: "",
@@ -80,11 +82,17 @@ export default function AlumniProfile() {
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Save-time failures (including the backend's registration validation) are
+  // surfaced as a toast instead of the inline red banner used for load errors.
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [registrationNotice, setRegistrationNotice] = useState<string | null>(
     null,
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  // True once the alumni has typed in the P (angkatan) input. From then on no
+  // suggestion may overwrite what is in that field.
+  const [angkatanEdited, setAngkatanEdited] = useState(false);
 
   useEffect(() => {
     const notice = window.sessionStorage.getItem(
@@ -113,6 +121,8 @@ export default function AlumniProfile() {
             fullName: result.fullName,
             nim: result.nim ?? "",
             angkatan: result.angkatan ? String(result.angkatan) : "",
+            tahunAngkatan:
+              result.tahunAngkatan != null ? String(result.tahunAngkatan) : "",
             program: result.program ?? "",
             phone: result.phone ?? "",
             location: result.location ?? "",
@@ -143,16 +153,47 @@ export default function AlumniProfile() {
   const update = (key: string, value: string | boolean) =>
     setForm((current) => ({ ...current, [key]: value }));
 
+  // The year may only ever fill an empty, untouched P; it never overwrites a
+  // stored P or one the alumni has typed (see alumni-angkatan-suggestion.ts).
+  const changeTahunAngkatan = (value: string) => {
+    const draft = applyYearToAngkatanDraft(
+      {
+        stored: profile?.angkatan ?? null,
+        value: form.angkatan,
+        editedByUser: angkatanEdited,
+      },
+      value,
+    );
+    setForm((current) => ({
+      ...current,
+      tahunAngkatan: value,
+      angkatan: draft.value,
+    }));
+  };
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setError(null);
+    setSaveError(null);
     setSuccessMessage(null);
     try {
-      let result = await updateMyAlumni({
+      // The photo is one of the mandatory registration fields, so a new photo
+      // is uploaded first: the backend rejects any profile save that would
+      // still be stored without a photo, and the upload endpoint is what
+      // writes that field (there is no photo field in this payload).
+      if (photoFile) {
+        await uploadMyAlumniPhoto(photoFile);
+        setPhotoFile(null);
+      }
+
+      const result = await updateMyAlumni({
         fullName: form.fullName,
         nim: form.nim || undefined,
         angkatan: form.angkatan ? Number(form.angkatan) : undefined,
+        // `null` clears the year; `undefined` would be ignored by the save
+        // logic, so an emptied field would silently come back.
+        tahunAngkatan: form.tahunAngkatan ? Number(form.tahunAngkatan) : null,
         program: form.program || undefined,
         phone: form.phone || undefined,
         location: form.location || undefined,
@@ -167,8 +208,6 @@ export default function AlumniProfile() {
         bio: form.bio || undefined,
         isPublic: form.isPublic,
       });
-      if (photoFile) result = await uploadMyAlumniPhoto(photoFile);
-      setPhotoFile(null);
       setProfile(result);
       setProfileLoaded(true);
       // Re-sync from the server response: the backend owns academic identity
@@ -179,6 +218,10 @@ export default function AlumniProfile() {
         fullName: result.fullName ?? current.fullName,
         nim: result.nim ?? current.nim,
         angkatan: result.angkatan ? String(result.angkatan) : current.angkatan,
+        tahunAngkatan:
+          result.tahunAngkatan != null
+            ? String(result.tahunAngkatan)
+            : current.tahunAngkatan,
         program: result.program ?? current.program,
       }));
       // The backend decides completeness; never claim a profile is complete
@@ -189,7 +232,7 @@ export default function AlumniProfile() {
           : "Profile saved. Your profile is pending review.",
       );
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      setSaveError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -221,6 +264,13 @@ export default function AlumniProfile() {
         <SuccessToast
           message={successMessage}
           onClose={() => setSuccessMessage(null)}
+        />
+      )}
+      {saveError && (
+        <SuccessToast
+          variant="error"
+          message={saveError}
+          onClose={() => setSaveError(null)}
         />
       )}
       <div className="border-b border-[var(--border)] bg-white px-5 sm:px-8">
@@ -278,7 +328,7 @@ export default function AlumniProfile() {
               <section>
                 <SectionHeader
                   title="Profile Photo"
-                  subtitle="Required before an admin can publish your profile."
+                  subtitle="Required — your registration is only saved once your full name, photo, and angkatan (P) are all present."
                 />
                 <ProfilePhotoField
                   initialUrl={profile?.photo}
@@ -386,8 +436,23 @@ export default function AlumniProfile() {
                         max="99"
                         className={profileInputClass}
                         value={form.angkatan}
+                        onChange={(event) => {
+                          update("angkatan", event.target.value);
+                          setAngkatanEdited(true);
+                        }}
+                      />
+                    </Field>
+                    <Field label="Tahun Angkatan" htmlFor="tahunAngkatan">
+                      <input
+                        id="tahunAngkatan"
+                        type="number"
+                        min="1900"
+                        max="2100"
+                        className={profileInputClass}
+                        placeholder="e.g. 2015"
+                        value={form.tahunAngkatan}
                         onChange={(event) =>
-                          update("angkatan", event.target.value)
+                          changeTahunAngkatan(event.target.value)
                         }
                       />
                     </Field>

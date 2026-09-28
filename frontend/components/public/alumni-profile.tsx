@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { formatAlumniClassLabel } from "@/lib/alumni-label";
 import { getPublicAlumniById } from "@/lib/api/modules";
 import type { PublicPerson } from "@/types/people";
 import PublicContainer from "./public-container";
@@ -14,6 +15,7 @@ export default function AlumniProfile({ id }: { id: string }) {
   const [profile, setProfile] = useState<PublicPerson | undefined>(undefined);
   const [imageFailed, setImageFailed] = useState(false);
   const [error, setError] = useState(false);
+  const classOfLabel = formatAlumniClassLabel(profile, t("classOf"));
 
   useEffect(() => {
     let cancelled = false;
@@ -104,9 +106,9 @@ export default function AlumniProfile({ id }: { id: string }) {
                   {profile.fullName}
                 </h1>
 
-                {profile.angkatan && (
+                {classOfLabel && (
                   <p className="mt-6 font-mono text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
-                    {t("classOf")} P{profile.angkatan}
+                    {classOfLabel}
                   </p>
                 )}
 

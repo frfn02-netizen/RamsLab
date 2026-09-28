@@ -231,3 +231,49 @@ describe("AlumniCard – angkatan displays as P prefix", () => {
     expect(screen.queryByText(/entryYear/i)).not.toBeInTheDocument();
   });
 });
+
+describe("AlumniCard – year and batch number", () => {
+  it("renders year and batch number together", () => {
+    render(
+      <AlumniCard
+        member={alumni({
+          fullName: "Year And Batch",
+          angkatan: 55,
+          tahunAngkatan: 2015,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("classOf 2015 (P55)")).toBeInTheDocument();
+  });
+
+  it("renders only the year when the batch number is missing", () => {
+    render(
+      <AlumniCard
+        member={alumni({
+          fullName: "Year Only",
+          angkatan: undefined,
+          tahunAngkatan: 2015,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("classOf 2015")).toBeInTheDocument();
+    expect(screen.queryByText(/P\d+/)).not.toBeInTheDocument();
+  });
+
+  it("renders no cohort label when both values are missing", () => {
+    render(
+      <AlumniCard
+        member={alumni({
+          fullName: "No Cohort",
+          angkatan: undefined,
+          tahunAngkatan: undefined,
+        })}
+      />,
+    );
+
+    expect(screen.queryByText(/classOf/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/P\d+/)).not.toBeInTheDocument();
+  });
+});

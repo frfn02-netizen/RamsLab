@@ -602,10 +602,13 @@ describe("alumni review workflow", () => {
     const { alumniId, token } = await createWorkflowAlumni();
 
     const saved = await saveProfile(token, {
-      fullName: "Missing Photo Alumni",
-      nim: `WF-PHOTO-${workflowSequence}`,
+      fullName: "Incomplete Alumni",
       angkatan: 30,
       program: "Ocean Engineering",
+      photo: `https://example.com/incomplete-${workflowSequence}.jpg`,
+      // NIM is left empty on purpose: a profile may only be *saved* with full
+      // name + photo + angkatan (registration gate), while everything beyond
+      // those three stays informational and must not gate the approval.
     });
 
     expect(saved.status).toBe(200);
@@ -622,7 +625,7 @@ describe("alumni review workflow", () => {
 
     const detail = await request(app).get(`/api/public/alumni/${alumniId}`);
     expect(detail.status).toBe(200);
-    expect(detail.body.data.fullName).toBe("Missing Photo Alumni");
+    expect(detail.body.data.fullName).toBe("Incomplete Alumni");
   });
 
   it("approves and publishes a complete profile", async () => {
@@ -959,5 +962,452 @@ describe("alumni rejection reason", () => {
     const list = await request(app).get("/api/public/alumni");
     expect(JSON.stringify(list.body)).not.toContain("reviewNote");
     expect(JSON.stringify(list.body)).not.toContain("Internal reviewer note");
+  });
+});
+
+// ============================================================
+// Cohort year (tahunAngkatan): separate from the batch number
+// ============================================================
+
+describe("alumni cohort year (tahunAngkatan)", () => {
+  it("saves and returns the cohort year on the alumni's own profile", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+
+    const saved = await completeProfile(token, { tahunAngkatan: 2015 });
+    expect(saved.body.data.tahunAngkatan).toBe(2015);
+
+    const reopened = await readProfile(token);
+    expect(reopened.body.data.tahunAngkatan).toBe(2015);
+
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.tahunAngkatan).toBe(2015);
+  });
+
+  it("clears the cohort year when the alumni sends null", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await completeProfile(token, { tahunAngkatan: 2015 });
+
+    const cleared = await saveProfile(token, { tahunAngkatan: null });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.data.tahunAngkatan).toBeNull();
+
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.tahunAngkatan).toBeNull();
+  });
+
+  it("leaves the cohort year untouched when the field is omitted", async () => {
+    const { token } = await createWorkflowAlumni();
+    await completeProfile(token, { tahunAngkatan: 2015 });
+
+    const saved = await saveProfile(token, { bio: "Still the same year." });
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.tahunAngkatan).toBe(2015);
+  });
+
+  it("rejects a cohort year outside 1900..2100", async () => {
+    const { token } = await createWorkflowAlumni();
+    await completeProfile(token);
+
+    const tooOld = await saveProfile(token, { tahunAngkatan: 1800 });
+    expect(tooOld.status).toBe(400);
+
+    const tooNew = await saveProfile(token, { tahunAngkatan: 2200 });
+    expect(tooNew.status).toBe(400);
+  });
+
+  it("lets the alumni change the cohort year after the first save", async () => {
+    // Not an academic identity field: unlike `angkatan` it is never claim-once.
+    const { token } = await createWorkflowAlumni();
+    await completeProfile(token, { tahunAngkatan: 2015 });
+
+    const updated = await saveProfile(token, { tahunAngkatan: 2016 });
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.tahunAngkatan).toBe(2016);
+  });
+
+  it("never overwrites a stored batch number while the year changes", async () => {
+    const { token } = await createWorkflowAlumni();
+    await completeProfile(token, { angkatan: 34, tahunAngkatan: 2015 });
+
+    const saved = await saveProfile(token, { angkatan: 99, tahunAngkatan: 2016 });
+
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.angkatan).toBe(34);
+    expect(saved.body.data.tahunAngkatan).toBe(2016);
+  });
+
+  it("does not require a cohort year for a complete profile", async () => {
+    const { token } = await createWorkflowAlumni();
+
+    const saved = await completeProfile(token);
+    expect(saved.body.data.profileCompleted).toBe(true);
+    expect(saved.body.data.tahunAngkatan ?? null).toBeNull();
+  });
+
+  it("puts an approved profile back in review when only the year changes", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await completeProfile(token);
+    const approved = await approveProfile(alumniId);
+    expect(approved.body.data.reviewStatus).toBe("APPROVED");
+
+    const saved = await saveProfile(token, { tahunAngkatan: 2015 });
+
+    expect(saved.body.data.tahunAngkatan).toBe(2015);
+    expect(saved.body.data.reviewStatus).toBe("PENDING");
+    expect(saved.body.data.isPublic).toBe(false);
+  });
+
+  it("keeps an approved profile approved when only the year is re-sent unchanged", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await completeProfile(token, { tahunAngkatan: 2015 });
+    await approveProfile(alumniId);
+
+    const saved = await saveProfile(token, { tahunAngkatan: 2015 });
+
+    expect(saved.body.data.reviewStatus).toBe("APPROVED");
+    expect(saved.body.data.isPublic).toBe(true);
+  });
+
+  it("returns the cohort year from public endpoints after approval", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await completeProfile(token, { angkatan: 55, tahunAngkatan: 2015 });
+    await approveProfile(alumniId);
+
+    const detail = await request(app).get(`/api/public/alumni/${alumniId}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.data.angkatan).toBe(55);
+    expect(detail.body.data.tahunAngkatan).toBe(2015);
+
+    const list = await request(app).get("/api/public/alumni");
+    const listed = (list.body.data as Array<{ id: string }>).find(
+      (alumni) => alumni.id === alumniId,
+    );
+    expect(listed).toMatchObject({
+      angkatan: 55,
+      tahunAngkatan: 2015,
+    });
+  });
+
+  it("lets an admin set and clear the cohort year", async () => {
+    const { alumniId } = await createWorkflowAlumni();
+
+    const set = await request(app)
+      .patch(`/api/alumni/${alumniId}`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ tahunAngkatan: 2015 });
+    expect(set.status).toBe(200);
+    expect(set.body.data.tahunAngkatan).toBe(2015);
+
+    const cleared = await request(app)
+      .patch(`/api/alumni/${alumniId}`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ tahunAngkatan: null });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.data.tahunAngkatan).toBeNull();
+  });
+});
+
+// ============================================================
+// Registration gate: full name + photo + angkatan (P) are mandatory
+// ============================================================
+
+describe("alumni registration requirements", () => {
+  const fullName = "Registration Alumni";
+  const photo = "https://example.com/registration-alumni.jpg";
+
+  function readStored(alumniId: string) {
+    return getAlumniCollection().findOne({ _id: new ObjectId(alumniId) });
+  }
+
+  it("accepts a registration save that has full name, photo, and angkatan", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+
+    const saved = await saveProfile(token, { fullName, angkatan: 41, photo });
+
+    expect(saved.status).toBe(200);
+    expect(saved.body.success).toBe(true);
+    expect(saved.body.data.fullName).toBe(fullName);
+    expect(saved.body.data.angkatan).toBe(41);
+    expect(saved.body.data.photo).toBe(photo);
+    // A first save never publishes itself: registration still waits for review.
+    expect(saved.body.data.reviewStatus).toBe("PENDING");
+    expect(saved.body.data.isPublic).toBe(false);
+    expect(await isPublicAlumni(alumniId)).toBe(false);
+  });
+
+  it("rejects a registration save without a full name", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+
+    const rejected = await saveProfile(token, { angkatan: 41, photo });
+
+    expect(rejected.status).toBe(400);
+    expect(rejected.body.success).toBe(false);
+    expect(rejected.body.message).toMatch(/full name/i);
+
+    // Nothing is persisted, so partial data never looks like a registration.
+    const stored = await readStored(alumniId);
+    expect(stored?.fullName ?? "").toBe("");
+    expect(stored?.photo).toBeUndefined();
+    // The shell stores the unset batch number as null (driver behaviour).
+    expect(stored?.angkatan ?? null).toBeNull();
+    expect(stored?.profileCompleted).toBe(false);
+    expect(stored?.reviewStatus).toBe("PENDING");
+  });
+
+  it("rejects a whitespace-only full name", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+
+    const rejected = await saveProfile(token, {
+      fullName: "   ",
+      angkatan: 41,
+      photo,
+    });
+
+    expect(rejected.status).toBe(400);
+    expect(
+      (rejected.body.errors as Array<{ path: string[] }>).some((issue) =>
+        issue.path.includes("fullName"),
+      ),
+    ).toBe(true);
+
+    const stored = await readStored(alumniId);
+    expect(stored?.fullName ?? "").toBe("");
+  });
+
+  it("rejects a registration save without a photo", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+
+    const rejected = await saveProfile(token, { fullName, angkatan: 41 });
+
+    expect(rejected.status).toBe(400);
+    expect(rejected.body.message).toMatch(/photo/i);
+
+    const stored = await readStored(alumniId);
+    expect(stored?.photo).toBeUndefined();
+    // The shell stores the unset batch number as null (driver behaviour).
+    expect(stored?.angkatan ?? null).toBeNull();
+    expect(stored?.fullName ?? "").toBe("");
+  });
+
+  it("rejects a registration save without angkatan (P)", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+
+    const rejected = await saveProfile(token, { fullName, photo });
+
+    expect(rejected.status).toBe(400);
+    expect(rejected.body.message).toMatch(/angkatan/i);
+
+    const stored = await readStored(alumniId);
+    // The shell stores the unset batch number as null (driver behaviour).
+    expect(stored?.angkatan ?? null).toBeNull();
+    expect(stored?.photo).toBeUndefined();
+  });
+
+  it("rejects clearing an existing photo to an empty value", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await completeProfile(token);
+
+    const cleared = await saveProfile(token, { photo: "" });
+
+    expect(cleared.status).toBe(400);
+    expect(cleared.body.message).toMatch(/photo/i);
+
+    const stored = await readStored(alumniId);
+    expect(stored?.photo).toBe(`https://example.com/workflow-${workflowSequence}.jpg`);
+  });
+
+  it("still accepts a registration save with an empty NIM", async () => {
+    const { token } = await createWorkflowAlumni();
+
+    const saved = await saveProfile(token, {
+      fullName,
+      angkatan: 41,
+      photo,
+      program: "Naval Architecture",
+    });
+
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.nim ?? "").toBe("");
+    // NIM only drives the informational completeness flag.
+    expect(saved.body.data.profileCompleted).toBe(false);
+  });
+
+  it("still accepts a registration save with an empty program", async () => {
+    const { token } = await createWorkflowAlumni();
+
+    const saved = await saveProfile(token, {
+      fullName,
+      angkatan: 41,
+      photo,
+      nim: `WF-REG-${workflowSequence}`,
+    });
+
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.program ?? "").toBe("");
+    expect(saved.body.data.profileCompleted).toBe(false);
+  });
+
+  it("still accepts a registration save with an empty cohort year", async () => {
+    const { token } = await createWorkflowAlumni();
+
+    const saved = await saveProfile(token, {
+      fullName,
+      angkatan: 41,
+      photo,
+      nim: `WF-REG-YEAR-${workflowSequence}`,
+      program: "Naval Architecture",
+      tahunAngkatan: null,
+    });
+
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.tahunAngkatan ?? null).toBeNull();
+    expect(saved.body.data.profileCompleted).toBe(true);
+  });
+});
+
+// ============================================================
+// Admin list: filter by review status (All / Pending / Rejected / Approved)
+// ============================================================
+
+describe("alumni admin review status filter", () => {
+  const rejectionReason = "Mohon melengkapi data pekerjaan.";
+
+  let pendingAlumniId = "";
+  let approvedAlumniId = "";
+  let rejectedAlumniId = "";
+  let incompleteApprovedAlumniId = "";
+
+  type ListRow = {
+    _id: string;
+    reviewStatus?: string;
+    reviewNote?: string | null;
+    profileCompleted?: boolean;
+  };
+
+  beforeAll(async () => {
+    const pending = await createWorkflowAlumni();
+    await completeProfile(pending.token);
+    pendingAlumniId = pending.alumniId;
+
+    const approved = await createWorkflowAlumni();
+    await completeProfile(approved.token);
+    expect((await approveProfile(approved.alumniId)).status).toBe(200);
+    approvedAlumniId = approved.alumniId;
+
+    const rejected = await createWorkflowAlumni();
+    await completeProfile(rejected.token);
+    expect(
+      (await rejectProfile(rejected.alumniId, rejectionReason)).status,
+    ).toBe(200);
+    rejectedAlumniId = rejected.alumniId;
+
+    // Approved while a publish field (NIM) is still missing: the Approved
+    // filter must never be confused with `profileCompleted`.
+    const incomplete = await createWorkflowAlumni();
+    const saved = await saveProfile(incomplete.token, {
+      fullName: "Approved Incomplete Alumni",
+      angkatan: 44,
+      photo: `https://example.com/approved-incomplete-${workflowSequence}.jpg`,
+      program: "Ocean Engineering",
+    });
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.profileCompleted).toBe(false);
+    expect((await approveProfile(incomplete.alumniId)).status).toBe(200);
+    incompleteApprovedAlumniId = incomplete.alumniId;
+  });
+
+  function listAlumni(reviewStatus?: string) {
+    const query: Record<string, string | number> = { page: 1, limit: 200 };
+    if (reviewStatus) query.reviewStatus = reviewStatus;
+
+    return request(app)
+      .get("/api/alumni")
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .query(query);
+  }
+
+  function rows(response: { body: { data?: ListRow[] } }) {
+    return response.body.data ?? [];
+  }
+
+  it("returns every review status when no filter is sent (All)", async () => {
+    const response = await listAlumni();
+
+    expect(response.status).toBe(200);
+
+    const ids = rows(response).map((row) => row._id);
+    expect(ids).toContain(pendingAlumniId);
+    expect(ids).toContain(approvedAlumniId);
+    expect(ids).toContain(rejectedAlumniId);
+  });
+
+  it("returns only PENDING alumni for the Pending filter", async () => {
+    const response = await listAlumni("PENDING");
+
+    expect(response.status).toBe(200);
+
+    const data = rows(response);
+    expect(data.length).toBeGreaterThan(0);
+    expect(data.every((row) => row.reviewStatus === "PENDING")).toBe(true);
+    expect(data.map((row) => row._id)).toContain(pendingAlumniId);
+    expect(data.map((row) => row._id)).not.toContain(rejectedAlumniId);
+  });
+
+  it("returns only REJECTED alumni for the Rejected filter", async () => {
+    const response = await listAlumni("REJECTED");
+
+    expect(response.status).toBe(200);
+
+    const data = rows(response);
+    expect(data.length).toBeGreaterThan(0);
+    expect(data.every((row) => row.reviewStatus === "REJECTED")).toBe(true);
+    expect(data.map((row) => row._id)).toContain(rejectedAlumniId);
+    expect(data.map((row) => row._id)).not.toContain(approvedAlumniId);
+  });
+
+  it("returns only APPROVED alumni for the Approved filter", async () => {
+    const response = await listAlumni("APPROVED");
+
+    expect(response.status).toBe(200);
+
+    const data = rows(response);
+    expect(data.length).toBeGreaterThan(0);
+    expect(data.every((row) => row.reviewStatus === "APPROVED")).toBe(true);
+    expect(data.map((row) => row._id)).toContain(approvedAlumniId);
+    expect(data.map((row) => row._id)).not.toContain(pendingAlumniId);
+  });
+
+  it("keeps an approved profile with profileCompleted=false in the Approved filter", async () => {
+    const response = await listAlumni("APPROVED");
+
+    const row = rows(response).find(
+      (item) => item._id === incompleteApprovedAlumniId,
+    );
+
+    expect(row).toBeDefined();
+    expect(row?.reviewStatus).toBe("APPROVED");
+    expect(row?.profileCompleted).toBe(false);
+  });
+
+  it("keeps the rejection reason on alumni returned by the Rejected filter", async () => {
+    const response = await listAlumni("REJECTED");
+
+    const row = rows(response).find((item) => item._id === rejectedAlumniId);
+
+    expect(row).toBeDefined();
+    expect(row?.reviewStatus).toBe("REJECTED");
+    expect(row?.reviewNote).toBe(rejectionReason);
+  });
+
+  it("rejects an unknown review status filter", async () => {
+    const response = await listAlumni("ARCHIVED");
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toMatch(/reviewStatus/i);
   });
 });

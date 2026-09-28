@@ -74,7 +74,7 @@ const emptyShell = {
 } as unknown as Alumni;
 
 function angkatanValue() {
-  return (screen.getByLabelText(/angkatan/i) as HTMLInputElement).value;
+  return (screen.getByLabelText("Angkatan *") as HTMLInputElement).value;
 }
 
 async function fillAndSave(payload: Record<string, unknown>) {
@@ -87,7 +87,7 @@ async function fillAndSave(payload: Record<string, unknown>) {
   fireEvent.change(screen.getByLabelText(/nim/i), {
     target: { value: String(payload.nim ?? "") },
   });
-  fireEvent.change(screen.getByLabelText(/angkatan/i), {
+  fireEvent.change(screen.getByLabelText("Angkatan *"), {
     target: { value: String(payload.angkatan ?? "") },
   });
   fireEvent.change(screen.getByLabelText(/status/i), {
@@ -151,7 +151,7 @@ describe("Angkatan (batch number) round trip", () => {
     render(<AlumniProfile />);
     await waitFor(() => expect(angkatanValue()).toBe("34"));
 
-    fireEvent.change(screen.getByLabelText(/angkatan/i), {
+    fireEvent.change(screen.getByLabelText("Angkatan *"), {
       target: { value: "99" },
     });
     fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
@@ -160,5 +160,100 @@ describe("Angkatan (batch number) round trip", () => {
     // The form is re-synced from the response, so it never shows a value the
     // backend refused to store.
     await waitFor(() => expect(angkatanValue()).toBe("34"));
+  });
+});
+
+function yearValue() {
+  return (screen.getByLabelText("Tahun Angkatan") as HTMLInputElement).value;
+}
+
+async function saveProfile() {
+  fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
+  await waitFor(() => expect(updateMyAlumni).toHaveBeenCalled());
+}
+
+describe("Tahun Angkatan (cohort year)", () => {
+  it("renders the stored year and sends an edited year back", async () => {
+    getMyAlumni.mockResolvedValue({ ...baseProfile, tahunAngkatan: 2015 });
+    updateMyAlumni.mockResolvedValue({
+      ...baseProfile,
+      tahunAngkatan: 2016,
+    });
+
+    render(<AlumniProfile />);
+    await waitFor(() => expect(yearValue()).toBe("2015"));
+
+    fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
+      target: { value: "2016" },
+    });
+    await saveProfile();
+
+    expect(updateMyAlumni.mock.calls[0][0].tahunAngkatan).toBe(2016);
+    await waitFor(() => expect(yearValue()).toBe("2016"));
+  });
+
+  it("sends null when the year is cleared so the value does not come back", async () => {
+    getMyAlumni.mockResolvedValue({ ...baseProfile, tahunAngkatan: 2015 });
+    updateMyAlumni.mockResolvedValue({
+      ...baseProfile,
+      angkatan: 34,
+      tahunAngkatan: null,
+    });
+
+    render(<AlumniProfile />);
+    await waitFor(() => expect(yearValue()).toBe("2015"));
+
+    fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
+      target: { value: "" },
+    });
+    await saveProfile();
+
+    expect(updateMyAlumni.mock.calls[0][0].tahunAngkatan).toBeNull();
+    await waitFor(() => expect(yearValue()).toBe(""));
+  });
+
+  it("keeps the stored batch number when the year changes", async () => {
+    getMyAlumni.mockResolvedValue(baseProfile);
+
+    render(<AlumniProfile />);
+    await waitFor(() => expect(angkatanValue()).toBe("34"));
+
+    fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
+      target: { value: "2015" },
+    });
+
+    expect(yearValue()).toBe("2015");
+    expect(angkatanValue()).toBe("34");
+  });
+
+  it("keeps a batch number the alumni has typed when the year changes", async () => {
+    getMyAlumni.mockResolvedValue(emptyShell);
+
+    render(<AlumniProfile />);
+    await waitFor(() => expect(angkatanValue()).toBe(""));
+
+    fireEvent.change(screen.getByLabelText("Angkatan *"), {
+      target: { value: "55" },
+    });
+    fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
+      target: { value: "2015" },
+    });
+
+    expect(yearValue()).toBe("2015");
+    expect(angkatanValue()).toBe("55");
+  });
+
+  it("leaves the batch number empty when there is no year → P reference", async () => {
+    getMyAlumni.mockResolvedValue(emptyShell);
+
+    render(<AlumniProfile />);
+    await waitFor(() => expect(angkatanValue()).toBe(""));
+
+    fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
+      target: { value: "2015" },
+    });
+
+    expect(yearValue()).toBe("2015");
+    expect(angkatanValue()).toBe("");
   });
 });

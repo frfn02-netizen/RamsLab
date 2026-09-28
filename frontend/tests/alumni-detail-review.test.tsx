@@ -182,7 +182,9 @@ describe("Alumni detail – review state", () => {
     expect(
       screen.queryByDisplayValue("Naval Architecture"),
     ).not.toBeInTheDocument();
-    expect(screen.getByText(/Naval Architecture · P34/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Naval Architecture · Class of P34/),
+    ).toBeInTheDocument();
 
     fireEvent.change(screen.getByDisplayValue("Half Filled Alumni"), {
       target: { value: "Renamed By Admin" },

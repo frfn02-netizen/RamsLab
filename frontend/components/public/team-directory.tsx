@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { formatAlumniClassLabel } from "@/lib/alumni-label";
 import { getPublicPeopleList } from "@/lib/api/modules";
 import type {
   PublicDirectoryCategory,
@@ -92,12 +93,16 @@ export function RoleLine({
   member: PublicPerson;
   fallback: string;
 }) {
+  const t = useTranslations("alumni");
   const role = [member.title, member.position].filter(Boolean).join(" · ");
-  const year = member.angkatan ? ` · P${member.angkatan}` : "";
+  // Non-alumni never carry `angkatan`, so this renders just the role today;
+  // if a member ever does, the same shared formatter is used as everywhere else
+  // instead of a dangling "P" suffix.
+  const classOfLabel = formatAlumniClassLabel(member, t("classOf"));
   if (!role) return null;
   return (
     <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-[var(--rams-red)]">
-      {`${role}${year}`}
+      {classOfLabel ? `${role} · ${classOfLabel}` : role}
     </p>
   );
 }
@@ -118,6 +123,7 @@ export function MemberCard({
   ].includes(member.category);
 
   const isAlumni = member.category === "ALUMNI";
+  const classOfLabel = formatAlumniClassLabel(member, t("classOf"));
   const company = isAlumni ? member.specialization[0] : undefined;
 
   return (
@@ -141,9 +147,9 @@ export function MemberCard({
           </Link>
         </h3>
 
-        {isAlumni && member.angkatan && (
-          <p className="mt-2 font-mono text-sm font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
-            {t("classOf")} P{member.angkatan}
+        {isAlumni && classOfLabel && (
+          <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
+            {classOfLabel}
           </p>
         )}
 

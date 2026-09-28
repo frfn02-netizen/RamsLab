@@ -37,6 +37,7 @@ export interface PublicPerson {
   bio?: string;
   linkedin?: string;
   angkatan?: number;
+  tahunAngkatan?: number | null;
   internshipStartDate?: string | null;
   internshipEndDate?: string | null;
   publicationIds?: string[];

@@ -16,16 +16,23 @@ import {
 } from "./alumni.schema.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 import { HttpError } from "../../middlewares/error.middleware.js";
-import { ALUMNI_REVIEW_STATUS, type Alumni } from "./alumni.types.js";
+import {
+  ALUMNI_REVIEW_STATUS,
+  type Alumni,
+  type AlumniReviewStatus,
+} from "./alumni.types.js";
 import { isProfileComplete } from "./alumni-completeness.js";
 
-export async function createAlumniShell(userId: string) {
+export async function createAlumniShell(userId: string, fullName?: string) {
   if (!ObjectId.isValid(userId)) throw new Error("Invalid user ID");
   const alumniCollection = getAlumniCollection();
   const now = new Date();
   const alumni = {
     userId: new ObjectId(userId),
-    fullName: "",
+    // The name collected at registration is kept on the shell so the first of
+    // the mandatory registration fields exists from the moment the account is
+    // created instead of being thrown away.
+    fullName: fullName?.trim() || "",
     angkatan: undefined,
     program: "",
     currentStatus: "OTHER" as const,
@@ -160,6 +167,7 @@ const PROFILE_CONTENT_FIELDS = [
   "nim",
   "program",
   "angkatan",
+  "tahunAngkatan",
   "photo",
   "phone",
   "location",
@@ -221,9 +229,65 @@ function rejectRenamedLegacyField(input: unknown) {
   }
 }
 
+// Mandatory registration fields (Pak Dhimas): an alumni may not save / submit
+// their profile registration until all three exist on the record. NIM, program
+// and tahunAngkatan stay optional here — they are completeness signals
+// (`profileCompleted`), never registration requirements.
+const REGISTRATION_REQUIRED_FIELDS = [
+  "fullName",
+  "photo",
+  "angkatan",
+] as const;
+
+const REGISTRATION_FIELD_LABELS: Record<
+  (typeof REGISTRATION_REQUIRED_FIELDS)[number],
+  string
+> = {
+  fullName: "full name",
+  photo: "photo",
+  angkatan: "angkatan (P)",
+};
+
+function isRegistrationFieldPresent(value: unknown): boolean {
+  if (typeof value === "string") return value.trim().length > 0;
+  return value !== undefined && value !== null;
+}
+
+// `merged` is the document as it would be stored after this save, so the check
+// sees both the already-persisted fields and the ones the payload changes.
+// An omitted field counts as "keep whatever is stored" (undefined), while an
+// explicitly emptied field counts as missing.
+function assertRegistrationComplete(merged: object | null | undefined) {
+  const stored = (merged ?? {}) as Record<string, unknown>;
+  const missing = REGISTRATION_REQUIRED_FIELDS.filter(
+    (field) => !isRegistrationFieldPresent(stored[field]),
+  );
+
+  if (missing.length === 0) return;
+
+  const labels = missing.map((field) => REGISTRATION_FIELD_LABELS[field]);
+  throw new HttpError(
+    400,
+    `Cannot save profile: ${labels.join(", ")} ${
+      missing.length === 1 ? "is" : "are"
+    } required to complete your alumni registration.`,
+    { missing },
+  );
+}
+
+export type UpdateMyAlumniOptions = {
+  // The photo upload endpoint stores one of the mandatory registration fields
+  // through this same save pipeline, so it cannot be blocked by the gate that
+  // exists precisely to require that field. The profile-completion save keeps
+  // the gate, which is what makes the registration impossible to finish
+  // without full name + photo + angkatan.
+  skipRegistrationCheck?: boolean;
+};
+
 export async function updateMyAlumni(
   userId: string,
   input: UpdateMyAlumniInput,
+  options: UpdateMyAlumniOptions = {},
 ) {
   if (!ObjectId.isValid(userId)) {
     throw new Error("Invalid user ID");
@@ -237,6 +301,14 @@ export async function updateMyAlumni(
   const existing = await findAlumniByUserId(new ObjectId(userId));
 
   const safeData = stripAcademicOverwrites(data, existing);
+
+  // The self save is the registration submission: refuse to persist it while
+  // the resulting record would still be missing a mandatory registration
+  // field, so partial data is never stored as if it were a valid registration.
+  if (existing && !options.skipRegistrationCheck) {
+    assertRegistrationComplete({ ...existing, ...safeData });
+  }
+
   const contentChanged = hasProfileChanges(safeData, existing);
   const previousStatus = existing?.reviewStatus;
 
@@ -280,6 +352,7 @@ export async function getAlumniList(
   page: number,
   limit: number,
   search?: string,
+  reviewStatus?: AlumniReviewStatus,
 ) {
   const safePage = Math.max(1, page);
 
@@ -289,6 +362,7 @@ export async function getAlumniList(
     page: safePage,
     limit: safeLimit,
     search,
+    reviewStatus,
   });
   const users = await getUsersCollection()
     .find({ _id: { $in: result.data.map((item) => item.userId) } })

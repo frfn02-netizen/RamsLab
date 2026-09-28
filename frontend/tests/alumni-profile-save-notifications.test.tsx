@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api/errors";
 import type { Alumni } from "@/types/alumni";
 
 const { getMyAlumni, updateMyAlumni, uploadMyAlumniPhoto, auth } = vi.hoisted(
@@ -90,7 +91,7 @@ describe("AlumniProfile – save notifications", () => {
     fireEvent.change(screen.getByLabelText(/nim/i), {
       target: { value: "NIM-NEW" },
     });
-    fireEvent.change(screen.getByLabelText(/angkatan/i), {
+    fireEvent.change(screen.getByLabelText("Angkatan *"), {
       target: { value: "25" },
     });
     fireEvent.change(screen.getByLabelText(/status/i), {
@@ -107,6 +108,13 @@ describe("AlumniProfile – save notifications", () => {
     expect(
       screen.queryByText("Profile saved. Your profile is pending review."),
     ).not.toBeInTheDocument();
+
+    // The success toast is the existing lime one.
+    const toast = screen.getByRole("status");
+    expect(toast).toHaveTextContent("Profile completed successfully");
+    expect(toast).toHaveTextContent("Success!");
+    expect(toast.className).toContain("fixed");
+    expect(toast.className).toContain("border-l-lime-500");
   });
 
   it("does not claim the profile is complete while the backend still reports it incomplete", async () => {
@@ -152,7 +160,51 @@ describe("AlumniProfile – save notifications", () => {
         true,
       );
     });
+
+    // It is the red error toast, not the inline ErrorState banner.
+    const toast = screen.getByRole("alert");
+    expect(toast.className).toContain("fixed");
+    expect(toast.className).toContain("border-l-red-500");
+    expect(document.querySelectorAll(".bg-red-50")).toHaveLength(0);
   });
+
+  const registrationErrors = [
+    "Cannot save profile: photo is required to complete your alumni registration.",
+    "Cannot save profile: full name is required to complete your alumni registration.",
+    "Cannot save profile: angkatan (P) is required to complete your alumni registration.",
+  ];
+
+  it.each(registrationErrors)(
+    "shows the registration validation error as a dismissible red toast: %s",
+    async (message) => {
+      getMyAlumni.mockResolvedValue(existingProfile);
+      updateMyAlumni.mockRejectedValue(new ApiError(message, 400));
+
+      render(<AlumniProfile />);
+
+      await waitFor(() =>
+        expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("alert")).toHaveTextContent(message),
+      );
+
+      const toast = screen.getByRole("alert");
+      expect(toast).toHaveTextContent("Error!");
+      expect(toast.className).toContain("fixed");
+      expect(toast.className).toContain("border-l-red-500");
+      expect(screen.getAllByText(message)).toHaveLength(1);
+      expect(document.querySelectorAll(".bg-red-50")).toHaveLength(0);
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /dismiss error notification/i }),
+      );
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+    },
+  );
 
   it("does not show success notification when save fails", async () => {
     getMyAlumni.mockResolvedValue(existingProfile);
@@ -204,5 +256,51 @@ describe("AlumniProfile – save notifications", () => {
     await waitFor(() => {
       expect(saveButton).not.toBeDisabled();
     });
+  });
+
+  it("uploads a pending photo before the profile save", async () => {
+    // The mock history (and its invocation order) survives between tests, so
+    // this one starts from a clean slate before comparing the call order.
+    getMyAlumni.mockClear();
+    uploadMyAlumniPhoto.mockClear();
+    updateMyAlumni.mockClear();
+
+    getMyAlumni.mockResolvedValue(existingProfile);
+    uploadMyAlumniPhoto.mockResolvedValue({
+      ...existingProfile,
+      photo: "https://example.com/new-photo.jpg",
+    });
+    updateMyAlumni.mockResolvedValue({
+      ...existingProfile,
+      photo: "https://example.com/new-photo.jpg",
+      profileCompleted: true,
+    });
+
+    render(<AlumniProfile />);
+
+    await waitFor(() =>
+      expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),
+    );
+
+    const file = new File(["photo-bytes"], "profile.png", {
+      type: "image/png",
+    });
+    fireEvent.change(screen.getByLabelText("Profile photo"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
+
+    await waitFor(() => expect(updateMyAlumni).toHaveBeenCalled());
+
+    // The backend rejects a save that would be stored without a photo, so the
+    // photo has to be uploaded first.
+    expect(uploadMyAlumniPhoto).toHaveBeenCalledWith(file);
+    expect(uploadMyAlumniPhoto.mock.invocationCallOrder[0]).toBeLessThan(
+      updateMyAlumni.mock.invocationCallOrder[0],
+    );
+    expect(
+      await screen.findByText("Profile completed successfully"),
+    ).toBeInTheDocument();
   });
 });

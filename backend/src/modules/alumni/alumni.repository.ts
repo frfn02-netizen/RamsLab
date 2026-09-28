@@ -2,7 +2,7 @@ import { Collection, ObjectId } from "mongodb";
 
 import { getDatabase } from "../../config/database.js";
 
-import type { Alumni } from "./alumni.types.js";
+import type { Alumni, AlumniReviewStatus } from "./alumni.types.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 
 const ALUMNI_COLLECTION = "alumni";
@@ -66,16 +66,24 @@ export interface AlumniListParams {
   page: number;
   limit: number;
   search?: string;
+  // Admin review-queue filter. It matches the stored `reviewStatus` exactly
+  // (never `isPublic` / `profileCompleted`), so records written before the
+  // workflow existed — no stored status at all — only appear under "All".
+  reviewStatus?: AlumniReviewStatus;
 }
 
 export async function findAlumniList(params: AlumniListParams) {
   const collection = getAlumniCollection();
 
-  const { page, limit, search } = params;
+  const { page, limit, search, reviewStatus } = params;
 
   const skip = (page - 1) * limit;
 
   const filter: Record<string, unknown> = {};
+
+  if (reviewStatus) {
+    filter.reviewStatus = reviewStatus;
+  }
 
   if (search?.trim()) {
     const keyword = search.trim().slice(0, SECURITY_LIMITS.maxSearchLength);

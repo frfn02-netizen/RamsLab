@@ -60,6 +60,9 @@ export const updateAlumniSchema = z.object({
 
   angkatan: z.number().int().min(1).max(99).optional(),
 
+  // Nullable so clearing the year persists (`$set: null`).
+  tahunAngkatan: z.number().int().min(1900).max(2100).nullish(),
+
   program: z.string().trim().min(1, "Program is required").optional(),
 
   phone: z.string().trim().max(50).optional(),
@@ -108,6 +111,9 @@ export const updateMyAlumniSchema = z.object({
   fullName: z.string().trim().min(2, "Full name is required").optional(),
 
   angkatan: z.number().int().min(1).max(99).optional(),
+
+  // Nullable so clearing the year persists (`$set: null`).
+  tahunAngkatan: z.number().int().min(1900).max(2100).nullish(),
 
   program: z.string().trim().min(1, "Program is required").max(200).optional(),
 

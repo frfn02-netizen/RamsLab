@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { formatAlumniClassLabel } from "@/lib/alumni-label";
 import { getPublicAlumniList } from "@/lib/api/modules";
 import type { PublicPerson } from "@/types/people";
 import PublicContainer from "./public-container";
@@ -24,6 +25,7 @@ function searchableText(member: PublicPerson) {
 
 export function AlumniCard({ member }: { member: PublicPerson }) {
   const t = useTranslations("alumni");
+  const classOfLabel = formatAlumniClassLabel(member, t("classOf"));
   const company = member.specialization[0];
 
   return (
@@ -47,9 +49,9 @@ export function AlumniCard({ member }: { member: PublicPerson }) {
         </Link>
       </h3>
 
-      {member.angkatan && (
-        <p className="mx-auto mt-2 font-mono text-sm font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
-          {t("classOf")} P{member.angkatan}
+      {classOfLabel && (
+        <p className="mx-auto mt-2 font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--rams-red)]">
+          {classOfLabel}
         </p>
       )}
 

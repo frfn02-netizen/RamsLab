@@ -66,7 +66,10 @@ export async function register(input: RegisterInput) {
 
   let alumni;
   try {
-    alumni = await createAlumniShell(user.id);
+    // The registration form already requires the full name; persist it on the
+    // shell instead of discarding it so the mandatory registration field is
+    // available from the first moment of the registration.
+    alumni = await createAlumniShell(user.id, input.fullName);
   } catch (error) {
     await deleteUser(new ObjectId(user.id));
     throw error;

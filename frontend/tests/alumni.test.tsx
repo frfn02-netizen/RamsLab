@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AlumniPage from "@/app/dashboard/alumni/page";
 import type { Alumni } from "@/types/alumni";
@@ -161,14 +167,16 @@ describe("Alumni list", () => {
     );
     expect(screen.getByText("Pending Alum")).toBeInTheDocument();
 
-    expect(screen.getByText("Approved")).toBeInTheDocument();
-    expect(screen.getByText("Public")).toBeInTheDocument();
-    expect(screen.getByText("Pending review")).toBeInTheDocument();
-    expect(screen.getByText("Private")).toBeInTheDocument();
+    // Scoped to the table: the page also renders an "Approved" filter button.
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("Approved")).toBeInTheDocument();
+    expect(within(table).getByText("Public")).toBeInTheDocument();
+    expect(within(table).getByText("Pending review")).toBeInTheDocument();
+    expect(within(table).getByText("Private")).toBeInTheDocument();
     expect(
-      screen.getByText("Missing: program, NIM, photo"),
+      within(table).getByText("Missing: program, NIM, photo"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Complete")).not.toBeInTheDocument();
-    expect(screen.queryByText("Incomplete")).not.toBeInTheDocument();
+    expect(within(table).queryByText("Complete")).not.toBeInTheDocument();
+    expect(within(table).queryByText("Incomplete")).not.toBeInTheDocument();
   });
 });

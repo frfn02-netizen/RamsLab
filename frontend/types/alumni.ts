@@ -11,6 +11,9 @@ export interface Alumni {
   photo?: string;
 
   angkatan: number;
+  // Calendar year of the cohort. Separate from `angkatan`, which stays the
+  // batch/sequence number (P) — no year → P formula exists.
+  tahunAngkatan?: number | null;
   program: string;
 
   phone?: string;
@@ -59,6 +62,9 @@ export interface AlumniListParams {
   page?: number;
   limit?: number;
   search?: string;
+  // Admin review-status filter (All = omit). Matches the stored reviewStatus,
+  // never isPublic / profileCompleted.
+  reviewStatus?: AlumniReviewStatus;
 }
 
 export interface AlumniListResponse {

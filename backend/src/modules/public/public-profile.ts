@@ -170,6 +170,7 @@ export function toPublicAlumniProfile(req: Request, member: Alumni) {
     bio: member.bio,
     linkedin: publicLinkedInUrl(member.linkedin),
     angkatan: member.angkatan,
+    tahunAngkatan: member.tahunAngkatan,
   };
 }
 

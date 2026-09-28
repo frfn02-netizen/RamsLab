@@ -23,9 +23,18 @@ import {
   getMissingPublishFields,
 } from "@/lib/alumni-publish";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import type { Alumni } from "@/types/alumni";
+import type { Alumni, AlumniReviewStatus } from "@/types/alumni";
 
 const limit = 10;
+
+type ReviewFilter = "ALL" | AlumniReviewStatus;
+
+const reviewFilters: { value: ReviewFilter; label: string }[] = [
+  { value: "ALL", label: "All" },
+  { value: "PENDING", label: "Pending" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "APPROVED", label: "Approved" },
+];
 
 function reviewState(item: Alumni) {
   if (item.reviewStatus === "APPROVED") {
@@ -51,6 +60,7 @@ export default function AlumniPage() {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const search = useDebouncedValue(searchInput.trim(), 300);
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("ALL");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +80,9 @@ export default function AlumniPage() {
           page,
           limit,
           search,
+          // "All" simply omits the parameter so the backend returns every
+          // review status (the default behaviour of the endpoint).
+          ...(reviewFilter === "ALL" ? {} : { reviewStatus: reviewFilter }),
         });
 
         if (!cancelled) {
@@ -92,7 +105,12 @@ export default function AlumniPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, search]);
+  }, [page, search, reviewFilter]);
+
+  function selectReviewFilter(value: ReviewFilter) {
+    setReviewFilter(value);
+    setPage(1);
+  }
 
   function remove(item: Alumni) {
     setPendingDelete(item);
@@ -146,24 +164,68 @@ export default function AlumniPage() {
         />
 
         <Card className="p-4">
-          <label
-            htmlFor="alumni-search"
-            className="mb-2 block text-sm font-semibold"
-          >
-            Search alumni
-          </label>
+          <div className="space-y-4">
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span
+                  id="alumni-review-filter-label"
+                  className="text-sm font-semibold"
+                >
+                  Review status
+                </span>
+                <span className="text-xs text-[var(--rams-gray)]">
+                  {total} alumni
+                </span>
+              </div>
 
-          <input
-            id="alumni-search"
-            type="search"
-            value={searchInput}
-            onChange={(event) => {
-              setSearchInput(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Name, NIM, or program"
-            className={`${inputClass} max-w-md`}
-          />
+              <div
+                role="group"
+                aria-labelledby="alumni-review-filter-label"
+                className="flex flex-wrap gap-2"
+              >
+                {reviewFilters.map((option) => {
+                  const active = reviewFilter === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => selectReviewFilter(option.value)}
+                      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 ${
+                        active
+                          ? "bg-[var(--rams-red)] text-white"
+                          : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="alumni-search"
+                className="mb-2 block text-sm font-semibold"
+              >
+                Search alumni
+              </label>
+
+              <input
+                id="alumni-search"
+                type="search"
+                value={searchInput}
+                onChange={(event) => {
+                  setSearchInput(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="Name, NIM, or program"
+                className={`${inputClass} max-w-md`}
+              />
+            </div>
+          </div>
         </Card>
 
         {error && items.length === 0 ? (
@@ -180,11 +242,17 @@ export default function AlumniPage() {
               </Card>
             ) : items.length === 0 ? (
               <EmptyState
-                title={search ? "No matching alumni" : "No alumni found"}
+                title={
+                  search || reviewFilter !== "ALL"
+                    ? "No matching alumni"
+                    : "No alumni found"
+                }
                 description={
                   search
                     ? `No alumni matched “${search}”.`
-                    : "There are no alumni records available yet."
+                    : reviewFilter !== "ALL"
+                      ? `No alumni with the “${reviewFilters.find((option) => option.value === reviewFilter)?.label}” review status.`
+                      : "There are no alumni records available yet."
                 }
               />
             ) : (

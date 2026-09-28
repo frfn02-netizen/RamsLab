@@ -14,6 +14,10 @@ import {
 
 import { reviewAlumniSchema } from "./alumni.schema.js";
 import {
+  ALUMNI_REVIEW_STATUS,
+  type AlumniReviewStatus,
+} from "./alumni.types.js";
+import {
   findAuditLogsByAlumniId,
   findAuditLogsWithUserNames,
 } from "./alumni-audit.repository.js";
@@ -198,9 +202,16 @@ export async function uploadMyAlumniPhotoController(
         .status(413)
         .json({ success: false, message: "Photo must be 3 MB or smaller" });
     const uploaded = await uploadProfilePhoto(photo);
-    const updated = await updateMyAlumni(req.user.userId, {
-      photo: uploaded.url,
-    });
+    const updated = await updateMyAlumni(
+      req.user.userId,
+      {
+        photo: uploaded.url,
+      },
+      // Writing the photo is the registration gate's own required field, so
+      // this single-field write goes through without it. The profile save that
+      // submits the registration still enforces full name + photo + angkatan.
+      { skipRegistrationCheck: true },
+    );
     if (!updated) {
       await removeProfilePhoto(uploaded.url);
       return res
@@ -326,6 +337,10 @@ export async function getAlumniListController(req: Request, res: Response) {
       ? req.query.search[0]
       : req.query.search;
 
+    const reviewStatusParam = Array.isArray(req.query.reviewStatus)
+      ? req.query.reviewStatus[0]
+      : req.query.reviewStatus;
+
     const page = pageParam ? Number(pageParam) : 1;
 
     const limit = limitParam ? Number(limitParam) : 10;
@@ -368,10 +383,29 @@ export async function getAlumniListController(req: Request, res: Response) {
       });
     }
 
+    // The admin list is filtered by the stored review workflow state. An
+    // absent / empty value means "All" and keeps the previous behaviour.
+    let reviewStatus: AlumniReviewStatus | undefined;
+    if (typeof reviewStatusParam === "string" && reviewStatusParam.trim()) {
+      const value = reviewStatusParam.trim().toUpperCase();
+      if (
+        value !== ALUMNI_REVIEW_STATUS.PENDING &&
+        value !== ALUMNI_REVIEW_STATUS.APPROVED &&
+        value !== ALUMNI_REVIEW_STATUS.REJECTED
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "reviewStatus must be PENDING, APPROVED, or REJECTED",
+        });
+      }
+      reviewStatus = value;
+    }
+
     const result = await getAlumniList(
       page,
       limit,
       typeof searchParam === "string" ? searchParam : undefined,
+      reviewStatus,
     );
 
     return res.json({

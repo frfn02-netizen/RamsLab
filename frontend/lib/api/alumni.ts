@@ -15,6 +15,7 @@ export async function getAlumniList(
     limit: String(params.limit ?? 10),
   });
   if (params.search?.trim()) query.set("search", params.search.trim());
+  if (params.reviewStatus) query.set("reviewStatus", params.reviewStatus);
   const response = await apiRequestWithMeta<Alumni[]>(
     `/alumni?${query.toString()}`,
   );
