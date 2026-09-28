@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ComponentType,
   type FormEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
@@ -25,6 +26,7 @@ import {
   uploadSiteContentImage,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import { isSiteContentKey } from "@/types/site-content";
 import type {
   AboutContent,
   BilingualText,
@@ -35,6 +37,7 @@ import type {
   HomepageContent,
   PublicServiceContent,
   SiteContentImage,
+  SiteContentKey,
 } from "@/types/site-content";
 
 const defaultHeroImagePosition: HeroImagePosition = { x: 50, y: 50 };
@@ -1905,30 +1908,27 @@ function PublicServiceEditor() {
   );
 }
 
-export default function SiteContentEditor({ keyName }: { keyName: string }) {
-  if (keyName === "homepage") {
-    return <HomepageEditor />;
-  }
+const siteContentEditors: Record<SiteContentKey, ComponentType> = {
+  homepage: HomepageEditor,
+  about: AboutEditor,
+  contact: ContactEditor,
+  footer: FooterEditor,
+  "public-service": PublicServiceEditor,
+};
 
-  if (keyName === "about") {
-    return <AboutEditor />;
-  }
-
-  if (keyName === "contact") {
-    return <ContactEditor />;
-  }
-
-  if (keyName === "footer") {
-    return <FooterEditor />;
-  }
-
-  if (keyName === "public-service") {
-    return <PublicServiceEditor />;
-  }
-
+function InvalidSiteContentPage() {
   return (
     <div className="p-5 sm:p-7 lg:p-9">
       <ErrorState message="Invalid site content page." />
     </div>
   );
+}
+
+export default function SiteContentEditor({ keyName }: { keyName: string }) {
+  if (!isSiteContentKey(keyName)) {
+    return <InvalidSiteContentPage />;
+  }
+
+  const Editor = siteContentEditors[keyName];
+  return <Editor />;
 }

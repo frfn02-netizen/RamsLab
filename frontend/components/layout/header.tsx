@@ -3,28 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
-
-const navigation = [
-  ["Dashboard", "/dashboard"],
-  ["Homepage", "/dashboard/content/homepage"],
-  ["Publications", "/dashboard/content/publications"],
-  ["Contact", "/dashboard/content/contact"],
-  ["Footer", "/dashboard/content/footer"],
-  ["Research Areas", "/dashboard/research"],
-  ["Research Highlights", "/dashboard/research-highlights"],
-  ["Events", "/dashboard/events"],
-  ["Public Service", "/dashboard/public-service"],
-  ["Projects", "/dashboard/projects"],
-  ["Lecturers", "/dashboard/lecturers"],
-  ["Students", "/dashboard/students"],
-  ["Alumni", "/dashboard/alumni"],
-  ["Partners", "/dashboard/partners"],
-  ["Tracking", "/dashboard/tracking"],
-] as const;
+import { visibleDashboardNavigationItems } from "./dashboard-navigation";
 
 export default function Header() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const navigation = visibleDashboardNavigationItems(user?.role);
 
   return (
     <header className="relative flex min-h-16 shrink-0 items-center justify-between border-b border-[#D9E2EA] bg-white px-4 sm:px-6">
@@ -84,7 +68,7 @@ export default function Header() {
           className="absolute right-4 top-14 z-20 w-56 border border-[#D9E2EA] bg-white p-2 shadow-[0_12px_30px_rgba(16,38,61,0.12)] lg:hidden"
           aria-label="Dashboard navigation"
         >
-          {navigation.map(([label, href]) => (
+          {navigation.map(({ label, href }) => (
             <Link
               key={href}
               href={href}

@@ -1,5 +1,16 @@
-export type SiteContentKey =
-  "homepage" | "about" | "contact" | "footer" | "public-service";
+export const SITE_CONTENT_KEYS = [
+  "homepage",
+  "about",
+  "contact",
+  "footer",
+  "public-service",
+] as const;
+
+export type SiteContentKey = (typeof SITE_CONTENT_KEYS)[number];
+
+export function isSiteContentKey(value: string): value is SiteContentKey {
+  return (SITE_CONTENT_KEYS as readonly string[]).includes(value);
+}
 
 export interface BilingualText {
   en: string;

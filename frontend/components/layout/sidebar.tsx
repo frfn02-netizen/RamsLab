@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
 import { assetPath } from "@/lib/asset-path";
-import { hasPermission } from "@/lib/authz";
 import type { ReactNode } from "react";
+import { visibleDashboardNavigation } from "./dashboard-navigation";
 
 function Icon({ d, className = "" }: { d: string; className?: string }) {
   return (
@@ -71,52 +71,10 @@ const ICONS: Record<string, ReactNode> = {
   tracking: <Icon d="M10 17.5a7.5 7.5 0 100-15 7.5 7.5 0 000 15zM10 5v5l3 2" />,
 };
 
-const navigationGroups = [
-  { label: "Overview", items: [["Dashboard", "/dashboard", "dashboard"]] },
-  {
-    label: "Content",
-    items: [
-      ["Homepage", "/dashboard/content/homepage", "homepage"],
-      ["About", "/dashboard/content/about", "about"],
-      ["Contact", "/dashboard/content/contact", "contact"],
-      ["Footer", "/dashboard/content/footer", "footer"],
-    ],
-  },
-  {
-    label: "Research & Work",
-    items: [
-      ["Research Areas", "/dashboard/research", "research"],
-      ["Research Highlights", "/dashboard/research-highlights", "highlights"],
-      ["Publications", "/dashboard/publications", "publications"],
-      ["Events", "/dashboard/events", "events"],
-      ["Videos", "/dashboard/videos", "videos"],
-    ],
-  },
-  {
-    label: "People",
-    items: [
-      ["Lecturers", "/dashboard/dosen", "lecturers"],
-      ["Experts", "/dashboard/experts", "experts"],
-      ["Students", "/dashboard/students", "students"],
-      ["Alumni", "/dashboard/alumni", "alumni"],
-    ],
-  },
-  {
-    label: "Ecosystem",
-    items: [
-      ["Public Service", "/dashboard/public-service", "public-service"],
-      ["Partners", "/dashboard/partners", "partners"],
-    ],
-  },
-  {
-    label: "System",
-    items: [["Tracking", "/dashboard/tracking", "tracking"]],
-  },
-] as const;
-
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const navigationGroups = visibleDashboardNavigation(user?.role);
 
   return (
     <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-[var(--rams-charcoal)] text-white lg:flex">
@@ -150,25 +108,13 @@ export default function Sidebar() {
         aria-label="Dashboard navigation"
       >
         {navigationGroups.map((group) => {
-          const visibleItems = group.items.filter(([, href]) =>
-            href === "/dashboard"
-              ? hasPermission(user?.role, "dashboard.read")
-              : href === "/dashboard/publications"
-                ? hasPermission(user?.role, "publication.read")
-                : href === "/dashboard/research-highlights"
-                  ? user?.role === "ADMIN"
-                  : user?.role === "ADMIN" || user?.role === "DOSEN",
-          );
-
-          if (visibleItems.length === 0) return null;
-
           return (
             <div key={group.label} className="mt-5 first:mt-0">
               <p className="mb-1.5 px-3 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-white/30">
                 {group.label}
               </p>
               <div className="space-y-0.5">
-                {visibleItems.map(([label, href, icon]) => {
+                {group.items.map(([label, href, icon]) => {
                   const active =
                     pathname === href || pathname.startsWith(`${href}/`);
                   return (
