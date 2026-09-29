@@ -16,6 +16,7 @@ export default function PublicEventsPage() {
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
   const localized = (value?: { en: string; id: string }) =>
     value?.[locale] || value?.en || value?.id || "";
 
@@ -35,13 +36,50 @@ export default function PublicEventsPage() {
             className="h-full w-full object-cover"
             src={assetPath("/assets/0722.mp4")}
             autoPlay
-            muted
+            muted={isVideoMuted}
             loop
             playsInline
             preload="metadata"
             aria-hidden="true"
             tabIndex={-1}
           />
+          <button
+            type="button"
+            onClick={() => setIsVideoMuted((muted) => !muted)}
+            aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
+            className="absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-[var(--navy)]/85 text-white shadow-sm transition-colors hover:bg-[var(--navy)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            {isVideoMuted ? (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                <path d="m16 9 5 5m0-5-5 5" />
+              </svg>
+            ) : (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path d="M18 6a8 8 0 0 1 0 12" />
+              </svg>
+            )}
+          </button>
         </div>
         {loading ? (
           <p className="text-sm font-semibold text-[var(--rams-gray)]">

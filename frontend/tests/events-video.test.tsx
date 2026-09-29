@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { PublicEvent } from "@/types/modules";
 
@@ -64,6 +64,9 @@ describe("public events page video", () => {
     expect(video).toHaveAttribute("playsinline");
     expect(video).toHaveAttribute("preload", "metadata");
     expect(video.muted).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Unmute video" }),
+    ).toBeInTheDocument();
     expect(video.className).toContain("object-cover");
     expect(video.className).toContain("w-full");
 
@@ -89,6 +92,38 @@ describe("public events page video", () => {
 
     // Same content container as the event cards.
     expect(frame.parentElement).toBe(grid.parentElement);
+  });
+
+  it("toggles video audio without interrupting playback", () => {
+    getPublicEvents.mockReturnValue(new Promise(() => {}));
+
+    const { container } = render(<PublicEventsPage />);
+    const video = container.querySelector("video")!;
+    const unmuteButton = screen.getByRole("button", { name: "Unmute video" });
+
+    Object.defineProperty(video, "paused", {
+      configurable: true,
+      value: false,
+    });
+    Object.defineProperty(video, "currentTime", {
+      configurable: true,
+      value: 12,
+    });
+
+    expect(video.muted).toBe(true);
+    fireEvent.click(unmuteButton);
+
+    expect(video.muted).toBe(false);
+    expect(screen.getByRole("button", { name: "Mute video" })).toBeInTheDocument();
+    expect(video.paused).toBe(false);
+    expect(video.currentTime).toBe(12);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mute video" }));
+
+    expect(video.muted).toBe(true);
+    expect(screen.getByRole("button", { name: "Unmute video" })).toBeInTheDocument();
+    expect(video.paused).toBe(false);
+    expect(video.currentTime).toBe(12);
   });
 
   it("keeps the existing event data fetching unchanged", async () => {
