@@ -11,8 +11,8 @@ export interface Alumni {
   photo?: string;
 
   angkatan: number;
-  // Calendar year of the cohort. Separate from `angkatan`, which stays the
-  // batch/sequence number (P) — no year → P formula exists.
+  // Calendar year of the cohort. `angkatan` remains the persisted P
+  // compatibility value and is derived from this year by the backend.
   tahunAngkatan?: number | null;
   program: string;
 

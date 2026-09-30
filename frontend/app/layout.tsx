@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   ),
 
   icons: {
-    icon: assetPath("/assets/rams-logo.png"),
-    apple: assetPath("/assets/rams-logo.png"),
+    icon: assetPath("/assets/RamsLogoFIX.png"),
+    apple: assetPath("/assets/RamsLogoFIX.png"),
   },
 
   robots: {

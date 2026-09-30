@@ -15,6 +15,7 @@ export interface LoginInput {
 
 export interface RegisterInput {
   fullName: string;
+  tahunAngkatan: number;
   email: string;
   password: string;
   confirmPassword: string;

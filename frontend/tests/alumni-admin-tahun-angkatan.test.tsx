@@ -173,26 +173,36 @@ describe("Alumni admin – tahunAngkatan edit form", () => {
     expect(payload.tahunAngkatan).toBeNull();
   });
 
-  it("still lets an admin correct the batch number after it has been saved", async () => {
+  it("does not render an editable Angkatan field", async () => {
     getAlumniById.mockResolvedValue(profile({ angkatan: 34 }));
-    updateAlumni.mockResolvedValue(profile({ angkatan: 55 }));
 
     render(<AlumniDetail id="alumni-1" />);
     await openEditForm();
 
-    await waitFor(() => expect(screen.getByDisplayValue("34")).toBeTruthy());
+    await waitFor(() => expect(yearInput()).toBeInTheDocument());
+    expect(screen.queryByLabelText(/^angkatan/i)).toBeNull();
+  });
 
-    fireEvent.change(screen.getByDisplayValue("34"), {
-      target: { value: "55" },
+  it("does not turn a legacy absent year into null on an unrelated save", async () => {
+    getAlumniById.mockResolvedValue(
+      profile({ angkatan: 34, tahunAngkatan: undefined }),
+    );
+    updateAlumni.mockResolvedValue(profile({ angkatan: 34 }));
+
+    render(<AlumniDetail id="alumni-1" />);
+    await openEditForm();
+
+    fireEvent.change(screen.getByDisplayValue("Cohort Alumni"), {
+      target: { value: "Updated Cohort Alumni" },
     });
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
 
-    await waitFor(() => expect(updateAlumni).toHaveBeenCalled());
+    await waitFor(() => expect(updateAlumni).toHaveBeenCalledOnce());
     const payload = updateAlumni.mock.calls[0][1] as Record<string, unknown>;
-    expect(payload.angkatan).toBe(55);
+    expect(payload).not.toHaveProperty("tahunAngkatan");
   });
 
-  it("keeps the stored batch number while only the year is edited", async () => {
+  it("saves the year without submitting manual P", async () => {
     getAlumniById.mockResolvedValue(
       profile({ angkatan: 34, tahunAngkatan: undefined }),
     );
@@ -207,14 +217,25 @@ describe("Alumni admin – tahunAngkatan edit form", () => {
 
     fireEvent.change(yearInput(), { target: { value: "2015" } });
 
-    // The stored P must survive the year edit.
-    expect(screen.getByDisplayValue("34")).toBeInTheDocument();
-
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => expect(updateAlumni).toHaveBeenCalled());
     const payload = updateAlumni.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.tahunAngkatan).toBe(2015);
-    expect(payload.angkatan).toBe(34);
+    expect(payload).not.toHaveProperty("angkatan");
+  });
+
+  it("does not constrain a stored year outside 1961..2059", async () => {
+    getAlumniById.mockResolvedValue(
+      profile({ angkatan: 34, tahunAngkatan: 1955 }),
+    );
+
+    render(<AlumniDetail id="alumni-1" />);
+    await openEditForm();
+
+    await waitFor(() => expect(yearInput().value).toBe("1955"));
+    // min/max would make the browser block the submit for a legacy value.
+    expect(yearInput().getAttribute("min")).toBeNull();
+    expect(yearInput().getAttribute("max")).toBeNull();
   });
 });

@@ -1,8 +1,9 @@
 // Shared formatter for the public alumni cohort label.
 //
-// Pak Dhimas approved these exact shapes. `tahunAngkatan` (calendar year) and
-// `angkatan` (batch/sequence number, displayed as P) are stored separately and
-// there is no official year → P mapping, so they are only combined here:
+// Pak Dhimas approved these exact shapes. `angkatan` is the persisted P
+// compatibility value derived from `tahunAngkatan` on save. Legacy records
+// can still have either value independently, so the formatter only combines
+// values returned by the API:
 //   - year + batch : "Class of 2015 (P55)"
 //   - batch only   : "Class of P55"    (alumni saved before the year field)
 //   - year only    : "Class of 2015"

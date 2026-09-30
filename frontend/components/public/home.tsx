@@ -388,7 +388,7 @@ export default function PublicHome() {
                     cards={[
                       {
                         key: "rams",
-                        logo: assetPath("/assets/rams-logo.png"),
+                        logo: assetPath("/assets/RamsLogoFIX.png"),
                         logoAlt: brand("laboratory"),
                         name: brand("laboratory"),
                         description: localized(

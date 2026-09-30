@@ -66,10 +66,14 @@ export async function register(input: RegisterInput) {
 
   let alumni;
   try {
-    // The registration form already requires the full name; persist it on the
-    // shell instead of discarding it so the mandatory registration field is
-    // available from the first moment of the registration.
-    alumni = await createAlumniShell(user.id, input.fullName);
+    // P is derived server-side from Tahun Angkatan. This prevents a manually
+    // supplied P from diverging from the academic year before the profile is
+    // ever saved. Photo is completed through the authenticated profile flow.
+    alumni = await createAlumniShell(
+      user.id,
+      input.fullName,
+      input.tahunAngkatan,
+    );
   } catch (error) {
     await deleteUser(new ObjectId(user.id));
     throw error;

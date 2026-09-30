@@ -70,7 +70,7 @@ function LoginContent() {
             <div>
               <div className="relative h-24 w-24 bg-white p-2 sm:h-28 sm:w-28">
                 <Image
-                  src={assetPath("/assets/rams-logo.png")}
+                  src={assetPath("/assets/RamsLogoFIX.png")}
                   alt="RAMS Laboratory"
                   fill
                   sizes="100%"

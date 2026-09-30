@@ -10,12 +10,14 @@ function RegisterContent() {
   const router = useRouter();
   const { user, status, register } = useAuth();
   const [fullName, setFullName] = useState("");
+  const [tahunAngkatan, setTahunAngkatan] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     fullName?: string;
+    tahunAngkatan?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
@@ -34,6 +36,15 @@ function RegisterContent() {
     const nextErrors: typeof fieldErrors = {};
     if (!fullName.trim() || fullName.trim().length < 2)
       nextErrors.fullName = "Full name must be at least 2 characters.";
+    const tahunAngkatanValue = tahunAngkatan.trim();
+    if (
+      !tahunAngkatanValue ||
+      !/^\d{4}$/.test(tahunAngkatanValue) ||
+      Number(tahunAngkatanValue) < 1961 ||
+      Number(tahunAngkatanValue) > 2059
+    )
+      nextErrors.tahunAngkatan =
+        "Tahun Angkatan must be a whole number between 1961 and 2059.";
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       nextErrors.email = "Enter a valid email address.";
     if (password.length < 8)
@@ -50,6 +61,7 @@ function RegisterContent() {
     try {
       await register({
         fullName: fullName.trim(),
+        tahunAngkatan: Number(tahunAngkatan.trim()),
         email: email.trim(),
         password,
         confirmPassword,
@@ -127,6 +139,42 @@ function RegisterContent() {
                 {fieldErrors.fullName && (
                   <p className="mt-1 text-xs text-red-600">
                     {fieldErrors.fullName}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="tahunAngkatan"
+                  className="mb-2 block text-sm font-semibold text-[var(--charcoal)]"
+                >
+                  Tahun Angkatan
+                </label>
+                <input
+                  id="tahunAngkatan"
+                  name="tahunAngkatan"
+                  type="number"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  required
+                  min="1961"
+                  max="2059"
+                  placeholder="e.g. 2015"
+                  value={tahunAngkatan}
+                  onChange={(e) => {
+                    setTahunAngkatan(e.target.value);
+                    setFieldErrors((c) => ({
+                      ...c,
+                      tahunAngkatan: undefined,
+                    }));
+                  }}
+                  className="block w-full border border-[#D3DBE2] bg-white px-3.5 py-2.5 text-sm text-[var(--charcoal)] outline-none transition-colors focus:border-[var(--rams-red)] focus:ring-1 focus:ring-[var(--rams-red)]"
+                />
+                <p className="mt-1 text-xs text-[var(--gray)]">
+                  P is calculated automatically from this year.
+                </p>
+                {fieldErrors.tahunAngkatan && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {fieldErrors.tahunAngkatan}
                   </p>
                 )}
               </div>

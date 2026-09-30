@@ -19,6 +19,16 @@ export const registerSchema = z
       .min(2, "Full name must be at least 2 characters")
       .max(200),
     email: z.string().trim().email("Invalid email address").toLowerCase(),
+    tahunAngkatan: z
+      .number({
+        error: (issue) =>
+          issue.code === "invalid_type" && issue.input === undefined
+            ? "Tahun Angkatan is required"
+            : "Tahun Angkatan must be a valid year",
+      })
+      .int("Tahun Angkatan must be a whole number")
+      .min(1961, "Tahun Angkatan must be between 1961 and 2059")
+      .max(2059, "Tahun Angkatan must be between 1961 and 2059"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")

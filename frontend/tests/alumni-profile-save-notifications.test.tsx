@@ -86,13 +86,13 @@ describe("AlumniProfile – save notifications", () => {
       target: { value: "New Alumni" },
     });
     fireEvent.change(screen.getByLabelText(/program/i), {
-      target: { value: "Marine Engineering" },
+      target: { value: "S1 TEKNIK SISTEM PERKAPALAN" },
     });
     fireEvent.change(screen.getByLabelText(/nim/i), {
       target: { value: "NIM-NEW" },
     });
-    fireEvent.change(screen.getByLabelText("Angkatan *"), {
-      target: { value: "25" },
+    fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
+      target: { value: "2015" },
     });
     fireEvent.change(screen.getByLabelText(/status/i), {
       target: { value: "WORKING" },

@@ -154,6 +154,43 @@ describe("Alumni detail – review state", () => {
     expect(screen.queryByText(/Missing fields/i)).not.toBeInTheDocument();
   });
 
+  it("never renders an unsafe stored photo as a link", async () => {
+    getAlumniById.mockResolvedValue({
+      ...pendingProfile,
+      photo: "javascript:alert(1)",
+    });
+
+    render(<AlumniDetail id="alumni-1" />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: "Half Filled Alumni" }),
+      ).toBeInTheDocument(),
+    );
+
+    expect(
+      screen.queryByRole("link", { name: /view uploaded photo/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("View uploaded photo ↗")).not.toBeInTheDocument();
+  });
+
+  it("still renders the photo link when the stored photo is a safe URL", async () => {
+    getAlumniById.mockResolvedValue({
+      ...pendingProfile,
+      photo: "https://example.com/legacy-alumni.jpg",
+    });
+
+    render(<AlumniDetail id="alumni-1" />);
+
+    const link = await screen.findByRole("link", {
+      name: /view uploaded photo/i,
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://example.com/legacy-alumni.jpg",
+    );
+  });
+
   it("keeps Program out of the admin edit form and out of its payload", async () => {
     getAlumniById.mockResolvedValue({
       ...pendingProfile,

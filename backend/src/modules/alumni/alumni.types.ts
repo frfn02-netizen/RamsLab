@@ -48,9 +48,8 @@ export interface Alumni {
 
   angkatan?: number;
 
-  // Calendar year of the cohort. Kept separate from `angkatan`, which stays
-  // the batch/sequence number (P). No formula links the two: Pak Dhimas has
-  // no official year → P mapping, so both are stored independently.
+  // Calendar year of the cohort. `angkatan` remains the persisted P
+  // compatibility field and is derived as `tahunAngkatan - 1960` on save.
   // `null` = explicitly cleared; `undefined` = never set.
   tahunAngkatan?: number | null;
 

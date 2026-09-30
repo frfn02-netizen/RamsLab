@@ -22,13 +22,13 @@ import {
 } from "@/lib/api/alumni";
 import { getTrackingByAlumniId } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import { applyYearToAngkatanDraft } from "@/lib/alumni-angkatan-suggestion";
 import { formatAlumniClassLabel } from "@/lib/alumni-label";
+import { isCohortYearInputConstrained } from "@/lib/alumni-angkatan-suggestion";
 import {
   formatMissingPublishFields,
   getMissingPublishFields,
 } from "@/lib/alumni-publish";
-import { safeHttpUrl } from "@/lib/safe-url";
+import { safeHttpUrl, safePhotoUrl } from "@/lib/safe-url";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
 import type { AlumniTracking } from "@/types/modules";
 
@@ -67,10 +67,12 @@ export default function AlumniDetail({ id }: { id: string }) {
   const [accountUpdating, setAccountUpdating] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
+  // Keep an absent legacy cohort year absent unless an administrator actually
+  // edits this field. An empty number input alone is not an explicit clear.
+  const [tahunAngkatanChanged, setTahunAngkatanChanged] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
-    angkatan: "",
     tahunAngkatan: "",
     currentStatus: "WORKING" as AlumniStatus,
     phone: "",
@@ -102,11 +104,10 @@ export default function AlumniDetail({ id }: { id: string }) {
 
           setAlumni(safeProfile);
           setTracking(events);
+          setTahunAngkatanChanged(false);
 
           setForm({
             fullName: profile.fullName,
-            angkatan:
-              profile.angkatan != null ? String(profile.angkatan) : "",
             tahunAngkatan:
               profile.tahunAngkatan != null
                 ? String(profile.tahunAngkatan)
@@ -142,26 +143,6 @@ export default function AlumniDetail({ id }: { id: string }) {
     }));
   };
 
-  // True once this admin typed in the P (angkatan) input; from then on the
-  // year suggestion may not replace what they typed.
-  const [angkatanEdited, setAngkatanEdited] = useState(false);
-
-  const changeTahunAngkatan = (value: string) => {
-    const draft = applyYearToAngkatanDraft(
-      {
-        stored: alumni?.angkatan ?? null,
-        value: form.angkatan,
-        editedByUser: angkatanEdited,
-      },
-      value,
-    );
-    setForm((current) => ({
-      ...current,
-      tahunAngkatan: value,
-      angkatan: draft.value,
-    }));
-  };
-
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -170,9 +151,15 @@ export default function AlumniDetail({ id }: { id: string }) {
     try {
       const result = await updateAlumni(id, {
         fullName: form.fullName,
-        angkatan: Number(form.angkatan),
-        // `null` clears the year so an emptied field cannot come back.
-        tahunAngkatan: form.tahunAngkatan ? Number(form.tahunAngkatan) : null,
+        ...(tahunAngkatanChanged
+          ? {
+              // An explicitly emptied field is a clear; omission leaves a
+              // legacy absent value untouched.
+              tahunAngkatan: form.tahunAngkatan
+                ? Number(form.tahunAngkatan)
+                : null,
+            }
+          : {}),
         currentStatus: form.currentStatus,
         phone: form.phone || undefined,
         location: form.location || undefined,
@@ -184,6 +171,7 @@ export default function AlumniDetail({ id }: { id: string }) {
       });
 
       setAlumni(result);
+      setTahunAngkatanChanged(false);
       setEditing(false);
     } catch (reason) {
       setError(getUserFacingError(reason));
@@ -264,6 +252,10 @@ export default function AlumniDetail({ id }: { id: string }) {
   }
 
   const missingFields = getMissingPublishFields(alumni);
+
+  // Unsafe stored values (javascript:, data:, arbitrary strings) must never
+  // be rendered as an external link.
+  const photoUrl = safePhotoUrl(alumni.photo);
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
@@ -396,32 +388,26 @@ export default function AlumniDetail({ id }: { id: string }) {
                 {/* Program is intentionally not editable here: only the
                     alumni owns that value through their own form. It stays in
                     the database and in the read-only header below. */}
-                <Field label="Angkatan">
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    max="99"
-                    className={inputClass}
-                    value={form.angkatan}
-                    onChange={(event) => {
-                      update("angkatan", event.target.value);
-                      setAngkatanEdited(true);
-                    }}
-                  />
-                </Field>
-
                 <Field label="Tahun Angkatan">
                   <input
                     type="number"
-                    min="1900"
-                    max="2100"
+                    min={
+                      isCohortYearInputConstrained(form.tahunAngkatan)
+                        ? "1961"
+                        : undefined
+                    }
+                    max={
+                      isCohortYearInputConstrained(form.tahunAngkatan)
+                        ? "2059"
+                        : undefined
+                    }
                     className={inputClass}
                     placeholder="e.g. 2015"
                     value={form.tahunAngkatan}
-                    onChange={(event) =>
-                      changeTahunAngkatan(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setTahunAngkatanChanged(true);
+                      update("tahunAngkatan", event.target.value);
+                    }}
                   />
                 </Field>
 
@@ -515,13 +501,13 @@ export default function AlumniDetail({ id }: { id: string }) {
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <Card className="space-y-6 p-6">
-              {alumni.photo && (
+              {photoUrl && (
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
                     Profile photo
                   </p>
                   <a
-                    href={alumni.photo}
+                    href={photoUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-2 inline-block text-sm font-bold text-[var(--rams-red)]"

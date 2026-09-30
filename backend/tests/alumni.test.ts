@@ -69,7 +69,7 @@ beforeAll(async () => {
     fullName: TEST_FULL_NAME,
     nim: TEST_NIM,
     angkatan: 26,
-    program: "Informatics Engineering",
+    program: "S1 TEKNIK SISTEM PERKAPALAN",
     photo: "https://example.com/vitest-alumni.jpg",
     phone: "081234567890",
     location: "Surabaya",
@@ -155,6 +155,7 @@ describe("Alumni API", () => {
 
     const registered = await request(app).post("/api/auth/register").send({
       fullName: "Register Alumni",
+      tahunAngkatan: 2015,
       email,
       password,
       confirmPassword: password,
@@ -169,6 +170,7 @@ describe("Alumni API", () => {
     expect(shells).toHaveLength(1);
     expect(shells[0]?.reviewStatus).toBe("PENDING");
     expect(shells[0]?.isPublic).toBe(false);
+    expect(shells[0]).toMatchObject({ tahunAngkatan: 2015, angkatan: 55 });
 
     const login = await request(app).post("/api/auth/login").send({
       email,
@@ -410,7 +412,7 @@ it("should not allow alumni to modify academic identity fields", async () => {
     .send({
       nim: "MALICIOUS-NIM-999",
       angkatan: 99,
-      program: "Unauthorized Program",
+      program: "S1 DOUBLE DEGREE (DD)",
     });
 
   expect(response.status).toBe(200);
@@ -421,7 +423,7 @@ it("should not allow alumni to modify academic identity fields", async () => {
 
   expect(response.body.data.angkatan).not.toBe(99);
 
-  expect(response.body.data.program).not.toBe("Unauthorized Program");
+  expect(response.body.data.program).not.toBe("S1 DOUBLE DEGREE (DD)");
 });
 
 it("should not allow alumni to modify immutable fields", async () => {
@@ -506,6 +508,24 @@ function readProfile(token: string) {
     .set("Cookie", `rams_access_token=${token}`);
 }
 
+async function seedLegacyProgram(
+  alumniId: string,
+  program: "Ship Design" | "Naval Architecture" | "Marine Engineering",
+) {
+  await getAlumniCollection().updateOne(
+    { _id: new ObjectId(alumniId) },
+    {
+      $set: {
+        fullName: "Legacy Program Alumni",
+        nim: `LEGACY-${workflowSequence}`,
+        angkatan: 34,
+        program,
+        photo: `https://example.com/legacy-${workflowSequence}.jpg`,
+      },
+    },
+  );
+}
+
 async function completeProfile(
   token: string,
   overrides: Record<string, unknown> = {},
@@ -515,7 +535,7 @@ async function completeProfile(
     fullName: "Workflow Alumni",
     nim: `WF-${sequence}`,
     angkatan: 34,
-    program: "Naval Architecture",
+    program: "S1 TEKNIK SISTEM PERKAPALAN",
     photo: `https://example.com/workflow-${sequence}.jpg`,
     ...overrides,
   });
@@ -567,7 +587,7 @@ describe("alumni review workflow", () => {
     const reopened = await readProfile(token);
     expect(reopened.status).toBe(200);
     expect(reopened.body.data.angkatan).toBe(34);
-    expect(reopened.body.data.program).toBe("Naval Architecture");
+    expect(reopened.body.data.program).toBe("S1 TEKNIK SISTEM PERKAPALAN");
 
     // Saving again without touching the batch number must keep it.
     const savedAgain = await saveProfile(token, { bio: "Still here" });
@@ -583,19 +603,67 @@ describe("alumni review workflow", () => {
 
     await completeProfile(token, {
       angkatan: 21,
-      program: "Informatics Engineering",
+      program: "S1 DOUBLE DEGREE (DD)",
     });
 
     const tampered = await saveProfile(token, {
       angkatan: 99,
-      program: "Someone Else's Program",
+      program: "S2 TEKNIK SISTEM PERKAPALAN",
       nim: "REPLACED-NIM",
     });
 
     expect(tampered.status).toBe(200);
     expect(tampered.body.data.angkatan).toBe(21);
-    expect(tampered.body.data.program).toBe("Informatics Engineering");
+    expect(tampered.body.data.program).toBe("S1 DOUBLE DEGREE (DD)");
     expect(tampered.body.data.nim).toBe(`WF-${workflowSequence}`);
+  });
+
+  it("lets Ship Design be replaced once, persists it, and exposes the stored program to admin and public views", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    const replacement = "S1 TEKNIK SISTEM PERKAPALAN";
+    await seedLegacyProgram(alumniId, "Ship Design");
+
+    const saved = await saveProfile(token, { program: replacement });
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.program).toBe(replacement);
+
+    const reloaded = await readProfile(token);
+    expect(reloaded.status).toBe(200);
+    expect(reloaded.body.data.program).toBe(replacement);
+
+    const attemptedOverwrite = await saveProfile(token, {
+      program: "S2 TEKNIK SISTEM PERKAPALAN",
+    });
+    expect(attemptedOverwrite.status).toBe(200);
+    expect(attemptedOverwrite.body.data.program).toBe(replacement);
+
+    const adminDetail = await request(app)
+      .get(`/api/alumni/${alumniId}`)
+      .set("Cookie", `rams_access_token=${adminToken}`);
+    expect(adminDetail.status).toBe(200);
+    expect(adminDetail.body.data.program).toBe(replacement);
+
+    const approved = await approveProfile(alumniId);
+    expect(approved.status).toBe(200);
+    const publicDetail = await request(app).get(`/api/public/alumni/${alumniId}`);
+    expect(publicDetail.status).toBe(200);
+    expect(publicDetail.body.data.program).toBe(replacement);
+  });
+
+  it("lets Naval Architecture be replaced by an approved program", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await seedLegacyProgram(alumniId, "Naval Architecture");
+
+    const saved = await saveProfile(token, {
+      program: "S2 DOUBLE DEGREE (DD)",
+    });
+
+    expect(saved.status).toBe(200);
+    expect(saved.body.data.program).toBe("S2 DOUBLE DEGREE (DD)");
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.program).toBe("S2 DOUBLE DEGREE (DD)");
   });
 
   it("approves and publishes an incomplete profile", async () => {
@@ -604,7 +672,7 @@ describe("alumni review workflow", () => {
     const saved = await saveProfile(token, {
       fullName: "Incomplete Alumni",
       angkatan: 30,
-      program: "Ocean Engineering",
+      program: "S2 TEKNIK SISTEM PERKAPALAN",
       photo: `https://example.com/incomplete-${workflowSequence}.jpg`,
       // NIM is left empty on purpose: a profile may only be *saved* with full
       // name + photo + angkatan (registration gate), while everything beyond
@@ -733,7 +801,7 @@ describe("alumni review workflow", () => {
     // Program can still be claimed later: the informational flag flips to
     // complete, and the content edit re-queues the profile for review.
     const filled = await saveProfile(token, {
-      program: "Mechanical Engineering",
+      program: "S3 TEKNIK SISTEM PERKAPALAN",
     });
     expect(filled.status).toBe(200);
     expect(filled.body.data.profileCompleted).toBe(true);
@@ -1008,15 +1076,160 @@ describe("alumni cohort year (tahunAngkatan)", () => {
     expect(saved.body.data.tahunAngkatan).toBe(2015);
   });
 
-  it("rejects a cohort year outside 1900..2100", async () => {
+  it("rejects a cohort year outside 1961..2059", async () => {
     const { token } = await createWorkflowAlumni();
     await completeProfile(token);
 
-    const tooOld = await saveProfile(token, { tahunAngkatan: 1800 });
+    // The bounds are the values which still derive a two-digit P (1..99).
+    const tooOld = await saveProfile(token, { tahunAngkatan: 1960 });
     expect(tooOld.status).toBe(400);
 
-    const tooNew = await saveProfile(token, { tahunAngkatan: 2200 });
+    const tooNew = await saveProfile(token, { tahunAngkatan: 2060 });
     expect(tooNew.status).toBe(400);
+
+    const wayOff = await saveProfile(token, { tahunAngkatan: 1800 });
+    expect(wayOff.status).toBe(400);
+
+    const farFuture = await saveProfile(token, { tahunAngkatan: 2200 });
+    expect(farFuture.status).toBe(400);
+
+    // The stored year must be untouched by every rejected attempt.
+    const stored = await readProfile(token);
+    expect(stored.body.data.tahunAngkatan ?? null).toBeNull();
+  });
+
+  async function seedLegacyCohortYear(alumniId: string, year: number) {
+    // A record written under the older 1900..2100 contract: P and the cohort
+    // year were stored independently, so they do not have to satisfy
+    // P = year - 1960. Nothing here may be migrated.
+    await getAlumniCollection().updateOne(
+      { _id: new ObjectId(alumniId) },
+      {
+        $set: {
+          fullName: "Legacy Cohort Alumni",
+          nim: `LEGACY-YEAR-${alumniId.slice(-6)}`,
+          angkatan: 34,
+          photo: `https://example.com/legacy-year-${alumniId.slice(-6)}.jpg`,
+          tahunAngkatan: year,
+        },
+      },
+    );
+  }
+
+  it("keeps a stored legacy year outside 1961..2059 fully savable", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await seedLegacyCohortYear(alumniId, 1955);
+
+    // Touching an unrelated field must not be blocked by the stored year.
+    const untouchedYear = await saveProfile(token, {
+      bio: "Saved with a legacy cohort year.",
+    });
+    expect(untouchedYear.status).toBe(200);
+    expect(untouchedYear.body.data.tahunAngkatan).toBe(1955);
+
+    // Re-submitting the same value is an echo of stored data, not a new one.
+    const echoed = await saveProfile(token, { tahunAngkatan: 1955 });
+    expect(echoed.status).toBe(200);
+    expect(echoed.body.data.tahunAngkatan).toBe(1955);
+    // The stored P is left alone: nothing derives a value from 1955.
+    expect(echoed.body.data.angkatan).toBe(34);
+
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.tahunAngkatan).toBe(1955);
+    expect(stored?.angkatan).toBe(34);
+  });
+
+  it("still rejects a *new* year outside 1961..2059 on a legacy record", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await seedLegacyCohortYear(alumniId, 1955);
+
+    const changed = await saveProfile(token, { tahunAngkatan: 1960 });
+    expect(changed.status).toBe(400);
+
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.tahunAngkatan).toBe(1955);
+    expect(stored?.angkatan).toBe(34);
+  });
+
+  it("derives P as soon as a legacy year is corrected to a valid one", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await seedLegacyCohortYear(alumniId, 1955);
+
+    const corrected = await saveProfile(token, { tahunAngkatan: 2015 });
+
+    expect(corrected.status).toBe(200);
+    expect(corrected.body.data.tahunAngkatan).toBe(2015);
+    expect(corrected.body.data.angkatan).toBe(55);
+  });
+
+  it("ignores a manual batch number while a cohort year governs the record", async () => {
+    const { alumniId, token } = await createWorkflowAlumni();
+    await completeProfile(token, { angkatan: 34, tahunAngkatan: 2015 });
+    expect((await readProfile(token)).body.data.angkatan).toBe(55);
+
+    const attempt = await saveProfile(token, { angkatan: 99 });
+
+    expect(attempt.status).toBe(200);
+    expect(attempt.body.data.angkatan).toBe(55);
+    expect(attempt.body.data.tahunAngkatan).toBe(2015);
+
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.angkatan).toBe(55);
+    expect(stored?.tahunAngkatan).toBe(2015);
+  });
+
+  it("never silently repairs a record whose P predates the derivation rule", async () => {
+    // Written before `P = tahunAngkatan - 1960` (2002 would imply 42). It is
+    // not migrated and must survive every save that does not change the year.
+    const { alumniId, token } = await createWorkflowAlumni();
+    await getAlumniCollection().updateOne(
+      { _id: new ObjectId(alumniId) },
+      {
+        $set: {
+          fullName: "Legacy Pair Alumni",
+          nim: `LEGACY-PAIR-${alumniId.slice(-6)}`,
+          angkatan: 89,
+          photo: `https://example.com/legacy-pair-${alumniId.slice(-6)}.jpg`,
+          tahunAngkatan: 2002,
+        },
+      },
+    );
+
+    // Unrelated edit: neither field is even part of the payload.
+    const unrelated = await saveProfile(token, { bio: "Untouched pair." });
+    expect(unrelated.status).toBe(200);
+
+    // Re-sending the stored year is an echo, not a change.
+    const echoed = await saveProfile(token, { tahunAngkatan: 2002, angkatan: 3 });
+    expect(echoed.status).toBe(200);
+    expect(echoed.body.data.tahunAngkatan).toBe(2002);
+    expect(echoed.body.data.angkatan).toBe(89);
+
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.tahunAngkatan).toBe(2002);
+    expect(stored?.angkatan).toBe(89);
+
+    // The admin endpoint behaves the same way.
+    const adminEcho = await request(app)
+      .patch(`/api/alumni/${alumniId}`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ tahunAngkatan: 2002, angkatan: 3 });
+    expect(adminEcho.status).toBe(200);
+    expect(adminEcho.body.data.angkatan).toBe(89);
+
+    // Only an explicit year change re-derives P.
+    const changed = await saveProfile(token, { tahunAngkatan: 2003 });
+    expect(changed.status).toBe(200);
+    expect(changed.body.data.tahunAngkatan).toBe(2003);
+    expect(changed.body.data.angkatan).toBe(43);
   });
 
   it("lets the alumni change the cohort year after the first save", async () => {
@@ -1029,14 +1242,17 @@ describe("alumni cohort year (tahunAngkatan)", () => {
     expect(updated.body.data.tahunAngkatan).toBe(2016);
   });
 
-  it("never overwrites a stored batch number while the year changes", async () => {
+  it("recalculates the stored batch number when the year changes", async () => {
     const { token } = await createWorkflowAlumni();
     await completeProfile(token, { angkatan: 34, tahunAngkatan: 2015 });
 
-    const saved = await saveProfile(token, { angkatan: 99, tahunAngkatan: 2016 });
+    const saved = await saveProfile(token, {
+      angkatan: 99,
+      tahunAngkatan: 2016,
+    });
 
     expect(saved.status).toBe(200);
-    expect(saved.body.data.angkatan).toBe(34);
+    expect(saved.body.data.angkatan).toBe(56);
     expect(saved.body.data.tahunAngkatan).toBe(2016);
   });
 
@@ -1108,6 +1324,40 @@ describe("alumni cohort year (tahunAngkatan)", () => {
       .send({ tahunAngkatan: null });
     expect(cleared.status).toBe(200);
     expect(cleared.body.data.tahunAngkatan).toBeNull();
+  });
+
+  it("never lets an admin diverge angkatan from the cohort year", async () => {
+    const { alumniId } = await createWorkflowAlumni();
+
+    const setYear = await request(app)
+      .patch(`/api/alumni/${alumniId}`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ tahunAngkatan: 2015 });
+    expect(setYear.status).toBe(200);
+    expect(setYear.body.data.angkatan).toBe(55);
+
+    // A raw batch number is not an independent value any more: with a cohort
+    // year on the record it must never win over `tahunAngkatan - 1960`.
+    const diverge = await request(app)
+      .patch(`/api/alumni/${alumniId}`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ angkatan: 99 });
+    expect(diverge.status).toBe(200);
+    expect(diverge.body.data.angkatan).toBe(55);
+    expect(diverge.body.data.tahunAngkatan).toBe(2015);
+
+    const together = await request(app)
+      .patch(`/api/alumni/${alumniId}`)
+      .set("Cookie", `rams_access_token=${adminToken}`)
+      .send({ angkatan: 99, tahunAngkatan: 2016 });
+    expect(together.status).toBe(200);
+    expect(together.body.data.angkatan).toBe(56);
+
+    const stored = await getAlumniCollection().findOne({
+      _id: new ObjectId(alumniId),
+    });
+    expect(stored?.angkatan).toBe(56);
+    expect(stored?.tahunAngkatan).toBe(2016);
   });
 });
 
@@ -1214,10 +1464,18 @@ describe("alumni registration requirements", () => {
     const cleared = await saveProfile(token, { photo: "" });
 
     expect(cleared.status).toBe(400);
-    expect(cleared.body.message).toMatch(/photo/i);
+    // An empty value is refused by the photo validation itself, so the error
+    // points at the photo field instead of silently keeping a blank string.
+    expect(
+      (cleared.body.errors as Array<{ path: string[] }>).some((issue) =>
+        issue.path.includes("photo"),
+      ),
+    ).toBe(true);
 
     const stored = await readStored(alumniId);
-    expect(stored?.photo).toBe(`https://example.com/workflow-${workflowSequence}.jpg`);
+    expect(stored?.photo).toBe(
+      `https://example.com/workflow-${workflowSequence}.jpg`,
+    );
   });
 
   it("still accepts a registration save with an empty NIM", async () => {
@@ -1227,7 +1485,7 @@ describe("alumni registration requirements", () => {
       fullName,
       angkatan: 41,
       photo,
-      program: "Naval Architecture",
+      program: "S1 TEKNIK SISTEM PERKAPALAN",
     });
 
     expect(saved.status).toBe(200);
@@ -1259,7 +1517,7 @@ describe("alumni registration requirements", () => {
       angkatan: 41,
       photo,
       nim: `WF-REG-YEAR-${workflowSequence}`,
-      program: "Naval Architecture",
+      program: "S1 TEKNIK SISTEM PERKAPALAN",
       tahunAngkatan: null,
     });
 
@@ -1312,7 +1570,7 @@ describe("alumni admin review status filter", () => {
       fullName: "Approved Incomplete Alumni",
       angkatan: 44,
       photo: `https://example.com/approved-incomplete-${workflowSequence}.jpg`,
-      program: "Ocean Engineering",
+      program: "S2 TEKNIK SISTEM PERKAPALAN",
     });
     expect(saved.status).toBe(200);
     expect(saved.body.data.profileCompleted).toBe(false);

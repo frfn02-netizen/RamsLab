@@ -22,18 +22,27 @@ import {
   type AlumniReviewStatus,
 } from "./alumni.types.js";
 import { isProfileComplete } from "./alumni-completeness.js";
+import { isApprovedAlumniProgram } from "./alumni-program.js";
 
-export async function createAlumniShell(userId: string, fullName?: string) {
+export async function createAlumniShell(
+  userId: string,
+  fullName?: string,
+  tahunAngkatan?: number,
+) {
   if (!ObjectId.isValid(userId)) throw new Error("Invalid user ID");
   const alumniCollection = getAlumniCollection();
   const now = new Date();
   const alumni = {
     userId: new ObjectId(userId),
-    // The name collected at registration is kept on the shell so the first of
-    // the mandatory registration fields exists from the moment the account is
-    // created instead of being thrown away.
+    // The registration year and its derived P are kept on the shell from the
+    // moment the account is created. Optional arguments retain compatibility
+    // with existing direct callers such as scripts and tests.
     fullName: fullName?.trim() || "",
-    angkatan: undefined,
+    tahunAngkatan: tahunAngkatan ?? undefined,
+    angkatan:
+      typeof tahunAngkatan === "number"
+        ? deriveAngkatanFromTahunAngkatan(tahunAngkatan)
+        : undefined,
     program: "",
     currentStatus: "OTHER" as const,
     careerHistory: [],
@@ -80,10 +89,12 @@ export async function updateAlumni(id: string, input: UpdateAlumniInput) {
     throw new Error("Invalid alumni ID");
   }
 
-  const data = updateAlumniSchema.parse(input);
-
   const alumniCollection = getAlumniCollection();
   const existing = await findAlumniById(id);
+
+  const parsed = updateAlumniSchema.parse(input);
+  assertCohortYear(parsed.tahunAngkatan, existing?.tahunAngkatan);
+  const data = withDerivedAngkatan(stripManualBatchNumber(parsed, existing), existing);
 
   const updateData = {
     ...data,
@@ -156,7 +167,9 @@ export async function reviewAlumni(
 
 // Academic identity may be claimed once by the alumni (a registration shell
 // holds no NIM / batch / program yet) and is immutable afterwards: only an
-// administrator can correct it afterwards.
+// administrator can correct it afterwards. A pre-approved-list program is an
+// exception: it stays intact until the alumni chooses an approved replacement,
+// which then becomes the one-time claim.
 const ACADEMIC_IDENTITY_FIELDS = ["nim", "angkatan", "program"] as const;
 
 // Fields that represent alumni-authored profile content. `isPublic` is a
@@ -195,11 +208,120 @@ function stripAcademicOverwrites<T extends AcademicIdentity>(
 ): T {
   const safeData = { ...data };
   for (const field of ACADEMIC_IDENTITY_FIELDS) {
-    if (safeData[field] !== undefined && comparable(existing?.[field]) !== "") {
+    const existingValue = existing?.[field];
+    const legacyProgramIsReplaceable =
+      field === "program" &&
+      comparable(existingValue) !== "" &&
+      !isApprovedAlumniProgram(existingValue);
+
+    if (
+      safeData[field] !== undefined &&
+      comparable(existingValue) !== "" &&
+      !legacyProgramIsReplaceable
+    ) {
       delete safeData[field];
     }
   }
   return safeData;
+}
+
+// Pak Dhimas defines P as the cohort year minus 1960. `angkatan` remains the
+// persisted compatibility field used by existing API consumers, but users do
+// not enter it directly in either profile form. A supplied cohort year is the
+// authoritative value and may therefore update a previously stored P.
+//
+// P stays a two-digit batch number, so only this window can derive one. The
+// acceptance window on the schemas is the historical 1900..2100 (see
+// alumni.schema.ts) so a legacy record can always re-save its own value; only
+// a *new* value has to land here (see `assertCohortYear`).
+const DERIVABLE_MIN_YEAR = 1961;
+const DERIVABLE_MAX_YEAR = 2059;
+
+export function deriveAngkatanFromTahunAngkatan(
+  tahunAngkatan: number,
+): number | undefined {
+  if (
+    !Number.isInteger(tahunAngkatan) ||
+    tahunAngkatan < DERIVABLE_MIN_YEAR ||
+    tahunAngkatan > DERIVABLE_MAX_YEAR
+  ) {
+    return undefined;
+  }
+  return tahunAngkatan - 1960;
+}
+
+// A cohort year outside the derivable window is tolerated only when it merely
+// echoes what is already stored. That keeps every legacy record savable —
+// including a field the user touched without intending to change it — while
+// genuinely new values are still held to the range that keeps P valid.
+function assertCohortYear(
+  next: number | null | undefined,
+  stored: number | null | undefined,
+) {
+  if (typeof next !== "number") return;
+  if (next === stored) return;
+  if (
+    next < DERIVABLE_MIN_YEAR ||
+    next > DERIVABLE_MAX_YEAR ||
+    !Number.isInteger(next)
+  ) {
+    throw new HttpError(
+      400,
+      `Tahun Angkatan must be between ${DERIVABLE_MIN_YEAR} and ${DERIVABLE_MAX_YEAR}.`,
+      { field: "tahunAngkatan" },
+    );
+  }
+}
+
+type CohortInput = {
+  angkatan?: number;
+  tahunAngkatan?: number | null;
+};
+
+type CohortRecord = {
+  angkatan?: number | null;
+  tahunAngkatan?: number | null;
+};
+
+// `angkatan` is derived, never authored, so a manually supplied batch number
+// is only meaningful while the record has no cohort year to derive it from
+// (the one-time claim for legacy P-only records). Whenever a year exists — in
+// the payload or on the stored record — the payload's `angkatan` is dropped
+// before the derived value is written, so the two can never diverge.
+function stripManualBatchNumber<T extends CohortInput>(
+  data: T,
+  existing: CohortRecord | null,
+): T {
+  const resultingYear =
+    data.tahunAngkatan !== undefined
+      ? data.tahunAngkatan
+      : (existing?.tahunAngkatan ?? undefined);
+
+  if (typeof resultingYear !== "number") return data;
+
+  const safeData = { ...data };
+  delete safeData.angkatan;
+  return safeData;
+}
+
+function withDerivedAngkatan<T extends CohortInput>(
+  data: T,
+  existing: CohortRecord | null,
+): T & { angkatan?: number } {
+  if (typeof data.tahunAngkatan !== "number") return data;
+
+  // P is written only when the cohort year is established or actually changed.
+  // Re-sending the stored value is an echo, not a change: records saved before
+  // `P = tahunAngkatan - 1960` (e.g. tahunAngkatan 2002 / angkatan 89) must
+  // stay exactly as stored and are never migrated or silently repaired here.
+  if (data.tahunAngkatan === (existing?.tahunAngkatan ?? undefined)) return data;
+
+  const derived = deriveAngkatanFromTahunAngkatan(data.tahunAngkatan);
+  // A legacy out-of-range year has no valid P: leave `angkatan` alone so the
+  // stored batch number survives the save instead of being nulled out.
+  if (derived === undefined) return data;
+
+  return { ...data, angkatan: derived };
 }
 
 function hasProfileChanges(
@@ -216,28 +338,23 @@ function hasProfileChanges(
   });
 }
 
-// `graduationYear` was renamed to `angkatan` (batch number instead of calendar
-// year) and the old payloads are silently stripped by zod, which made a save
-// look successful while nothing was written. Fail loudly instead.
+// `graduationYear` was replaced by `tahunAngkatan`; the old payload is
+// silently stripped by zod, which would otherwise make a save look successful
+// while nothing was written. Fail loudly instead.
 function rejectRenamedLegacyField(input: unknown) {
   if (input && typeof input === "object" && "graduationYear" in input) {
     throw new HttpError(
       400,
-      "graduationYear no longer exists; use angkatan (batch number between 1 and 99). Reload the page to load the latest form.",
+      "graduationYear no longer exists; use tahunAngkatan. Reload the page to load the latest form.",
       { field: "graduationYear" },
     );
   }
 }
 
-// Mandatory registration fields (Pak Dhimas): an alumni may not save / submit
-// their profile registration until all three exist on the record. NIM, program
-// and tahunAngkatan stay optional here — they are completeness signals
-// (`profileCompleted`), never registration requirements.
-const REGISTRATION_REQUIRED_FIELDS = [
-  "fullName",
-  "photo",
-  "angkatan",
-] as const;
+// The persisted compatibility field remains P (`angkatan`), but new accounts
+// obtain it exclusively from Tahun Angkatan. Existing P-only records continue
+// to satisfy this gate unchanged; no data migration is required.
+const REGISTRATION_REQUIRED_FIELDS = ["fullName", "photo", "angkatan"] as const;
 
 const REGISTRATION_FIELD_LABELS: Record<
   (typeof REGISTRATION_REQUIRED_FIELDS)[number],
@@ -245,7 +362,7 @@ const REGISTRATION_FIELD_LABELS: Record<
 > = {
   fullName: "full name",
   photo: "photo",
-  angkatan: "angkatan (P)",
+  angkatan: "Tahun Angkatan",
 };
 
 function isRegistrationFieldPresent(value: unknown): boolean {
@@ -295,12 +412,23 @@ export async function updateMyAlumni(
 
   rejectRenamedLegacyField(input);
 
-  const data = completeMyAlumniSchema.parse(input);
-
   const alumniCollection = getAlumniCollection();
   const existing = await findAlumniByUserId(new ObjectId(userId));
 
+  const parsed = completeMyAlumniSchema.parse(input);
+  assertCohortYear(parsed.tahunAngkatan, existing?.tahunAngkatan);
+  const data = withDerivedAngkatan(stripManualBatchNumber(parsed, existing), existing);
+
   const safeData = stripAcademicOverwrites(data, existing);
+  // `stripAcademicOverwrites` protects manually supplied academic fields.
+  // The derived P is different: it is controlled by Tahun Angkatan, so it
+  // must replace a legacy P when the year actually changes. `withDerivedAngkatan`
+  // only sets `angkatan` when the year is new or changed *and* yields a valid
+  // P, so a manual claim, a legacy out-of-range year, or a re-sent unchanged
+  // year can never reach this override.
+  if (typeof data.tahunAngkatan === "number" && data.angkatan !== undefined) {
+    safeData.angkatan = data.angkatan;
+  }
 
   // The self save is the registration submission: refuse to persist it while
   // the resulting record would still be missing a mandatory registration

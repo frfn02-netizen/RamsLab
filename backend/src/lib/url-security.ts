@@ -26,3 +26,16 @@ export function safeHttpUrl(value?: string | null): string | undefined {
   if (!value || !isSafeHttpUrl(value)) return undefined;
   return value;
 }
+
+// Photo values written before the URL-first profile storage still use plain
+// image filenames (e.g. `profile-1.jpg`), so those stay valid alongside full
+// http(s) URLs. Anything else — javascript:, data:, vbscript:, empty or an
+// arbitrary string — is refused.
+const LEGACY_PHOTO_FILENAME = /^[a-zA-Z0-9_-]+\.(jpe?g|png|webp)$/;
+
+export function isPhotoValue(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (isSafeHttpUrl(trimmed)) return true;
+  return LEGACY_PHOTO_FILENAME.test(trimmed);
+}

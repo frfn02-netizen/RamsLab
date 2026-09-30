@@ -19,7 +19,12 @@ import { uploadMyAlumniPhoto } from "@/lib/api/alumni";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
 import AlumniReviewStatus from "@/components/profile/alumni-review-status";
 import { getUserFacingError } from "@/lib/api/errors";
-import { applyYearToAngkatanDraft } from "@/lib/alumni-angkatan-suggestion";
+import { assetPath } from "@/lib/asset-path";
+import { isCohortYearInputConstrained } from "@/lib/alumni-angkatan-suggestion";
+import {
+  ALUMNI_PROGRAM_OPTIONS,
+  isAlumniProgram,
+} from "@/lib/alumni-program-options";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
 import SuccessToast from "@/components/dashboard/success-toast";
 
@@ -65,7 +70,6 @@ export default function AlumniProfile() {
   const [form, setForm] = useState({
     fullName: "",
     nim: "",
-    angkatan: "",
     tahunAngkatan: "",
     program: "",
     phone: "",
@@ -90,9 +94,10 @@ export default function AlumniProfile() {
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  // True once the alumni has typed in the P (angkatan) input. From then on no
-  // suggestion may overwrite what is in that field.
-  const [angkatanEdited, setAngkatanEdited] = useState(false);
+  // An empty input can mean either "this legacy record has never had a year"
+  // or "the alumni deliberately cleared its stored year". Preserve that
+  // distinction instead of turning every unrelated save into a `$set: null`.
+  const [tahunAngkatanChanged, setTahunAngkatanChanged] = useState(false);
 
   useEffect(() => {
     const notice = window.sessionStorage.getItem(
@@ -117,10 +122,10 @@ export default function AlumniProfile() {
         if (!cancelled) {
           setProfile(result);
           setProfileLoaded(true);
+          setTahunAngkatanChanged(false);
           setForm({
             fullName: result.fullName,
             nim: result.nim ?? "",
-            angkatan: result.angkatan ? String(result.angkatan) : "",
             tahunAngkatan:
               result.tahunAngkatan != null ? String(result.tahunAngkatan) : "",
             program: result.program ?? "",
@@ -153,24 +158,6 @@ export default function AlumniProfile() {
   const update = (key: string, value: string | boolean) =>
     setForm((current) => ({ ...current, [key]: value }));
 
-  // The year may only ever fill an empty, untouched P; it never overwrites a
-  // stored P or one the alumni has typed (see alumni-angkatan-suggestion.ts).
-  const changeTahunAngkatan = (value: string) => {
-    const draft = applyYearToAngkatanDraft(
-      {
-        stored: profile?.angkatan ?? null,
-        value: form.angkatan,
-        editedByUser: angkatanEdited,
-      },
-      value,
-    );
-    setForm((current) => ({
-      ...current,
-      tahunAngkatan: value,
-      angkatan: draft.value,
-    }));
-  };
-
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -190,11 +177,21 @@ export default function AlumniProfile() {
       const result = await updateMyAlumni({
         fullName: form.fullName,
         nim: form.nim || undefined,
-        angkatan: form.angkatan ? Number(form.angkatan) : undefined,
-        // `null` clears the year; `undefined` would be ignored by the save
-        // logic, so an emptied field would silently come back.
-        tahunAngkatan: form.tahunAngkatan ? Number(form.tahunAngkatan) : null,
-        program: form.program || undefined,
+        // Only send this field after the user changes it. That preserves the
+        // distinction between a legacy record with no year (`undefined`) and
+        // an intentional clear (`null`).
+        ...(tahunAngkatanChanged
+          ? {
+              tahunAngkatan: form.tahunAngkatan
+                ? Number(form.tahunAngkatan)
+                : null,
+            }
+          : {}),
+        // A legacy program outside the current six options remains displayed
+        // but is omitted from the request unless the alumni actively selects
+        // an approved replacement. That preserves existing data while the
+        // backend rejects arbitrary new values.
+        ...(isAlumniProgram(form.program) ? { program: form.program } : {}),
         phone: form.phone || undefined,
         location: form.location || undefined,
         currentStatus: (form.currentStatus as AlumniStatus) || undefined,
@@ -210,6 +207,7 @@ export default function AlumniProfile() {
       });
       setProfile(result);
       setProfileLoaded(true);
+      setTahunAngkatanChanged(false);
       // Re-sync from the server response: the backend owns academic identity
       // (it may keep an existing NIM / batch / program), so the form must
       // always show what is actually stored instead of the typed value.
@@ -217,7 +215,6 @@ export default function AlumniProfile() {
         ...current,
         fullName: result.fullName ?? current.fullName,
         nim: result.nim ?? current.nim,
-        angkatan: result.angkatan ? String(result.angkatan) : current.angkatan,
         tahunAngkatan:
           result.tahunAngkatan != null
             ? String(result.tahunAngkatan)
@@ -277,7 +274,7 @@ export default function AlumniProfile() {
         <div className="mx-auto flex max-w-[880px] items-center justify-between py-4">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
-              src="/assets/rams-logo.png"
+              src={assetPath("/assets/RamsLogoFIX.png")}
               alt="RAMS"
               width={64}
               height={64}
@@ -328,7 +325,7 @@ export default function AlumniProfile() {
               <section>
                 <SectionHeader
                   title="Profile Photo"
-                  subtitle="Required — your registration is only saved once your full name, photo, and angkatan (P) are all present."
+                  subtitle="Required — your registration is saved once your full name and photo are present."
                 />
                 <ProfilePhotoField
                   initialUrl={profile?.photo}
@@ -402,21 +399,34 @@ export default function AlumniProfile() {
               <section>
                 <SectionHeader
                   title="Academic Information"
-                  subtitle="Your academic background at ITS."
+                  subtitle="Your academic background at ITS. P is calculated automatically from Tahun Angkatan."
                 />
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <Field label="Program *" htmlFor="program">
-                      <input
+                      <select
                         id="program"
                         required
                         className={profileInputClass}
-                        placeholder="e.g. Naval Architecture"
                         value={form.program}
                         onChange={(event) =>
                           update("program", event.target.value)
                         }
-                      />
+                      >
+                        <option value="" disabled>
+                          Select program
+                        </option>
+                        {!isAlumniProgram(form.program) && form.program && (
+                          <option value={form.program} disabled>
+                            {form.program} (legacy program)
+                          </option>
+                        )}
+                        {ALUMNI_PROGRAM_OPTIONS.map((program) => (
+                          <option key={program} value={program}>
+                            {program}
+                          </option>
+                        ))}
+                      </select>
                     </Field>
                     <Field label="NIM *" htmlFor="nim">
                       <input
@@ -427,33 +437,27 @@ export default function AlumniProfile() {
                         onChange={(event) => update("nim", event.target.value)}
                       />
                     </Field>
-                    <Field label=" Angkatan *" htmlFor="angkatan">
-                      <input
-                        id="angkatan"
-                        required
-                        type="number"
-                        min="1"
-                        max="99"
-                        className={profileInputClass}
-                        value={form.angkatan}
-                        onChange={(event) => {
-                          update("angkatan", event.target.value);
-                          setAngkatanEdited(true);
-                        }}
-                      />
-                    </Field>
                     <Field label="Tahun Angkatan" htmlFor="tahunAngkatan">
                       <input
                         id="tahunAngkatan"
                         type="number"
-                        min="1900"
-                        max="2100"
+                        min={
+                          isCohortYearInputConstrained(form.tahunAngkatan)
+                            ? "1961"
+                            : undefined
+                        }
+                        max={
+                          isCohortYearInputConstrained(form.tahunAngkatan)
+                            ? "2059"
+                            : undefined
+                        }
                         className={profileInputClass}
                         placeholder="e.g. 2015"
                         value={form.tahunAngkatan}
-                        onChange={(event) =>
-                          changeTahunAngkatan(event.target.value)
-                        }
+                        onChange={(event) => {
+                          setTahunAngkatanChanged(true);
+                          update("tahunAngkatan", event.target.value);
+                        }}
                       />
                     </Field>
                     <Field label="Status *" htmlFor="currentStatus">

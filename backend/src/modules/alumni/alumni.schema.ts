@@ -1,6 +1,22 @@
 import { z } from "zod";
 import { ALUMNI_STATUS } from "./alumni.types.js";
-import { isSafeLinkedInUrl } from "../../lib/url-security.js";
+import { ALUMNI_PROGRAMS } from "./alumni-program.js";
+import { isPhotoValue, isSafeLinkedInUrl } from "../../lib/url-security.js";
+
+// Photo is a security-sensitive string: it is later rendered as an external
+// link, so only http(s) URLs and legacy image filenames are ever stored.
+// Empty values are refused too — a photo is cleared through the dedicated
+// flow, never by saving a blank string.
+const photoSchema = z
+  .string()
+  .trim()
+  .refine(isPhotoValue, {
+    error: (issue) =>
+      typeof issue.input === "string" && issue.input.trim() === ""
+        ? "Photo cannot be empty"
+        : "Photo must be an http(s) URL or an image filename (jpg, jpeg, png, webp)",
+  })
+  .optional();
 
 const optionalLinkedInSchema = z.preprocess(
   (value) =>
@@ -56,14 +72,18 @@ export const updateAlumniSchema = z.object({
     .max(200)
     .optional(),
 
-  photo: z.string().trim().optional(),
+  photo: photoSchema,
 
   angkatan: z.number().int().min(1).max(99).optional(),
 
+  // Acceptance keeps the historical 1900..2100 window so a legacy record can
+  // always re-save its own stored year; `assertCohortYear` in the service
+  // rejects any *new* value outside 1961..2059, which is the range that still
+  // derives a valid P (`year - 1960` in 1..99). No data migration is needed.
   // Nullable so clearing the year persists (`$set: null`).
   tahunAngkatan: z.number().int().min(1900).max(2100).nullish(),
 
-  program: z.string().trim().min(1, "Program is required").optional(),
+  program: z.enum(ALUMNI_PROGRAMS).optional(),
 
   phone: z.string().trim().max(50).optional(),
 
@@ -100,11 +120,10 @@ export const updateAlumniSchema = z.object({
 // ALUMNI SELF UPDATE
 // ========================================
 //
-// Alumni users must not modify identity
-// and academic master data (nim / angkatan /
-// program): the service ignores them once a
-// value exists, so a profile shell can be
-// completed exactly once.
+// Alumni users must not modify identity and academic master data (nim /
+// angkatan / program): the service ignores them once a value exists, so a
+// profile shell can be completed exactly once. A legacy program outside the
+// approved enum is deliberately replaceable once with an approved option.
 //
 
 export const updateMyAlumniSchema = z.object({
@@ -112,12 +131,15 @@ export const updateMyAlumniSchema = z.object({
 
   angkatan: z.number().int().min(1).max(99).optional(),
 
+  // Same 1900..2100 acceptance window as the admin schema: a stored legacy
+  // year must never make an existing profile unsavable. The service still
+  // enforces 1961..2059 for a value that actually changes.
   // Nullable so clearing the year persists (`$set: null`).
   tahunAngkatan: z.number().int().min(1900).max(2100).nullish(),
 
-  program: z.string().trim().min(1, "Program is required").max(200).optional(),
+  program: z.enum(ALUMNI_PROGRAMS).optional(),
 
-  photo: z.string().trim().optional(),
+  photo: photoSchema,
 
   phone: z.string().trim().optional(),
 

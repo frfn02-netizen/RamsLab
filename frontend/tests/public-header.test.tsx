@@ -73,9 +73,7 @@ vi.mock("next/image", () => ({
     fill?: boolean;
     priority?: boolean;
     [key: string]: unknown;
-  }) => (
-    <img alt={alt} {...props} />
-  ),
+  }) => <img alt={alt} {...props} />,
 }));
 
 vi.mock("@/components/public/hero-context", () => ({
@@ -90,11 +88,16 @@ describe("public mobile header", () => {
 
     const mobileHeader = screen.getByTestId("mobile-header");
     const header = mobileHeader.parentElement!;
-    expect(within(mobileHeader).getByText("RAMS Laboratory")).toBeInTheDocument();
+    expect(
+      within(mobileHeader).getByText("RAMS Laboratory"),
+    ).toBeInTheDocument();
     expect(mobileHeader.querySelector("img")).toHaveAttribute(
       "src",
-      "/assets/rams-logo.png",
+      "/assets/RamsLogoFIX.png",
     );
+    expect(
+      mobileHeader.querySelector('img[src="/assets/ITSLogoFIX.png"]'),
+    ).toBeNull();
     expect(
       within(mobileHeader).getByRole("button", { name: "Open navigation" }),
     ).toHaveAttribute("aria-expanded", "false");
@@ -117,7 +120,11 @@ describe("public mobile header", () => {
     expect(drawer.className).toContain("inset-x-0");
     expect(drawer.className).toContain("h-dvh");
     expect(drawer.className).toContain("bg-white");
-    expect(within(drawer).getByText("Reliability · Availability · Management · Safety")).toBeInTheDocument();
+    expect(
+      within(drawer).getByText(
+        "Reliability · Availability · Management · Safety",
+      ),
+    ).toBeInTheDocument();
 
     for (const label of [
       "People",
@@ -127,13 +134,14 @@ describe("public mobile header", () => {
       "Public Service",
       "Partners",
     ]) {
-      expect(within(drawer).getByRole("link", { name: label })).toBeInTheDocument();
+      expect(
+        within(drawer).getByRole("link", { name: label }),
+      ).toBeInTheDocument();
     }
 
-    expect(within(drawer).getByRole("link", { name: "Events" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    expect(
+      within(drawer).getByRole("link", { name: "Events" }),
+    ).toHaveAttribute("aria-current", "page");
     fireEvent.click(within(drawer).getByRole("button", { name: "ID" }));
     expect(replace).toHaveBeenCalledWith("/events", { locale: "id" });
   });
@@ -143,7 +151,9 @@ describe("public mobile header", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
 
     const drawer = screen.getByTestId("mobile-public-navigation");
-    expect(screen.getByRole("button", { name: "Close navigation" })).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Close navigation" }),
+    ).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "Close navigation" }));
     expect(drawer).toHaveAttribute("aria-hidden", "true");
 
@@ -159,7 +169,22 @@ describe("public mobile header", () => {
       name: "Primary navigation",
     });
     expect(desktopNavigation.className).toContain("lg:flex");
-    expect(within(desktopNavigation).getByRole("link", { name: "Events" })).toBeInTheDocument();
-    expect(within(desktopNavigation).getByRole("link", { name: "Contact us" })).toBeInTheDocument();
+    expect(
+      within(desktopNavigation).getByRole("link", { name: "Events" }),
+    ).toBeInTheDocument();
+    expect(
+      within(desktopNavigation).getByRole("link", { name: "Contact us" }),
+    ).toBeInTheDocument();
+
+    const desktopHeader = desktopNavigation.parentElement!;
+    expect(
+      desktopHeader.querySelector('img[src="/assets/ITSLogoFIX.png"]'),
+    ).toBeInTheDocument();
+    expect(
+      desktopHeader.querySelector('img[src="/assets/RamsLogoFIX.png"]'),
+    ).toBeInTheDocument();
+    expect(
+      within(desktopHeader).getByTestId("desktop-logo-separator"),
+    ).toHaveClass("w-px");
   });
 });

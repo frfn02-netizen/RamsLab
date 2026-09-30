@@ -137,7 +137,7 @@ export default function PublicFooter() {
             <div className="flex items-center gap-4">
               <div className="relative h-16 w-16 shrink-0 sm:h-[4.5rem] sm:w-[4.5rem]">
                 <Image
-                  src={assetPath("/assets/rams-logo.png")}
+                  src={assetPath("/assets/RamsLogoFIX.png")}
                   alt={brand("laboratory")}
                   fill
                   sizes="72px"

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
 import { getMyAuditLogs, type AlumniAuditLog } from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
+import { assetPath } from "@/lib/asset-path";
 
 const dateLabel = (value: string) => {
   const date = new Date(value);
@@ -67,7 +68,7 @@ export default function AlumniHistoryPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 sm:px-8">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
-              src="/assets/rams-logo.png"
+              src={assetPath("/assets/RamsLogoFIX.png")}
               alt="RAMS"
               width={64}
               height={64}
