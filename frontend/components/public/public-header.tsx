@@ -26,6 +26,43 @@ function isActive(pathname: string, href: string) {
   return pathname === href;
 }
 
+function MobileBrand({ laboratory }: { laboratory: string }) {
+  return (
+    <>
+      <div className="flex shrink-0 items-center gap-2">
+        <div className="relative h-8 w-[50px] shrink-0">
+          <Image
+            src={assetPath("/assets/ITSLogoFIX.png")}
+            alt=""
+            fill
+            sizes="50px"
+            className="object-contain"
+            priority
+          />
+        </div>
+        <span
+          data-testid="mobile-logo-separator"
+          aria-hidden="true"
+          className="h-8 w-px shrink-0 bg-white shadow-[0_0_1px_rgba(11,32,56,0.28)]"
+        />
+        <div className="relative h-10 w-10 shrink-0">
+          <Image
+            src={assetPath("/assets/RamsLogoFIX.png")}
+            alt=""
+            fill
+            sizes="40px"
+            className="object-contain"
+            priority
+          />
+        </div>
+      </div>
+      <span className="truncate font-display text-sm font-bold tracking-[-0.01em] text-[var(--navy)]">
+        {laboratory}
+      </span>
+    </>
+  );
+}
+
 export default function PublicHeader() {
   const pathname = usePathname();
   const t = useTranslations("nav");
@@ -54,18 +91,18 @@ export default function PublicHeader() {
           : "lg:border-[var(--ais-blue)] lg:bg-white lg:text-[var(--charcoal)] lg:shadow-[0_4px_18px_rgba(11,32,56,0.08)]"
       }`}
     >
-      <div className="mx-auto hidden min-h-[4.5rem] max-w-[1380px] items-center justify-between gap-5 px-4 sm:px-6 lg:flex lg:px-8">
+      <div className="mx-auto hidden h-20 max-w-[1440px] items-center justify-between gap-8 px-4 sm:px-6 lg:flex lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2"
+          className="flex items-center gap-3"
           aria-label={a11y("home")}
         >
-          <div className="relative h-14 w-[86px] shrink-0">
+          <div className="relative h-16 w-[100px] shrink-0">
             <Image
               src={assetPath("/assets/ITSLogoFIX.png")}
               alt=""
               fill
-              sizes="86px"
+              sizes="100px"
               className="object-contain"
               priority
             />
@@ -73,28 +110,26 @@ export default function PublicHeader() {
           <span
             data-testid="desktop-logo-separator"
             aria-hidden="true"
-            className={`h-12 w-px shrink-0 ${
-              isAtTop ? "bg-white/35" : "bg-[var(--border)]"
-            }`}
+            className="h-14 w-px shrink-0 bg-white shadow-[0_0_1px_rgba(11,32,56,0.28)]"
           />
-          <div className="relative h-[80px] w-[80px] shrink-0 sm:h-[94px] sm:w-[94px]">
+          <div className="relative h-[72px] w-[72px] shrink-0">
             <Image
               src={assetPath("/assets/RamsLogoFIX.png")}
               alt=""
               fill
-              sizes="94px"
+              sizes="72px"
               className="object-contain"
               priority
             />
           </div>
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col justify-center leading-none">
             <span
-              className={`font-display text-[1.35rem] font-bold sm:text-2xl lg:text-[1.65rem] transition-[color] duration-300 ${isAtTop ? "text-white" : "text-[var(--navy)]"}`}
+              className={`font-display text-[1.35rem] font-bold tracking-[-0.025em] transition-[color] duration-300 ${isAtTop ? "text-white" : "text-[var(--navy)]"}`}
             >
               {brand("laboratory")}
             </span>
             <span
-              className={`text-[0.78rem] sm:text-sm transition-[color] duration-300 ${isAtTop ? "text-white/70" : "text-[var(--gray)]"}`}
+              className={`mt-1 text-[0.7rem] font-medium tracking-[0.01em] transition-[color] duration-300 ${isAtTop ? "text-white/70" : "text-[var(--gray)]"}`}
             >
               {brand("technicalLine")}
             </span>
@@ -102,14 +137,15 @@ export default function PublicHeader() {
         </Link>
 
         <nav
-          className="hidden items-center gap-7 lg:flex"
+          className="hidden h-full items-center gap-5 xl:gap-6 lg:flex"
           aria-label={a11y("primaryNav")}
         >
           {links.map(([key, href]) => (
             <Link
               key={key}
               href={href}
-              className={`text-[0.95rem] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)] ${isActive(pathname, href) ? "text-[var(--rams-red)]" : isAtTop ? "text-white hover:text-white/80" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
+              aria-current={isActive(pathname, href) ? "page" : undefined}
+              className={`relative flex h-full items-center text-[0.9rem] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, href) ? "text-[var(--rams-red)] after:scale-x-100" : isAtTop ? "text-white hover:text-white/80" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
             >
               {t(key)}
             </Link>
@@ -117,7 +153,8 @@ export default function PublicHeader() {
           <Link
             href={contactLink[1]}
             aria-label={a11y("contactUs")}
-            className={`transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)] ${isActive(pathname, contactLink[1]) ? "text-[var(--maroon)]" : isAtTop ? "text-white hover:text-[var(--maroon)]" : "text-[var(--maroon)] hover:text-[var(--maroon)]"}`}
+            aria-current={isActive(pathname, contactLink[1]) ? "page" : undefined}
+            className={`relative flex h-full items-center px-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, contactLink[1]) ? "text-[var(--maroon)] after:scale-x-100" : isAtTop ? "text-white hover:text-[var(--maroon)]" : "text-[var(--maroon)] hover:text-[var(--maroon)]"}`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -136,7 +173,7 @@ export default function PublicHeader() {
             </svg>
           </Link>
           <div
-            className={`flex items-center gap-1 pl-5 transition-[border-color] duration-300 ${isAtTop ? "border-l border-white/20" : "border-l border-[var(--border)]"}`}
+            className={`flex items-center gap-1 pl-4 transition-[border-color] duration-300 ${isAtTop ? "border-l border-white/20" : "border-l border-[var(--border)]"}`}
           >
             <Suspense>
               <LanguageSwitcher dark={isAtTop} />
@@ -151,22 +188,10 @@ export default function PublicHeader() {
       >
         <Link
           href="/"
-          className="flex min-w-0 items-center gap-2.5"
+          className="flex min-w-0 items-center gap-2"
           aria-label={a11y("home")}
         >
-          <div className="relative h-10 w-10 shrink-0">
-            <Image
-              src={assetPath("/assets/RamsLogoFIX.png")}
-              alt=""
-              fill
-              sizes="40px"
-              className="object-contain"
-              priority
-            />
-          </div>
-          <span className="truncate font-display text-base font-bold tracking-[-0.01em] text-[var(--navy)]">
-            {brand("laboratory")}
-          </span>
+          <MobileBrand laboratory={brand("laboratory")} />
         </Link>
         <button
           type="button"
@@ -198,22 +223,10 @@ export default function PublicHeader() {
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="flex min-w-0 items-center gap-2.5"
+            className="flex min-w-0 items-center gap-2"
             aria-label={a11y("home")}
           >
-            <div className="relative h-10 w-10 shrink-0">
-              <Image
-                src={assetPath("/assets/RamsLogoFIX.png")}
-                alt=""
-                fill
-                sizes="40px"
-                className="object-contain"
-                priority
-              />
-            </div>
-            <span className="truncate font-display text-base font-bold tracking-[-0.01em] text-[var(--navy)]">
-              {brand("laboratory")}
-            </span>
+            <MobileBrand laboratory={brand("laboratory")} />
           </Link>
           <button
             ref={closeButtonRef}
