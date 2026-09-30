@@ -61,13 +61,13 @@ describe("security regressions", () => {
     expect(schema.safeParse(input).success).toBe(false);
   });
 
-  it("does not expose Alumni NIM, location, or user fields publicly", () => {
+  it("does not expose Alumni NIM, phone, or user fields publicly", () => {
     const profile = toPublicAlumniProfile({} as never, {
       _id: new ObjectId("000000000000000000000001"),
       userId: new ObjectId("000000000000000000000002"),
       fullName: "Public Alumni",
       nim: "PRIVATE-NIM",
-      location: "Private Location",
+      location: "Surabaya",
       angkatan: 2020,
       program: "Marine Engineering",
       currentStatus: "WORKING",
@@ -83,9 +83,11 @@ describe("security regressions", () => {
     });
 
     expect(profile).not.toHaveProperty("nim");
-    expect(profile).not.toHaveProperty("location");
     expect(profile).not.toHaveProperty("userId");
     expect(profile).not.toHaveProperty("phone");
+    // `location` is an approved Alumni profile field (the alumni's Current
+    // Location), so it is intentionally part of the public payload.
+    expect(profile).toHaveProperty("location", "Surabaya");
     expect(profile).toMatchObject({
       fullName: "Public Alumni",
       angkatan: 2020,

@@ -435,6 +435,10 @@
     "angkatan": "P",
     "classOf": "Class of",
     "bioLabel": "BIO",
+    "programLabel": "Program",
+    "positionLabel": "Current position",
+    "companyLabel": "Company",
+    "locationLabel": "Current Location",
     "ctaTitle": "Stay connected with the laboratory."
   },
   "contact": {

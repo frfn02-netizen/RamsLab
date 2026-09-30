@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
+import enMessages from "@/messages/en.json";
+import idMessages from "@/messages/id.json";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -54,6 +56,8 @@ import AlumniProfile from "@/components/public/alumni-profile";
 const mockProfile = {
   fullName: "Jane Smith",
   angkatan: 24,
+  tahunAngkatan: 2024,
+  program: "Naval Architecture",
   position: "Engineer",
   specialization: ["RAMS Lab"],
   photo: "",
@@ -117,9 +121,43 @@ describe("AlumniProfile – detail rendering", () => {
     expect(screen.getByText("Engineer")).toBeInTheDocument();
     expect(screen.getByText("RAMS Lab")).toBeInTheDocument();
     expect(screen.getByText("Surabaya")).toBeInTheDocument();
-    expect(
-      screen.getByText("Researcher in marine systems."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Naval Architecture")).toBeInTheDocument();
+    expect(screen.getByText("classOf 2024 (P24)")).toBeInTheDocument();
+    expect(screen.getByText("programLabel")).toBeInTheDocument();
+    expect(screen.getByText("positionLabel")).toBeInTheDocument();
+    expect(screen.getByText("companyLabel")).toBeInTheDocument();
+    expect(screen.getByText("locationLabel")).toBeInTheDocument();
+    const metadataGrid = screen.getByTestId("alumni-metadata-grid");
+    expect(metadataGrid).toHaveClass("grid", "sm:grid-cols-2");
+    expect(metadataGrid).not.toHaveClass("border-b");
+
+    const metadataFields: Array<[label: string, value: string]> = [
+      ["programLabel", "Naval Architecture"],
+      ["positionLabel", "Engineer"],
+      ["companyLabel", "RAMS Lab"],
+      ["locationLabel", "Surabaya"],
+    ];
+    for (const [label, value] of metadataFields) {
+      const term = screen.getByText(label);
+      // Small uppercase tracking label, no per-field border or divider.
+      expect(term).toHaveClass("uppercase");
+      expect(term.parentElement).not.toHaveClass("border-t");
+      // The value is the enlarged editorial size, never the old text-base.
+      const definition = term.nextElementSibling;
+      expect(definition).toHaveTextContent(value);
+      expect(definition).toHaveClass("text-lg");
+      expect(definition).not.toHaveClass("text-base");
+    }
+
+    // Class of and BIO keep their own sizes: only the four metadata values
+    // are rendered at text-lg.
+    expect(screen.getByText("classOf 2024 (P24)")).toHaveClass("text-sm");
+    expect(screen.getByText("Researcher in marine systems.")).toHaveClass(
+      "text-base",
+    );
+    expect(screen.getByText("bioLabel").closest("section")).toHaveClass(
+      "border-t",
+    );
   });
 
   it("renders LinkedIn link when provided", async () => {
@@ -133,6 +171,51 @@ describe("AlumniProfile – detail rendering", () => {
       "href",
       "https://linkedin.com/in/janesmith",
     );
+    expect(linkedinLink.closest("a")).toHaveAttribute(
+      "rel",
+      "noreferrer",
+    );
+  });
+
+  it("omits empty optional detail sections", async () => {
+    getPublicAlumniById.mockResolvedValue({
+      ...mockProfile,
+      program: " ",
+      position: "",
+      specialization: ["  "],
+      location: " ",
+      bio: "",
+      linkedin: "",
+    });
+    render(<AlumniProfile id="abc123" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+    });
+
+    for (const label of [
+      "programLabel",
+      "positionLabel",
+      "companyLabel",
+      "locationLabel",
+      "bioLabel",
+      "LinkedIn",
+    ]) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
+    }
+  });
+
+  it("keeps the approved 2x2 copy, with location meaning the alumni's current location", () => {
+    // The public card mirrors the alumni profile form: `location` is labelled
+    // "Current Location" there, so the public label must not read as a work
+    // location (that is what `currentPosition` / `currentCompany` are for).
+    expect(enMessages.alumni.locationLabel).toBe("Current Location");
+    expect(idMessages.alumni.locationLabel).toBe("Lokasi saat ini");
+
+    expect(enMessages.alumni.programLabel).toBe("Program");
+    expect(enMessages.alumni.positionLabel).toBe("Current position");
+    expect(enMessages.alumni.companyLabel).toBe("Company");
+    expect(enMessages.alumni.bioLabel).toBe("BIO");
   });
 });
 

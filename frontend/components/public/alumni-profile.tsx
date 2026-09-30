@@ -10,6 +10,19 @@ import type { PublicPerson } from "@/types/people";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
 
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="font-mono text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
+        {label}
+      </dt>
+      <dd className="mt-2 text-lg font-medium leading-7 text-[var(--navy)]">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
 export default function AlumniProfile({ id }: { id: string }) {
   const t = useTranslations("alumni");
   const [profile, setProfile] = useState<PublicPerson | undefined>(undefined);
@@ -61,9 +74,12 @@ export default function AlumniProfile({ id }: { id: string }) {
     );
   }
 
-  const company = profile.specialization?.[0];
-  const hasBio = Boolean(profile.bio?.trim());
-  const hasLinkedin = Boolean(profile.linkedin);
+  const program = profile.program?.trim();
+  const position = profile.position?.trim();
+  const company = profile.specialization?.[0]?.trim();
+  const location = profile.location?.trim();
+  const bio = profile.bio?.trim();
+  const linkedin = profile.linkedin?.trim();
 
   return (
     <main className="bg-[var(--paper)]">
@@ -76,12 +92,12 @@ export default function AlumniProfile({ id }: { id: string }) {
             ← {t("backToAlumni")}
           </Link>
 
-          <article className="mt-8 border border-[var(--border)] bg-white p-7 sm:p-10 lg:p-14">
+          <article className="mt-8 border border-[var(--border)] bg-white">
             <div
               className={
                 profile.photo && !imageFailed
-                  ? "grid gap-10 sm:grid-cols-[minmax(200px,32%)_minmax(0,1fr)] sm:gap-12 lg:gap-14"
-                  : undefined
+                  ? "grid gap-10 p-6 sm:grid-cols-[minmax(210px,30%)_minmax(0,1fr)] sm:gap-10 sm:p-10 lg:gap-14 lg:p-14"
+                  : "p-6 sm:p-10 lg:p-14"
               }
             >
               {profile.photo && !imageFailed && (
@@ -107,47 +123,47 @@ export default function AlumniProfile({ id }: { id: string }) {
                 </h1>
 
                 {classOfLabel && (
-                  <p className="mt-6 font-mono text-sm uppercase tracking-[0.1em] text-[var(--gray)]">
+                  <p className="mt-5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-[var(--rams-red)]">
                     {classOfLabel}
                   </p>
                 )}
 
-                {profile.position && (
-                  <p className="mt-3 text-xl leading-8 text-[var(--slate)]">
-                    {profile.position}
-                  </p>
+                {(program || position || company || location) && (
+                  <dl
+                    data-testid="alumni-metadata-grid"
+                    className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:gap-x-12 lg:gap-y-10"
+                  >
+                    {program && <DetailItem label={t("programLabel")} value={program} />}
+                    {position && (
+                      <DetailItem label={t("positionLabel")} value={position} />
+                    )}
+                    {company && (
+                      <DetailItem label={t("companyLabel")} value={company} />
+                    )}
+                    {location && (
+                      <DetailItem label={t("locationLabel")} value={location} />
+                    )}
+                  </dl>
                 )}
 
-                {company && (
-                  <p className="mt-2 text-base leading-7 text-[var(--gray)]">
-                    {company}
-                  </p>
-                )}
-
-                {profile.location && (
-                  <p className="mt-2 text-base leading-7 text-[var(--gray)]">
-                    {profile.location}
-                  </p>
-                )}
-
-                {hasBio && (
-                  <div className="mt-8 border-t border-[var(--border)] pt-6">
-                    <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-[var(--gray)]">
+                {bio && (
+                  <section className="mt-8 border-t border-[var(--border)] pt-7">
+                    <h2 className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-[var(--rams-red)]">
                       {t("bioLabel")}
+                    </h2>
+                    <p className="mt-4 whitespace-pre-wrap text-base leading-7 text-[var(--slate)]">
+                      {bio}
                     </p>
-                    <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-[var(--slate)]">
-                      {profile.bio}
-                    </p>
-                  </div>
+                  </section>
                 )}
 
-                {hasLinkedin && (
+                {linkedin && (
                   <div className="mt-8">
                     <a
-                      href={profile.linkedin}
+                      href={linkedin}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-2 font-semibold text-[var(--rams-red)] hover:text-[var(--navy)]"
+                      className="inline-flex items-center gap-2 font-semibold text-[var(--rams-red)] transition-colors hover:text-[var(--navy)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--rams-red)]"
                     >
                       LinkedIn <span aria-hidden="true">→</span>
                     </a>

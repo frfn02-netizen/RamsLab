@@ -437,6 +437,10 @@
     "angkatan": "P",
     "classOf": "Angkatan",
     "bioLabel": "BIO",
+    "programLabel": "Program",
+    "positionLabel": "Posisi di pekerjaan",
+    "companyLabel": "Perusahaan",
+    "locationLabel": "Lokasi saat ini",
     "ctaTitle": "Tetap terhubung dengan laboratorium."
   },
   "contact": {
