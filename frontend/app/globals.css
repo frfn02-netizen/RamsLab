@@ -1318,24 +1318,24 @@ body {
   }
 }
 
-.publications-page {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-height: calc(100vh - 4.5rem);
+/* Publications timeline: continuous scroll-driven progress.
+   JavaScript only writes the --timeline-progress / --node-top custom
+   properties on scroll (rAF-throttled); the visual state is resolved by CSS. */
+.publication-timeline-progress-line {
+  height: clamp(
+    0px,
+    calc(var(--timeline-progress, 0px) - 0.75rem),
+    calc(100% - 1.5rem)
+  );
 }
 
-.publications-scroll-track {
-  --publication-stream-travel: 0px;
-}
-
-@media (min-width: 1024px) {
-  .publications-scroll-track {
-    min-height: calc(100vh - 72px + var(--publication-stream-travel, 0px));
-  }
-
-  .publications-sticky-grid {
-    grid-template-rows: calc(
-      100vh - 4.5rem + var(--publication-stream-travel, 0px)
-    );
-  }
+.publication-timeline-progress-node {
+  opacity: clamp(
+    0,
+    calc(
+      (var(--timeline-progress, 0px) - var(--node-top, 0px)) /
+        var(--node-ramp, 48px)
+    ),
+    1
+  );
 }

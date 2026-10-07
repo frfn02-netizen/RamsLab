@@ -2,24 +2,13 @@
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type RefObject,
-} from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { getPublications, getPublicPublicationPdfUrl } from "@/lib/api/modules";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { Publication, PublicationFacets } from "@/types/modules";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
-import { MaritimeShip } from "./maritime-motion";
 
 type PublicationProject = Publication;
 
@@ -71,6 +60,11 @@ function isActive(filters: PublicationFilters) {
   );
 }
 
+const FILTER_LABEL =
+  "text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[var(--gray)]";
+const FIELD_CLASS =
+  "w-full rounded-[3px] border border-[var(--border)] bg-white px-3.5 py-2.5 text-sm text-[var(--navy)] outline-none transition-colors placeholder:text-[var(--gray)] focus:border-[var(--navy)] focus:ring-1 focus:ring-[var(--navy)]/15";
+
 function PublicationFiltersPanel({
   filters,
   years,
@@ -99,17 +93,24 @@ function PublicationFiltersPanel({
     });
   };
 
+  const chipClass = (checked: boolean) =>
+    `inline-flex cursor-pointer items-center gap-1.5 rounded-[3px] border px-2.5 py-1 text-xs transition-colors ${
+      checked
+        ? "border-[var(--navy)] bg-[var(--navy)]/5 text-[var(--navy)]"
+        : "border-[var(--border)] bg-white text-[var(--charcoal)] hover:border-[var(--gray)]"
+    }`;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <label htmlFor={`${prefix}-year`} className="eyebrow">
+        <label htmlFor={`${prefix}-year`} className={FILTER_LABEL}>
           {t("year")}
         </label>
         <select
           id={`${prefix}-year`}
           value={filters.year}
           onChange={(event) => onChange({ year: event.target.value })}
-          className="mt-3 w-full border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[var(--navy)] outline-none transition focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[var(--rams-red)]/15"
+          className={`mt-2.5 ${FIELD_CLASS}`}
         >
           <option value="">{t("allYears")}</option>
           {years.map((year) => (
@@ -121,50 +122,50 @@ function PublicationFiltersPanel({
       </div>
 
       <fieldset>
-        <legend className="eyebrow">{t("topic")}</legend>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <legend className={FILTER_LABEL}>{t("topic")}</legend>
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
           {topics.length ? (
-            topics.map((topic) => (
-              <label
-                key={topic.value}
-                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-sm transition hover:border-[var(--rams-red)]"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.topics.includes(topic.value)}
-                  onChange={() => toggle("topics", topic.value)}
-                  className="h-4 w-4 accent-[var(--rams-red)]"
-                />
-                <span>{topic.label}</span>
-              </label>
-            ))
+            topics.map((topic) => {
+              const checked = filters.topics.includes(topic.value);
+              return (
+                <label key={topic.value} className={chipClass(checked)}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggle("topics", topic.value)}
+                    className="h-3.5 w-3.5 accent-[var(--navy)]"
+                  />
+                  <span>{topic.label}</span>
+                </label>
+              );
+            })
           ) : (
-            <p className="text-sm text-[var(--gray)]">{t("noOptions")}</p>
+            <p className="text-xs text-[var(--gray)]">{t("noOptions")}</p>
           )}
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className="eyebrow">{t("method")}</legend>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <legend className={FILTER_LABEL}>{t("method")}</legend>
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
           {methods.length ? (
-            methods.map((method) => (
-              <label
-                key={method}
-                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-sm transition hover:border-[var(--rams-red)]"
-              >
-                <input
-                  id={`${prefix}-method-${slug(method)}`}
-                  type="checkbox"
-                  checked={filters.methods.includes(method)}
-                  onChange={() => toggle("methods", method)}
-                  className="h-4 w-4 accent-[var(--rams-red)]"
-                />
-                <span>{method}</span>
-              </label>
-            ))
+            methods.map((method) => {
+              const checked = filters.methods.includes(method);
+              return (
+                <label key={method} className={chipClass(checked)}>
+                  <input
+                    id={`${prefix}-method-${slug(method)}`}
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggle("methods", method)}
+                    className="h-3.5 w-3.5 accent-[var(--navy)]"
+                  />
+                  <span>{method}</span>
+                </label>
+              );
+            })
           ) : (
-            <p className="text-sm text-[var(--gray)]">{t("noOptions")}</p>
+            <p className="text-xs text-[var(--gray)]">{t("noOptions")}</p>
           )}
         </div>
       </fieldset>
@@ -173,7 +174,7 @@ function PublicationFiltersPanel({
         <button
           type="button"
           onClick={onClear}
-          className="text-sm font-semibold text-[var(--rams-red)] underline decoration-[var(--rams-red)]/30 underline-offset-4 transition hover:text-[var(--rams-red-dark)]"
+          className="text-xs font-semibold text-[var(--charcoal)] underline decoration-[var(--gray)]/40 underline-offset-4 transition-colors hover:text-[var(--navy)]"
         >
           {t("clearAll")}
         </button>
@@ -185,96 +186,73 @@ function PublicationFiltersPanel({
 const PublicationCard = memo(function PublicationCard({
   project,
   t,
-  active,
-  selected = false,
+  selected,
   publicationId,
   onSelect,
-  staged = false,
 }: {
   project: PublicationProject;
   t: (key: string) => string;
-  active: boolean;
-  selected?: boolean;
+  selected: boolean;
   publicationId: string;
-  onSelect?: (id: string) => void;
-  staged?: boolean;
+  onSelect: (id: string | null) => void;
 }) {
   const publicationUrl = project.pdfUrl
     ? getPublicPublicationPdfUrl(project._id)
     : null;
   const publicationLinkLabel = t("viewPdf");
 
-  const radioRef = useRef<HTMLInputElement>(null);
-
-  useLayoutEffect(() => {
-    const el = radioRef.current;
-    if (el && el.checked !== selected) {
-      el.checked = selected;
-    }
-  });
-
-  const handleRadioMouseDown = (event: React.MouseEvent<HTMLInputElement>) => {
+  const handleSelectChange = () => onSelect(publicationId);
+  const handleSelectClick = (event: React.MouseEvent<HTMLInputElement>) => {
+    event.stopPropagation();
+    if (selected) onSelect(null);
+  };
+  const handleSelectMouseDown = (event: React.MouseEvent<HTMLInputElement>) => {
     event.preventDefault();
     event.stopPropagation();
   };
 
-  const handleRadioChange = () => {
-    onSelect?.(publicationId);
-  };
-
-  const handleRadioClick = (event: React.MouseEvent<HTMLInputElement>) => {
-    event.stopPropagation();
-    if (selected) {
-      onSelect?.(publicationId);
-    }
-  };
-
   return (
-    <article
-      className={`group border bg-white p-6 transition-[opacity,transform,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none sm:p-7 ${staged && !active ? "pointer-events-none translate-y-3 border-[var(--border)] opacity-0" : active ? "translate-y-0 border-[var(--rams-red)]/55 opacity-100 shadow-[0_10px_28px_rgba(11,32,56,0.07)]" : "translate-y-3 border-[var(--border)] opacity-70"} hover:-translate-y-0.5 hover:border-[var(--rams-red)]/55 hover:shadow-[0_10px_28px_rgba(11,32,56,0.07)]`}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <input
-            ref={radioRef}
-            type="radio"
-            checked={selected}
-            onChange={handleRadioChange}
-            onClick={handleRadioClick}
-            onMouseDown={handleRadioMouseDown}
-            aria-label={project.title}
-            className={`h-4 w-4 accent-[var(--rams-red)] ${selected ? "ring-2 ring-[var(--rams-red)] ring-offset-2" : ""}`}
-          />
-          <p className="eyebrow text-[var(--ais-blue)]">
-            {t("publicationRecord")}
-          </p>
-        </div>
-        <span className="border border-[var(--rams-red)]/25 px-2 py-1 font-mono text-[0.65rem] font-semibold text-[var(--rams-red)]">
-          {project.year}
-        </span>
-      </div>
-      <h3 className="mt-6 max-w-2xl font-display text-xl font-semibold leading-tight text-[var(--navy)] sm:text-2xl">
+    <article className="group relative rounded-[3px] border border-[var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(11,32,56,0.05)] sm:p-6">
+      <input
+        type="radio"
+        checked={selected}
+        onChange={handleSelectChange}
+        onClick={handleSelectClick}
+        onMouseDown={handleSelectMouseDown}
+        aria-label={project.title}
+        data-publication-node={publicationId}
+        className="absolute -left-10 top-8 h-3.5 w-3.5 cursor-pointer appearance-none rounded-full bg-[var(--border)] ring-2 ring-white transition-colors checked:bg-[var(--charcoal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--navy)] sm:-left-12"
+      />
+      <span
+        aria-hidden="true"
+        data-testid="publication-node-active"
+        className="publication-timeline-progress-node pointer-events-none absolute -left-10 top-8 h-3.5 w-3.5 rounded-full bg-[var(--charcoal)] ring-2 ring-white sm:-left-12"
+      />
+      <h3 className="min-w-0 pr-16 font-display text-lg font-bold leading-snug text-[var(--navy)] sm:text-xl">
         {project.title}
       </h3>
-      <p className="mt-4 text-sm leading-6 text-[var(--slate)]">
+      <span className="absolute right-0 top-0 rounded-bl-[3px] rounded-tr-[3px] bg-[var(--rams-red)] px-2.5 py-1 font-mono text-[0.7rem] font-semibold leading-4 text-white">
+        {project.year}
+      </span>
+      <p className="mt-3 text-sm leading-6 text-[var(--charcoal)]">
         {project.authors.join(", ")}
       </p>
-      <p className="mt-2 text-sm text-[var(--gray)]">
+      <p className="mt-1.5 text-xs leading-5 text-[var(--gray)]">
         {project.publicationType} · {project.journal}
       </p>
-      <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[var(--border)] pt-5">
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[var(--border)] pt-4">
         {publicationUrl && (
           <a
             href={publicationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-bold tracking-[0.08em] text-[var(--rams-red)] transition hover:text-[var(--rams-red-dark)]"
+            className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--rams-red)] transition-colors hover:text-[var(--rams-red-dark)]"
             aria-label={`${publicationLinkLabel}: ${project.title}`}
           >
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"
-              className="mr-1 inline-block h-3.5 w-3.5 align-[-0.15em] text-[var(--rams-red)]"
+              className="mr-1 inline-block h-3.5 w-3.5 align-[-0.15em]"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -297,265 +275,141 @@ const PublicationCard = memo(function PublicationCard({
   );
 });
 
-const PUBLIC_HEADER_HEIGHT_PX = 72;
+const TIMELINE_READING_LINE_RATIO = 0.34;
+const TIMELINE_NODE_FADE_PX = 48;
 
-function useStickyPublicationProgress(
-  sectionRef: RefObject<HTMLDivElement | null>,
-  stickyViewportRef: RefObject<HTMLDivElement | null>,
-  streamViewportRef: RefObject<HTMLDivElement | null>,
-  streamRef: RefObject<HTMLDivElement | null>,
-  contentKey: string,
-  count: number,
-) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [streamOffset, setStreamOffset] = useState(0);
-  const [streamTravel, setStreamTravel] = useState(0);
-  const streamTravelRef = useRef(0);
+function useTimelineScrollProgress(ids: string[]) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (count === 0) {
-      const resetFrame = window.requestAnimationFrame(() => {
-        setActiveIndex(0);
-        setStreamOffset(0);
-        setStreamTravel(0);
-        streamTravelRef.current = 0;
-      });
-      return () => window.cancelAnimationFrame(resetFrame);
-    }
+    const container = containerRef.current;
+    if (!container) return;
 
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-    const reduceMotionQuery = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    );
-    if (!mediaQuery.matches || reduceMotionQuery.matches) {
-      const resetFrame = window.requestAnimationFrame(() => {
-        setActiveIndex(0);
-        setStreamOffset(0);
-        setStreamTravel(0);
-        streamTravelRef.current = 0;
-      });
-      return () => window.cancelAnimationFrame(resetFrame);
-    }
+    const measureNodes = () => {
+      const containerRect = container.getBoundingClientRect();
+      container
+        .querySelectorAll<HTMLElement>("[data-publication-id]")
+        .forEach((row) => {
+          const node = row.querySelector<HTMLElement>(
+            "[data-publication-node]",
+          );
+          const rect = (node ?? row).getBoundingClientRect();
+          const centerY = rect.top - containerRect.top + rect.height / 2;
+          row.style.setProperty("--node-top", `${centerY}px`);
+        });
+      container.style.setProperty("--node-ramp", `${TIMELINE_NODE_FADE_PX}px`);
+    };
 
-    let frame = 0;
-    let measureFrame = 0;
-    let followUpMeasureFrame = 0;
-    const updateProgress = (travel = streamTravelRef.current) => {
-      frame = 0;
-      const section = sectionRef.current;
-      const stickyViewport = stickyViewportRef.current;
-      if (!section || !stickyViewport || travel <= 0) {
-        setStreamOffset(0);
-        setActiveIndex(0);
-        return;
-      }
-      const sectionTop = section.getBoundingClientRect().top;
+    const applyProgress = () => {
+      const rect = container.getBoundingClientRect();
+      const readingY = window.innerHeight * TIMELINE_READING_LINE_RATIO;
       const progress = Math.min(
-        1,
-        Math.max(0, (PUBLIC_HEADER_HEIGHT_PX - sectionTop) / travel),
+        rect.height,
+        Math.max(0, readingY - rect.top),
       );
-      const nextOffset = travel * progress;
-      const nextIndex = Math.min(count - 1, Math.floor(progress * count));
-      setStreamOffset((current) =>
-        current === nextOffset ? current : nextOffset,
-      );
-      setActiveIndex((current) =>
-        current === nextIndex ? current : nextIndex,
-      );
-    };
-    const requestProgressUpdate = () => {
-      if (!frame) frame = window.requestAnimationFrame(() => updateProgress());
-    };
-    const measureStream = () => {
-      const streamViewport = streamViewportRef.current;
-      const stream = streamRef.current;
-      if (!streamViewport || !stream) return;
-      const nextTravel = Math.max(
-        stream.scrollHeight - streamViewport.clientHeight,
-        0,
-      );
-      if (streamTravelRef.current !== nextTravel) {
-        streamTravelRef.current = nextTravel;
-        setStreamTravel(nextTravel);
-      }
-      updateProgress(nextTravel);
-    };
-    const measureAfterLayout = () => {
-      measureStream();
-      followUpMeasureFrame = window.requestAnimationFrame(measureStream);
+      container.style.setProperty("--timeline-progress", `${progress}px`);
     };
 
-    requestProgressUpdate();
-    window.addEventListener("scroll", requestProgressUpdate, { passive: true });
-    window.addEventListener("resize", requestProgressUpdate);
-    window.addEventListener("resize", measureStream);
-    mediaQuery.addEventListener("change", requestProgressUpdate);
-    mediaQuery.addEventListener("change", measureStream);
+    const scheduleProgress = () => {
+      if (frameRef.current !== null) return;
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null;
+        applyProgress();
+      });
+    };
+
+    const remeasure = () => {
+      measureNodes();
+      applyProgress();
+    };
+
+    remeasure();
+    window.addEventListener("scroll", scheduleProgress, { passive: true });
+    window.addEventListener("resize", remeasure);
     const resizeObserver =
-      "ResizeObserver" in window ? new ResizeObserver(measureStream) : null;
-    if (resizeObserver && sectionRef.current)
-      resizeObserver.observe(sectionRef.current);
-    if (resizeObserver && stickyViewportRef.current)
-      resizeObserver.observe(stickyViewportRef.current);
-    if (resizeObserver) {
-      if (streamViewportRef.current)
-        resizeObserver.observe(streamViewportRef.current);
-      if (streamRef.current) resizeObserver.observe(streamRef.current);
-    }
-    measureFrame = window.requestAnimationFrame(measureAfterLayout);
-    return () => {
-      window.removeEventListener("scroll", requestProgressUpdate);
-      window.removeEventListener("resize", requestProgressUpdate);
-      window.removeEventListener("resize", measureStream);
-      mediaQuery.removeEventListener("change", requestProgressUpdate);
-      mediaQuery.removeEventListener("change", measureStream);
-      resizeObserver?.disconnect();
-      window.cancelAnimationFrame(measureFrame);
-      window.cancelAnimationFrame(followUpMeasureFrame);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, [
-    contentKey,
-    count,
-    sectionRef,
-    stickyViewportRef,
-    streamViewportRef,
-    streamRef,
-  ]);
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => remeasure());
+    resizeObserver?.observe(container);
 
-  return { activeIndex, streamOffset, streamTravel };
+    return () => {
+      window.removeEventListener("scroll", scheduleProgress);
+      window.removeEventListener("resize", remeasure);
+      resizeObserver?.disconnect();
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, [ids]);
+
+  return containerRef;
 }
 
 function PublicationTimeline({
   groups,
   t,
-  activeIndex,
-  streamViewportRef,
-  streamRef,
-  streamOffset,
-  scrollProgress,
   selectedPublicationId,
   onSelectPublication,
 }: {
   groups: [number, PublicationProject[]][];
   t: (key: string) => string;
-  activeIndex: number;
-  streamViewportRef: RefObject<HTMLDivElement | null>;
-  streamRef: RefObject<HTMLDivElement | null>;
-  streamOffset: number;
-  scrollProgress: number;
   selectedPublicationId: string | null;
   onSelectPublication: (id: string | null) => void;
 }) {
-  const entries = useMemo(
+  const publicationIds = useMemo(
     () =>
       groups.flatMap(([, items]) =>
-        items.map((publication) => ({ id: publication._id, publication })),
+        items.map((publication) => publication._id),
       ),
     [groups],
   );
-  const indexById = useMemo(
-    () => new Map(entries.map((entry, index) => [entry.id, index])),
-    [entries],
-  );
-
-  const selectedPubIdRef = useRef(selectedPublicationId);
-  useEffect(() => {
-    selectedPubIdRef.current = selectedPublicationId;
-  });
-
-  const selectPublication = useCallback(
-    (id: string) => {
-      onSelectPublication(selectedPubIdRef.current === id ? null : id);
-    },
-    [onSelectPublication],
-  );
+  const containerRef = useTimelineScrollProgress(publicationIds);
 
   return (
-    <>
-      <div className="flex justify-end lg:hidden">
-        <MaritimeShip className="h-9 w-20" />
-      </div>
-      <div
-        ref={streamViewportRef}
-        className="publications-stream-viewport relative mt-6 hidden min-h-0 min-w-0 flex-1 overflow-hidden lg:flex"
-      >
-        <div
-          className="pointer-events-none absolute right-1 z-10 hidden -translate-y-1/2 lg:block"
-          style={{ top: `${scrollProgress * 100}%` }}
-        >
-          <MaritimeShip className="h-10 w-20" />
-        </div>
-        <div
-          ref={streamRef}
-          style={{ transform: `translate3d(0, -${streamOffset}px, 0)` }}
-          className="relative w-full will-change-transform motion-reduce:transform-none"
-        >
-          <div className="relative pl-10 sm:pl-14">
-            <div className="absolute bottom-0 left-3 top-1 w-px bg-[var(--border)]" />
-            {groups.map(([year, items]) => (
-              <section key={year} className="relative mb-10 last:mb-0">
-                <div className="relative mb-5">
-                  <span className="absolute -left-[2.15rem] top-1.5 h-3 w-3 border-2 border-[var(--rams-red)] bg-[var(--background-light)]" />
-                  <h2 className="font-display text-lg font-semibold tracking-[0.03em] text-[var(--navy)]">
-                    {year}
-                  </h2>
-                </div>
-                <div className="space-y-5">
-                  {items.map((publication) => {
-                    const index = indexById.get(publication._id) ?? 0;
-                    return (
-                      <div key={publication._id} className="group relative">
-                        <span
-                          className={`absolute -left-[2.2rem] top-8 border-2 bg-[var(--background-light)] transition-[height,width,border-color] duration-300 motion-reduce:transition-none ${index === activeIndex ? "h-4 w-4 border-[var(--rams-red)]" : "h-3 w-3 border-[var(--ais-blue)] group-hover:border-[var(--rams-red)]"}`}
-                        />
-                        <PublicationCard
-                          project={publication}
-                          t={t}
-                          active={index === activeIndex}
-                          selected={selectedPublicationId === publication._id}
-                          publicationId={publication._id}
-                          onSelect={selectPublication}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
+    <div
+      ref={containerRef}
+      data-testid="publications-timeline"
+      className="relative mt-8"
+    >
+      <span
+        aria-hidden="true"
+        data-testid="publications-timeline-line"
+        className="absolute bottom-3 left-[7px] top-3 w-px bg-[var(--border)]"
+      />
+      <span
+        aria-hidden="true"
+        data-testid="publications-timeline-progress"
+        className="publication-timeline-progress-line absolute left-[7px] top-3 w-px bg-[var(--rams-red)]"
+      />
+      {groups.map(([year, items], index) => (
+        <section key={year} className={index === 0 ? "" : "mt-10"}>
+          <div className="relative mb-4 pl-10 sm:pl-12">
+            <h2 className="font-display text-sm font-semibold uppercase tracking-[0.18em] text-[var(--navy)]">
+              {year}
+            </h2>
+          </div>
+          <div className="space-y-5">
+            {items.map((publication) => (
+              <div
+                key={publication._id}
+                data-publication-id={publication._id}
+                className="relative pl-10 sm:pl-12"
+              >
+                <PublicationCard
+                  project={publication}
+                  t={t}
+                  selected={selectedPublicationId === publication._id}
+                  publicationId={publication._id}
+                  onSelect={onSelectPublication}
+                />
+              </div>
             ))}
           </div>
-        </div>
-      </div>
-      <div className="relative mt-6 pl-10 sm:pl-14 lg:hidden">
-        <div className="absolute bottom-0 left-3 top-1 w-px bg-[var(--border)]" />
-        {groups.map(([year, items]) => (
-          <section key={year} className="relative mb-10 last:mb-0">
-            <div className="relative mb-5">
-              <span className="absolute -left-[2.15rem] top-1.5 h-3 w-3 border-2 border-[var(--rams-red)] bg-[var(--background-light)]" />
-              <h2 className="font-display text-lg font-semibold tracking-[0.03em] text-[var(--navy)]">
-                {year}
-              </h2>
-            </div>
-            <div className="space-y-5">
-              {items.map((publication) => (
-                <div key={publication._id} className="group relative">
-                  <span className="absolute -left-[2.15rem] top-8 h-3 w-3 border-2 border-[var(--ais-blue)] bg-[var(--background-light)]" />
-                  <PublicationCard
-                    project={publication}
-                    t={t}
-                    active
-                    staged={false}
-                    selected={selectedPublicationId === publication._id}
-                    publicationId={publication._id}
-                    onSelect={selectPublication}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-    </>
+        </section>
+      ))}
+    </div>
   );
 }
 
@@ -578,10 +432,6 @@ export default function Publications() {
   const [selectedPublicationId, setSelectedPublicationId] = useState<
     string | null
   >(null);
-  const stickySectionRef = useRef<HTMLDivElement>(null);
-  const stickyViewportRef = useRef<HTMLDivElement>(null);
-  const streamViewportRef = useRef<HTMLDivElement>(null);
-  const streamRef = useRef<HTMLDivElement>(null);
 
   const filters = useMemo(
     () => readFilters(new URLSearchParams(queryString)),
@@ -671,59 +521,51 @@ export default function Publications() {
       visibleFilters.sort === "newest" ? b - a : a - b,
     );
   }, [visibleFilters.sort, visibleRecords]);
-  const publicationContentKey = `${visibleFilters.sort}:${visibleRecords.map((record) => record._id).join(",")}`;
-  const { activeIndex, streamOffset, streamTravel } =
-    useStickyPublicationProgress(
-      stickySectionRef,
-      stickyViewportRef,
-      streamViewportRef,
-      streamRef,
-      publicationContentKey,
-      visibleRecords.length,
-    );
-  const publicationScrollProgress =
-    streamTravel > 0 ? Math.min(1, streamOffset / streamTravel) : 0;
-  const stickyStyle = visibleRecords.length
-    ? ({ "--publication-stream-travel": `${streamTravel}px` } as CSSProperties)
-    : undefined;
 
   return (
     <section className="bg-[var(--background-light)]">
-      <PublicContainer className="py-8 sm:py-10 lg:py-12">
-        <header className="max-w-3xl border-b border-[var(--border)] pb-6">
-          <p className="eyebrow">{t("heroEyebrow")}</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold leading-tight tracking-[-0.04em] text-[var(--navy)] sm:text-5xl">
+      <PublicContainer className="py-10 sm:py-12 lg:py-14">
+        <header className="max-w-3xl border-b border-[var(--border)] pb-8">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[var(--gray)]">
+            {t("heroEyebrow")}
+          </p>
+          <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-[var(--navy)] sm:text-4xl">
             {t("heroTitle")}
           </h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--slate)] sm:text-lg">
+          <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--gray)]">
             {t("heroDescription")}
           </p>
         </header>
 
-        <div
-          ref={stickySectionRef}
-          style={stickyStyle}
-          className={
-            visibleRecords.length ? "publications-scroll-track relative" : ""
-          }
-        >
-          <div className="publications-sticky-grid pt-6 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:gap-8 lg:items-start">
-            <div className="lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileFiltersOpen(true)}
-                className="flex w-full items-center justify-between border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--navy)] focus:outline-none focus:ring-2 focus:ring-[var(--rams-red)]/25"
-              >
-                <span>{t("filterPublications")}</span>
-                <span aria-hidden="true">＋</span>
-              </button>
-            </div>
-
-            <aside
-              className="hidden border-r border-[var(--border)] pr-8 lg:block lg:sticky lg:top-[4.5rem] lg:self-start"
-              aria-label={t("filterPublications")}
+        <div className="pt-8 lg:grid lg:grid-cols-[26%_minmax(0,1fr)] lg:items-start lg:gap-12">
+          <div className="lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(true)}
+              className="flex w-full items-center justify-between rounded-[3px] border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--navy)] focus:outline-none focus:ring-2 focus:ring-[var(--navy)]/20"
             >
-              <div className="lg:max-h-[calc(100vh-4.5rem-2rem)] lg:overflow-y-auto">
+              <span>{t("filterPublications")}</span>
+              <span aria-hidden="true">＋</span>
+            </button>
+          </div>
+
+          <aside
+            className="hidden lg:sticky lg:top-[5.5rem] lg:block lg:self-start"
+            aria-label={t("filterPublications")}
+          >
+            <div className="lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
+              <label htmlFor="publication-search-desktop" className="sr-only">
+                {t("search")}
+              </label>
+              <input
+                id="publication-search-desktop"
+                type="search"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className={FIELD_CLASS}
+              />
+              <div className="mt-6">
                 <PublicationFiltersPanel
                   filters={visibleFilters}
                   years={years}
@@ -735,92 +577,78 @@ export default function Publications() {
                   prefix="desktop"
                 />
               </div>
-            </aside>
-
-            <div
-              ref={stickyViewportRef}
-              className={
-                visibleRecords.length
-                  ? "lg:sticky lg:top-[4.5rem] lg:h-[calc(100vh-4.5rem)] lg:overflow-hidden"
-                  : ""
-              }
-            >
-              <main className="mt-6 min-w-0 lg:mt-0 lg:flex lg:h-full lg:flex-col">
-                <div className="flex shrink-0 flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end sm:justify-end">
-                  <label className="flex items-center gap-3 text-sm text-[var(--gray)]">
-                    {t("sort")}
-                    <select
-                      value={filters.sort}
-                      onChange={(event) =>
-                        updateFilters({ sort: event.target.value as SortOrder })
-                      }
-                      className="border-0 border-b border-[var(--border)] bg-transparent py-1 pl-1 pr-7 text-sm font-semibold text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
-                    >
-                      <option value="newest">{t("newestFirst")}</option>
-                      <option value="oldest">{t("oldestFirst")}</option>
-                    </select>
-                  </label>
-                </div>
-
-                <label htmlFor="publication-search" className="sr-only">
-                  {t("search")}
-                </label>
-                <input
-                  id="publication-search"
-                  type="search"
-                  value={searchInput}
-                  onChange={(event) => {
-                    setSearchInput(event.target.value);
-                  }}
-                  placeholder={t("searchPlaceholder")}
-                  className="mt-6 w-full border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--navy)] outline-none placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[var(--rams-red)]/15"
-                />
-
-                {loading && visibleRecords.length === 0 ? (
-                  <div className="mt-8">
-                    <PublicLoading label={t("loading")} />
-                  </div>
-                ) : error ? (
-                  <div className="mt-8">
-                    <PublicError
-                      message={t("error")}
-                      onRetry={() => setReloadToken((value) => value + 1)}
-                    />
-                  </div>
-                ) : visibleRecords.length === 0 ? (
-                  <div className="mt-8 border border-dashed border-[var(--border)] bg-white p-10 text-center">
-                    <h2 className="font-display text-2xl font-semibold text-[var(--navy)]">
-                      {t("emptyTitle")}
-                    </h2>
-                    <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--slate)]">
-                      {t("emptyDescription")}
-                    </p>
-                    {isActive(visibleFilters) && (
-                      <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="mt-6 text-sm font-semibold text-[var(--rams-red)] underline underline-offset-4"
-                      >
-                        {t("clearAll")}
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <PublicationTimeline
-                    groups={groups}
-                    t={t}
-                    activeIndex={activeIndex}
-                    streamViewportRef={streamViewportRef}
-                    streamRef={streamRef}
-                    streamOffset={streamOffset}
-                    scrollProgress={publicationScrollProgress}
-                    selectedPublicationId={selectedPublicationId}
-                    onSelectPublication={setSelectedPublicationId}
-                  />
-                )}
-              </main>
             </div>
-          </div>
+          </aside>
+
+          <main className="relative mt-6 min-w-0 lg:mt-0">
+            <div className="flex items-center justify-end gap-4 border-b border-[var(--border)] pb-4">
+              <label className="flex items-center gap-2 text-sm text-[var(--gray)]">
+                {t("sort")}
+                <select
+                  value={filters.sort}
+                  onChange={(event) =>
+                    updateFilters({ sort: event.target.value as SortOrder })
+                  }
+                  className="rounded-[3px] border border-[var(--border)] bg-white py-1 pl-2 pr-7 text-sm font-medium text-[var(--navy)] outline-none transition-colors focus:border-[var(--navy)]"
+                >
+                  <option value="newest">{t("newestFirst")}</option>
+                  <option value="oldest">{t("oldestFirst")}</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-5 lg:hidden">
+              <label htmlFor="publication-search-mobile" className="sr-only">
+                {t("search")}
+              </label>
+              <input
+                id="publication-search-mobile"
+                type="search"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className={FIELD_CLASS}
+              />
+            </div>
+
+            {loading && visibleRecords.length === 0 ? (
+              <div className="mt-8">
+                <PublicLoading label={t("loading")} />
+              </div>
+            ) : error ? (
+              <div className="mt-8">
+                <PublicError
+                  message={t("error")}
+                  onRetry={() => setReloadToken((value) => value + 1)}
+                />
+              </div>
+            ) : visibleRecords.length === 0 ? (
+              <div className="mt-8 rounded-[3px] border border-dashed border-[var(--border)] bg-white p-10 text-center">
+                <h2 className="font-display text-xl font-semibold text-[var(--navy)]">
+                  {t("emptyTitle")}
+                </h2>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--gray)]">
+                  {t("emptyDescription")}
+                </p>
+                {isActive(visibleFilters) && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-6 text-sm font-semibold text-[var(--charcoal)] underline decoration-[var(--gray)]/40 underline-offset-4 hover:text-[var(--navy)]"
+                  >
+                    {t("clearAll")}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <PublicationTimeline
+                groups={groups}
+                t={t}
+                selectedPublicationId={selectedPublicationId}
+                onSelectPublication={setSelectedPublicationId}
+              />
+            )}
+          </main>
         </div>
       </PublicContainer>
 
@@ -836,25 +664,25 @@ export default function Publications() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="mobile-publication-filters-title"
-            className="absolute inset-y-0 right-0 w-[min(90vw,24rem)] overflow-y-auto bg-[var(--background-light)] p-6 shadow-[-12px_0_30px_rgba(11,32,56,0.12)]"
+            className="absolute inset-y-0 right-0 w-[min(90vw,24rem)] overflow-y-auto border-l border-[var(--border)] bg-white p-6"
           >
             <div className="flex items-center justify-between border-b border-[var(--border)] pb-5">
               <h2
                 id="mobile-publication-filters-title"
-                className="font-display text-xl font-semibold text-[var(--navy)]"
+                className="font-display text-lg font-semibold text-[var(--navy)]"
               >
                 {t("filterPublications")}
               </h2>
               <button
                 type="button"
                 onClick={() => setMobileFiltersOpen(false)}
-                className="text-2xl leading-none text-[var(--gray)] focus:outline-none focus:ring-2 focus:ring-[var(--rams-red)]/25"
+                className="text-2xl leading-none text-[var(--gray)] focus:outline-none focus:ring-2 focus:ring-[var(--navy)]/20"
                 aria-label={t("closeFilters")}
               >
                 ×
               </button>
             </div>
-            <div className="py-7">
+            <div className="py-6">
               <PublicationFiltersPanel
                 filters={visibleFilters}
                 years={years}
@@ -866,11 +694,11 @@ export default function Publications() {
                 prefix="mobile"
               />
             </div>
-            <div className="sticky bottom-0 -mx-6 border-t border-[var(--border)] bg-[var(--background-light)] px-6 pt-4">
+            <div className="sticky bottom-0 -mx-6 border-t border-[var(--border)] bg-white px-6 pt-4">
               <button
                 type="button"
                 onClick={() => setMobileFiltersOpen(false)}
-                className="w-full bg-[var(--navy)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--rams-red)]"
+                className="w-full rounded-[3px] bg-[var(--navy)] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--navy-deep)]"
               >
                 {t("apply")}
               </button>
