@@ -376,12 +376,12 @@ function PublicationTimeline({
       <span
         aria-hidden="true"
         data-testid="publications-timeline-line"
-        className="absolute bottom-3 left-[7px] top-3 w-px bg-[var(--border)]"
+        className="absolute bottom-3 left-[7px] top-3 w-0.5 -translate-x-1/2 bg-[var(--border)]"
       />
       <span
         aria-hidden="true"
         data-testid="publications-timeline-progress"
-        className="publication-timeline-progress-line absolute left-[7px] top-3 w-px bg-[var(--rams-red)]"
+        className="publication-timeline-progress-line absolute left-[7px] top-3 w-[3px] -translate-x-1/2 bg-[var(--rams-red)]"
       />
       {groups.map(([year, items], index) => (
         <section key={year} className={index === 0 ? "" : "mt-10"}>
