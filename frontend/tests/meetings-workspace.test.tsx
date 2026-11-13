@@ -354,7 +354,7 @@ describe("meetings workspace overview", () => {
     expect(screen.queryByText("Kickoff")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Open meeting" }),
-    ).toHaveAttribute("href", "/dashboard/meetings/next");
+    ).toHaveAttribute("href", "/meetings/next");
   });
 
   it("renders a clear empty state when nothing is scheduled", async () => {
@@ -470,7 +470,7 @@ describe("workspace routes", () => {
       screen.getByRole("link", { name: "Schedule meeting" }),
     ).toHaveAttribute(
       "href",
-      expect.stringMatching(/^\/dashboard\/meetings\/new/),
+      expect.stringMatching(/^\/meetings\/new/),
     );
   });
 
@@ -488,6 +488,12 @@ describe("workspace routes", () => {
       expect(
         screen.getByRole("heading", { name: "Meetings" }),
       ).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("link", { name: "Schedule meeting" }),
+    ).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/dashboard\/meetings\/new/),
     );
   });
 });

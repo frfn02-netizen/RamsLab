@@ -35,7 +35,7 @@ function MeetingRow({
 }) {
   return (
     <Link
-      href={`/dashboard/meetings/${meeting._id}`}
+      href={`/meetings/${meeting._id}`}
       className="flex items-center gap-4 px-5 py-4 transition hover:bg-[var(--rams-gray-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
     >
       <DayChip value={meeting.startAt} />
@@ -140,7 +140,7 @@ export default function MyMeetings() {
           title="My Meetings"
           description="Meetings you organize or attend, with upcoming sessions first."
           action={
-            <LinkButton href="/dashboard/meetings/new">
+            <LinkButton href="/meetings/new">
               Schedule meeting
             </LinkButton>
           }
@@ -160,7 +160,7 @@ export default function MyMeetings() {
             title="No meetings yet"
             description="When you organize or join a meeting, it will appear here."
             action={
-              <LinkButton href="/dashboard/meetings/new">
+              <LinkButton href="/meetings/new">
                 Schedule meeting
               </LinkButton>
             }

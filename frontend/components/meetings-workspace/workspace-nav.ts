@@ -42,7 +42,11 @@ export function meetingsPageTitle(pathname: string) {
   const item = meetingsNavItems.find((candidate) =>
     isMeetingsNavItemActive(current, candidate.href),
   );
-  return item?.label ?? "Meetings workspace";
+  if (item) return item.label;
+  if (current === "/meetings/new") return "Schedule meeting";
+  if (/^\/meetings\/[^/]+\/edit$/.test(current)) return "Edit meeting";
+  if (/^\/meetings\/[^/]+$/.test(current)) return "Meeting details";
+  return "Meetings workspace";
 }
 
 export function canAccessMeetingsWorkspace(role: UserRole | undefined) {

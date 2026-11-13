@@ -82,7 +82,7 @@ export default function MeetingsOverview() {
           title="Meetings workspace"
           description="Plan internal lab meetings, review the calendar, and follow the meetings you organize or attend."
           action={
-            <LinkButton href="/dashboard/meetings/new">
+            <LinkButton href="/meetings/new">
               Schedule meeting
             </LinkButton>
           }
@@ -131,7 +131,7 @@ export default function MeetingsOverview() {
                         </p>
                       )}
                       <div className="mt-5 flex flex-wrap gap-2">
-                        <LinkButton href={`/dashboard/meetings/${next._id}`}>
+                        <LinkButton href={`/meetings/${next._id}`}>
                           Open meeting
                         </LinkButton>
                         <LinkButton
@@ -149,7 +149,7 @@ export default function MeetingsOverview() {
                   title="No upcoming meetings"
                   description="The workspace agenda is clear. Schedule the next lab meeting to get started."
                   action={
-                    <LinkButton href="/dashboard/meetings/new">
+                    <LinkButton href="/meetings/new">
                       Schedule meeting
                     </LinkButton>
                   }
@@ -209,7 +209,7 @@ export default function MeetingsOverview() {
               {later.map((meeting) => (
                 <Link
                   key={meeting._id}
-                  href={`/dashboard/meetings/${meeting._id}`}
+                  href={`/meetings/${meeting._id}`}
                   className="flex items-center gap-4 px-5 py-4 transition hover:bg-[var(--rams-gray-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
                 >
                   <DayChip value={meeting.startAt} />

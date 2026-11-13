@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function MeetingsCalendarPage() {
-  return <MeetingsPage />;
+  return <MeetingsPage basePath="/meetings" />;
 }

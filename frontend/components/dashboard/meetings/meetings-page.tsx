@@ -45,7 +45,11 @@ function CalendarSkeleton() {
   );
 }
 
-export default function MeetingsPage() {
+export default function MeetingsPage({
+  basePath = "/dashboard/meetings",
+}: {
+  basePath?: string;
+}) {
   const [cursor, setCursor] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
@@ -114,7 +118,7 @@ export default function MeetingsPage() {
           description="Schedule and review internal lab meetings. Select a day to see its agenda."
           action={
             <LinkButton
-              href={`/dashboard/meetings/new?date=${dayKey(selectedDate)}`}
+              href={`${basePath}/new?date=${dayKey(selectedDate)}`}
             >
               Schedule meeting
             </LinkButton>
@@ -256,7 +260,7 @@ export default function MeetingsPage() {
                     description="Pick another day, or schedule a meeting for this date."
                     action={
                       <LinkButton
-                        href={`/dashboard/meetings/new?date=${dayKey(
+                        href={`${basePath}/new?date=${dayKey(
                           selectedDate,
                         )}`}
                       >
@@ -270,7 +274,7 @@ export default function MeetingsPage() {
                   {selectedMeetings.map((meeting) => (
                     <li key={meeting._id} className="py-3 first:pt-0 last:pb-0">
                       <Link
-                        href={`/dashboard/meetings/${meeting._id}`}
+                        href={`${basePath}/${meeting._id}`}
                         className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2"
                       >
                         <p className="text-sm font-semibold text-[var(--rams-charcoal)] hover:text-[var(--rams-red)]">

@@ -23,7 +23,13 @@ import {
 } from "@/lib/meetings/calendar";
 import type { Meeting } from "@/types/meetings";
 
-export default function MeetingDetail({ id }: { id: string }) {
+export default function MeetingDetail({
+  id,
+  basePath = "/dashboard/meetings",
+}: {
+  id: string;
+  basePath?: string;
+}) {
   const router = useRouter();
   const { success, error: notifyError } = useToast();
   const [meeting, setMeeting] = useState<Meeting | null>(null);
@@ -63,7 +69,7 @@ export default function MeetingDetail({ id }: { id: string }) {
     try {
       await deleteMeeting(meeting._id);
       success("Meeting deleted.");
-      router.push("/dashboard/meetings");
+      router.push(basePath);
     } catch (reason) {
       notifyError(getUserFacingError(reason));
       setDeleting(false);
@@ -80,7 +86,7 @@ export default function MeetingDetail({ id }: { id: string }) {
       <div className="p-5 sm:p-7 lg:p-9">
         <div className="mx-auto max-w-3xl space-y-5">
           <Link
-            href="/dashboard/meetings"
+            href={basePath}
             className="text-sm font-bold text-[var(--rams-red)]"
           >
             ← Meetings
@@ -95,7 +101,7 @@ export default function MeetingDetail({ id }: { id: string }) {
     <div className="p-5 sm:p-7 lg:p-9">
       <div className="mx-auto max-w-6xl space-y-7">
         <Link
-          href="/dashboard/meetings"
+          href={basePath}
           className="text-sm font-bold text-[var(--rams-red)]"
         >
           ← Meetings
@@ -105,7 +111,7 @@ export default function MeetingDetail({ id }: { id: string }) {
           title={meeting.title}
           action={
             meeting.canEdit ? (
-              <LinkButton href={`/dashboard/meetings/${meeting._id}/edit`}>
+              <LinkButton href={`${basePath}/${meeting._id}/edit`}>
                 Edit meeting
               </LinkButton>
             ) : null

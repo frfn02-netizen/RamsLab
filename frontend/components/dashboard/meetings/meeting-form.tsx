@@ -92,9 +92,11 @@ function roleTone(role: UserDirectoryEntry["role"]) {
 export default function MeetingForm({
   id,
   initialDate,
+  basePath = "/dashboard/meetings",
 }: {
   id?: string;
   initialDate?: string;
+  basePath?: string;
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -321,7 +323,7 @@ export default function MeetingForm({
       } else {
         success(id ? "Meeting updated." : "Meeting scheduled.");
       }
-      router.push(`/dashboard/meetings/${savedId}`);
+      router.push(`${basePath}/${savedId}`);
     } catch (reason) {
       notifyError(getUserFacingError(reason));
     } finally {
@@ -338,7 +340,7 @@ export default function MeetingForm({
       <div className="p-5 sm:p-7 lg:p-9">
         <div className="mx-auto max-w-3xl space-y-5">
           <Link
-            href="/dashboard/meetings"
+            href={basePath}
             className="text-sm font-bold text-[var(--rams-red)]"
           >
             ← Meetings
@@ -349,7 +351,7 @@ export default function MeetingForm({
     );
   }
 
-  const backHref = id ? `/dashboard/meetings/${id}` : "/dashboard/meetings";
+  const backHref = id ? `${basePath}/${id}` : basePath;
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
