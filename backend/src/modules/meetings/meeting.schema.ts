@@ -1,6 +1,17 @@
 import { z } from "zod";
 import { isSafeHttpUrl } from "../../lib/url-security.js";
 
+export const MAX_MEETING_ATTACHMENTS = 10;
+export const MAX_MEETING_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+export const MEETING_ATTACHMENT_EXTENSION = /\.(pdf|ppt|pptx|doc|docx)$/i;
+export const MEETING_ATTACHMENT_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
 const objectId = z
   .string()
   .trim()

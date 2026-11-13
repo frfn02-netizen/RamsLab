@@ -4,7 +4,12 @@ import { ObjectId } from "mongodb";
 
 import app from "../src/app.js";
 import { connectDatabase } from "../src/config/database.js";
-import { getMeetingsCollection } from "../src/modules/meetings/meeting.repository.js";
+import {
+  addMeetingAttachment,
+  getMeetingsCollection,
+} from "../src/modules/meetings/meeting.repository.js";
+import { MAX_MEETING_ATTACHMENTS } from "../src/modules/meetings/meeting.schema.js";
+import type { MeetingAttachment } from "../src/modules/meetings/meeting.types.js";
 import { getUsersCollection } from "../src/modules/users/user.repository.js";
 import {
   ensureTestUsers,
@@ -34,6 +39,38 @@ async function cleanupMeetings() {
     },
     title: { $regex: `^${TITLE_PREFIX}` },
   });
+}
+
+function buildSeedAttachment(index: number, stamp: number): MeetingAttachment {
+  return {
+    id: `seed-${stamp}-${index}`,
+    url: `https://res.cloudinary.com/test/raw/upload/seed-${stamp}-${index}.pdf`,
+    publicId: `rams-platform/meetings/seed-${stamp}-${index}`,
+    filename: `seed-${stamp}-${index}.pdf`,
+    mimeType: "application/pdf",
+    size: 1024,
+    uploadedAt: new Date(),
+  };
+}
+
+async function seedMeetingWithAttachments(count: number): Promise<string> {
+  const now = new Date();
+  const stamp = now.getTime();
+  const result = await getMeetingsCollection().insertOne({
+    title: `${TITLE_PREFIX} attachment cap ${stamp}`,
+    description: "",
+    startAt: new Date("2031-01-01T09:00:00.000Z"),
+    endAt: new Date("2031-01-01T10:00:00.000Z"),
+    createdBy: new ObjectId(TEST_DOSEN_USER_ID),
+    participantIds: [],
+    meetingLink: null,
+    attachments: Array.from({ length: count }, (_, index) =>
+      buildSeedAttachment(index, stamp),
+    ),
+    createdAt: now,
+    updatedAt: now,
+  });
+  return result.insertedId.toHexString();
 }
 
 beforeAll(async () => {
@@ -192,6 +229,68 @@ describe("Meetings API", () => {
       .send("not allowed");
 
     expect(response.status).toBe(415);
+  });
+
+  it("rejects an upload once the meeting already has 10 attachments", async () => {
+    const fullId = await seedMeetingWithAttachments(MAX_MEETING_ATTACHMENTS);
+
+    const response = await request(app)
+      .post(`/api/meetings/${fullId}/attachments`)
+      .set("Cookie", `rams_access_token=${creatorToken}`)
+      .set("Content-Type", "application/pdf")
+      .set("X-Original-Filename", "extra.pdf")
+      .send(Buffer.from("%PDF-1.4 attachment cap test"));
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      "A meeting can have at most 10 attachments",
+    );
+
+    const stored = await getMeetingsCollection().findOne({
+      _id: new ObjectId(fullId),
+    });
+    expect(stored?.attachments).toHaveLength(MAX_MEETING_ATTACHMENTS);
+  });
+
+  it("enforces the attachment cap atomically under concurrent inserts", async () => {
+    const nearFullId = await seedMeetingWithAttachments(
+      MAX_MEETING_ATTACHMENTS - 1,
+    );
+    const attempts = 5;
+
+    const results = await Promise.all(
+      Array.from({ length: attempts }, (_, index) =>
+        addMeetingAttachment(
+          nearFullId,
+          {
+            ...buildSeedAttachment(index, Date.now()),
+            id: `race-${index}`,
+            publicId: `rams-platform/meetings/race-${index}`,
+          },
+          MAX_MEETING_ATTACHMENTS,
+        ),
+      ),
+    );
+
+    expect(results.filter((result) => result.status === "ok")).toHaveLength(1);
+    expect(
+      results.filter((result) => result.status === "limit_reached"),
+    ).toHaveLength(attempts - 1);
+
+    const stored = await getMeetingsCollection().findOne({
+      _id: new ObjectId(nearFullId),
+    });
+    expect(stored?.attachments).toHaveLength(MAX_MEETING_ATTACHMENTS);
+  });
+
+  it("reports not_found when adding an attachment to a missing meeting", async () => {
+    const result = await addMeetingAttachment(
+      new ObjectId().toHexString(),
+      buildSeedAttachment(0, Date.now()),
+      MAX_MEETING_ATTACHMENTS,
+    );
+
+    expect(result.status).toBe("not_found");
   });
 
   it("exposes a participant directory only to staff", async () => {

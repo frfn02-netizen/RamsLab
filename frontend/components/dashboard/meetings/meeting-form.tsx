@@ -54,6 +54,12 @@ const ALLOWED_ATTACHMENT_TYPES = new Set([
 ]);
 const ALLOWED_ATTACHMENT_EXTENSION = /\.(pdf|ppt|pptx|doc|docx)$/i;
 
+type PendingFile = { key: string; file: File };
+
+function createPendingFile(file: File): PendingFile {
+  return { key: crypto.randomUUID(), file };
+}
+
 type FormState = {
   title: string;
   description: string;
@@ -98,7 +104,7 @@ export default function MeetingForm({
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [users, setUsers] = useState<UserDirectoryEntry[]>([]);
   const [userQuery, setUserQuery] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<PendingFile[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<MeetingConflict[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
@@ -237,7 +243,8 @@ export default function MeetingForm({
       if (
         next.some(
           (existing) =>
-            existing.name === file.name && existing.size === file.size,
+            existing.file.name === file.name &&
+            existing.file.size === file.size,
         )
       ) {
         continue;
@@ -246,7 +253,7 @@ export default function MeetingForm({
         setFileError("A meeting can have at most 10 attachments.");
         break;
       }
-      next.push(file);
+      next.push(createPendingFile(file));
     }
     setFiles(next);
   }
@@ -299,7 +306,7 @@ export default function MeetingForm({
       const savedId = result.meeting._id;
 
       let uploadFailed = false;
-      for (const file of files) {
+      for (const { file } of files) {
         try {
           await uploadMeetingAttachment(savedId, file);
         } catch {
@@ -564,9 +571,9 @@ export default function MeetingForm({
 
               {files.length > 0 && (
                 <ul className="divide-y divide-black/8 border border-black/10">
-                  {files.map((file, index) => (
+                  {files.map(({ key, file }, index) => (
                     <li
-                      key={`${file.name}-${file.size}`}
+                      key={key}
                       className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
                     >
                       <div className="min-w-0">

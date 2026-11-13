@@ -19,6 +19,7 @@ import {
   toObjectId,
   updateMeeting as updateMeetingRecord,
 } from "./meeting.repository.js";
+import { MAX_MEETING_ATTACHMENTS } from "./meeting.schema.js";
 import type { ConflictCheckInput, CreateMeetingInput, UpdateMeetingInput } from "./meeting.schema.js";
 import type {
   Meeting,
@@ -299,9 +300,14 @@ export async function deleteMeeting(id: string, actor: JwtPayload) {
   assertCanModify(existing, actor);
 
   await deleteMeetingRecord(id);
-  await Promise.allSettled(
+  await Promise.all(
     (existing.attachments ?? []).map((attachment) =>
-      removeCloudinaryAttachment(attachment.publicId),
+      removeCloudinaryAttachment(attachment.publicId).catch((error) => {
+        console.error(
+          `[meetings] Failed to delete Cloudinary attachment ${attachment.publicId}`,
+          error,
+        );
+      }),
     ),
   );
 }
@@ -320,7 +326,7 @@ export async function addAttachment(
   if (!meeting) throw new HttpError(404, "Meeting not found");
   assertCanModify(meeting, actor);
 
-  if ((meeting.attachments ?? []).length >= 10) {
+  if ((meeting.attachments ?? []).length >= MAX_MEETING_ATTACHMENTS) {
     throw new HttpError(400, "A meeting can have at most 10 attachments");
   }
 
@@ -329,21 +335,34 @@ export async function addAttachment(
     file.originalFilename,
   );
 
-  const updated = await addMeetingAttachment(id, {
-    id: randomUUID(),
-    url: uploaded.url,
-    publicId: uploaded.publicId,
-    filename: uploaded.filename,
-    mimeType: file.mimeType,
-    size: file.size,
-    uploadedAt: new Date(),
-  });
-  if (!updated) {
-    await removeCloudinaryAttachment(uploaded.publicId).catch(() => undefined);
+  const result = await addMeetingAttachment(
+    id,
+    {
+      id: randomUUID(),
+      url: uploaded.url,
+      publicId: uploaded.publicId,
+      filename: uploaded.filename,
+      mimeType: file.mimeType,
+      size: file.size,
+      uploadedAt: new Date(),
+    },
+    MAX_MEETING_ATTACHMENTS,
+  );
+
+  if (result.status !== "ok") {
+    await removeCloudinaryAttachment(uploaded.publicId).catch((error) => {
+      console.error(
+        `[meetings] Failed to clean up orphaned Cloudinary attachment ${uploaded.publicId}`,
+        error,
+      );
+    });
+    if (result.status === "limit_reached") {
+      throw new HttpError(400, "A meeting can have at most 10 attachments");
+    }
     throw new HttpError(404, "Meeting not found");
   }
 
-  const [response] = await hydrate([updated], actor);
+  const [response] = await hydrate([result.meeting], actor);
   return response;
 }
 
@@ -362,7 +381,12 @@ export async function removeAttachment(
   );
   if (!removed) throw new HttpError(404, "Attachment not found");
   if (removed.publicId) {
-    await removeCloudinaryAttachment(removed.publicId).catch(() => undefined);
+    await removeCloudinaryAttachment(removed.publicId).catch((error) => {
+      console.error(
+        `[meetings] Failed to delete Cloudinary attachment ${removed.publicId}`,
+        error,
+      );
+    });
   }
   if (!updated) throw new HttpError(404, "Meeting not found");
 

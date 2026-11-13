@@ -6,6 +6,11 @@ import type { Meeting, MeetingAttachment } from "./meeting.types.js";
 
 const MEETINGS_COLLECTION = "meetings";
 
+export type AddMeetingAttachmentResult =
+  | { status: "ok"; meeting: Meeting }
+  | { status: "not_found" }
+  | { status: "limit_reached" };
+
 export function getMeetingsCollection(): Collection<Meeting> {
   return getDatabase().collection<Meeting>(MEETINGS_COLLECTION);
 }
@@ -127,17 +132,32 @@ export async function deleteMeeting(id: string): Promise<boolean> {
 export async function addMeetingAttachment(
   id: string,
   attachment: MeetingAttachment,
-): Promise<Meeting | null> {
+  maxAttachments: number,
+): Promise<AddMeetingAttachmentResult> {
   const objectId = toObjectId(id);
-  if (!objectId) return null;
-  return getMeetingsCollection().findOneAndUpdate(
-    { _id: objectId },
+  if (!objectId) return { status: "not_found" };
+
+  const meeting = await getMeetingsCollection().findOneAndUpdate(
+    {
+      _id: objectId,
+      $expr: {
+        $lt: [{ $size: { $ifNull: ["$attachments", []] } }, maxAttachments],
+      },
+    },
     {
       $push: { attachments: attachment },
       $set: { updatedAt: new Date() },
     },
     { returnDocument: "after" },
   );
+
+  if (meeting) return { status: "ok", meeting };
+
+  const existing = await getMeetingsCollection().findOne(
+    { _id: objectId },
+    { projection: { _id: 1 } },
+  );
+  return existing ? { status: "limit_reached" } : { status: "not_found" };
 }
 
 export async function removeMeetingAttachment(

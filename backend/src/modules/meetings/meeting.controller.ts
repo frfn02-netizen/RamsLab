@@ -5,6 +5,9 @@ import { normalizeAttachmentFilename } from "../../lib/cloudinary.js";
 import {
   conflictCheckSchema,
   createMeetingSchema,
+  MEETING_ATTACHMENT_EXTENSION,
+  MEETING_ATTACHMENT_MIME_TYPES,
+  MAX_MEETING_ATTACHMENT_BYTES,
   updateMeetingSchema,
 } from "./meeting.schema.js";
 import {
@@ -17,16 +20,6 @@ import {
   removeAttachment,
   updateMeeting,
 } from "./meeting.service.js";
-
-const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
-const ALLOWED_ATTACHMENT_TYPES = new Set([
-  "application/pdf",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-const ALLOWED_ATTACHMENT_EXTENSION = /\.(pdf|ppt|pptx|doc|docx)$/i;
 
 function fail(res: Response, error: unknown, fallback: string) {
   if (error instanceof ZodError) {
@@ -130,13 +123,13 @@ export async function uploadAttachmentController(req: Request, res: Response) {
       .toLowerCase();
     const buffer = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
 
-    if (!ALLOWED_ATTACHMENT_TYPES.has(contentType)) {
+    if (!MEETING_ATTACHMENT_MIME_TYPES.has(contentType)) {
       throw new HttpError(
         415,
         "Only PDF, PowerPoint, and Word documents are supported",
       );
     }
-    if (!buffer.length || buffer.length > MAX_ATTACHMENT_BYTES) {
+    if (!buffer.length || buffer.length > MAX_MEETING_ATTACHMENT_BYTES) {
       throw new HttpError(413, "File must be between 1 byte and 20 MB");
     }
 
@@ -146,7 +139,7 @@ export async function uploadAttachmentController(req: Request, res: Response) {
         ? headerValue
         : `attachment-${Date.now()}`;
     const filename = normalizeAttachmentFilename(rawFilename);
-    if (!ALLOWED_ATTACHMENT_EXTENSION.test(filename)) {
+    if (!MEETING_ATTACHMENT_EXTENSION.test(filename)) {
       throw new HttpError(
         400,
         "Filename must end with .pdf, .ppt, .pptx, .doc, or .docx",
