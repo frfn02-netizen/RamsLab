@@ -645,7 +645,9 @@ describe("alumni review workflow", () => {
 
     const approved = await approveProfile(alumniId);
     expect(approved.status).toBe(200);
-    const publicDetail = await request(app).get(`/api/public/alumni/${alumniId}`);
+    const publicDetail = await request(app).get(
+      `/api/public/alumni/${alumniId}`,
+    );
     expect(publicDetail.status).toBe(200);
     expect(publicDetail.body.data.program).toBe(replacement);
   });
@@ -1206,7 +1208,10 @@ describe("alumni cohort year (tahunAngkatan)", () => {
     expect(unrelated.status).toBe(200);
 
     // Re-sending the stored year is an echo, not a change.
-    const echoed = await saveProfile(token, { tahunAngkatan: 2002, angkatan: 3 });
+    const echoed = await saveProfile(token, {
+      tahunAngkatan: 2002,
+      angkatan: 3,
+    });
     expect(echoed.status).toBe(200);
     expect(echoed.body.data.tahunAngkatan).toBe(2002);
     expect(echoed.body.data.angkatan).toBe(89);

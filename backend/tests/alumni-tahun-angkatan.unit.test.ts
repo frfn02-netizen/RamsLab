@@ -68,9 +68,9 @@ describe("tahunAngkatan schema contract", () => {
     expect(
       updateMyAlumniSchema.safeParse({ tahunAngkatan: "2015" }).success,
     ).toBe(false);
-    expect(
-      updateAlumniSchema.safeParse({ tahunAngkatan: 2101 }).success,
-    ).toBe(false);
+    expect(updateAlumniSchema.safeParse({ tahunAngkatan: 2101 }).success).toBe(
+      false,
+    );
   });
 
   it("keeps the batch number range unchanged", () => {
@@ -121,7 +121,8 @@ describe("alumni program schema contract", () => {
       updateMyAlumniSchema.safeParse({ program: "Naval Architecture" }).success,
     ).toBe(false);
     expect(
-      updateAlumniSchema.safeParse({ program: "S1 Teknik Sistem Perkapalan" }).success,
+      updateAlumniSchema.safeParse({ program: "S1 Teknik Sistem Perkapalan" })
+        .success,
     ).toBe(false);
   });
 });

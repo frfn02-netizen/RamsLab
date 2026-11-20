@@ -14,7 +14,8 @@ const createdAlumniIds: ObjectId[] = [];
 let sequence = 0;
 
 beforeAll(async () => {
-  if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is required for alumni registration tests");
+  if (!process.env.JWT_SECRET)
+    throw new Error("JWT_SECRET is required for alumni registration tests");
   await connectDatabase();
   await ensureTestUsers();
 });
@@ -44,20 +45,23 @@ describe("alumni registration cohort year", () => {
   it.each([
     [2005, 45],
     [2015, 55],
-  ])("stores P%s when Tahun Angkatan is %s", async (tahunAngkatan, expectedP) => {
-    const email = uniqueEmail(String(tahunAngkatan));
-    const registered = await register({
-      fullName: "Cohort Alumni",
-      tahunAngkatan,
-      email,
-      password: "VitestRegister1!",
-      confirmPassword: "VitestRegister1!",
-    });
+  ])(
+    "stores P%s when Tahun Angkatan is %s",
+    async (tahunAngkatan, expectedP) => {
+      const email = uniqueEmail(String(tahunAngkatan));
+      const registered = await register({
+        fullName: "Cohort Alumni",
+        tahunAngkatan,
+        email,
+        password: "VitestRegister1!",
+        confirmPassword: "VitestRegister1!",
+      });
 
-    expect(registered.status).toBe(201);
-    const shell = await readShell(email);
-    expect(shell).toMatchObject({ tahunAngkatan, angkatan: expectedP });
-  });
+      expect(registered.status).toBe(201);
+      const shell = await readShell(email);
+      expect(shell).toMatchObject({ tahunAngkatan, angkatan: expectedP });
+    },
+  );
 
   it("rejects a registration without Tahun Angkatan, not a missing manual P", async () => {
     const email = uniqueEmail("missing-year");
@@ -69,8 +73,10 @@ describe("alumni registration cohort year", () => {
     });
 
     expect(registered.status).toBe(400);
-    expect((registered.body.errors as Array<{ path: string[] }>)).toEqual(
-      expect.arrayContaining([expect.objectContaining({ path: ["tahunAngkatan"] })]),
+    expect(registered.body.errors as Array<{ path: string[] }>).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ["tahunAngkatan"] }),
+      ]),
     );
     expect(await readShell(email)).toBeNull();
   });

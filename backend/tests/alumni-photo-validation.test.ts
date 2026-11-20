@@ -14,7 +14,11 @@ import {
 } from "../src/modules/alumni/alumni.schema.js";
 import { getAlumniCollection } from "../src/modules/alumni/alumni.repository.js";
 
-import { ensureTestUsers, signTestToken, TEST_ADMIN_USER_ID } from "./auth-fixture.js";
+import {
+  ensureTestUsers,
+  signTestToken,
+  TEST_ADMIN_USER_ID,
+} from "./auth-fixture.js";
 
 // ============================================================
 // G-2: photo values are validated as http(s) URLs or legacy image
