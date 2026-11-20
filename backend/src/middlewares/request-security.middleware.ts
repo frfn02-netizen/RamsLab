@@ -28,6 +28,15 @@ export function verifyStateChangingOrigin(
   // from recovering from a mismatched cookie pair.
   const isLoginRequest =
     req.method === "POST" && req.path === "/api/auth/login";
+
+  // Password recovery is token-based, not session-based. A stale access
+  // cookie must not prevent a user from requesting or completing a reset. The
+  // Origin check above still applies to these POST requests.
+  const isPasswordRecoveryRequest =
+    req.method === "POST" &&
+    (req.path === "/api/auth/forgot-password" ||
+      req.path === "/api/auth/reset-password");
+
   // Requests from browsers carry an Origin header. A CSRF cookie also marks
   // a session created by the login flow, so continue enforcing the
   // double-submit check for those requests even when a non-browser client
@@ -36,7 +45,8 @@ export function verifyStateChangingOrigin(
   if (
     req.cookies?.rams_access_token &&
     (origin || req.cookies?.rams_csrf_token) &&
-    !isLoginRequest
+    !isLoginRequest &&
+    !isPasswordRecoveryRequest
   ) {
     const csrfCookie = req.cookies?.rams_csrf_token;
     const csrfHeader = req.get("x-csrf-token");

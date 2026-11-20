@@ -11,8 +11,8 @@ describe("authentication API flow", () => {
             success: true,
             user: {
               id: "user-1",
-              email: "admin@example.test",
-              role: "ADMIN",
+              email: "dosen@example.test",
+              role: "DOSEN",
               isActive: true,
             },
             csrfToken: "login-csrf",
@@ -24,7 +24,11 @@ describe("authentication API flow", () => {
         new Response(
           JSON.stringify({
             success: true,
-            user: { userId: "user-1", role: "ADMIN" },
+            user: {
+              userId: "user-1",
+              role: "DOSEN",
+              fullName: "Budi Santoso",
+            },
           }),
           { status: 200 },
         ),
@@ -38,8 +42,12 @@ describe("authentication API flow", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      login({ email: "admin@example.test", password: "correct-password" }),
-    ).resolves.toMatchObject({ id: "user-1", role: "ADMIN" });
+      login({ email: "dosen@example.test", password: "correct-password" }),
+    ).resolves.toMatchObject({
+      id: "user-1",
+      role: "DOSEN",
+      fullName: "Budi Santoso",
+    });
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[0][0]).toContain("/auth/login");
     expect(fetchMock.mock.calls[1][0]).toContain("/auth/me");

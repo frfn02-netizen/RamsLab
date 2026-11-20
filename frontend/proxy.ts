@@ -6,8 +6,11 @@ const PRIVATE_PREFIXES = [
   "/api",
   "/dashboard",
   "/meetings",
+  "/schedule",
   "/admin",
   "/login",
+  "/forgot-password",
+  "/reset-password",
   "/profile",
   "/change-password",
 ];

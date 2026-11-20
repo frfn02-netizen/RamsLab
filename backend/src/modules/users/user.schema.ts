@@ -11,9 +11,9 @@ export const createUserSchema = z.object({
 
   role: z.enum([
     USER_ROLES.ALUMNI,
+    USER_ROLES.STUDENT,
     USER_ROLES.DOSEN,
     USER_ROLES.ADMIN,
-    USER_ROLES.PUBLICATION_EDITOR,
   ]),
 
   isActive: z.boolean().default(true),
@@ -32,9 +32,28 @@ export const updateUserSchema = z.object({
 
 export const createManagedAccountSchema = z.object({
   email: createUserSchema.shape.email,
-  password: createUserSchema.shape.password,
+  password: createUserSchema.shape.password.optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
+export const createStudentUserSchema = z.object({
+  email: createUserSchema.shape.email,
+  displayName: z.string().trim().min(2).max(200).optional(),
+  schedulePortalAccess: z.boolean().default(false),
+});
+
+export const updateSchedulePortalAccessSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export const updateAgendaManageAccessSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export type CreateStudentUserInput = z.infer<typeof createStudentUserSchema>;
+export type UpdateSchedulePortalAccessInput = z.infer<
+  typeof updateSchedulePortalAccessSchema
+>;

@@ -16,6 +16,30 @@ declare global {
   }
 }
 
+const PASSWORD_CHANGE_ALLOWED_REQUESTS = new Set([
+  "GET /api/auth/me",
+  "GET /api/auth/csrf",
+  "POST /api/auth/change-password",
+  "POST /api/auth/logout",
+]);
+
+function normalizeRequestPath(req: Request) {
+  const raw = (req.originalUrl ?? req.url).split("?")[0];
+  const collapsed = raw.replace(/\/{2,}/g, "/");
+  const withoutTrailing =
+    collapsed.length > 1 ? collapsed.replace(/\/+$/, "") : collapsed;
+  // Express routes case-insensitively by default. Normalize case and trailing
+  // slashes only; do not resolve dot segments or decode percent escapes, so
+  // ambiguous paths still fail closed.
+  return (withoutTrailing || "/").toLowerCase();
+}
+
+function isPasswordChangeAllowed(req: Request) {
+  return PASSWORD_CHANGE_ALLOWED_REQUESTS.has(
+    `${req.method} ${normalizeRequestPath(req)}`,
+  );
+}
+
 export async function authenticate(
   req: Request,
   res: Response,
@@ -51,10 +75,19 @@ export async function authenticate(
       throw new Error("Invalid user role");
     }
 
+    if (user.mustChangePassword && !isPasswordChangeAllowed(req)) {
+      return res.status(403).json({
+        success: false,
+        code: "PASSWORD_CHANGE_REQUIRED",
+        message: "You must change your password before continuing.",
+      });
+    }
+
     req.user = {
       userId: user._id!.toString(),
       role: user.role,
       tokenVersion: user.tokenVersion ?? 0,
+      permissions: Array.isArray(user.permissions) ? user.permissions : [],
     };
 
     return next();
@@ -88,6 +121,7 @@ export async function optionallyAuthenticate(
         userId: user._id!.toString(),
         role: user.role,
         tokenVersion: user.tokenVersion ?? 0,
+        permissions: Array.isArray(user.permissions) ? user.permissions : [],
       };
     }
   } catch {

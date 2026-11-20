@@ -1,18 +1,31 @@
-import type { AuthUser, LoginInput, RegisterInput } from "@/types/auth";
+import type {
+  AuthUser,
+  ForgotPasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResetPasswordInput,
+} from "@/types/auth";
 import { apiRequestWithMeta, clearCsrfToken, setCsrfToken } from "./client";
 import { ApiError } from "./errors";
 
 type LoginUser = {
   id: string;
   email: string;
+  displayName?: string;
+  fullName?: string;
   role: AuthUser["role"];
   isActive?: boolean;
+  permissions?: string[];
   mustChangePassword?: boolean;
+  labMembership?: AuthUser["labMembership"];
 };
 type MeUser = {
   userId: string;
+  fullName?: string;
   role: AuthUser["role"];
+  permissions?: string[];
   mustChangePassword?: boolean;
+  labMembership?: AuthUser["labMembership"];
 };
 type CsrfResponse = { csrfToken: string };
 
@@ -24,18 +37,27 @@ function normalizeUser(
     return {
       id: user.userId,
       email: fallback?.email,
+      fullName: user.fullName ?? fallback?.fullName,
       role: user.role,
       isActive: fallback?.isActive ?? true,
+      permissions: user.permissions ?? fallback?.permissions ?? [],
       mustChangePassword:
         user.mustChangePassword ?? fallback?.mustChangePassword ?? false,
+      labMembership: user.labMembership ?? fallback?.labMembership ?? null,
     };
   }
   return {
     id: user.id,
     email: user.email,
+    fullName:
+      user.fullName ??
+      user.displayName ??
+      fallback?.fullName,
     role: user.role,
     isActive: user.isActive ?? true,
+    permissions: user.permissions ?? fallback?.permissions ?? [],
     mustChangePassword: user.mustChangePassword ?? false,
+    labMembership: user.labMembership ?? null,
   };
 }
 
@@ -92,6 +114,20 @@ export function changePassword(input: {
   newPassword: string;
 }) {
   return apiRequestWithMeta("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function forgotPassword(input: ForgotPasswordInput) {
+  return apiRequestWithMeta("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function resetPassword(input: ResetPasswordInput) {
+  return apiRequestWithMeta("/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(input),
   });

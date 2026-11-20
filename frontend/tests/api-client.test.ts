@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { apiRequest, onUnauthorized, setCsrfToken } from "@/lib/api/client";
+import {
+  apiRequest,
+  onLabMembershipRequired,
+  onUnauthorized,
+  setCsrfToken,
+} from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 
 describe("API client", () => {
@@ -124,6 +129,37 @@ describe("API client", () => {
     });
     expect(unauthorized).toHaveBeenCalledOnce();
     removeHandler();
+  });
+
+  it("notifies the membership layer on LAB_MEMBERSHIP_REQUIRED", async () => {
+    const membershipRequired = vi.fn();
+    const unauthorized = vi.fn();
+    const removeMembershipHandler =
+      onLabMembershipRequired(membershipRequired);
+    const removeUnauthorizedHandler = onUnauthorized(unauthorized);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            message: "Active lab membership is required",
+            code: "LAB_MEMBERSHIP_REQUIRED",
+          }),
+          { status: 403 },
+        ),
+      ),
+    );
+
+    await expect(apiRequest("/meetings/agenda")).rejects.toMatchObject({
+      status: 403,
+      details: { code: "LAB_MEMBERSHIP_REQUIRED" },
+    });
+    expect(membershipRequired).toHaveBeenCalledOnce();
+    expect(unauthorized).not.toHaveBeenCalled();
+
+    removeMembershipHandler();
+    removeUnauthorizedHandler();
   });
 
   it("normalizes network failures into ApiError", async () => {

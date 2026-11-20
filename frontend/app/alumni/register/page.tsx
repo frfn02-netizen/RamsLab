@@ -4,17 +4,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import { getUserFacingError } from "@/lib/api/errors";
+import { AuthLoadingSkeleton } from "@/components/skeletons";
+import PasswordInput from "@/components/password-input";
 
 function RegisterContent() {
   const router = useRouter();
   const { user, status, register } = useAuth();
+  const { error: notifyError } = useToast();
   const [fullName, setFullName] = useState("");
   const [tahunAngkatan, setTahunAngkatan] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     fullName?: string;
     tahunAngkatan?: string;
@@ -57,7 +60,6 @@ function RegisterContent() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
-    setError(null);
     try {
       await register({
         fullName: fullName.trim(),
@@ -72,7 +74,7 @@ function RegisterContent() {
       );
       router.replace("/alumni/dashboard");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSubmitting(false);
     }
@@ -211,10 +213,9 @@ function RegisterContent() {
                 >
                   Password
                 </label>
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   autoComplete="new-password"
                   required
                   value={password}
@@ -237,10 +238,9 @@ function RegisterContent() {
                 >
                   Confirm Password
                 </label>
-                <input
+                <PasswordInput
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
                   autoComplete="new-password"
                   required
                   value={confirmPassword}
@@ -259,14 +259,6 @@ function RegisterContent() {
                   </p>
                 )}
               </div>
-              {error && (
-                <p
-                  className="border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-800"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              )}
               <button
                 type="submit"
                 disabled={submitting}
@@ -296,11 +288,10 @@ export default function AlumniRegisterPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[var(--paper)]">
-          <p className="text-sm text-[var(--gray)]" role="status">
-            Loading…
-          </p>
-        </main>
+        <AuthLoadingSkeleton
+          label="Loading registration"
+          className="bg-[var(--paper)]"
+        />
       }
     >
       <RegisterContent />

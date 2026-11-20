@@ -2,15 +2,26 @@ import { ObjectId } from "mongodb";
 
 export const USER_ROLES = {
   ALUMNI: "ALUMNI",
+  STUDENT: "STUDENT",
   DOSEN: "DOSEN",
   ADMIN: "ADMIN",
-  PUBLICATION_EDITOR: "PUBLICATION_EDITOR",
 } as const;
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
+export interface UserDirectoryEntry {
+  _id?: ObjectId;
+  displayName?: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  permissions?: string[];
+}
+
 export interface User {
   _id?: ObjectId;
+
+  displayName?: string;
 
   email: string;
 
@@ -19,6 +30,8 @@ export interface User {
   role: UserRole;
 
   isActive: boolean;
+
+  permissions?: string[];
 
   mustChangePassword?: boolean;
 

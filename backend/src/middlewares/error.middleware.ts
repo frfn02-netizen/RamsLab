@@ -7,6 +7,7 @@ export class HttpError extends Error {
     public readonly statusCode: number,
     message: string,
     public readonly details?: unknown,
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "HttpError";
@@ -70,6 +71,7 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
       ...(error.details !== undefined && !isProduction
         ? { details: error.details }
         : {}),
+      ...(error.code ? { code: error.code } : {}),
     });
   }
 

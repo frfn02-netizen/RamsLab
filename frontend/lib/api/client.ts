@@ -17,19 +17,35 @@ export type ApiResponse<T> = {
   message?: string;
   data?: T;
   total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+  hasMore?: boolean;
   user?: T;
   csrfToken?: string;
   errors?: unknown;
+  code?: string;
+  reauthenticate?: boolean;
 };
 
 export type ApiRequestOptions = RequestInit & { timeoutMs?: number };
 
 let unauthorizedHandler: (() => void) | null = null;
+let labMembershipRequiredHandler: (() => void) | null = null;
 
 export function onUnauthorized(handler: (() => void) | null) {
   unauthorizedHandler = handler;
   return () => {
     if (unauthorizedHandler === handler) unauthorizedHandler = null;
+  };
+}
+
+export function onLabMembershipRequired(handler: (() => void) | null) {
+  labMembershipRequiredHandler = handler;
+  return () => {
+    if (labMembershipRequiredHandler === handler) {
+      labMembershipRequiredHandler = null;
+    }
   };
 }
 
@@ -190,10 +206,20 @@ async function requestEnvelope<T>(
   if (!response.ok || body.success === false) {
     if (response.status === 401 && !path.startsWith("/auth/"))
       unauthorizedHandler?.();
+    if (
+      response.status === 403 &&
+      body.code === "LAB_MEMBERSHIP_REQUIRED" &&
+      !path.startsWith("/auth/")
+    ) {
+      labMembershipRequiredHandler?.();
+    }
     throw new ApiError(
       body.message ?? "Request failed",
       response.status,
-      getErrorDetails(body.errors),
+      {
+        ...getErrorDetails(body.errors),
+        ...(body.code ? { code: body.code } : {}),
+      },
     );
   }
   return body;

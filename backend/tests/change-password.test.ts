@@ -15,10 +15,10 @@ let accessCookie = "";
 let csrfCookie = "";
 let csrfToken = "";
 
-async function loginAsTestUser() {
+async function loginAsTestUser(password = CURRENT_PASSWORD) {
   const login = await request(app).post("/api/auth/login").send({
     email: EMAIL,
-    password: CURRENT_PASSWORD,
+    password,
   });
   expect(login.status).toBe(200);
 
@@ -63,6 +63,7 @@ afterAll(async () => {
 
 describe("POST /api/auth/change-password", () => {
   it("changes password successfully with valid credentials", async () => {
+    const previousAccessCookie = accessCookie;
     const res = await request(app)
       .post("/api/auth/change-password")
       .set("Cookie", [accessCookie, csrfCookie])
@@ -72,15 +73,46 @@ describe("POST /api/auth/change-password", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.message).toBe("Password changed successfully");
+    expect(res.body.reauthenticate).toBe(false);
+
+    const setCookies = (res.headers["set-cookie"] ?? []) as string[];
+    expect(
+      setCookies.some((cookie) => cookie.startsWith("rams_access_token=")),
+    ).toBe(true);
 
     const user = await getUsersCollection().findOne({ _id: USER_ID });
     expect(user?.mustChangePassword).toBe(false);
+    expect(user?.tokenVersion).toBe(1);
 
     const passwordMatches = await bcrypt.compare(
       NEW_PASSWORD,
       user!.passwordHash,
     );
     expect(passwordMatches).toBe(true);
+
+    const oldSession = await request(app)
+      .get("/api/alumni/me")
+      .set("Cookie", previousAccessCookie);
+    expect(oldSession.status).toBe(401);
+
+    await loginAsTestUser(NEW_PASSWORD);
+  });
+
+  it("rejects a new password identical to the current password", async () => {
+    const before = await getUsersCollection().findOne({ _id: USER_ID });
+
+    const res = await request(app)
+      .post("/api/auth/change-password")
+      .set("Cookie", [accessCookie, csrfCookie])
+      .set("X-CSRF-Token", csrfToken)
+      .send({ currentPassword: NEW_PASSWORD, newPassword: NEW_PASSWORD });
+
+    expect(res.status).toBe(422);
+    expect(res.body.message).toMatch(/different from the current password/i);
+
+    const after = await getUsersCollection().findOne({ _id: USER_ID });
+    expect(after?.tokenVersion).toBe(before?.tokenVersion);
+    expect(after?.passwordHash).toBe(before?.passwordHash);
   });
 
   it("rejects incorrect current password", async () => {

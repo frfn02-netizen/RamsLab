@@ -1,50 +1,41 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import { getUserFacingError } from "@/lib/api/errors";
+import { AuthLoadingSkeleton } from "@/components/skeletons";
 import { assetPath } from "@/lib/asset-path";
+import PasswordInput from "@/components/password-input";
 import { Button, inputClass } from "@/components/ui";
-import type { AuthUser } from "@/types/auth";
+import { authorizedLoginDestination } from "@/lib/authz";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, status, login } = useAuth();
+  const { error: notifyError } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const destination = (account: AuthUser) =>
-    account.mustChangePassword
-      ? "/change-password"
-      : account.role === "ALUMNI"
-        ? "/dashboard/alumni/profile"
-        : "/dashboard";
-
   useEffect(() => {
-    if (status === "authenticated" && user) router.replace(destination(user));
+    if (status === "authenticated" && user) {
+      router.replace(authorizedLoginDestination(user, null));
+    }
   }, [router, status, user]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
     setSubmitting(true);
     try {
       const authenticatedUser = await login({ email, password });
       const next = searchParams.get("next");
-      const fallback = destination(authenticatedUser);
-      router.replace(
-        next?.startsWith("/") &&
-          !next.startsWith("//") &&
-          authenticatedUser.role !== "ALUMNI"
-          ? next
-          : fallback,
-      );
+      router.replace(authorizedLoginDestination(authenticatedUser, next));
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSubmitting(false);
     }
@@ -151,25 +142,24 @@ function LoginContent() {
                 >
                   Password
                 </label>
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className={inputClass}
                 />
+                <div className="mt-2 flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-semibold text-[var(--rams-red)] hover:text-[var(--rams-red-dark)]"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
-              {error && (
-                <p
-                  className="border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-800"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              )}
               <Button type="submit" disabled={submitting} className="w-full">
                 {submitting ? "Signing in…" : "Sign in"}
               </Button>
@@ -185,11 +175,10 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[var(--navy)]">
-          <p className="text-sm text-white/65" role="status">
-            Loading sign in…
-          </p>
-        </main>
+        <AuthLoadingSkeleton
+          label="Loading sign in"
+          className="bg-[var(--navy)]"
+        />
       }
     >
       <LoginContent />

@@ -1,11 +1,19 @@
-export type UserRole = "ADMIN" | "DOSEN" | "ALUMNI" | "PUBLICATION_EDITOR";
+export type UserRole = "ADMIN" | "DOSEN" | "STUDENT" | "ALUMNI";
+
+export interface LabMembershipSummary {
+  labId: string;
+  status: "ACTIVE" | "INACTIVE";
+}
 
 export interface AuthUser {
   id: string;
   email?: string;
+  fullName?: string;
   role: UserRole;
   isActive: boolean;
+  permissions?: string[];
   mustChangePassword?: boolean;
+  labMembership?: LabMembershipSummary | null;
 }
 
 export interface LoginInput {
@@ -30,4 +38,22 @@ export interface ManagedAccount {
   email: string;
   role: UserRole;
   isActive: boolean;
+  temporaryPassword?: string;
+}
+
+export interface AdminPasswordResetResult {
+  userId: string;
+  email: string;
+  role: UserRole;
+  temporaryPassword: string;
+  mustChangePassword: true;
+}
+
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  token: string;
+  newPassword: string;
 }
