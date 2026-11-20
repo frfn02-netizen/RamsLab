@@ -94,7 +94,10 @@ export async function updateAlumni(id: string, input: UpdateAlumniInput) {
 
   const parsed = updateAlumniSchema.parse(input);
   assertCohortYear(parsed.tahunAngkatan, existing?.tahunAngkatan);
-  const data = withDerivedAngkatan(stripManualBatchNumber(parsed, existing), existing);
+  const data = withDerivedAngkatan(
+    stripManualBatchNumber(parsed, existing),
+    existing,
+  );
 
   const updateData = {
     ...data,
@@ -314,7 +317,8 @@ function withDerivedAngkatan<T extends CohortInput>(
   // Re-sending the stored value is an echo, not a change: records saved before
   // `P = tahunAngkatan - 1960` (e.g. tahunAngkatan 2002 / angkatan 89) must
   // stay exactly as stored and are never migrated or silently repaired here.
-  if (data.tahunAngkatan === (existing?.tahunAngkatan ?? undefined)) return data;
+  if (data.tahunAngkatan === (existing?.tahunAngkatan ?? undefined))
+    return data;
 
   const derived = deriveAngkatanFromTahunAngkatan(data.tahunAngkatan);
   // A legacy out-of-range year has no valid P: leave `angkatan` alone so the
@@ -417,7 +421,10 @@ export async function updateMyAlumni(
 
   const parsed = completeMyAlumniSchema.parse(input);
   assertCohortYear(parsed.tahunAngkatan, existing?.tahunAngkatan);
-  const data = withDerivedAngkatan(stripManualBatchNumber(parsed, existing), existing);
+  const data = withDerivedAngkatan(
+    stripManualBatchNumber(parsed, existing),
+    existing,
+  );
 
   const safeData = stripAcademicOverwrites(data, existing);
   // `stripAcademicOverwrites` protects manually supplied academic fields.

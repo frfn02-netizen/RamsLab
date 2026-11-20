@@ -15,13 +15,13 @@ const router = Router();
 router.get(
   "/",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getStudentListController,
 );
 router.get(
   "/:id",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getStudentController,
 );
 router.post("/", authenticate, requireRole("ADMIN"), createStudentController);

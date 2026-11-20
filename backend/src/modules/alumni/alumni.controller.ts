@@ -294,7 +294,10 @@ export async function reviewAlumniController(req: Request, res: Response) {
       .status(400)
       .json({ success: false, message: "Review action is required" });
 
-  const parsed = reviewAlumniSchema.safeParse({ action, reason: req.body?.reason });
+  const parsed = reviewAlumniSchema.safeParse({
+    action,
+    reason: req.body?.reason,
+  });
   if (!parsed.success) {
     return res.status(400).json({
       success: false,

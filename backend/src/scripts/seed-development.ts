@@ -75,7 +75,6 @@ const DEVELOPMENT_DB_NAME = "rams_platform_dev";
 const developmentEmails = {
   admin: "admin@rams.test",
   dosen: "dosen@rams.test",
-  editor: "publication-editor@rams.test",
   alumni: "alumni.one@rams.test",
 } as const;
 
@@ -88,7 +87,6 @@ function assertDevelopmentEnvironment() {
   for (const name of [
     "SEED_ADMIN_PASSWORD",
     "SEED_DOSEN_PASSWORD",
-    "SEED_PUBLICATION_EDITOR_PASSWORD",
     "SEED_ALUMNI_PASSWORD",
   ]) {
     const password = process.env[name];
@@ -132,17 +130,12 @@ async function seedUsers() {
     USER_ROLES.DOSEN,
     process.env.SEED_DOSEN_PASSWORD!,
   );
-  const editor = await upsertUser(
-    developmentEmails.editor,
-    USER_ROLES.PUBLICATION_EDITOR,
-    process.env.SEED_PUBLICATION_EDITOR_PASSWORD!,
-  );
   const alumni = await upsertUser(
     developmentEmails.alumni,
     USER_ROLES.ALUMNI,
     process.env.SEED_ALUMNI_PASSWORD!,
   );
-  return { admin, dosen, editor, alumni };
+  return { admin, dosen, alumni };
 }
 
 async function seedDosenProfile(userId: ObjectId) {
@@ -345,7 +338,7 @@ async function seedResearchAreas() {
     );
 }
 
-async function seedPublications(editorId: ObjectId) {
+async function seedPublications(authorId: ObjectId) {
   const now = new Date();
   for (const [index, publication] of demoPublications.entries()) {
     const normalizedTitle = normalizePublicationTitle(publication.title);
@@ -362,10 +355,10 @@ async function seedPublications(editorId: ObjectId) {
           doi: normalizeDoi(publication.doi),
           pdfUrl: publication.pdfUrl || null,
           normalizedTitle,
-          updatedBy: editorId,
+          updatedBy: authorId,
           updatedAt: now,
         },
-        $setOnInsert: { createdAt: now, createdBy: editorId },
+        $setOnInsert: { createdAt: now, createdBy: authorId },
       },
       { upsert: true },
     );
@@ -572,7 +565,7 @@ async function main() {
   const partners = await seedPartners();
   await seedProjects(partners);
   await seedResearchAreas();
-  await seedPublications(users.editor._id!);
+  await seedPublications(users.admin._id!);
   await seedDevelopmentResearchHighlights();
   await seedEvents();
   await seedPublicServiceExperts();

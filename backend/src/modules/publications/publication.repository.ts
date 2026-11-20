@@ -211,19 +211,8 @@ export async function createPublication(
   return { ...document, _id: result.insertedId };
 }
 
-export function canModifyPublication(
-  publication: Publication,
-  actor: JwtPayload,
-) {
-  return (
-    actor.role === "ADMIN" || publication.createdBy?.toString() === actor.userId
-  );
-}
-
-function actorFilter(id: string, actor: JwtPayload) {
-  const filter: Record<string, unknown> = { _id: new ObjectId(id) };
-  if (actor.role !== "ADMIN") filter.createdBy = new ObjectId(actor.userId);
-  return filter;
+function publicationFilter(id: string) {
+  return { _id: new ObjectId(id) };
 }
 
 export async function updatePublication(
@@ -238,23 +227,20 @@ export async function updatePublication(
   await ensureNoDuplicate(next, id);
   const { _id: _ignoredId, ...updateData } = next;
   return getPublicationsCollection().findOneAndUpdate(
-    actorFilter(id, actor),
+    publicationFilter(id),
     { $set: updateData },
     { returnDocument: "after" },
   );
 }
 
-export async function deletePublication(
-  id: string,
-  actor: JwtPayload,
-): Promise<boolean> {
+export async function deletePublication(id: string): Promise<boolean> {
   if (!ObjectId.isValid(id)) return false;
   const referenced = await getDatabase()
     .collection("research_highlights")
     .findOne({ publicationId: new ObjectId(id) }, { projection: { _id: 1 } });
   if (referenced) throw new PublicationReferencedError();
   const result = await getPublicationsCollection().deleteOne(
-    actorFilter(id, actor),
+    publicationFilter(id),
   );
   if (result.deletedCount === 1) {
     // Detach the deleted Publication from every lecturer. Lecturer

@@ -15,7 +15,6 @@ import {
   ensureTestUsers,
   signTestToken,
   TEST_ADMIN_USER_ID,
-  TEST_DOSEN_USER_ID,
 } from "./auth-fixture.js";
 
 const TEST_ALUMNI_ID = new ObjectId();
@@ -27,7 +26,6 @@ const TEST_TRACKING_TITLE = "Vitest Tracking";
 const TEST_USER_ID = new ObjectId();
 
 let adminToken: string;
-let dosenToken: string;
 let trackingId: string;
 
 beforeAll(async () => {
@@ -69,7 +67,6 @@ beforeAll(async () => {
 
   adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
 
-  dosenToken = signTestToken(TEST_DOSEN_USER_ID, "DOSEN");
 });
 
 afterAll(async () => {
@@ -116,7 +113,7 @@ describe("Tracking API", () => {
   it("should get tracking by alumni id", async () => {
     const response = await request(app)
       .get(`/api/tracking/alumni/${TEST_ALUMNI_ID.toHexString()}`)
-      .set("Cookie", `rams_access_token=${dosenToken}`);
+      .set("Cookie", `rams_access_token=${adminToken}`);
 
     expect(response.status).toBe(200);
 
@@ -134,7 +131,7 @@ describe("Tracking API", () => {
   it("should get tracking by id", async () => {
     const response = await request(app)
       .get(`/api/tracking/${trackingId}`)
-      .set("Cookie", `rams_access_token=${dosenToken}`);
+      .set("Cookie", `rams_access_token=${adminToken}`);
 
     expect(response.status).toBe(200);
 
@@ -148,7 +145,7 @@ describe("Tracking API", () => {
   it("should reject invalid alumni id", async () => {
     const response = await request(app)
       .get("/api/tracking/alumni/invalid-id")
-      .set("Cookie", `rams_access_token=${dosenToken}`);
+      .set("Cookie", `rams_access_token=${adminToken}`);
 
     expect(response.status).toBe(400);
 
@@ -160,7 +157,7 @@ describe("Tracking API", () => {
   it("should reject invalid tracking id", async () => {
     const response = await request(app)
       .get("/api/tracking/invalid-id")
-      .set("Cookie", `rams_access_token=${dosenToken}`);
+      .set("Cookie", `rams_access_token=${adminToken}`);
 
     expect(response.status).toBe(404);
 

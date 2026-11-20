@@ -14,27 +14,27 @@ import {
 const router = Router();
 
 // ========================================
-// ADMIN + DOSEN
+// ADMIN
 // ========================================
 
 router.get(
   "/",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getProjectListController,
 );
 
 router.get(
   "/slug/:slug",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getProjectBySlugController,
 );
 
 router.get(
   "/:id",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getProjectController,
 );
 

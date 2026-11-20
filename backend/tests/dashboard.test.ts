@@ -65,28 +65,13 @@ describe("Dashboard API", () => {
     expect(typeof response.body.data.publications).toBe("number");
   });
 
-  it("should get dashboard statistics as dosen", async () => {
+  it("should reject dashboard statistics for dosen", async () => {
     const response = await request(app)
       .get("/api/dashboard")
       .set("Cookie", `rams_access_token=${dosenToken}`);
 
-    expect(response.status).toBe(200);
-
-    expect(response.body.success).toBe(true);
-
-    expect(response.body.data).toBeDefined();
-
-    expect(typeof response.body.data.users).toBe("number");
-
-    expect(typeof response.body.data.alumni).toBe("number");
-
-    expect(typeof response.body.data.dosen).toBe("number");
-
-    expect(typeof response.body.data.projects).toBe("number");
-
-    expect(typeof response.body.data.universityPartners).toBe("number");
-
-    expect(typeof response.body.data.industrialPartners).toBe("number");
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
   });
 
   it("should reject dashboard access for alumni", async () => {

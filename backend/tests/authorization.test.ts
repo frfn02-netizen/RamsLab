@@ -7,6 +7,7 @@ import {
   ensureTestUsers,
   signTestToken,
   TEST_ADMIN_USER_ID,
+  TEST_DOSEN_USER_ID,
   TEST_ALUMNI_USER_ID,
 } from "./auth-fixture.js";
 
@@ -52,5 +53,21 @@ describe("Authorization", () => {
       success: true,
       message: "Admin access granted",
     });
+  });
+
+  it("should deny dosen access to dashboard and admin-managed APIs", async () => {
+    const token = signTestToken(TEST_DOSEN_USER_ID, "DOSEN");
+
+    const [dashboard, dosenDirectory] = await Promise.all([
+      request(app)
+        .get("/api/dashboard")
+        .set("Cookie", `rams_access_token=${token}`),
+      request(app)
+        .get("/api/dosen")
+        .set("Cookie", `rams_access_token=${token}`),
+    ]);
+
+    expect(dashboard.status).toBe(403);
+    expect(dosenDirectory.status).toBe(403);
   });
 });

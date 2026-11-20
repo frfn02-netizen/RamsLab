@@ -21,20 +21,20 @@ import {
 const router = Router();
 
 // ========================================
-// ADMIN + DOSEN
+// ADMIN
 // ========================================
 
 router.get(
   "/university",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getUniversityPartnerListController,
 );
 
 router.get(
   "/university/:id",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getUniversityPartnerController,
 );
 
@@ -64,20 +64,20 @@ router.delete(
 );
 
 // ========================================
-// ADMIN + DOSEN
+// ADMIN
 // ========================================
 
 router.get(
   "/industrial",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getIndustrialPartnerListController,
 );
 
 router.get(
   "/industrial/:id",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getIndustrialPartnerController,
 );
 

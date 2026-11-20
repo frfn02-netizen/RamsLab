@@ -13,55 +13,40 @@ import {
 
 const router = Router();
 
-// ========================================
-// ADMIN + DOSEN
-// ========================================
 
-router.get(
-  "/",
-  authenticate,
-  requireRole("ADMIN", "DOSEN"),
-  getDosenListController,
+router.get("/",
+  authenticate, requireRole("ADMIN"), getDosenListController,
 );
 
-router.get(
-  "/employee/:employeeId",
-  authenticate,
-  requireRole("ADMIN", "DOSEN"),
-  getDosenByEmployeeIdController,
+router.get
+(
+  "/employee/:employeeId", authenticate, requireRole("ADMIN"), getDosenByEmployeeIdController,
 );
 
-router.get(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN", "DOSEN"),
-  getDosenController,
+router.get
+(
+  "/:id", authenticate, requireRole("ADMIN"), getDosenController,
 );
 
-// ========================================
-// ADMIN
-// ========================================
+router.post
+(
+  "/", authenticate, requireRole("ADMIN"), createDosenController
+);
 
-router.post("/", authenticate, requireRole("ADMIN"), createDosenController);
+router.patch
+(
+  "/:id", authenticate, requireRole("ADMIN"), updateDosenController
+);
 
-router.patch("/:id", authenticate, requireRole("ADMIN"), updateDosenController);
-
-router.post(
-  "/:id/photo",
-  authenticate,
-  requireRole("ADMIN"),
-  express.raw({
+router.post( "/:id/photo", authenticate, requireRole("ADMIN"), express.raw({
     type: ["image/jpeg", "image/png", "image/webp"],
     limit: "3mb",
-  }),
-  uploadDosenPhotoController,
+  }), uploadDosenPhotoController,
 );
 
-router.delete(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  deleteDosenController,
+router.delete
+( 
+ "/:id", authenticate, requireRole("ADMIN"), deleteDosenController,
 );
 
 export default router;

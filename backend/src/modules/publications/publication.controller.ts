@@ -15,7 +15,6 @@ import {
   PublicationReferencedError,
   updatePublication,
 } from "./publication.repository.js";
-import { canModifyPublication } from "./publication.repository.js";
 import { findUserById } from "../users/user.repository.js";
 import type { Publication } from "./publication.types.js";
 import { safeHttpUrl } from "../../lib/url-security.js";
@@ -70,7 +69,7 @@ async function serialize(publication: Publication, includeAudit = false) {
 }
 
 function canViewPublicationAudit(req: Request) {
-  return req.user?.role === "ADMIN" || req.user?.role === "PUBLICATION_EDITOR";
+  return req.user?.role === "ADMIN";
 }
 
 function parseList(value: unknown) {
@@ -264,11 +263,6 @@ export async function updatePublicationController(req: Request, res: Response) {
       return res
         .status(404)
         .json({ success: false, message: "Publication not found" });
-    if (!canModifyPublication(existing, req.user!))
-      return res.status(403).json({
-        success: false,
-        message: "You can only modify publications you created",
-      });
     const publication = await updatePublication(id, input, req.user!);
     if (!publication)
       return res
@@ -311,12 +305,7 @@ export async function deletePublicationController(req: Request, res: Response) {
       return res
         .status(404)
         .json({ success: false, message: "Publication not found" });
-    if (!canModifyPublication(existing, req.user!))
-      return res.status(403).json({
-        success: false,
-        message: "You can only modify publications you created",
-      });
-    const deleted = await deletePublication(id, req.user!);
+    const deleted = await deletePublication(id);
     if (!deleted)
       return res
         .status(404)

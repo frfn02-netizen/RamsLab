@@ -15,20 +15,20 @@ import { requireRole } from "../../middlewares/role.middlewares.js";
 const router = Router();
 
 // ========================================
-// ADMIN + DOSEN
+// ADMIN
 // ========================================
 
 router.get(
   "/alumni/:alumniId",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getTrackingByAlumniId,
 );
 
 router.get(
   "/:id",
   authenticate,
-  requireRole("ADMIN", "DOSEN"),
+  requireRole("ADMIN"),
   getTrackingById,
 );
 

@@ -11,13 +11,11 @@ import {
   signTestToken,
   TEST_ADMIN_USER_ID,
   TEST_DOSEN_USER_ID,
-  TEST_PUBLICATION_EDITOR_USER_ID,
 } from "./auth-fixture.js";
 
 const titlePrefix = "Vitest Publication";
 let adminToken: string;
 let dosenToken: string;
-let editorToken: string;
 let publicationId: string;
 
 const publication = {
@@ -42,10 +40,6 @@ beforeAll(async () => {
   });
   adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
   dosenToken = signTestToken(TEST_DOSEN_USER_ID, "DOSEN");
-  editorToken = signTestToken(
-    TEST_PUBLICATION_EDITOR_USER_ID,
-    "PUBLICATION_EDITOR",
-  );
 });
 
 afterAll(async () => {
@@ -149,51 +143,62 @@ describe("Publications API", () => {
   it("paginates public publications with a true total count", async () => {
     const now = new Date();
     const pageTitlePrefix = `${titlePrefix} public page`;
-    await getPublicationsCollection().deleteMany({
-      title: { $regex: `^${pageTitlePrefix}` },
-    });
-    await getPublicationsCollection().insertMany(
-      Array.from({ length: 105 }, (_, index) => {
-        const number = String(index + 1).padStart(3, "0");
-        const title = `${pageTitlePrefix} ${number}`;
-        return {
-          title,
-          authors: ["Pagination Author"],
-          publicationType: "Article",
-          year: 2026,
-          journal: "Pagination Journal",
-          doi: null,
-          pdfUrl: null,
-          topics: ["Pagination Topic"],
-          methods: ["Pagination Method"],
-          normalizedTitle: normalizePublicationTitle(title),
-          createdAt: now,
-          updatedAt: now,
-        };
-      }) as never[],
-    );
+    const collection = getPublicationsCollection();
+    // Facets are intentionally collection-wide. Snapshot and restore every
+    // existing record so this fixture can assert exact facets without
+    // depending on, or destroying, unrelated publication data.
+    const existingPublications = await collection.find({}).toArray();
 
-    const firstPage = await request(app)
-      .get("/api/public/publications")
-      .query({ search: pageTitlePrefix, page: 1, limit: 200 });
-    expect(firstPage.status).toBe(200);
-    expect(firstPage.body.data).toHaveLength(105);
-    expect(firstPage.body.total).toBe(105);
-    expect(firstPage.body.page).toBe(1);
-    expect(firstPage.body.limit).toBe(200);
-    expect(firstPage.body.facets).toMatchObject({
-      years: [2026],
-      topics: ["Pagination Topic"],
-      methods: ["Pagination Method"],
-    });
+    try {
+      await collection.deleteMany({});
+      await collection.insertMany(
+        Array.from({ length: 105 }, (_, index) => {
+          const number = String(index + 1).padStart(3, "0");
+          const title = `${pageTitlePrefix} ${number}`;
+          return {
+            title,
+            authors: ["Pagination Author"],
+            publicationType: "Article",
+            year: 2026,
+            journal: "Pagination Journal",
+            doi: null,
+            pdfUrl: null,
+            topics: ["Pagination Topic"],
+            methods: ["Pagination Method"],
+            normalizedTitle: normalizePublicationTitle(title),
+            createdAt: now,
+            updatedAt: now,
+          };
+        }) as never[],
+      );
 
-    const secondPage = await request(app)
-      .get("/api/public/publications")
-      .query({ search: pageTitlePrefix, page: 2, limit: 100 });
-    expect(secondPage.status).toBe(200);
-    expect(secondPage.body.data).toHaveLength(5);
-    expect(secondPage.body.total).toBe(105);
-    expect(secondPage.body.data[0].title).toBe(`${pageTitlePrefix} 101`);
+      const firstPage = await request(app)
+        .get("/api/public/publications")
+        .query({ search: pageTitlePrefix, page: 1, limit: 200 });
+      expect(firstPage.status).toBe(200);
+      expect(firstPage.body.data).toHaveLength(105);
+      expect(firstPage.body.total).toBe(105);
+      expect(firstPage.body.page).toBe(1);
+      expect(firstPage.body.limit).toBe(200);
+      expect(firstPage.body.facets).toMatchObject({
+        years: [2026],
+        topics: ["Pagination Topic"],
+        methods: ["Pagination Method"],
+      });
+
+      const secondPage = await request(app)
+        .get("/api/public/publications")
+        .query({ search: pageTitlePrefix, page: 2, limit: 100 });
+      expect(secondPage.status).toBe(200);
+      expect(secondPage.body.data).toHaveLength(5);
+      expect(secondPage.body.total).toBe(105);
+      expect(secondPage.body.data[0].title).toBe(`${pageTitlePrefix} 101`);
+    } finally {
+      await collection.deleteMany({});
+      if (existingPublications.length > 0) {
+        await collection.insertMany(existingPublications);
+      }
+    }
   });
 
   it("prevents duplicate DOI and normalized title-year records", async () => {
@@ -276,103 +281,5 @@ describe("Publications API", () => {
     expect(
       (await request(app).get(`/api/publications/${publicationId}`)).status,
     ).toBe(404);
-  });
-
-  it("allows an editor to create and manage only their own publication", async () => {
-    const created = await request(app)
-      .post("/api/publications")
-      .set("Cookie", `rams_access_token=${editorToken}`)
-      .send({
-        ...publication,
-        title: `${titlePrefix} editor-owned`,
-        doi: null,
-        pdfUrl: null,
-      });
-    expect(created.status).toBe(201);
-    expect(created.body.data.createdBy).toBe(TEST_PUBLICATION_EDITOR_USER_ID);
-    expect(created.body.data.updatedBy).toBeNull();
-    const editorPublicationId = created.body.data._id;
-
-    const ownUpdate = await request(app)
-      .patch(`/api/publications/${editorPublicationId}`)
-      .set("Cookie", `rams_access_token=${editorToken}`)
-      .send({ title: `${titlePrefix} editor-owned updated` });
-    expect(ownUpdate.status).toBe(200);
-    expect(ownUpdate.body.data.updatedBy).toBe(TEST_PUBLICATION_EDITOR_USER_ID);
-
-    const otherUpdate = await request(app)
-      .patch(`/api/publications/${editorPublicationId}`)
-      .set("Cookie", `rams_access_token=${dosenToken}`)
-      .send({ title: `${titlePrefix} denied` });
-    expect(otherUpdate.status).toBe(403);
-
-    expect(
-      (
-        await request(app)
-          .get("/api/alumni")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(app)
-          .get("/api/dosen")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(app)
-          .get("/api/projects")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(app)
-          .get("/api/admin/research")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(app)
-          .get("/api/partners/university")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(app)
-          .get("/api/tracking/00000000000000000000a001")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(app)
-          .post("/api/users/dosen")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-          .send({
-            email: "blocked@test.local",
-            password: "not-a-real-password",
-          })
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(app)
-          .get("/api/admin/test")
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(403);
-
-    expect(
-      (
-        await request(app)
-          .delete(`/api/publications/${editorPublicationId}`)
-          .set("Cookie", `rams_access_token=${editorToken}`)
-      ).status,
-    ).toBe(200);
   });
 });
