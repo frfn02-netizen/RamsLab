@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
+import { AuthLoadingSkeleton } from "@/components/skeletons";
 
 export default function AlumniPortalPage() {
   const router = useRouter();
@@ -23,11 +24,7 @@ export default function AlumniPortalPage() {
 
   if (status === "loading") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--paper)]">
-        <p className="text-sm text-[var(--gray)]" role="status">
-          Loading…
-        </p>
-      </main>
+      <AuthLoadingSkeleton label="Loading" className="bg-[var(--paper)]" />
     );
   }
 

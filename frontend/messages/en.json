@@ -173,6 +173,15 @@
       "title": "Get to Know RAMS Laboratory",
       "description": "Watch our introduction to learn about the laboratory's research, methods, and the systems we study.",
       "watchOnYouTube": "Watch on YouTube",
+      "watchIntroduction": "Watch Introduction",
+      "allVideos": "All Videos",
+      "featured": "Featured",
+      "playVideo": "Play video",
+      "closeVideo": "Close video",
+      "videoDialog": "Video player",
+      "previousVideo": "Previous video",
+      "nextVideo": "Next video",
+      "goToVideo": "Go to video",
       "latestVideos": "Latest Videos",
       "viewAll": "View all videos",
       "loading": "Loading videos",
@@ -219,7 +228,10 @@
     "ecosystemTitle": "RAMS Laboratory × AIS-ITS.",
     "ecosystemDescription": "The public identity brings together RAMS Laboratory’s reliability and safety work with the blue maritime systems direction of AIS-ITS.",
     "ecosystemLink": "See collaboration network",
-    "ctaTitle": "Build the next dependable system with us."
+    "ctaTitle": "Build the next dependable system with us.",
+    "exploreWork": "Explore Our Work",
+    "exploreResearch": "Explore Our Research",
+    "getInTouch": "Get in Touch"
   },
   "timeline": {
     "foundation": {
@@ -380,9 +392,81 @@
     "showPerPage": "Show"
   },
   "team": {
-    "heroEyebrow": "People & expertise",
-    "heroTitle": "A multidisciplinary research team",
-    "heroDescription": "RAMS Laboratory brings together laboratory leadership, lecturers, researchers, and engineering collaborators around dependable systems.",
+    "breadcrumbLabel": "Breadcrumb",
+    "heroEyebrow": "People & Expertise",
+    "heroBreadcrumbCurrent": "People & Expertise",
+    "heroTitle": "The people behind reliable research.",
+    "heroDescription": "Meet the researchers, academics, and emerging talents driving RAMS Laboratory forward.",
+    "heroPrimaryCta": "Explore our team",
+    "heroSecondaryCta": "About RAMS",
+    "heroAnnotationTitle": "Maritime Systems",
+    "heroAnnotationLine": "Reliability · Safety · Management",
+    "heroVisualLabel": "Technical blueprint of a maritime research vessel with radar rings, survey markers, and ocean wave lines.",
+    "categoriesLabel": "People categories",
+    "categories": {
+      "DOSEN": "Lecturers",
+      "STUDENTS": "Graduate Students",
+      "UNDERGRADUATE": "Undergraduate Students",
+      "INTERNSHIP": "Vocational Interns",
+      "ALUMNI": "Alumni"
+    },
+    "sections": {
+      "DOSEN": {
+        "eyebrow": "Lecturers",
+        "title": "Our Lecturers",
+        "description": "Academic leaders and researchers who drive RAMS's research, education, and innovation."
+      },
+      "STUDENTS": {
+        "eyebrow": "Graduate Students",
+        "title": "Our Graduate Students",
+        "description": "Researchers advancing the laboratory through focused master's and doctoral work."
+      },
+      "UNDERGRADUATE": {
+        "eyebrow": "Undergraduate Students",
+        "title": "Our Undergraduate Students",
+        "description": "Students building research experience through applied maritime and reliability projects."
+      },
+      "INTERNSHIP": {
+        "eyebrow": "Vocational Interns",
+        "title": "Our Vocational Interns",
+        "description": "Vocational interns contributing technical work across laboratory projects."
+      },
+      "ALUMNI": {
+        "eyebrow": "Alumni",
+        "title": "Our Alumni",
+        "description": "Former members carrying RAMS research into industry, academia, and public service."
+      }
+    },
+    "roleBadges": {
+      "DOSEN": "Lecturer",
+      "MAHASISWA": "Doctoral researcher",
+      "MASTER": "Master's researcher",
+      "UNDERGRADUATE": "Undergraduate researcher",
+      "INTERNSHIP": "Vocational intern",
+      "ALUMNI": "Alumni"
+    },
+    "graduateGroups": {
+      "MAHASISWA": "PhD",
+      "MASTER": "Master's"
+    },
+    "searchLabel": "Search people",
+    "searchPlaceholder": "Search people, research interest, or keyword...",
+    "filterLabel": "Filter by research area",
+    "filterAll": "All Research Areas",
+    "filterReliability": "Reliability",
+    "filterSafety": "Safety",
+    "filterMaintenance": "Maintenance",
+    "filterMaritime": "Maritime Systems",
+    "filterAis": "AIS",
+    "filterSimulation": "Simulation",
+    "sortLabel": "Sort",
+    "sortDefault": "Default order",
+    "sortName": "Name (A-Z)",
+    "noResultsTitle": "No people match this search",
+    "noResultsDescription": "Adjust the search terms or choose a different research area.",
+    "noProfilesTitle": "No profiles published",
+    "noProfilesDescription": "Profiles in this category will appear here when available.",
+    "studentGroupEmpty": "No profiles published in this category.",
     "headEyebrow": "LABORATORY HEAD",
     "headName": "Prof. Ketut",
     "headPhotoAlt": "Prof. Ketut, RAMS Laboratory head",
@@ -525,6 +609,7 @@
     "closeLabel": "Close",
     "projectsEyebrow": "Public Service",
     "projectsTitle": "Public Service Projects",
+    "projectsSort": "Sort projects",
     "projectsSearchPlaceholder": "Search projects...",
     "projectsSortNewest": "Newest first",
     "projectsSortOldest": "Oldest first",

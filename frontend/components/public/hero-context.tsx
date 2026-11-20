@@ -3,46 +3,84 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { usePathname } from "@/i18n/navigation";
 
-const HeroContext = createContext({ isAtTop: true });
+type HeroTone = "dark" | "light";
+
+const HeroContext = createContext<{ isAtTop: boolean; heroTone: HeroTone }>({
+  isAtTop: true,
+  heroTone: "dark",
+});
 
 export function HeroProvider({ children }: { children: React.ReactNode }) {
   const [isAtTop, setIsAtTop] = useState(true);
+  const [heroTone, setHeroTone] = useState<HeroTone>("dark");
   const pathname = usePathname();
 
   useEffect(() => {
-    let observer: IntersectionObserver | null = null;
-    let pollCount = 0;
-    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    let hero: HTMLElement | null = null;
+    let frame: number | null = null;
+    let startTimer: ReturnType<typeof setTimeout> | null = null;
+    let mutationObserver: MutationObserver | null = null;
 
-    setIsAtTop(false);
-
-    function setup() {
-      const hero = document.getElementById("hero");
+    function update() {
       if (!hero) {
-        if (pollCount < 20) {
-          pollCount++;
-          pollTimer = setTimeout(setup, 50);
-        }
+        setIsAtTop(false);
         return;
       }
-      observer = new IntersectionObserver(
-        ([entry]) => setIsAtTop(entry.isIntersecting),
-        { threshold: 0 },
-      );
-      observer.observe(hero);
+      setIsAtTop(window.scrollY <= 4);
     }
 
-    const startTimer = setTimeout(setup, 100);
+    function onScroll() {
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        update();
+      });
+    }
+
+    function attach(target: HTMLElement) {
+      if (hero === target) return;
+      hero = target;
+      setHeroTone(target.dataset.heroTone === "light" ? "light" : "dark");
+      update();
+    }
+
+    function findHero() {
+      const found = document.getElementById("hero");
+      if (!found) return false;
+      attach(found);
+      return true;
+    }
+
+    function setup() {
+      if (findHero()) return;
+      update();
+      mutationObserver = new MutationObserver(() => {
+        if (findHero()) {
+          mutationObserver?.disconnect();
+          mutationObserver = null;
+        }
+      });
+      mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    startTimer = setTimeout(setup, 0);
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
-      observer?.disconnect();
-      clearTimeout(startTimer);
-      if (pollTimer) clearTimeout(pollTimer);
+      window.removeEventListener("scroll", onScroll);
+      if (frame !== null) cancelAnimationFrame(frame);
+      if (startTimer) clearTimeout(startTimer);
+      mutationObserver?.disconnect();
     };
   }, [pathname]);
 
   return (
-    <HeroContext.Provider value={{ isAtTop }}>{children}</HeroContext.Provider>
+    <HeroContext.Provider value={{ isAtTop, heroTone }}>
+      {children}
+    </HeroContext.Provider>
   );
 }
 

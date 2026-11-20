@@ -1,7 +1,10 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
+const { replace, hero } = vi.hoisted(() => ({
+  replace: vi.fn(),
+  hero: { isAtTop: false, heroTone: "dark" as "dark" | "light" },
+}));
 
 vi.mock("next-intl", () => ({
   useLocale: () => "en",
@@ -77,10 +80,15 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("@/components/public/hero-context", () => ({
-  useHeroContext: () => ({ isAtTop: false }),
+  useHeroContext: () => hero,
 }));
 
 import PublicHeader from "@/components/public/public-header";
+
+beforeEach(() => {
+  hero.isAtTop = false;
+  hero.heroTone = "dark";
+});
 
 describe("public mobile header", () => {
   it("renders a compact branded mobile header without the tagline", () => {
@@ -103,10 +111,10 @@ describe("public mobile header", () => {
     expect(ramsLogo?.parentElement).toHaveClass("h-10", "w-10");
     expect(
       within(mobileHeader).getByTestId("mobile-logo-separator"),
-    ).toHaveClass("h-8", "w-px", "bg-white");
-    expect(
-      itsLogo?.compareDocumentPosition(ramsLogo!),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    ).toHaveClass("h-8", "w-px", "bg-[var(--border)]");
+    expect(itsLogo?.compareDocumentPosition(ramsLogo!)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
     expect(
       within(mobileHeader).getByRole("button", { name: "Open navigation" }),
     ).toHaveAttribute("aria-expanded", "false");
@@ -115,8 +123,8 @@ describe("public mobile header", () => {
         "Reliability · Availability · Management · Safety",
       ),
     ).not.toBeInTheDocument();
-    expect(header.className).toContain("bg-white/85");
-    expect(header.className).toContain("backdrop-blur-md");
+    expect(header.className).toContain("bg-white/95");
+    expect(header.className).toContain("backdrop-blur-[14px]");
   });
 
   it("opens a full-width drawer with the active navigation and working language switcher", () => {
@@ -138,7 +146,7 @@ describe("public mobile header", () => {
     expect(within(drawer).getByTestId("mobile-logo-separator")).toHaveClass(
       "h-8",
       "w-px",
-      "bg-white",
+      "bg-[var(--border)]",
     );
     expect(
       within(drawer).getByText(
@@ -182,6 +190,20 @@ describe("public mobile header", () => {
     expect(drawer).toHaveAttribute("aria-hidden", "true");
   });
 
+  it("uses a transparent header over the hero at the top of the page", () => {
+    hero.isAtTop = true;
+    render(<PublicHeader />);
+
+    const mobileHeader = screen.getByTestId("mobile-header");
+    const header = mobileHeader.parentElement!;
+    expect(header.className).toContain("bg-transparent");
+    expect(header.className).toContain("text-white");
+    expect(header.className).not.toContain("bg-white/95");
+    expect(
+      within(mobileHeader).getByTestId("mobile-logo-separator"),
+    ).toHaveClass("bg-white/70");
+  });
+
   it("keeps the desktop navigation and language switcher in their desktop-only container", () => {
     render(<PublicHeader />);
 
@@ -219,7 +241,7 @@ describe("public mobile header", () => {
     ).toHaveClass("h-[72px]", "w-[72px]");
     expect(
       within(desktopHeader).getByTestId("desktop-logo-separator"),
-    ).toHaveClass("h-14", "w-px", "bg-white");
+    ).toHaveClass("h-14", "w-px", "bg-[var(--border)]");
     expect(desktopHeader).toHaveClass("h-20");
   });
 });

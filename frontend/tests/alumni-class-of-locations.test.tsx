@@ -173,7 +173,9 @@ describe("Team directory RoleLine – no dangling batch number", () => {
       />,
     );
 
-    expect(screen.getByText("Lecturer · classOf 2015 (P55)")).toBeInTheDocument();
+    expect(
+      screen.getByText("Lecturer · classOf 2015 (P55)"),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/· P55$/)).not.toBeInTheDocument();
   });
 });

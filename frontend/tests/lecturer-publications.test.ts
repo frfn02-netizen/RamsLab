@@ -707,12 +707,20 @@ describe("14. Shared author matching helper", () => {
   });
 
   it("returns only the publications that belong to the lecturer", () => {
-    expect(matchedIds(FULL_NAME).sort()).toEqual(["exact", "initials", "short"]);
+    expect(matchedIds(FULL_NAME).sort()).toEqual([
+      "exact",
+      "initials",
+      "short",
+    ]);
   });
 
   it("keeps the deduplicated result for repeated publications", () => {
     const duplicated = [
-      publication({ _id: "first", doi: "10.1000/artana", authors: ["Ketut Buda"] }),
+      publication({
+        _id: "first",
+        doi: "10.1000/artana",
+        authors: ["Ketut Buda"],
+      }),
       publication({
         _id: "second",
         doi: "10.1000/ARTANA",

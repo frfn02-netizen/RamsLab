@@ -45,9 +45,7 @@ describe("Alumni review status", () => {
 
     expect(await screen.findByText("Pending review")).toBeInTheDocument();
     expect(screen.queryByText("Profile rejected")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Reason from reviewer"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Reason from reviewer")).not.toBeInTheDocument();
     expect(
       screen.queryByText(/save your changes to resubmit/i),
     ).not.toBeInTheDocument();
@@ -66,9 +64,7 @@ describe("Alumni review status", () => {
 
     expect(await screen.findByText("Approved")).toBeInTheDocument();
     expect(screen.queryByText("Profile rejected")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Reason from reviewer"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Reason from reviewer")).not.toBeInTheDocument();
     expect(
       screen.queryByText("Should not be shown anymore"),
     ).not.toBeInTheDocument();
@@ -112,8 +108,6 @@ describe("Alumni review status", () => {
 
     expect(await screen.findByText("Pending review")).toBeInTheDocument();
     expect(screen.getByText("Profile Status")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Reason from reviewer"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Reason from reviewer")).not.toBeInTheDocument();
   });
 });

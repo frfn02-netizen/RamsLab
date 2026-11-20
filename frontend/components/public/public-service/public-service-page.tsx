@@ -8,11 +8,17 @@ import {
   getPublicPartners,
   getPublicServiceProjectsList,
 } from "@/lib/api/modules";
+import {
+  MediaCardsSkeleton,
+  SkeletonGroup,
+  TableSkeleton,
+} from "@/components/skeletons";
 import type {
   Partner,
   PublicServiceProjectPageItem,
   PublicServiceProjectFacets,
 } from "@/types/modules";
+import Select from "@/components/select";
 import PageHero from "../page-hero";
 import PublicContainer from "../public-container";
 
@@ -53,9 +59,12 @@ export default function PublicServicePage() {
       <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="space-y-16 py-16 sm:py-20">
         {loading ? (
-          <p className="text-sm font-semibold text-[var(--rams-gray)]">
-            {common("loading")}
-          </p>
+          <SkeletonGroup label={common("loading")}>
+            <MediaCardsSkeleton
+              count={6}
+              columns="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            />
+          </SkeletonGroup>
         ) : error ? (
           <p className="text-sm font-semibold text-red-700">
             {common("requestUnavailable")}
@@ -374,60 +383,61 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full rounded-md border border-[var(--border)] bg-white px-4 py-2.5 text-sm text-[var(--navy)] outline-none transition placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-red-100 sm:max-w-xs"
           />
-          <select
+          <Select
+            ariaLabel={t("projectsSort")}
+            className="w-full sm:w-[10rem] sm:shrink-0"
             value={sort}
-            onChange={(e) => {
-              setSort(e.target.value as "newest" | "oldest");
+            onChange={(next) => {
+              setSort(next as "newest" | "oldest");
               setPage(1);
             }}
-            className="rounded-md border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
-          >
-            <option value="newest">{t("projectsSortNewest")}</option>
-            <option value="oldest">{t("projectsSortOldest")}</option>
-          </select>
+            options={[
+              { value: "newest", label: t("projectsSortNewest") },
+              { value: "oldest", label: t("projectsSortOldest") },
+            ]}
+          />
         </div>
 
         <div className="flex flex-wrap gap-3">
           {facets && facets.yearGroups.length > 0 && (
-            <select
+            <Select
+              ariaLabel={t("projectsFilterYear")}
+              className="w-full sm:w-[10rem]"
               value={yearGroup ?? ""}
-              onChange={(e) => {
-                setYearGroup(e.target.value || undefined);
+              onChange={(next) => {
+                setYearGroup(next || undefined);
                 setPage(1);
               }}
-              className="rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
-            >
-              <option value="">{t("projectsFilterYear")}</option>
-              {facets.yearGroups.map((yg) => (
-                <option key={yg} value={yg}>
-                  {yg}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: t("projectsFilterYear") },
+                ...facets.yearGroups.map((yg) => ({
+                  value: yg,
+                  label: yg,
+                })),
+              ]}
+            />
           )}
           {facets && facets.clients.length > 0 && (
-            <select
+            <Select
+              ariaLabel={t("projectsFilterClient")}
+              className="w-full sm:w-[14rem]"
               value={client ?? ""}
-              onChange={(e) => {
-                setClient(e.target.value || undefined);
+              onChange={(next) => {
+                setClient(next || undefined);
                 setPage(1);
               }}
-              className="rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--navy)] outline-none focus:border-[var(--rams-red)]"
-            >
-              <option value="">{t("projectsFilterClient")}</option>
-              {facets.clients.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: t("projectsFilterClient") },
+                ...facets.clients.map((c) => ({ value: c, label: c })),
+              ]}
+            />
           )}
         </div>
 
         {loading ? (
-          <p className="py-8 text-sm font-semibold text-[var(--rams-gray)]">
-            {t("projectsLoading")}
-          </p>
+          <SkeletonGroup label={t("projectsLoading")}>
+            <TableSkeleton rows={6} columns={5} minWidth="min-w-[600px]" />
+          </SkeletonGroup>
         ) : items.length === 0 ? (
           <p className="py-8 text-sm font-semibold text-[var(--rams-gray)]">
             {t("projectsEmpty")}

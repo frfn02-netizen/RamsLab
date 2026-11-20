@@ -110,14 +110,14 @@ describe("proxy middleware – trailing slash (TRALING_SLASH_CONFIG=true)", () =
     expect(response.headers.get("x-intl-middleware")).toBeNull();
   });
 
-  it.each([
-    "/alumni/6ab0d6de07058c3a572ea486/",
-    "/alumni/some-id/",
-  ])("%s is routed through i18n middleware", (pathname) => {
-    const request = makeRequest(pathname);
-    const response = proxy(request);
-    expect(response.headers.get("x-intl-middleware")).toBe("true");
-  });
+  it.each(["/alumni/6ab0d6de07058c3a572ea486/", "/alumni/some-id/"])(
+    "%s is routed through i18n middleware",
+    (pathname) => {
+      const request = makeRequest(pathname);
+      const response = proxy(request);
+      expect(response.headers.get("x-intl-middleware")).toBe("true");
+    },
+  );
 
   it("keeps /dashboard/ private while normalizing only the alumni check", () => {
     const request = makeRequest("/dashboard/");

@@ -6,6 +6,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { getPublications, getPublicPublicationPdfUrl } from "@/lib/api/modules";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import Select from "@/components/select";
 import type { Publication, PublicationFacets } from "@/types/modules";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
@@ -106,19 +107,20 @@ function PublicationFiltersPanel({
         <label htmlFor={`${prefix}-year`} className={FILTER_LABEL}>
           {t("year")}
         </label>
-        <select
+        <Select
           id={`${prefix}-year`}
+          ariaLabel={t("year")}
+          className="mt-2.5"
           value={filters.year}
-          onChange={(event) => onChange({ year: event.target.value })}
-          className={`mt-2.5 ${FIELD_CLASS}`}
-        >
-          <option value="">{t("allYears")}</option>
-          {years.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => onChange({ year: next })}
+          options={[
+            { value: "", label: t("allYears") },
+            ...years.map((year) => ({
+              value: String(year),
+              label: String(year),
+            })),
+          ]}
+        />
       </div>
 
       <fieldset>
@@ -304,10 +306,7 @@ function useTimelineScrollProgress(ids: string[]) {
     const applyProgress = () => {
       const rect = container.getBoundingClientRect();
       const readingY = window.innerHeight * TIMELINE_READING_LINE_RATIO;
-      const progress = Math.min(
-        rect.height,
-        Math.max(0, readingY - rect.top),
-      );
+      const progress = Math.min(rect.height, Math.max(0, readingY - rect.top));
       container.style.setProperty("--timeline-progress", `${progress}px`);
     };
 
@@ -584,16 +583,19 @@ export default function Publications() {
             <div className="flex items-center justify-end gap-4 border-b border-[var(--border)] pb-4">
               <label className="flex items-center gap-2 text-sm text-[var(--gray)]">
                 {t("sort")}
-                <select
+                <Select
+                  ariaLabel={t("sort")}
+                  className="w-[8.5rem] shrink-0"
+                  size="sm"
                   value={filters.sort}
-                  onChange={(event) =>
-                    updateFilters({ sort: event.target.value as SortOrder })
+                  onChange={(next) =>
+                    updateFilters({ sort: next as SortOrder })
                   }
-                  className="rounded-[3px] border border-[var(--border)] bg-white py-1 pl-2 pr-7 text-sm font-medium text-[var(--navy)] outline-none transition-colors focus:border-[var(--navy)]"
-                >
-                  <option value="newest">{t("newestFirst")}</option>
-                  <option value="oldest">{t("oldestFirst")}</option>
-                </select>
+                  options={[
+                    { value: "newest", label: t("newestFirst") },
+                    { value: "oldest", label: t("oldestFirst") },
+                  ]}
+                />
               </label>
             </div>
 
@@ -613,7 +615,7 @@ export default function Publications() {
 
             {loading && visibleRecords.length === 0 ? (
               <div className="mt-8">
-                <PublicLoading label={t("loading")} />
+                <PublicLoading label={t("loading")} variant="list" />
               </div>
             ) : error ? (
               <div className="mt-8">

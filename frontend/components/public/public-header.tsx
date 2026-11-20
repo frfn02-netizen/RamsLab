@@ -26,7 +26,13 @@ function isActive(pathname: string, href: string) {
   return pathname === href;
 }
 
-function MobileBrand({ laboratory }: { laboratory: string }) {
+function MobileBrand({
+  laboratory,
+  darkHero = false,
+}: {
+  laboratory: string;
+  darkHero?: boolean;
+}) {
   return (
     <>
       <div className="flex shrink-0 items-center gap-2">
@@ -43,7 +49,11 @@ function MobileBrand({ laboratory }: { laboratory: string }) {
         <span
           data-testid="mobile-logo-separator"
           aria-hidden="true"
-          className="h-8 w-px shrink-0 bg-white shadow-[0_0_1px_rgba(11,32,56,0.28)]"
+          className={`h-8 w-px shrink-0 ${
+            darkHero
+              ? "bg-white/70 shadow-[0_0_1px_rgba(255,255,255,0.35)]"
+              : "bg-[var(--border)]"
+          }`}
         />
         <div className="relative h-10 w-10 shrink-0">
           <Image
@@ -56,7 +66,11 @@ function MobileBrand({ laboratory }: { laboratory: string }) {
           />
         </div>
       </div>
-      <span className="truncate font-display text-sm font-bold tracking-[-0.01em] text-[var(--navy)]">
+      <span
+        className={`truncate font-display text-sm font-bold tracking-[-0.01em] ${
+          darkHero ? "text-white" : "text-[var(--navy)]"
+        }`}
+      >
         {laboratory}
       </span>
     </>
@@ -70,7 +84,8 @@ export default function PublicHeader() {
   const a11y = useTranslations("a11y");
   const [open, setOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const { isAtTop } = useHeroContext();
+  const { isAtTop, heroTone } = useHeroContext();
+  const isDarkHero = isAtTop && heroTone === "dark";
 
   useEffect(() => {
     if (!open) return;
@@ -85,10 +100,12 @@ export default function PublicHeader() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 border-b border-white/45 bg-white/85 text-[var(--charcoal)] shadow-[0_1px_8px_rgba(11,32,56,0.05)] backdrop-blur-md transition-[background-color,color,box-shadow,border-color] duration-300 lg:border-b-2 lg:backdrop-blur-none ${
+      className={`fixed top-0 left-0 right-0 z-50 border-b transition-[background-color,color,box-shadow,border-color,backdrop-filter] duration-300 ease-out ${
         isAtTop
-          ? "lg:border-transparent lg:bg-transparent lg:text-white lg:shadow-none"
-          : "lg:border-[var(--ais-blue)] lg:bg-white lg:text-[var(--charcoal)] lg:shadow-[0_4px_18px_rgba(11,32,56,0.08)]"
+          ? `border-transparent bg-transparent shadow-none ${
+              isDarkHero ? "text-white" : "text-[var(--navy)]"
+            }`
+          : "border-[#E1E7EE] bg-white/95 text-[var(--charcoal)] shadow-[0_6px_24px_rgba(11,32,56,0.08)] backdrop-blur-[14px]"
       }`}
     >
       <div className="mx-auto hidden h-20 max-w-[1440px] items-center justify-between gap-8 px-4 sm:px-6 lg:flex lg:px-8">
@@ -110,7 +127,11 @@ export default function PublicHeader() {
           <span
             data-testid="desktop-logo-separator"
             aria-hidden="true"
-            className="h-14 w-px shrink-0 bg-white shadow-[0_0_1px_rgba(11,32,56,0.28)]"
+            className={`h-14 w-px shrink-0 transition-colors duration-300 ${
+              isDarkHero
+                ? "bg-white/70 shadow-[0_0_1px_rgba(255,255,255,0.35)]"
+                : "bg-[var(--border)]"
+            }`}
           />
           <div className="relative h-[72px] w-[72px] shrink-0">
             <Image
@@ -124,12 +145,12 @@ export default function PublicHeader() {
           </div>
           <div className="flex min-w-0 flex-col justify-center leading-none">
             <span
-              className={`font-display text-[1.35rem] font-bold tracking-[-0.025em] transition-[color] duration-300 ${isAtTop ? "text-white" : "text-[var(--navy)]"}`}
+              className={`font-display text-[1.35rem] font-bold tracking-[-0.025em] transition-[color] duration-300 ${isDarkHero ? "text-white" : "text-[var(--navy)]"}`}
             >
               {brand("laboratory")}
             </span>
             <span
-              className={`mt-1 text-[0.7rem] font-medium tracking-[0.01em] transition-[color] duration-300 ${isAtTop ? "text-white/70" : "text-[var(--gray)]"}`}
+              className={`mt-1 text-[0.7rem] font-medium tracking-[0.01em] transition-[color] duration-300 ${isDarkHero ? "text-white/70" : "text-[var(--gray)]"}`}
             >
               {brand("technicalLine")}
             </span>
@@ -145,7 +166,7 @@ export default function PublicHeader() {
               key={key}
               href={href}
               aria-current={isActive(pathname, href) ? "page" : undefined}
-              className={`relative flex h-full items-center text-[0.9rem] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, href) ? "text-[var(--rams-red)] after:scale-x-100" : isAtTop ? "text-white hover:text-white/80" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
+              className={`relative flex h-full items-center text-[0.9rem] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:bottom-6 after:left-1/2 after:h-0.5 after:w-7 after:-translate-x-1/2 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, href) ? "text-[var(--rams-red)] after:scale-x-100" : isDarkHero ? "text-white hover:text-white/80" : isAtTop ? "text-[var(--navy)] hover:text-[var(--rams-red)]" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
             >
               {t(key)}
             </Link>
@@ -153,8 +174,10 @@ export default function PublicHeader() {
           <Link
             href={contactLink[1]}
             aria-label={a11y("contactUs")}
-            aria-current={isActive(pathname, contactLink[1]) ? "page" : undefined}
-            className={`relative flex h-full items-center px-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, contactLink[1]) ? "text-[var(--maroon)] after:scale-x-100" : isAtTop ? "text-white hover:text-[var(--maroon)]" : "text-[var(--maroon)] hover:text-[var(--maroon)]"}`}
+            aria-current={
+              isActive(pathname, contactLink[1]) ? "page" : undefined
+            }
+            className={`relative flex h-full items-center px-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:bottom-6 after:left-1/2 after:h-0.5 after:w-7 after:-translate-x-1/2 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, contactLink[1]) ? "text-[var(--maroon)] after:scale-x-100" : isDarkHero ? "text-white hover:text-white/80" : "text-[var(--maroon)] hover:text-[var(--maroon)]"}`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -173,10 +196,14 @@ export default function PublicHeader() {
             </svg>
           </Link>
           <div
-            className={`flex items-center gap-1 pl-4 transition-[border-color] duration-300 ${isAtTop ? "border-l border-white/20" : "border-l border-[var(--border)]"}`}
+            className={`flex items-center gap-1 pl-4 transition-[border-color] duration-300 ${
+              isDarkHero
+                ? "border-l border-white/20"
+                : "border-l border-[var(--border)]"
+            }`}
           >
             <Suspense>
-              <LanguageSwitcher dark={isAtTop} />
+              <LanguageSwitcher dark={isDarkHero} />
             </Suspense>
           </div>
         </nav>
@@ -191,11 +218,18 @@ export default function PublicHeader() {
           className="flex min-w-0 items-center gap-2"
           aria-label={a11y("home")}
         >
-          <MobileBrand laboratory={brand("laboratory")} />
+          <MobileBrand
+            laboratory={brand("laboratory")}
+            darkHero={isDarkHero}
+          />
         </Link>
         <button
           type="button"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-white/70 bg-white/60 text-[var(--navy)] transition-colors hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-md border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)] ${
+            isDarkHero
+              ? "border-white/60 bg-white/10 text-white hover:border-white hover:text-white"
+              : "border-[var(--border)] bg-white/70 text-[var(--navy)] hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"
+          }`}
           aria-expanded={open}
           aria-controls="mobile-public-navigation"
           aria-label={a11y("openMenu")}

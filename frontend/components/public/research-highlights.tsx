@@ -221,7 +221,10 @@ export default function ResearchHighlights() {
       <section className="relative -mt-[4.5rem] h-[100svh] overflow-hidden bg-[#2a0a0e] py-20 text-white">
         <MaritimeChartPattern />
         <PublicContainer className="relative z-10">
-          <PublicLoading label={t("researchHighlights.loading")} />
+          <PublicLoading
+            label={t("researchHighlights.loading")}
+            variant="profile"
+          />
         </PublicContainer>
       </section>
     );
@@ -246,6 +249,7 @@ export default function ResearchHighlights() {
   return (
     <section
       id="hero"
+      data-hero-tone="dark"
       className="relative -mt-[4.5rem] h-[100svh] overflow-hidden bg-[#2a0a0e] text-white"
       aria-label={t("researchHighlights.carouselLabel")}
     >

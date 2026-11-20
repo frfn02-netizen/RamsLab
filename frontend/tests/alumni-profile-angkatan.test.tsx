@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Alumni } from "@/types/alumni";
 
@@ -16,11 +22,17 @@ vi.mock("@/lib/api/alumni", () => ({
   uploadMyAlumniPhoto,
 }));
 vi.mock("@/components/providers/auth-providers", () => ({
-  useAuth: () => ({ user: stableUser, status: "authenticated", logout: vi.fn() }),
+  useAuth: () => ({
+    user: stableUser,
+    status: "authenticated",
+    logout: vi.fn(),
+  }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 vi.mock("next/image", () => ({
-  default: ({ alt, ...props }: { alt: string; [key: string]: unknown }) => <img alt={alt} {...props} />,
+  default: ({ alt, ...props }: { alt: string; [key: string]: unknown }) => (
+    <img alt={alt} {...props} />
+  ),
 }));
 vi.mock("@/components/dashboard/profile-photo-field", () => ({
   default: () => <div data-testid="profile-photo-field" />,
@@ -53,15 +65,38 @@ describe("Alumni profile cohort year", () => {
     getMyAlumni.mockResolvedValue(profile);
     render(<AlumniProfile />);
 
-    const program = await screen.findByLabelText("Program *");
+    const program = await screen.findByLabelText("Program *", {
+      selector: "select",
+    });
     expect(program.tagName).toBe("SELECT");
     expect(program.querySelectorAll("option")).toHaveLength(7);
-    expect(screen.getByRole("option", { name: "S1 TEKNIK SISTEM PERKAPALAN" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "S1 DOUBLE DEGREE (DD)" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "S2 TEKNIK SISTEM PERKAPALAN" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "S2 DOUBLE DEGREE (DD)" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "S3 TEKNIK SISTEM PERKAPALAN" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "S3 DOUBLE DEGREE (DD)" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Program *" }));
+    const listbox = await screen.findByRole("listbox");
+    expect(
+      within(listbox).getByRole("option", {
+        name: "S1 TEKNIK SISTEM PERKAPALAN",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(listbox).getByRole("option", { name: "S1 DOUBLE DEGREE (DD)" }),
+    ).toBeInTheDocument();
+    expect(
+      within(listbox).getByRole("option", {
+        name: "S2 TEKNIK SISTEM PERKAPALAN",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(listbox).getByRole("option", { name: "S2 DOUBLE DEGREE (DD)" }),
+    ).toBeInTheDocument();
+    expect(
+      within(listbox).getByRole("option", {
+        name: "S3 TEKNIK SISTEM PERKAPALAN",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(listbox).getByRole("option", { name: "S3 DOUBLE DEGREE (DD)" }),
+    ).toBeInTheDocument();
   });
 
   it("displays a legacy program safely and does not resubmit it", async () => {
@@ -70,9 +105,15 @@ describe("Alumni profile cohort year", () => {
     updateMyAlumni.mockResolvedValue({ ...profile, program: legacyProgram });
     render(<AlumniProfile />);
 
-    const program = await screen.findByLabelText("Program *");
+    const program = await screen.findByLabelText("Program *", {
+      selector: "select",
+    });
     expect(program).toHaveValue(legacyProgram);
-    expect(screen.getByRole("option", { name: `${legacyProgram} (legacy program)` })).toBeInTheDocument();
+    const legacyOption = Array.from(program.querySelectorAll("option")).find(
+      (option) => option.value === legacyProgram,
+    );
+    expect(legacyOption?.textContent).toBe(`${legacyProgram} (legacy program)`);
+    expect(legacyOption?.hasAttribute("disabled")).toBe(true);
 
     fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
     await waitFor(() => expect(updateMyAlumni).toHaveBeenCalledOnce());
@@ -86,7 +127,9 @@ describe("Alumni profile cohort year", () => {
     updateMyAlumni.mockResolvedValueOnce({ ...profile, program: replacement });
 
     const firstView = render(<AlumniProfile />);
-    const program = await screen.findByLabelText("Program *");
+    const program = await screen.findByLabelText("Program *", {
+      selector: "select",
+    });
     expect(program).toHaveValue(legacyProgram);
     fireEvent.change(program, { target: { value: replacement } });
     fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
@@ -102,7 +145,9 @@ describe("Alumni profile cohort year", () => {
     getMyAlumni.mockResolvedValueOnce({ ...profile, program: replacement });
     render(<AlumniProfile />);
 
-    expect(await screen.findByLabelText("Program *")).toHaveValue(replacement);
+    expect(
+      await screen.findByLabelText("Program *", { selector: "select" }),
+    ).toHaveValue(replacement);
   });
 
   it("does not render an editable Angkatan (P) field", async () => {
@@ -133,7 +178,11 @@ describe("Alumni profile cohort year", () => {
       tahunAngkatan: null,
       angkatan: undefined,
     });
-    updateMyAlumni.mockResolvedValue({ ...profile, tahunAngkatan: 2005, angkatan: 45 });
+    updateMyAlumni.mockResolvedValue({
+      ...profile,
+      tahunAngkatan: 2005,
+      angkatan: 45,
+    });
     render(<AlumniProfile />);
 
     const year = await screen.findByLabelText("Tahun Angkatan");
@@ -158,7 +207,9 @@ describe("Alumni profile cohort year", () => {
     });
     render(<AlumniProfile />);
 
-    const year = (await screen.findByLabelText("Tahun Angkatan")) as HTMLInputElement;
+    const year = (await screen.findByLabelText(
+      "Tahun Angkatan",
+    )) as HTMLInputElement;
     expect(year).toHaveValue(1955);
     expect(year.getAttribute("min")).toBeNull();
     expect(year.getAttribute("max")).toBeNull();
@@ -175,7 +226,9 @@ describe("Alumni profile cohort year", () => {
     updateMyAlumni.mockResolvedValue({ ...profile, tahunAngkatan: 2015 });
     render(<AlumniProfile />);
 
-    const year = (await screen.findByLabelText("Tahun Angkatan")) as HTMLInputElement;
+    const year = (await screen.findByLabelText(
+      "Tahun Angkatan",
+    )) as HTMLInputElement;
     expect(year.getAttribute("min")).toBe("1961");
     expect(year.getAttribute("max")).toBe("2059");
   });

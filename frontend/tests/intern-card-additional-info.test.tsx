@@ -110,19 +110,30 @@ describe("MemberCard – Vocational Intern additional info", () => {
     expect(screen.getByText("Marine Systems")).toBeInTheDocument();
   });
 
-  it("renders multiple specializations joined by dot", () => {
+  it("renders each specialization as its own expertise tag", () => {
     const member = intern({
       fullName: "Arfan Saputra",
       specialization: ["Reliability Engineering", "Safety Systems"],
     });
     render(<MemberCard member={member} roleFallback="Role" />);
 
-    expect(
-      screen.getByText("Reliability Engineering · Safety Systems"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Reliability Engineering")).toBeInTheDocument();
+    expect(screen.getByText("Safety Systems")).toBeInTheDocument();
   });
 
-  it("does not render specialization when array is empty", () => {
+  it("caps expertise tags at three", () => {
+    const member = intern({
+      fullName: "Arfan Saputra",
+      specialization: ["One", "Two", "Three", "Four"],
+    });
+    render(<MemberCard member={member} roleFallback="Role" />);
+
+    const article = screen.getByRole("article");
+    expect(article.querySelectorAll("li")).toHaveLength(3);
+    expect(screen.queryByText("Four")).not.toBeInTheDocument();
+  });
+
+  it("does not render expertise tags when array is empty", () => {
     const member = intern({
       fullName: "Arfan Saputra",
       specialization: [],
@@ -130,8 +141,7 @@ describe("MemberCard – Vocational Intern additional info", () => {
     render(<MemberCard member={member} roleFallback="Role" />);
 
     const article = screen.getByRole("article");
-    const specParagraph = article.querySelector("p.text-sm.leading-6");
-    expect(specParagraph).toBeNull();
+    expect(article.querySelectorAll("li")).toHaveLength(0);
   });
 
   it("hides role and specialization lines when data is absent", () => {

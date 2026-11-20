@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { getPublicEvents } from "@/lib/api/modules";
 import { assetPath } from "@/lib/asset-path";
 import type { PublicEvent } from "@/types/modules";
+import { MediaCardsSkeleton, SkeletonGroup } from "@/components/skeletons";
 import PublicContainer from "../public-container";
 import PageHero from "../page-hero";
 
@@ -82,9 +83,9 @@ export default function PublicEventsPage() {
           </button>
         </div>
         {loading ? (
-          <p className="text-sm font-semibold text-[var(--rams-gray)]">
-            {common("loading")}
-          </p>
+          <SkeletonGroup label={common("loading")}>
+            <MediaCardsSkeleton count={4} columns="grid gap-5 sm:grid-cols-2" />
+          </SkeletonGroup>
         ) : error ? (
           <p className="text-sm font-semibold text-red-700">
             {common("requestUnavailable")}

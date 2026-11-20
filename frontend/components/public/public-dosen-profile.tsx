@@ -294,7 +294,7 @@ function LecturerPublications({
   return (
     <ProfileSection title={t("title")}>
       {loading ? (
-        <PublicLoading label={t("loading")} />
+        <PublicLoading label={t("loading")} variant="profile" />
       ) : error ? (
         <PublicError
           message={t("error")}
@@ -530,7 +530,7 @@ export default function PublicDosenProfile({ id }: { id: string }) {
   if (!profile && !error)
     return (
       <PublicContainer className="py-20">
-        <PublicLoading label="Loading profile" />
+        <PublicLoading label="Loading profile" variant="profile" />
       </PublicContainer>
     );
   if (error || !profile)

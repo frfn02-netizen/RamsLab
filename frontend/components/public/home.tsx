@@ -326,10 +326,7 @@ export default function PublicHome() {
       <section className="bg-white py-14">
         <PublicContainer>
           <RevealOnScroll className="mb-6 max-w-2xl">
-            <p className="eyebrow text-[var(--rams-red)]">
-              {common("principles")}
-            </p>
-            <h2 className="mt-2 font-display text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl">
+            <h2 className="font-display text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl">
               {common("principlesTitle")}
             </h2>
           </RevealOnScroll>
@@ -342,22 +339,25 @@ export default function PublicHome() {
               className="rams-principles grid grid-cols-1 border-t border-b border-[var(--border)] sm:grid-cols-2 lg:grid-cols-4"
               stagger={120}
             >
-              {content.principles.map((item, i) => (
-                <div
+              {content.principles.map((item) => (
+                <article
                   key={item.key}
-                  className={`rams-item relative p-8 ${i < 3 ? "lg:border-r lg:border-[var(--border)]" : ""}`}
+                  className="rams-item relative overflow-hidden p-8 lg:p-10"
                 >
-                  <span aria-hidden="true" className="rams-accent" />
-                  <span className="rams-letter font-display text-4xl font-bold text-[var(--rams-red)]">
+                  <span aria-hidden="true" className="rams-watermark">
                     {item.key}
                   </span>
-                  <h3 className="rams-title mt-4 font-bold text-[var(--navy)]">
-                    {localized(item.title)}
-                  </h3>
-                  <p className="mt-2 text-sm text-[var(--gray)]">
-                    {localized(item.description)}
-                  </p>
-                </div>
+                  <span aria-hidden="true" className="rams-accent" />
+                  <div className="relative">
+                    <span aria-hidden="true" className="rams-rule" />
+                    <h3 className="rams-title mt-4 font-display text-xl font-bold tracking-tight text-[var(--navy)]">
+                      {localized(item.title)}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--gray)]">
+                      {localized(item.description)}
+                    </p>
+                  </div>
+                </article>
               ))}
             </RevealOnScroll>
           )}

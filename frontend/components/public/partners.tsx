@@ -72,7 +72,7 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
           </RevealOnScroll>
 
           {loading ? (
-            <PublicLoading label={t("loading")} />
+            <PublicLoading label={t("loading")} variant="partners" />
           ) : error ? (
             <PublicError message={t("noDescription")} onRetry={() => {}} />
           ) : partners.length === 0 ? (

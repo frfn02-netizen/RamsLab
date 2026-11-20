@@ -55,7 +55,7 @@ export default function AlumniProfile({ id }: { id: string }) {
   if (profile === undefined && !error) {
     return (
       <PublicContainer className="py-20">
-        <PublicLoading label={t("loading")} />
+        <PublicLoading label={t("loading")} variant="profile" />
       </PublicContainer>
     );
   }
@@ -133,7 +133,9 @@ export default function AlumniProfile({ id }: { id: string }) {
                     data-testid="alumni-metadata-grid"
                     className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:gap-x-12 lg:gap-y-10"
                   >
-                    {program && <DetailItem label={t("programLabel")} value={program} />}
+                    {program && (
+                      <DetailItem label={t("programLabel")} value={program} />
+                    )}
                     {position && (
                       <DetailItem label={t("positionLabel")} value={position} />
                     )}

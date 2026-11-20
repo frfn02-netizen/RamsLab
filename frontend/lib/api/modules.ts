@@ -50,7 +50,7 @@ import type {
   HomepageVideoUpdateInput,
   PublicHomepageVideo,
 } from "@/types/modules";
-import type { ManagedAccount } from "@/types/auth";
+import type { AdminPasswordResetResult, ManagedAccount } from "@/types/auth";
 import type {
   SiteContentAdminEnvelope,
   SiteContentKey,
@@ -96,12 +96,18 @@ export const deleteDosen = async (id: string) => {
 };
 export const createDosenAccount = (input: {
   email: string;
-  password: string;
+  password?: string;
 }) =>
   apiRequest<ManagedAccount>("/users/dosen", {
     method: "POST",
     body: JSON.stringify(input),
   });
+
+export const resetUserPassword = (userId: string) =>
+  apiRequest<AdminPasswordResetResult>(
+    `/users/${encodeURIComponent(userId)}/password-reset`,
+    { method: "POST" },
+  );
 export const getStudentList = () => apiRequest<Student[]>("/students");
 export const getStudentById = (id: string) =>
   apiRequest<Student>(`/students/${encodeURIComponent(id)}`);

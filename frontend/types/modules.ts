@@ -231,8 +231,11 @@ export type StudentType =
 export interface Student {
   _id: string;
   fullName: string;
+  nim?: string;
   studentType: StudentType;
   program?: string;
+  faculty?: string;
+  department?: string;
   specialization: string[];
   photo?: string;
   bio?: string;
@@ -536,4 +539,5 @@ export interface PublicHomepageVideo {
   thumbnailUrl: string;
   isFeatured: boolean;
   order: number;
+  duration?: string | null;
 }

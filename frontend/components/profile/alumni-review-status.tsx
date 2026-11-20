@@ -56,9 +56,7 @@ function ReviewStatusContent({
   const note = reviewNote?.trim();
 
   return (
-    <Card
-      className={`p-5 sm:p-6 ${rejected ? "border-red-300" : ""}`}
-    >
+    <Card className={`p-5 sm:p-6 ${rejected ? "border-red-300" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs font-bold uppercase tracking-wide text-[var(--rams-gray)]">
           {t("statusTitle")}

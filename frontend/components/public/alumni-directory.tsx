@@ -155,7 +155,7 @@ export default function AlumniDirectory() {
 
         <div className="mt-6" aria-live="polite">
           {loading ? (
-            <PublicLoading label={t("loading")} />
+            <PublicLoading label={t("loading")} variant="people" />
           ) : error ? (
             <PublicError message={t("error")} onRetry={load} />
           ) : filteredRecords.length === 0 ? (

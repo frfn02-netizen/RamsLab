@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
+import Select from "@/components/select";
 
 const topicKeys = [
   "risk",
@@ -23,6 +24,7 @@ export default function ContactForm({
   const t = useTranslations("contact");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(false);
+  const [topic, setTopic] = useState("");
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -97,19 +99,19 @@ export default function ContactForm({
             </label>
             <label className="grid gap-2 text-sm font-semibold text-[var(--navy)]">
               {t("topic")}
-              <select
+              <Select
                 name="topic"
                 required
-                defaultValue=""
-                className={inputClass}
-              >
-                <option value="" disabled>
-                  {t("selectTopic")}
-                </option>
-                {topicKeys.map((key) => (
-                  <option key={key}>{t(`topics.${key}`)}</option>
-                ))}
-              </select>
+                size="lg"
+                value={topic}
+                onChange={setTopic}
+                placeholder={t("selectTopic")}
+                ariaLabel={t("topic")}
+                options={topicKeys.map((key) => {
+                  const optionLabel = t(`topics.${key}`);
+                  return { value: optionLabel, label: optionLabel };
+                })}
+              />
             </label>
           </div>
           <label className="grid gap-2 text-sm font-semibold text-[var(--navy)]">

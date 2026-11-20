@@ -25,6 +25,34 @@ export async function getAlumniList(
   };
 }
 
+export interface AlumniStats {
+  total: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+}
+
+/**
+ * Derived from the existing paginated list endpoint so the dashboard does not
+ * need a separate backend statistics route. Pending is calculated from the
+ * total minus the explicit terminal statuses, which also keeps legacy records
+ * without a stored review status in the "awaiting review" bucket.
+ */
+export async function getAlumniStats(): Promise<AlumniStats> {
+  const [all, approved, rejected] = await Promise.all([
+    getAlumniList({ page: 1, limit: 1 }),
+    getAlumniList({ page: 1, limit: 1, reviewStatus: "APPROVED" }),
+    getAlumniList({ page: 1, limit: 1, reviewStatus: "REJECTED" }),
+  ]);
+
+  return {
+    total: all.total,
+    approved: approved.total,
+    rejected: rejected.total,
+    pending: Math.max(0, all.total - approved.total - rejected.total),
+  };
+}
+
 export function getAlumniById(id: string) {
   return apiRequest<Alumni>(`/alumni/${encodeURIComponent(id)}`);
 }

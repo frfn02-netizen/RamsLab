@@ -45,6 +45,7 @@ vi.mock("@/components/dashboard/profile-photo-field", () => ({
 }));
 
 import AlumniProfile from "@/components/profile/alumni-profile";
+import { ToastProvider } from "@/components/providers/toast-providers";
 
 const existingProfile: Alumni = {
   _id: "alumni-1",
@@ -67,6 +68,14 @@ beforeEach(() => {
   auth.role = "ALUMNI";
 });
 
+function renderProfile() {
+  return render(
+    <ToastProvider>
+      <AlumniProfile />
+    </ToastProvider>,
+  );
+}
+
 describe("AlumniProfile – save notifications", () => {
   it("shows 'Profile completed successfully' when the backend reports the profile complete", async () => {
     getMyAlumni.mockRejectedValue(new Error("Not found"));
@@ -76,7 +85,7 @@ describe("AlumniProfile – save notifications", () => {
       profileCompleted: true,
     });
 
-    render(<AlumniProfile />);
+    renderProfile();
 
     await waitFor(() =>
       expect(screen.getByLabelText(/full name/i)).toBeInTheDocument(),
@@ -85,16 +94,19 @@ describe("AlumniProfile – save notifications", () => {
     fireEvent.change(screen.getByLabelText(/full name/i), {
       target: { value: "New Alumni" },
     });
-    fireEvent.change(screen.getByLabelText(/program/i), {
-      target: { value: "S1 TEKNIK SISTEM PERKAPALAN" },
-    });
+    fireEvent.change(
+      screen.getByLabelText(/program/i, { selector: "select" }),
+      {
+        target: { value: "S1 TEKNIK SISTEM PERKAPALAN" },
+      },
+    );
     fireEvent.change(screen.getByLabelText(/nim/i), {
       target: { value: "NIM-NEW" },
     });
     fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
       target: { value: "2015" },
     });
-    fireEvent.change(screen.getByLabelText(/status/i), {
+    fireEvent.change(screen.getByLabelText(/status/i, { selector: "select" }), {
       target: { value: "WORKING" },
     });
 
@@ -109,12 +121,12 @@ describe("AlumniProfile – save notifications", () => {
       screen.queryByText("Profile saved. Your profile is pending review."),
     ).not.toBeInTheDocument();
 
-    // The success toast is the existing lime one.
+    // The success toast is rendered by the global toast provider.
     const toast = screen.getByRole("status");
     expect(toast).toHaveTextContent("Profile completed successfully");
     expect(toast).toHaveTextContent("Success!");
-    expect(toast.className).toContain("fixed");
-    expect(toast.className).toContain("border-l-lime-500");
+    expect(toast.className).toContain("border-l-emerald-500");
+    expect(toast.className).toContain("rounded-xl");
   });
 
   it("does not claim the profile is complete while the backend still reports it incomplete", async () => {
@@ -124,7 +136,7 @@ describe("AlumniProfile – save notifications", () => {
       profileCompleted: false,
     });
 
-    render(<AlumniProfile />);
+    renderProfile();
 
     await waitFor(() =>
       expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),
@@ -146,7 +158,7 @@ describe("AlumniProfile – save notifications", () => {
     getMyAlumni.mockResolvedValue(existingProfile);
     updateMyAlumni.mockRejectedValue(new Error("Server error"));
 
-    render(<AlumniProfile />);
+    renderProfile();
 
     await waitFor(() =>
       expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),
@@ -163,9 +175,8 @@ describe("AlumniProfile – save notifications", () => {
 
     // It is the red error toast, not the inline ErrorState banner.
     const toast = screen.getByRole("alert");
-    expect(toast.className).toContain("fixed");
     expect(toast.className).toContain("border-l-red-500");
-    expect(document.querySelectorAll(".bg-red-50")).toHaveLength(0);
+    expect(document.querySelectorAll(".border-red-200")).toHaveLength(0);
   });
 
   const registrationErrors = [
@@ -180,7 +191,7 @@ describe("AlumniProfile – save notifications", () => {
       getMyAlumni.mockResolvedValue(existingProfile);
       updateMyAlumni.mockRejectedValue(new ApiError(message, 400));
 
-      render(<AlumniProfile />);
+      renderProfile();
 
       await waitFor(() =>
         expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),
@@ -194,15 +205,16 @@ describe("AlumniProfile – save notifications", () => {
 
       const toast = screen.getByRole("alert");
       expect(toast).toHaveTextContent("Error!");
-      expect(toast.className).toContain("fixed");
       expect(toast.className).toContain("border-l-red-500");
       expect(screen.getAllByText(message)).toHaveLength(1);
-      expect(document.querySelectorAll(".bg-red-50")).toHaveLength(0);
+      expect(document.querySelectorAll(".border-red-200")).toHaveLength(0);
 
       fireEvent.click(
         screen.getByRole("button", { name: /dismiss error notification/i }),
       );
-      expect(screen.queryByText(message)).not.toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.queryByText(message)).not.toBeInTheDocument(),
+      );
     },
   );
 
@@ -210,7 +222,7 @@ describe("AlumniProfile – save notifications", () => {
     getMyAlumni.mockResolvedValue(existingProfile);
     updateMyAlumni.mockRejectedValue(new Error("Server error"));
 
-    render(<AlumniProfile />);
+    renderProfile();
 
     await waitFor(() =>
       expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),
@@ -237,7 +249,7 @@ describe("AlumniProfile – save notifications", () => {
       }),
     );
 
-    render(<AlumniProfile />);
+    renderProfile();
 
     await waitFor(() =>
       expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),
@@ -276,7 +288,7 @@ describe("AlumniProfile – save notifications", () => {
       profileCompleted: true,
     });
 
-    render(<AlumniProfile />);
+    renderProfile();
 
     await waitFor(() =>
       expect(screen.getByDisplayValue("Jane Smith")).toBeInTheDocument(),

@@ -120,9 +120,7 @@ function nodeTopValue(index: number) {
 }
 
 async function waitForTimeline(count: number) {
-  await waitFor(() =>
-    expect(screen.getAllByRole("radio")).toHaveLength(count),
-  );
+  await waitFor(() => expect(screen.getAllByRole("radio")).toHaveLength(count));
   await waitFor(() =>
     expect(timeline().style.getPropertyValue("--node-ramp")).toBe("48px"),
   );
@@ -193,9 +191,7 @@ describe("publications timeline scroll synchronization", () => {
     expect(container.querySelectorAll("[data-publication-id]")).toHaveLength(
       48,
     );
-    expect(
-      screen.getAllByTestId("publication-node-active"),
-    ).toHaveLength(48);
+    expect(screen.getAllByTestId("publication-node-active")).toHaveLength(48);
 
     const line = screen.getByTestId("publications-timeline-line");
     expect(line.className).toContain("top-3");
@@ -230,7 +226,12 @@ describe("publications timeline scroll synchronization", () => {
     const records = Array.from({ length: 4 }, (_, index) =>
       makePublication(index + 1),
     );
-    layout.nodeOffsets = { "pub-1": 100, "pub-2": 400, "pub-3": 900, "pub-4": 1400 };
+    layout.nodeOffsets = {
+      "pub-1": 100,
+      "pub-2": 400,
+      "pub-3": 900,
+      "pub-4": 1400,
+    };
     layout.containerHeight = 2000;
     getPublications.mockResolvedValue(makeResponse(records));
 

@@ -173,6 +173,15 @@
       "title": "Mengenal Laboratorium RAMS",
       "description": "Tonton pengenalan kami untuk mempelajari tentang riset, metode, dan sistem yang kami pelajari.",
       "watchOnYouTube": "Tonton di YouTube",
+      "watchIntroduction": "Tonton Pengenalan",
+      "allVideos": "Semua Video",
+      "featured": "Unggulan",
+      "playVideo": "Putar video",
+      "closeVideo": "Tutup video",
+      "videoDialog": "Pemutar video",
+      "previousVideo": "Video sebelumnya",
+      "nextVideo": "Video berikutnya",
+      "goToVideo": "Buka video",
       "latestVideos": "Video Terbaru",
       "viewAll": "Lihat semua video",
       "loading": "Memuat video",
@@ -221,7 +230,10 @@
     "ecosystemTitle": "Laboratorium RAMS × AIS-ITS.",
     "ecosystemDescription": "Identitas publik ini memadukan karya keandalan dan keselamatan Laboratorium RAMS dengan arah sistem maritim AIS-ITS.",
     "ecosystemLink": "Lihat jejaring kolaborasi",
-    "ctaTitle": "Bangun sistem andal berikutnya bersama kami."
+    "ctaTitle": "Bangun sistem andal berikutnya bersama kami.",
+    "exploreWork": "Jelajahi Karya Kami",
+    "exploreResearch": "Jelajahi Riset Kami",
+    "getInTouch": "Hubungi Kami"
   },
   "timeline": {
     "foundation": {
@@ -382,9 +394,81 @@
     "showPerPage": "Tampilkan"
   },
   "team": {
-    "heroEyebrow": "Orang & keahlian",
-    "heroTitle": "Tim riset multidisiplin.",
-    "heroDescription": "Laboratorium RAMS mempertemukan pimpinan laboratorium, dosen, peneliti, dan kolaborator rekayasa di sekitar sistem yang andal.",
+    "breadcrumbLabel": "Navigasi halaman",
+    "heroEyebrow": "Orang & Keahlian",
+    "heroBreadcrumbCurrent": "Orang & Keahlian",
+    "heroTitle": "Orang-orang di balik riset yang andal.",
+    "heroDescription": "Kenali para peneliti, akademisi, dan talenta muda yang mendorong Laboratorium RAMS maju.",
+    "heroPrimaryCta": "Jelajahi tim kami",
+    "heroSecondaryCta": "Tentang RAMS",
+    "heroAnnotationTitle": "Sistem Maritim",
+    "heroAnnotationLine": "Keandalan · Keselamatan · Manajemen",
+    "heroVisualLabel": "Ilustrasi cetak biru teknis kapal riset maritim dengan lingkaran radar, penanda survei, dan garis gelombang laut.",
+    "categoriesLabel": "Kategori orang",
+    "categories": {
+      "DOSEN": "Dosen",
+      "STUDENTS": "Mahasiswa Pascasarjana",
+      "UNDERGRADUATE": "Mahasiswa Sarjana",
+      "INTERNSHIP": "Peserta Magang Vokasi",
+      "ALUMNI": "Alumni"
+    },
+    "sections": {
+      "DOSEN": {
+        "eyebrow": "Dosen",
+        "title": "Dosen Kami",
+        "description": "Pemimpin akademik dan peneliti yang mendorong riset, pendidikan, dan inovasi RAMS."
+      },
+      "STUDENTS": {
+        "eyebrow": "Mahasiswa Pascasarjana",
+        "title": "Mahasiswa Pascasarjana Kami",
+        "description": "Peneliti yang memajukan laboratorium melalui studi magister dan doktoral yang terfokus."
+      },
+      "UNDERGRADUATE": {
+        "eyebrow": "Mahasiswa Sarjana",
+        "title": "Mahasiswa Sarjana Kami",
+        "description": "Mahasiswa yang membangun pengalaman riset melalui proyek maritim dan keandalan terapan."
+      },
+      "INTERNSHIP": {
+        "eyebrow": "Peserta Magang Vokasi",
+        "title": "Peserta Magang Vokasi Kami",
+        "description": "Peserta magang vokasi yang berkontribusi pada pekerjaan teknis di seluruh proyek laboratorium."
+      },
+      "ALUMNI": {
+        "eyebrow": "Alumni",
+        "title": "Alumni Kami",
+        "description": "Mantan anggota yang membawa riset RAMS ke industri, dunia akademik, dan layanan publik."
+      }
+    },
+    "roleBadges": {
+      "DOSEN": "Dosen",
+      "MAHASISWA": "Peneliti doktoral",
+      "MASTER": "Peneliti magister",
+      "UNDERGRADUATE": "Peneliti sarjana",
+      "INTERNSHIP": "Peserta magang vokasi",
+      "ALUMNI": "Alumni"
+    },
+    "graduateGroups": {
+      "MAHASISWA": "Doktoral",
+      "MASTER": "Magister"
+    },
+    "searchLabel": "Cari orang",
+    "searchPlaceholder": "Cari orang, minat riset, atau kata kunci...",
+    "filterLabel": "Saring berdasarkan bidang riset",
+    "filterAll": "Semua Bidang Riset",
+    "filterReliability": "Keandalan",
+    "filterSafety": "Keselamatan",
+    "filterMaintenance": "Pemeliharaan",
+    "filterMaritime": "Sistem Maritim",
+    "filterAis": "AIS",
+    "filterSimulation": "Simulasi",
+    "sortLabel": "Urutkan",
+    "sortDefault": "Urutan bawaan",
+    "sortName": "Nama (A-Z)",
+    "noResultsTitle": "Tidak ada orang yang cocok",
+    "noResultsDescription": "Sesuaikan kata kunci atau pilih bidang riset lain.",
+    "noProfilesTitle": "Belum ada profil",
+    "noProfilesDescription": "Profil pada kategori ini akan muncul di sini jika tersedia.",
+    "studentGroupEmpty": "Belum ada profil pada kategori ini.",
     "headEyebrow": "KEPALA LABORATORIUM",
     "headName": "Prof. Ketut",
     "headPhotoAlt": "Prof. Ketut, kepala Laboratorium RAMS",
@@ -529,6 +613,7 @@
     "closeLabel": "Tutup",
     "projectsEyebrow": "Layanan Publik",
     "projectsTitle": "Proyek Layanan Publik",
+    "projectsSort": "Urutkan proyek",
     "projectsSearchPlaceholder": "Cari proyek...",
     "projectsSortNewest": "Terbaru lebih dulu",
     "projectsSortOldest": "Terlama lebih dulu",

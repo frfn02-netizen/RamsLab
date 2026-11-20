@@ -171,7 +171,7 @@ export default function PublicExpertProfile({ id }: { id: string }) {
   if (!profile && !error)
     return (
       <PublicContainer className="py-20">
-        <PublicLoading label="Loading expert profile" />
+        <PublicLoading label="Loading expert profile" variant="profile" />
       </PublicContainer>
     );
   if (error || !profile)

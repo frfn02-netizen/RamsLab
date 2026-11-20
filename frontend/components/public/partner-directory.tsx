@@ -52,7 +52,7 @@ export default function PartnerDirectory() {
 
       <div className="mt-6">
         {loading ? (
-          <PublicLoading label={t("loading")} />
+          <PublicLoading label={t("loading")} variant="partners" />
         ) : error ? (
           <PublicError message={t("noDescription")} />
         ) : totalPublished > 0 ? (

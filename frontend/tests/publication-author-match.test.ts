@@ -38,9 +38,9 @@ describe("gelar dan nama dipendekkan", () => {
   });
 
   it("mencocokkan nama dosen yang juga memuat gelar", () => {
-    expect(
-      isPublicationAuthorMatch(FULL_NAME, "Prof. Ketut Buda Artana"),
-    ).toBe(true);
+    expect(isPublicationAuthorMatch(FULL_NAME, "Prof. Ketut Buda Artana")).toBe(
+      true,
+    );
   });
 });
 
@@ -64,9 +64,9 @@ describe("nama identik", () => {
   });
 
   it("mengabaikan perbedaan whitespace", () => {
-    expect(
-      isPublicationAuthorMatch("Aria   Putra", "  aria putra "),
-    ).toBe(true);
+    expect(isPublicationAuthorMatch("Aria   Putra", "  aria putra ")).toBe(
+      true,
+    );
   });
 
   it("mengabaikan perbedaan punctuation dan singkatan gelar", () => {
@@ -101,9 +101,9 @@ describe("anti false positive", () => {
 
   it("tidak cocok ketika nama dosen hanya satu token", () => {
     expect(isPublicationAuthorMatch("Budi", "Prof. Budi Santoso")).toBe(false);
-    expect(isPublicationAuthorMatch("testfiturbaru", "testfiturbaru junior")).toBe(
-      false,
-    );
+    expect(
+      isPublicationAuthorMatch("testfiturbaru", "testfiturbaru junior"),
+    ).toBe(false);
   });
 
   it("tidak cocok ketika salah satu nama kosong", () => {

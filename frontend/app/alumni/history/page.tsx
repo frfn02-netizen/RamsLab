@@ -8,6 +8,7 @@ import { useAuth } from "@/components/providers/auth-providers";
 import { getMyAuditLogs, type AlumniAuditLog } from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
 import { assetPath } from "@/lib/asset-path";
+import { AuthLoadingSkeleton, TimelineSkeleton } from "@/components/skeletons";
 
 const dateLabel = (value: string) => {
   const date = new Date(value);
@@ -54,11 +55,10 @@ export default function AlumniHistoryPage() {
 
   if (status === "loading" || !user || user.role !== "ALUMNI") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]">
-        <p className="text-sm text-[var(--gray)]" role="status">
-          Checking your session…
-        </p>
-      </div>
+      <AuthLoadingSkeleton
+        label="Checking your session"
+        className="bg-[var(--paper)]"
+      />
     );
   }
 
@@ -118,7 +118,9 @@ export default function AlumniHistoryPage() {
         )}
 
         {loading ? (
-          <p className="mt-10 text-sm text-[var(--gray)]">Loading history…</p>
+          <div className="mt-8">
+            <TimelineSkeleton items={3} />
+          </div>
         ) : logs.length === 0 ? (
           <div className="mt-16 text-center">
             <p className="text-lg font-semibold text-[var(--navy)]">

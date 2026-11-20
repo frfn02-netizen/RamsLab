@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
 import AlumniProfile from "@/components/profile/alumni-profile";
+import { AuthLoadingSkeleton } from "@/components/skeletons";
 
 export default function AlumniDashboardPage() {
   const router = useRouter();
@@ -19,11 +20,10 @@ export default function AlumniDashboardPage() {
 
   if (status === "loading" || !user || user.role !== "ALUMNI") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]">
-        <p className="text-sm text-[var(--gray)]" role="status">
-          Checking your session…
-        </p>
-      </div>
+      <AuthLoadingSkeleton
+        label="Checking your session"
+        className="bg-[var(--paper)]"
+      />
     );
   }
 

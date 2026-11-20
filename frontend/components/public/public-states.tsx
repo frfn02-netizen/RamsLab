@@ -1,20 +1,61 @@
 import { useTranslations } from "next-intl";
-import { MaritimeShip } from "./maritime-motion";
+import {
+  MediaCardsSkeleton,
+  PartnerCardsSkeleton,
+  ProfileCardsSkeleton,
+  PublicationListSkeleton,
+  Skeleton,
+  SkeletonGroup,
+  SkeletonLines,
+} from "@/components/skeletons";
 
-export function PublicLoading({ label }: { label?: string }) {
+type PublicLoadingVariant =
+  "cards" | "people" | "partners" | "list" | "profile";
+
+export function PublicLoading({
+  label,
+  variant = "cards",
+}: {
+  label?: string;
+  variant?: PublicLoadingVariant;
+}) {
   const common = useTranslations("common");
+  const statusLabel = label ?? common("loading");
+
   return (
-    <div
-      className="border border-[var(--border)] bg-white p-8 text-center"
-      role="status"
-    >
-      <div className="maritime-loader mx-auto mb-4">
-        <MaritimeShip className="h-12 w-24" />
-      </div>
-      <p className="text-sm text-[var(--gray)]">
-        {label ?? common("loading")}…
-      </p>
-    </div>
+    <SkeletonGroup label={statusLabel}>
+      {variant === "people" ? (
+        <ProfileCardsSkeleton
+          count={10}
+          columns="grid gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        />
+      ) : variant === "partners" ? (
+        <PartnerCardsSkeleton count={6} />
+      ) : variant === "list" ? (
+        <PublicationListSkeleton count={4} />
+      ) : variant === "profile" ? (
+        <div className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-[18rem_minmax(0,1fr)]">
+            <Skeleton className="aspect-[4/5] w-full rounded-[3px]" />
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-9 w-2/3" />
+              <SkeletonLines lines={4} className="max-w-xl" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            </div>
+          </div>
+          <SkeletonLines lines={5} />
+        </div>
+      ) : (
+        <MediaCardsSkeleton
+          count={6}
+          columns="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        />
+      )}
+    </SkeletonGroup>
   );
 }
 

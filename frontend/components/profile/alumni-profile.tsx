@@ -5,15 +5,16 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import { getMyAlumni, updateMyAlumni } from "@/lib/api/alumni";
 import { uploadMyAlumniPhoto } from "@/lib/api/alumni";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
@@ -26,7 +27,7 @@ import {
   isAlumniProgram,
 } from "@/lib/alumni-program-options";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
-import SuccessToast from "@/components/dashboard/success-toast";
+import Select from "@/components/select";
 
 const statuses: AlumniStatus[] = [
   "WORKING",
@@ -65,6 +66,7 @@ function SectionHeader({
 
 export default function AlumniProfile() {
   const { logout, status, user } = useAuth();
+  const { success, error: notifyError } = useToast();
   const router = useRouter();
   const [profile, setProfile] = useState<Alumni | null>(null);
   const [form, setForm] = useState({
@@ -86,13 +88,6 @@ export default function AlumniProfile() {
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Save-time failures (including the backend's registration validation) are
-  // surfaced as a toast instead of the inline red banner used for load errors.
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [registrationNotice, setRegistrationNotice] = useState<string | null>(
-    null,
-  );
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   // An empty input can mean either "this legacy record has never had a year"
   // or "the alumni deliberately cleared its stored year". Preserve that
@@ -105,8 +100,8 @@ export default function AlumniProfile() {
     );
     if (!notice) return;
     window.sessionStorage.removeItem("rams_alumni_registration_notice");
-    setRegistrationNotice(notice);
-  }, []);
+    success(notice);
+  }, [success]);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login?next=/profile");
@@ -161,9 +156,6 @@ export default function AlumniProfile() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setError(null);
-    setSaveError(null);
-    setSuccessMessage(null);
     try {
       // The photo is one of the mandatory registration fields, so a new photo
       // is uploaded first: the backend rejects any profile save that would
@@ -223,24 +215,20 @@ export default function AlumniProfile() {
       }));
       // The backend decides completeness; never claim a profile is complete
       // while the server still reports missing required fields.
-      setSuccessMessage(
+      success(
         result.profileCompleted
           ? "Profile completed successfully"
           : "Profile saved. Your profile is pending review.",
       );
     } catch (reason) {
-      setSaveError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
   }
 
   if (status === "loading" || loading || !user || user.role !== "ALUMNI")
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Checking your session" />
-      </div>
-    );
+    return <FormSkeleton fields={10} actionCount={1} />;
 
   if (profileLoaded && !profile && !error)
     return (
@@ -251,25 +239,6 @@ export default function AlumniProfile() {
 
   return (
     <div className="min-h-screen bg-[var(--paper)]">
-      {registrationNotice && (
-        <SuccessToast
-          message={registrationNotice}
-          onClose={() => setRegistrationNotice(null)}
-        />
-      )}
-      {successMessage && (
-        <SuccessToast
-          message={successMessage}
-          onClose={() => setSuccessMessage(null)}
-        />
-      )}
-      {saveError && (
-        <SuccessToast
-          variant="error"
-          message={saveError}
-          onClose={() => setSaveError(null)}
-        />
-      )}
       <div className="border-b border-[var(--border)] bg-white px-5 sm:px-8">
         <div className="mx-auto flex max-w-[880px] items-center justify-between py-4">
           <Link href="/" className="flex items-center gap-2.5">
@@ -404,29 +373,28 @@ export default function AlumniProfile() {
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <Field label="Program *" htmlFor="program">
-                      <select
+                      <Select
                         id="program"
                         required
-                        className={profileInputClass}
+                        placeholder="Select program"
                         value={form.program}
-                        onChange={(event) =>
-                          update("program", event.target.value)
-                        }
-                      >
-                        <option value="" disabled>
-                          Select program
-                        </option>
-                        {!isAlumniProgram(form.program) && form.program && (
-                          <option value={form.program} disabled>
-                            {form.program} (legacy program)
-                          </option>
-                        )}
-                        {ALUMNI_PROGRAM_OPTIONS.map((program) => (
-                          <option key={program} value={program}>
-                            {program}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(next) => update("program", next)}
+                        options={[
+                          ...(!isAlumniProgram(form.program) && form.program
+                            ? [
+                                {
+                                  value: form.program,
+                                  label: `${form.program} (legacy program)`,
+                                  disabled: true,
+                                },
+                              ]
+                            : []),
+                          ...ALUMNI_PROGRAM_OPTIONS.map((program) => ({
+                            value: program,
+                            label: program,
+                          })),
+                        ]}
+                      />
                     </Field>
                     <Field label="NIM *" htmlFor="nim">
                       <input
@@ -461,27 +429,22 @@ export default function AlumniProfile() {
                       />
                     </Field>
                     <Field label="Status *" htmlFor="currentStatus">
-                      <select
+                      <Select
                         id="currentStatus"
                         required
-                        className={profileInputClass}
+                        placeholder="Select status"
                         value={form.currentStatus}
-                        onChange={(event) => {
-                          update("currentStatus", event.target.value);
-                          if (event.target.value !== "OTHER") {
+                        onChange={(next) => {
+                          update("currentStatus", next);
+                          if (next !== "OTHER") {
                             update("otherStatus", "");
                           }
                         }}
-                      >
-                        <option value="" disabled>
-                          Select status
-                        </option>
-                        {statuses.map((s) => (
-                          <option key={s} value={s}>
-                            {label(s)}
-                          </option>
-                        ))}
-                      </select>
+                        options={statuses.map((status) => ({
+                          value: status,
+                          label: label(status),
+                        }))}
+                      />
                     </Field>
                   </div>
 

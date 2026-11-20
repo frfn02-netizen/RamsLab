@@ -48,9 +48,7 @@ describe("public events page video", () => {
     const { container } = render(<PublicEventsPage />);
 
     await waitFor(() =>
-      expect(
-        screen.getByText("Ocean Engineering Summit"),
-      ).toBeInTheDocument(),
+      expect(screen.getByText("Ocean Engineering Summit")).toBeInTheDocument(),
     );
 
     const videos = container.querySelectorAll("video");
@@ -83,8 +81,7 @@ describe("public events page video", () => {
     const heading = container.querySelector("h1")!;
     const grid = container.querySelector(".grid")!;
     expect(
-      heading.compareDocumentPosition(video) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      heading.compareDocumentPosition(video) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
       video.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -114,14 +111,18 @@ describe("public events page video", () => {
     fireEvent.click(unmuteButton);
 
     expect(video.muted).toBe(false);
-    expect(screen.getByRole("button", { name: "Mute video" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Mute video" }),
+    ).toBeInTheDocument();
     expect(video.paused).toBe(false);
     expect(video.currentTime).toBe(12);
 
     fireEvent.click(screen.getByRole("button", { name: "Mute video" }));
 
     expect(video.muted).toBe(true);
-    expect(screen.getByRole("button", { name: "Unmute video" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Unmute video" }),
+    ).toBeInTheDocument();
     expect(video.paused).toBe(false);
     expect(video.currentTime).toBe(12);
   });

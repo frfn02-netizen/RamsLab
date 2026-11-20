@@ -5,31 +5,22 @@ export type AlumniReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
 export interface Alumni {
   _id: string;
   userId: string;
-
   fullName: string;
   nim: string;
   photo?: string;
-
   angkatan: number;
-  // Calendar year of the cohort. `angkatan` remains the persisted P
-  // compatibility value and is derived from this year by the backend.
   tahunAngkatan?: number | null;
   program: string;
-
   phone?: string;
   location?: string;
-
   currentStatus: AlumniStatus;
   otherStatus?: string;
   currentCompany?: string;
   currentPosition?: string;
-
   linkedin?: string;
   bio?: string;
-
   careerHistory: CareerHistory[];
   educationHistory: EducationHistory[];
-
   isPublic: boolean;
   reviewStatus?: AlumniReviewStatus;
   reviewNote?: string | null;
@@ -37,7 +28,6 @@ export interface Alumni {
   accountEmail?: string;
   accountActive?: boolean;
   mustChangePassword?: boolean;
-
   createdAt: string;
   updatedAt: string;
 }
@@ -62,8 +52,6 @@ export interface AlumniListParams {
   page?: number;
   limit?: number;
   search?: string;
-  // Admin review-status filter (All = omit). Matches the stored reviewStatus,
-  // never isPublic / profileCompleted.
   reviewStatus?: AlumniReviewStatus;
 }
 

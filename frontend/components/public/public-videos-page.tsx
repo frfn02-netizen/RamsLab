@@ -6,6 +6,7 @@ import { getPublicHomepageVideos } from "@/lib/api/modules";
 import type { PublicHomepageVideo } from "@/types/modules";
 import PublicContainer from "./public-container";
 import PageHero from "./page-hero";
+import { MediaCardsSkeleton, SkeletonGroup } from "@/components/skeletons";
 
 export default function PublicVideosPage() {
   const t = useTranslations("videos");
@@ -26,9 +27,12 @@ export default function PublicVideosPage() {
       <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="py-10 sm:py-14">
         {loading ? (
-          <p className="text-sm font-semibold text-[var(--gray)]">
-            {common("loading")}
-          </p>
+          <SkeletonGroup label={common("loading")}>
+            <MediaCardsSkeleton
+              count={6}
+              columns="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            />
+          </SkeletonGroup>
         ) : error ? (
           <p className="text-sm font-semibold text-red-700">
             {common("requestUnavailable")}

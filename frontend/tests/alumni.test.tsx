@@ -5,16 +5,24 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AlumniPage from "@/app/dashboard/alumni/page";
+import { ToastProvider } from "@/components/providers/toast-providers";
 import type { Alumni } from "@/types/alumni";
 
-const { getAlumniList, deleteAlumni, auth } = vi.hoisted(() => ({
-  getAlumniList: vi.fn(),
-  deleteAlumni: vi.fn(),
-  auth: { role: "DOSEN" as string },
+const { getAlumniList, getAlumniStats, deleteAlumni, auth } = vi.hoisted(
+  () => ({
+    getAlumniList: vi.fn(),
+    getAlumniStats: vi.fn(),
+    deleteAlumni: vi.fn(),
+    auth: { role: "DOSEN" as string },
+  }),
+);
+vi.mock("@/lib/api/alumni", () => ({
+  getAlumniList,
+  getAlumniStats,
+  deleteAlumni,
 }));
-vi.mock("@/lib/api/alumni", () => ({ getAlumniList, deleteAlumni }));
 vi.mock("@/components/providers/auth-providers", () => ({
   useAuth: () => ({ user: { role: auth.role }, status: "authenticated" }),
 }));
@@ -36,19 +44,37 @@ const record: Alumni = {
   updatedAt: "2024-01-01",
 };
 
+beforeEach(() => {
+  getAlumniStats.mockResolvedValue({
+    total: 1,
+    approved: 0,
+    pending: 1,
+    rejected: 0,
+  });
+});
+
 afterEach(() => {
   auth.role = "DOSEN";
   getAlumniList.mockReset();
+  getAlumniStats.mockReset();
   deleteAlumni.mockReset();
   vi.restoreAllMocks();
 });
+
+function renderAlumniPage() {
+  return render(
+    <ToastProvider>
+      <AlumniPage />
+    </ToastProvider>,
+  );
+}
 
 describe("Alumni list", () => {
   it("confirms and deletes the selected alumni", async () => {
     auth.role = "ADMIN";
     getAlumniList.mockResolvedValue({ data: [record], total: 1 });
     deleteAlumni.mockResolvedValue(undefined);
-    render(<AlumniPage />);
+    renderAlumniPage();
     await waitFor(() =>
       expect(screen.getByText("Marine Researcher")).toBeInTheDocument(),
     );
@@ -68,11 +94,61 @@ describe("Alumni list", () => {
     );
   });
 
+  it("renders the alumni statistics cards from the API", async () => {
+    getAlumniStats.mockResolvedValue({
+      total: 128,
+      approved: 86,
+      pending: 30,
+      rejected: 12,
+    });
+    getAlumniList.mockResolvedValue({ data: [], total: 0 });
+
+    renderAlumniPage();
+
+    const region = await screen.findByRole("region", {
+      name: "Alumni statistics",
+    });
+
+    expect(within(region).getByText("128")).toBeInTheDocument();
+    expect(within(region).getByText("Total Alumni")).toBeInTheDocument();
+    expect(within(region).getByText("86")).toBeInTheDocument();
+    expect(within(region).getByText("Approved")).toBeInTheDocument();
+    expect(within(region).getByText("30")).toBeInTheDocument();
+    expect(within(region).getByText("Pending")).toBeInTheDocument();
+    expect(within(region).getByText("12")).toBeInTheDocument();
+    expect(within(region).getByText("Rejected")).toBeInTheDocument();
+  });
+
+  it("shows a retry state when statistics cannot be loaded", async () => {
+    getAlumniStats.mockRejectedValueOnce(new Error("Stats failed"));
+    getAlumniList.mockResolvedValue({ data: [], total: 0 });
+
+    renderAlumniPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Something went wrong. Please try again.",
+    );
+
+    getAlumniStats.mockResolvedValueOnce({
+      total: 3,
+      approved: 1,
+      pending: 1,
+      rejected: 1,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Total Alumni")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("3")).toBeInTheDocument();
+  });
+
   it("does nothing when deletion is cancelled", async () => {
     auth.role = "ADMIN";
     deleteAlumni.mockClear();
     getAlumniList.mockResolvedValue({ data: [record], total: 1 });
-    render(<AlumniPage />);
+    renderAlumniPage();
     await waitFor(() =>
       expect(screen.getByText("Marine Researcher")).toBeInTheDocument(),
     );
@@ -86,7 +162,7 @@ describe("Alumni list", () => {
     auth.role = "ADMIN";
     getAlumniList.mockResolvedValue({ data: [record], total: 1 });
     deleteAlumni.mockRejectedValue(new Error("Delete failed"));
-    render(<AlumniPage />);
+    renderAlumniPage();
     await waitFor(() =>
       expect(screen.getByText("Marine Researcher")).toBeInTheDocument(),
     );
@@ -103,7 +179,7 @@ describe("Alumni list", () => {
 
   it("renders real API data and keeps the search control mounted", async () => {
     getAlumniList.mockResolvedValue({ data: [record], total: 1 });
-    render(<AlumniPage />);
+    renderAlumniPage();
     expect(
       screen.getByRole("searchbox", { name: "Search alumni" }),
     ).toBeInTheDocument();
@@ -123,7 +199,7 @@ describe("Alumni list", () => {
   it("does not render admin create-alumni actions for an admin", async () => {
     auth.role = "ADMIN";
     getAlumniList.mockResolvedValue({ data: [], total: 0 });
-    render(<AlumniPage />);
+    renderAlumniPage();
     await waitFor(() =>
       expect(
         screen.getByText("There are no alumni records available yet."),
@@ -160,7 +236,7 @@ describe("Alumni list", () => {
       data: [approved, pending],
       total: 2,
     });
-    render(<AlumniPage />);
+    renderAlumniPage();
 
     await waitFor(() =>
       expect(screen.getByText("Approved Alum")).toBeInTheDocument(),
