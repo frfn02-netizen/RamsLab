@@ -13,10 +13,11 @@ import {
 
 const TEST_CODE = "VITEST_RESEARCH";
 const TEST_SLUG = "vitest-research-area";
-const methods = {
-  en: ["Method one", "Method two", "Method three"],
-  id: ["Metode satu", "Metode dua", "Metode tiga"],
-} as const;
+const LEGACY_INVALID_FILTER = {
+  code: "INVALID",
+  slug: "invalid",
+  "title.en": "Vitest research area",
+};
 const input = {
   code: TEST_CODE,
   slug: TEST_SLUG,
@@ -25,8 +26,6 @@ const input = {
     en: "A research area for API tests.",
     id: "Bidang riset untuk pengujian API.",
   },
-  methods,
-  applications: { en: "TESTING", id: "PENGUJIAN" },
   order: 99,
   published: true,
 };
@@ -41,9 +40,9 @@ beforeAll(async () => {
   await createResearchAreaIndexes();
   await getResearchAreasCollection().deleteMany({
     $or: [
-      { code: TEST_CODE },
-      { slug: TEST_SLUG },
-      { code: "VITEST_RESEARCH_HIDDEN" },
+      { code: { $regex: /^VITEST_RESEARCH/ } },
+      { slug: { $regex: /^vitest-research/ } },
+      LEGACY_INVALID_FILTER,
     ],
   });
   adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
@@ -53,9 +52,9 @@ beforeAll(async () => {
 afterAll(async () => {
   await getResearchAreasCollection().deleteMany({
     $or: [
-      { code: TEST_CODE },
-      { slug: TEST_SLUG },
-      { code: "VITEST_RESEARCH_HIDDEN" },
+      { code: { $regex: /^VITEST_RESEARCH/ } },
+      { slug: { $regex: /^vitest-research/ } },
+      LEGACY_INVALID_FILTER,
     ],
   });
 });
@@ -95,7 +94,8 @@ describe("Research Areas API", () => {
       .get(`/api/admin/research/${areaId}`)
       .set(auth(adminToken));
     expect(fetched.status).toBe(200);
-    expect(fetched.body.data.methods.en).toHaveLength(3);
+    expect(fetched.body.data.title).toEqual(input.title);
+    expect(fetched.body.data.description).toEqual(input.description);
   });
 
   it("rejects duplicate code and duplicate slug", async () => {
@@ -117,9 +117,9 @@ describe("Research Areas API", () => {
       .set(auth(adminToken))
       .send({
         ...input,
-        code: "INVALID",
-        slug: "invalid",
-        methods: { ...methods, en: ["only one"] },
+        code: "VITEST_RESEARCH_INVALID",
+        slug: "vitest-research-invalid",
+        title: { ...input.title, en: " " },
       });
     expect(invalid.status).toBe(400);
     const updated = await request(app)
@@ -130,8 +130,6 @@ describe("Research Areas API", () => {
         order: 2,
         title: input.title,
         description: input.description,
-        methods: input.methods,
-        applications: input.applications,
       });
     expect(updated.status).toBe(200);
     expect(updated.body.data.published).toBe(false);
