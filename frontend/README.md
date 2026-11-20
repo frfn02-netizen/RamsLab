@@ -53,13 +53,13 @@ The tests use mocked HTTP responses for deterministic client behavior. They do n
 
 Public: `/`, `/projects`, `/projects/[slug]`, `/partners`, `/partners/university`, `/partners/industrial`.
 
-Authenticated staff: `/dashboard`, `/dashboard/alumni`, `/dashboard/dosen`, `/dashboard/projects`, `/dashboard/partners`, `/dashboard/tracking`.
+Authenticated admin: `/dashboard` and its CMS routes. Authenticated DOSEN accounts use `/meetings` only and can create and manage meetings they organize.
 
 Authenticated alumni: `/profile` for the self-profile contract exposed by the backend.
 
 ## Role model
 
-The backend is the authorization boundary. The frontend uses roles only to provide useful UX: ADMIN sees mutation controls, DOSEN sees read-only operational views where the API allows it, and ALUMNI is routed to the supported self-profile page. A hidden button is not a security control.
+The backend is the authorization boundary. The frontend uses the centralized permission policy for route and navigation UX, while the API enforces the same access boundary. ADMIN has the full dashboard and Meetings workspace, DOSEN has Meetings-only access, and ALUMNI is routed to the supported self-profile page. A hidden button is not a security control.
 
 ## Production deployment
 

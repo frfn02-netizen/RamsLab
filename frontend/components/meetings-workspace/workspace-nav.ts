@@ -1,4 +1,11 @@
+import {
+  canAccessMeetingsWorkspace,
+  canAccessSchedulePortal,
+  canViewMeetingsAgenda,
+} from "@/lib/authz";
 import type { UserRole } from "@/types/auth";
+
+export { canAccessMeetingsWorkspace, canViewMeetingsAgenda };
 
 export type MeetingsNavItem = {
   label: string;
@@ -20,9 +27,36 @@ export const meetingsNavItems: readonly MeetingsNavItem[] = [
   {
     label: "My Meetings",
     href: "/meetings/mine",
-    description: "Meetings you organize or attend",
+    description: "Meetings you created",
+  },
+  {
+    label: "Schedule Portal",
+    href: "/schedule",
+    description: "Separate schedule workspace",
   },
 ];
+
+export function visibleMeetingsNavItems(
+  role: UserRole | undefined,
+  grantedPermissions: readonly string[] = [],
+): readonly MeetingsNavItem[] {
+  if (!canAccessMeetingsWorkspace(role)) {
+    return [];
+  }
+
+  const canViewAgenda = canViewMeetingsAgenda(role);
+  const canViewMine = role === "ADMIN" || role === "DOSEN";
+  const canViewSchedule = canAccessSchedulePortal(role, grantedPermissions);
+
+  return meetingsNavItems.filter((item) => {
+    if (item.href === "/meetings/mine") return canViewMine;
+    if (item.href === "/schedule") return canViewSchedule;
+    if (item.href === "/meetings" || item.href === "/meetings/calendar") {
+      return canViewAgenda;
+    }
+    return true;
+  });
+}
 
 function normalizePath(pathname: string) {
   if (pathname.length > 1 && pathname.endsWith("/")) {
@@ -33,7 +67,12 @@ function normalizePath(pathname: string) {
 
 export function isMeetingsNavItemActive(pathname: string, href: string) {
   const current = normalizePath(pathname);
-  if (href === "/meetings") return current === "/meetings";
+  if (href === "/meetings") {
+    if (current === "/meetings") return true;
+    if (!current.startsWith("/meetings/")) return false;
+    const section = current.split("/")[2];
+    return section !== "calendar" && section !== "mine";
+  }
   return current === href || current.startsWith(`${href}/`);
 }
 
@@ -49,6 +88,20 @@ export function meetingsPageTitle(pathname: string) {
   return "Meetings workspace";
 }
 
-export function canAccessMeetingsWorkspace(role: UserRole | undefined) {
-  return role === "ADMIN" || role === "DOSEN";
+export function meetingsPageDescription(pathname: string) {
+  const current = normalizePath(pathname);
+  const item = meetingsNavItems.find((candidate) =>
+    isMeetingsNavItemActive(current, candidate.href),
+  );
+  if (item) return item.description;
+  if (current === "/meetings/new") {
+    return "Set the agenda, invite registered accounts, and attach documents.";
+  }
+  if (/^\/meetings\/[^/]+\/edit$/.test(current)) {
+    return "Update the schedule, participants, or supporting documents.";
+  }
+  if (/^\/meetings\/[^/]+$/.test(current)) {
+    return "Agenda, participants, and supporting documents.";
+  }
+  return "";
 }

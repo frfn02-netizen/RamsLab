@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { HttpError } from "../../middlewares/error.middleware.js";
 import { normalizeAttachmentFilename } from "../../lib/cloudinary.js";
 import {
+  cancelMeetingSchema,
   conflictCheckSchema,
   createMeetingSchema,
   MEETING_ATTACHMENT_EXTENSION,
@@ -12,10 +13,14 @@ import {
 } from "./meeting.schema.js";
 import {
   addAttachment,
+  cancelMeeting,
   checkConflicts,
   createMeeting,
   deleteMeeting,
+  getMeetingAgenda,
+  getMeetingAudit,
   getMeeting,
+  getMeetingCalendar,
   getMeetings,
   removeAttachment,
   updateMeeting,
@@ -33,6 +38,7 @@ function fail(res: Response, error: unknown, fallback: string) {
     return res.status(error.statusCode).json({
       success: false,
       message: error.message,
+      ...(error.code ? { code: error.code } : {}),
     });
   }
   return res.status(500).json({ success: false, message: fallback });
@@ -62,12 +68,61 @@ export async function getMeetingListController(req: Request, res: Response) {
   }
 }
 
+export async function getMeetingCalendarController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const meetings = await getMeetingCalendar(req.user!, {
+      from: parseOptionalDate(req.query.from),
+      to: parseOptionalDate(req.query.to),
+    });
+    return res.json({ success: true, data: meetings });
+  } catch (error) {
+    return fail(res, error, "Failed to fetch meeting calendar");
+  }
+}
+
+export async function getMeetingAgendaController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const limit =
+      typeof req.query.limit === "string" && /^\d+$/.test(req.query.limit)
+        ? Number(req.query.limit)
+        : undefined;
+    const offset =
+      typeof req.query.offset === "string" && /^\d+$/.test(req.query.offset)
+        ? Number(req.query.offset)
+        : undefined;
+    const agenda = await getMeetingAgenda(req.user!, {
+      from: parseOptionalDate(req.query.from),
+      to: parseOptionalDate(req.query.to),
+      limit,
+      offset,
+    });
+    return res.json({ success: true, data: agenda });
+  } catch (error) {
+    return fail(res, error, "Failed to fetch meeting agenda");
+  }
+}
+
 export async function getMeetingController(req: Request, res: Response) {
   try {
     const meeting = await getMeeting(req.params.id as string, req.user!);
     return res.json({ success: true, data: meeting });
   } catch (error) {
     return fail(res, error, "Failed to fetch meeting");
+  }
+}
+
+export async function getMeetingAuditController(req: Request, res: Response) {
+  try {
+    const audit = await getMeetingAudit(req.params.id as string, req.user!);
+    return res.json({ success: true, data: audit });
+  } catch (error) {
+    return fail(res, error, "Failed to fetch meeting audit history");
   }
 }
 
@@ -92,6 +147,19 @@ export async function updateMeetingController(req: Request, res: Response) {
     return res.json({ success: true, data: result });
   } catch (error) {
     return fail(res, error, "Failed to update meeting");
+  }
+}
+
+export async function cancelMeetingController(req: Request, res: Response) {
+  try {
+    const result = await cancelMeeting(
+      req.params.id as string,
+      cancelMeetingSchema.parse(req.body ?? {}),
+      req.user!,
+    );
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    return fail(res, error, "Failed to cancel meeting");
   }
 }
 

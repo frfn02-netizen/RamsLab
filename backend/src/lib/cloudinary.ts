@@ -11,6 +11,7 @@ const EVENT_FOLDER = "rams-platform/events";
 const PROJECT_FOLDER = "rams-platform/projects";
 const PARTNER_LOGO_FOLDER = "rams-platform/partner-logos";
 const PUBLIC_SERVICE_FOLDER = "rams-platform/public-services";
+const MEETING_ATTACHMENT_FOLDER = "rams-platform/meetings";
 
 function ensureCloudinaryConfigured() {
   if (!process.env.CLOUDINARY_URL) {
@@ -237,6 +238,49 @@ export async function removeEventImage(publicId?: string) {
   ensureCloudinaryConfigured();
   await cloudinary.uploader.destroy(publicId, {
     resource_type: "image",
+    type: "upload",
+    invalidate: true,
+  });
+}
+
+function safeAttachmentName(filename: string) {
+  const sanitized = filename
+    .replace(/[\\/\u0000-\u001f\u007f]/g, "")
+    .replace(/[^\p{L}\p{N}._() -]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180);
+  return sanitized || "attachment";
+}
+
+export function normalizeAttachmentFilename(filename: string) {
+  return safeAttachmentName(filename);
+}
+
+export async function uploadMeetingAttachment(
+  buffer: Buffer,
+  originalFilename: string,
+) {
+  const filename = normalizeAttachmentFilename(originalFilename);
+  const result = await uploadBuffer(
+    buffer,
+    MEETING_ATTACHMENT_FOLDER,
+    "raw",
+    filename,
+  );
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+    filename,
+  };
+}
+
+export async function removeMeetingAttachment(publicId?: string) {
+  if (!publicId) return;
+
+  ensureCloudinaryConfigured();
+  await cloudinary.uploader.destroy(publicId, {
+    resource_type: "raw",
     type: "upload",
     invalidate: true,
   });

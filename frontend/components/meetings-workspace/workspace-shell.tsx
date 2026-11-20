@@ -3,14 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
 import { assetPath } from "@/lib/asset-path";
 import {
   isMeetingsNavItemActive,
-  meetingsNavItems,
-  meetingsPageTitle,
+  visibleMeetingsNavItems,
 } from "./workspace-nav";
 
 const NAV_ICONS: Record<string, string> = {
@@ -19,6 +18,8 @@ const NAV_ICONS: Record<string, string> = {
     "M4 4.5h12a1 1 0 011 1V16a1 1 0 01-1 1H4a1 1 0 01-1-1V5.5a1 1 0 011-1zM6 2.5v3M14 2.5v3M3 8.5h14M7 12h.01M10 12h.01M13 12h.01",
   "/meetings/mine":
     "M7.5 9.5a2.75 2.75 0 100-5.5 2.75 2.75 0 000 5.5zM2.5 17c0-2.4 2.24-4.25 5-4.25s5 1.85 5 4.25M13.5 5.5h4M13.5 9h4M13.5 12.5h2.5",
+  "/schedule":
+    "M4 4.5h12a1 1 0 011 1V16a1 1 0 01-1 1H4a1 1 0 01-1-1V5.5a1 1 0 011-1zM6 2.5v3M14 2.5v3M3 8.5h14M7 12h.01M10 12h.01M13 12h.01",
 };
 
 function NavIcon({ href }: { href: string }) {
@@ -38,28 +39,40 @@ function NavIcon({ href }: { href: string }) {
   );
 }
 
+function initialsOf(value: string | undefined) {
+  const source = (value ?? "").trim();
+  if (!source) return "RM";
+  const local = source.split("@")[0];
+  const parts = local.split(/[._-]+/).filter(Boolean);
+  const letters = (
+    parts.length > 1 ? parts[0][0] + parts[1][0] : local.slice(0, 2)
+  ).toUpperCase();
+  return letters || "RM";
+}
+
 function WorkspaceIdentity({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="relative h-10 w-12 shrink-0 rounded-sm bg-white p-1">
+      <span
+        className={`relative shrink-0 overflow-hidden rounded-md border border-[#E7E2D8] bg-white ${
+          compact ? "h-8 w-8" : "h-9 w-9"
+        }`}
+      >
         <Image
           src={assetPath("/assets/RamsLogoFIX.png")}
           alt="RAMS Laboratory"
           fill
-          sizes="48px"
+          sizes={compact ? "32px" : "36px"}
           className="object-contain p-1"
         />
       </span>
-      <div className="min-w-0 border-l-2 border-[var(--rams-red)] pl-3">
-        <p className="truncate text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[var(--rams-red-light)]">
+      <div className="min-w-0">
+        <p className="truncate text-[0.58rem] font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
           RAMS
         </p>
-        <p className="truncate text-sm font-bold text-white">Meetings</p>
-        {!compact && (
-          <p className="truncate text-[0.7rem] text-white/45">
-            Research workspace
-          </p>
-        )}
+        <p className="truncate text-[0.92rem] font-semibold leading-tight text-[var(--rams-charcoal)]">
+          Meetings
+        </p>
       </div>
     </div>
   );
@@ -67,10 +80,15 @@ function WorkspaceIdentity({ compact = false }: { compact?: boolean }) {
 
 function WorkspaceNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const items = visibleMeetingsNavItems(
+    user?.role,
+    user?.permissions ?? [],
+  );
 
   return (
-    <div className="space-y-1">
-      {meetingsNavItems.map((item) => {
+    <div className="space-y-0.5">
+      {items.map((item) => {
         const active = isMeetingsNavItemActive(pathname, item.href);
         return (
           <Link
@@ -78,35 +96,26 @@ function WorkspaceNavLinks({ onNavigate }: { onNavigate?: () => void }) {
             href={item.href}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
-            className={`group flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors duration-150 ${
+            className={`relative flex items-center gap-3 rounded-md px-3 py-2 transition-colors duration-150 ${
               active
-                ? "bg-white/10 text-white"
-                : "text-white/55 hover:bg-white/5 hover:text-white/85"
+                ? "bg-[#FBE6E3] font-semibold text-[var(--rams-charcoal)]"
+                : "text-[#6B6A64] hover:bg-[#F7F1EC] hover:text-[var(--rams-charcoal)]"
             }`}
           >
-            <span
-              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center transition-colors duration-150 ${
-                active
-                  ? "text-[var(--rams-red-light)]"
-                  : "text-white/35 group-hover:text-white/55"
-              }`}
-            >
-              <NavIcon href={item.href} />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold">
-                {item.label}
-              </span>
-              <span className="mt-0.5 block truncate text-[0.7rem] text-white/40">
-                {item.description}
-              </span>
-            </span>
             {active && (
               <span
-                className="ml-auto mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--rams-red)]"
+                className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-[var(--rams-red)]"
                 aria-hidden="true"
               />
             )}
+            <span
+              className={
+                active ? "text-[var(--rams-red)]" : "text-[#A8A399]"
+              }
+            >
+              <NavIcon href={item.href} />
+            </span>
+            <span className="truncate text-[0.82rem]">{item.label}</span>
           </Link>
         );
       })}
@@ -114,40 +123,45 @@ function WorkspaceNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function BackToDashboardLink({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <Link
-      href="/dashboard"
-      onClick={onNavigate}
-      className="flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
-    >
-      <svg
-        viewBox="0 0 20 20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-4 w-4 shrink-0"
-        aria-hidden="true"
-      >
-        <path d="M11.5 5l-5 5 5 5M16 5v10" />
-      </svg>
-      Back to RAMS Dashboard
-    </Link>
-  );
-}
-
-function WorkspaceNavigation({ onNavigate }: { onNavigate?: () => void }) {
+function WorkspaceNavigation({
+  onNavigate,
+  showDashboardLink,
+}: {
+  onNavigate?: () => void;
+  showDashboardLink: boolean;
+}) {
   return (
     <nav
       aria-label="Meetings workspace navigation"
       className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4"
     >
+      <p className="mb-2 px-3 text-[0.56rem] font-bold uppercase tracking-[0.18em] text-[#A8A399]">
+        Workspace
+      </p>
       <WorkspaceNavLinks onNavigate={onNavigate} />
-      <div className="mt-6 border-t border-white/10 pt-4">
-        <BackToDashboardLink onNavigate={onNavigate} />
-      </div>
+      {showDashboardLink && (
+        <div className="mt-4 border-t border-[#EDE8DE] pt-3">
+          <Link
+            href="/dashboard"
+            onClick={onNavigate}
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-[0.72rem] font-medium text-[#8A867D] transition-colors hover:bg-[#F5F2EC] hover:text-[var(--rams-charcoal)]"
+          >
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4 shrink-0"
+              aria-hidden="true"
+            >
+              <path d="M11.5 5l-5 5 5 5M16 5v10" />
+            </svg>
+            Back to RAMS Dashboard
+          </Link>
+        </div>
+      )}
     </nav>
   );
 }
@@ -158,13 +172,14 @@ export default function MeetingsWorkspaceShell({
   children: ReactNode;
 }) {
   const { user, logout } = useAuth();
-  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const title = meetingsPageTitle(pathname);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const closeMobile = () => setMobileOpen(false);
+  const showDashboardLink = user?.role === "ADMIN";
 
   useEffect(() => {
     if (!mobileOpen) return;
+    closeButtonRef.current?.focus();
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setMobileOpen(false);
     }
@@ -173,32 +188,39 @@ export default function MeetingsWorkspaceShell({
   }, [mobileOpen]);
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-[var(--rams-gray-light)] text-[var(--rams-charcoal)]">
-      <aside className="hidden h-full min-h-0 w-72 shrink-0 flex-col overflow-hidden border-r border-white/10 bg-[var(--rams-charcoal)] text-white lg:flex">
-        <div className="shrink-0 border-b border-white/10 px-5 py-5">
-          <WorkspaceIdentity />
+    <div className="dashboard-shell flex h-[100dvh] overflow-hidden bg-[#F7F5F1] text-[var(--rams-charcoal)]">
+      <aside className="hidden h-full min-h-0 w-[220px] shrink-0 flex-col overflow-hidden border-r border-[#E7E2D8] bg-[#FBFAF7] lg:flex">
+        <div className="shrink-0 px-4 pb-4 pt-5">
+          <Link
+            href="/meetings"
+            aria-label="Meetings workspace home"
+            className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)]"
+          >
+            <WorkspaceIdentity />
+          </Link>
         </div>
-        <WorkspaceNavigation />
-        <footer className="shrink-0 border-t border-white/10 px-5 py-4">
-          <p className="text-[0.7rem] text-white/40">
-            Signed in as{" "}
-            <span className="font-semibold text-white/65">
-              {user?.role ?? "User"}
-            </span>
-          </p>
-        </footer>
-      </aside>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-[#D9E2EA] bg-white px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+        <WorkspaceNavigation showDashboardLink={showDashboardLink} />
+
+        <footer className="shrink-0 border-t border-[#E7E2D8] px-3 py-3">
+          <div className="flex items-center gap-2 rounded-md px-2 py-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F1EDE5] text-[0.56rem] font-bold uppercase tracking-wide text-[#6B6A64]">
+              {initialsOf(user?.email)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[0.68rem] font-medium text-[var(--rams-charcoal)]">
+                {user?.email ?? "Authenticated user"}
+              </p>
+              <p className="text-[0.56rem] font-bold uppercase tracking-[0.14em] text-[#A8A399]">
+                {user?.role ?? "User"}
+              </p>
+            </div>
             <button
               type="button"
-              aria-label="Open meetings navigation"
-              aria-expanded={mobileOpen}
-              aria-controls="meetings-workspace-mobile-navigation"
-              onClick={() => setMobileOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#C6D4DF] text-[var(--rams-charcoal)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] lg:hidden"
+              aria-label="Sign out"
+              title="Sign out"
+              onClick={() => void logout()}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#A8A399] transition hover:bg-[#F1EDE5] hover:text-[var(--rams-charcoal)]"
             >
               <svg
                 viewBox="0 0 20 20"
@@ -206,41 +228,67 @@ export default function MeetingsWorkspaceShell({
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
-                className="h-5 w-5"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M12 4.5H5.5a1 1 0 00-1 1v9a1 1 0 001 1H12M13.5 13l3-3-3-3M16.5 10h-7" />
+              </svg>
+            </button>
+          </div>
+        </footer>
+      </aside>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-[#E7E2D8] bg-white px-4 sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              aria-label="Open meetings navigation"
+              aria-expanded={mobileOpen}
+              aria-controls="meetings-workspace-mobile-navigation"
+              onClick={() => setMobileOpen(true)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#E7E2D8] text-[#6B6A64] transition hover:text-[var(--rams-charcoal)] lg:hidden"
+            >
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                className="h-[18px] w-[18px]"
                 aria-hidden="true"
               >
                 <path d="M3 5.5h14M3 10h14M3 14.5h14" />
               </svg>
             </button>
-            <div className="min-w-0">
-              <p className="truncate text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[var(--rams-red)]">
-                RAMS Meetings
-              </p>
-              <p
-                className="truncate text-sm font-semibold text-[var(--rams-charcoal)]"
-                aria-live="polite"
-              >
-                {title}
-              </p>
-            </div>
+            <p className="hidden text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#A8A399] sm:block">
+              RAMS Meetings
+            </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="max-w-48 truncate text-sm font-semibold text-[var(--rams-charcoal)]">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="hidden min-w-0 text-right sm:block">
+              <p className="max-w-48 truncate text-[0.72rem] font-medium text-[var(--rams-charcoal)]">
                 {user?.email ?? "Authenticated user"}
               </p>
-              <span className="mt-1 inline-flex rounded-full bg-[#FCEAEC] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red-dark)]">
+              <p className="text-[0.56rem] font-bold uppercase tracking-[0.14em] text-[#A8A399]">
                 {user?.role ?? "User"}
-              </span>
+              </p>
             </div>
             <button
               type="button"
               onClick={() => void logout()}
-              className="hidden min-h-10 items-center rounded-md border border-[#C6D4DF] px-3 text-sm font-semibold text-[var(--rams-charcoal)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] sm:inline-flex"
+              className="hidden h-8 items-center rounded-md border border-[#E7E2D8] px-2.5 text-[0.7rem] font-semibold text-[#6B6A64] transition hover:border-[#D8D0C2] hover:text-[var(--rams-charcoal)] sm:inline-flex"
             >
               Sign out
             </button>
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F1EDE5] text-[0.56rem] font-bold uppercase tracking-wide text-[#6B6A64] sm:hidden"
+              aria-hidden="true"
+            >
+              {initialsOf(user?.email)}
+            </span>
           </div>
         </header>
 
@@ -255,22 +303,30 @@ export default function MeetingsWorkspaceShell({
             type="button"
             aria-label="Close meetings navigation"
             onClick={closeMobile}
-            className="absolute inset-0 bg-[var(--rams-charcoal)]/60"
+            className="absolute inset-0 bg-[#2B2723]/50"
           />
           <div
             id="meetings-workspace-mobile-navigation"
             role="dialog"
             aria-modal="true"
             aria-label="Meetings workspace navigation"
-            className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-hidden bg-[var(--rams-charcoal)] text-white shadow-[0_20px_60px_rgba(16,38,61,0.45)]"
+            className="absolute inset-y-0 left-0 flex w-[272px] max-w-[86vw] flex-col overflow-hidden overscroll-contain border-r border-[#E7E2D8] bg-[#FBFAF7] text-[var(--rams-charcoal)] shadow-xl"
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-5">
-              <WorkspaceIdentity compact />
+            <div className="flex shrink-0 items-center justify-between gap-3 px-4 pb-3 pt-4">
+              <Link
+                href="/meetings"
+                aria-label="Meetings workspace home"
+                onClick={closeMobile}
+                className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)]"
+              >
+                <WorkspaceIdentity compact />
+              </Link>
               <button
+                ref={closeButtonRef}
                 type="button"
                 aria-label="Close meetings navigation"
                 onClick={closeMobile}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#E7E2D8] text-[#8A867D] transition hover:text-[var(--rams-charcoal)]"
               >
                 <svg
                   viewBox="0 0 20 20"
@@ -278,7 +334,7 @@ export default function MeetingsWorkspaceShell({
                   stroke="currentColor"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                   aria-hidden="true"
                 >
                   <path d="M5 5l10 10M15 5L5 15" />
@@ -286,20 +342,23 @@ export default function MeetingsWorkspaceShell({
               </button>
             </div>
 
-            <WorkspaceNavigation onNavigate={closeMobile} />
+            <WorkspaceNavigation
+              onNavigate={closeMobile}
+              showDashboardLink={showDashboardLink}
+            />
 
-            <div className="shrink-0 border-t border-white/10 px-5 py-4">
-              <p className="truncate text-xs text-white/55">
+            <div className="shrink-0 border-t border-[#E7E2D8] px-4 py-3">
+              <p className="truncate text-[0.7rem] font-medium text-[var(--rams-charcoal)]">
                 {user?.email ?? "Authenticated user"}
               </p>
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <span className="inline-flex rounded-full bg-white/10 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-white/70">
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <span className="text-[0.56rem] font-bold uppercase tracking-[0.14em] text-[#A8A399]">
                   {user?.role ?? "User"}
                 </span>
                 <button
                   type="button"
                   onClick={() => void logout()}
-                  className="text-xs font-semibold text-white/55 transition hover:text-white"
+                  className="text-[0.68rem] font-semibold text-[#8A867D] transition hover:text-[var(--rams-charcoal)]"
                 >
                   Sign out
                 </button>

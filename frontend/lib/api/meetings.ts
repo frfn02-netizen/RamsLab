@@ -1,6 +1,9 @@
 import { apiRequest, apiRequestWithMeta } from "./client";
 import type {
   Meeting,
+  MeetingAuditEntry,
+  MeetingAgendaPage,
+  MeetingCalendarEvent,
   MeetingConflict,
   MeetingInput,
   MeetingSaveResult,
@@ -17,8 +20,37 @@ export const getMeetings = (params: { from?: string; to?: string } = {}) => {
   );
 };
 
+export const getMeetingCalendar = (
+  params: { from?: string; to?: string } = {},
+) => {
+  const query = new URLSearchParams();
+  if (params.from) query.set("from", params.from);
+  if (params.to) query.set("to", params.to);
+  return apiRequest<MeetingCalendarEvent[]>(
+    `/meetings/calendar${query.size ? `?${query.toString()}` : ""}`,
+  );
+};
+
+export const getMeetingAgenda = (
+  params: { from?: string; to?: string; limit?: number; offset?: number } = {},
+) => {
+  const query = new URLSearchParams();
+  if (params.from) query.set("from", params.from);
+  if (params.to) query.set("to", params.to);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  return apiRequest<MeetingAgendaPage>(
+    `/meetings/agenda${query.size ? `?${query.toString()}` : ""}`,
+  );
+};
+
 export const getMeeting = (id: string) =>
   apiRequest<Meeting>(`/meetings/${encodeURIComponent(id)}`);
+
+export const getMeetingAudit = (id: string) =>
+  apiRequest<MeetingAuditEntry[]>(
+    `/meetings/${encodeURIComponent(id)}/audit`,
+  );
 
 export const createMeeting = (input: MeetingInput) =>
   apiRequest<MeetingSaveResult>("/meetings", {
@@ -32,6 +64,12 @@ export const updateMeeting = (id: string, input: MeetingUpdateInput) =>
     body: JSON.stringify(input),
   });
 
+export const cancelMeeting = (id: string, reason?: string) =>
+  apiRequest<Meeting>(`/meetings/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    body: JSON.stringify(reason?.trim() ? { reason: reason.trim() } : {}),
+  });
+
 export const deleteMeeting = async (id: string) => {
   await apiRequestWithMeta(`/meetings/${encodeURIComponent(id)}`, {
     method: "DELETE",
@@ -41,6 +79,7 @@ export const deleteMeeting = async (id: string) => {
 export const checkMeetingConflicts = (input: {
   startAt: string;
   endAt: string;
+  picIds?: string[];
   participantIds: string[];
   excludeId?: string;
 }) =>

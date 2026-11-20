@@ -2,17 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Button,
-  Card,
-  EmptyState,
-  ErrorState,
-  LinkButton,
-  PageHeader,
-} from "@/components/ui";
+
+import { useAuth } from "@/components/providers/auth-providers";
+import MeetingHighlightBadge from "@/components/meetings-workspace/meeting-highlight-badge";
+import MeetingModeBadge from "@/components/meetings-workspace/meeting-mode-badge";
+import { Button, ErrorState, LinkButton } from "@/components/ui";
 import { Skeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
-import { getMeetings } from "@/lib/api/meetings";
+import { getMeetingAgenda, getMeetings } from "@/lib/api/meetings";
+import { getPublicSchedule } from "@/lib/api/public-schedule";
 import {
   buildMonthGrid,
   dayKey,
@@ -25,38 +23,78 @@ import {
   monthVisibleRange,
   startOfDay,
 } from "@/lib/meetings/calendar";
-import type { Meeting } from "@/types/meetings";
+import { meetingModeAriaLabel, safeHttpUrl } from "@/lib/meetings/mode";
+import { meetingToCalendarEvent } from "@/lib/meetings/calendar-event";
+import { publicMeetingToCalendarEvent } from "@/lib/meetings/public-calendar-event";
+import { canCreateMeetings } from "@/lib/authz";
+import { meetingStatusLabel } from "@/lib/meetings/status";
+import type { MeetingCalendarEvent } from "@/types/meetings";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+function CalendarModeMarker({
+  mode,
+}: {
+  mode: MeetingCalendarEvent["mode"];
+}) {
+  const shape =
+    mode === undefined
+      ? "rounded-full border border-dashed border-[#8A867D] bg-transparent"
+      : mode === "ONLINE"
+        ? "rounded-full border border-[var(--rams-red)] bg-white"
+        : mode === "OFFLINE"
+          ? "rounded-full bg-[var(--rams-red)]"
+          : "rounded-[1px] bg-[#B8B1A8]";
+
+  return (
+    <span
+      className={`h-1.5 w-1.5 shrink-0 ${shape}`}
+      aria-hidden="true"
+    />
+  );
+}
+
 function CalendarSkeleton() {
   return (
-    <Card className="p-4 sm:p-5">
+    <div className="rounded-lg border border-[#E7E2D8] bg-white p-4">
       <div className="flex items-center justify-between gap-3">
         <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-9 w-56" />
+        <Skeleton className="h-9 w-52" />
       </div>
-      <div className="mt-5 grid grid-cols-7 gap-px bg-black/10">
+      <div className="mt-5 grid grid-cols-7 gap-px overflow-hidden rounded-lg bg-[#EDE8DE]">
         {Array.from({ length: 42 }).map((_, index) => (
-          <Skeleton key={index} className="h-16 rounded-none bg-white" />
+          <Skeleton key={index} className="h-20 rounded-none bg-white" />
         ))}
       </div>
-    </Card>
+    </div>
   );
 }
 
 export default function MeetingsPage({
   basePath = "/dashboard/meetings",
+  title = "Meetings",
+  description = "Schedule and review internal lab meetings. Select a day to see its agenda.",
+  source = "agenda",
+  canCreateOverride,
 }: {
   basePath?: string;
+  title?: string;
+  description?: string;
+  source?: "agenda" | "accessibles" | "public";
+  canCreateOverride?: boolean;
 }) {
+  const { user } = useAuth();
+  const canCreate =
+    canCreateOverride ??
+    canCreateMeetings(user?.role, user?.permissions ?? []);
+  const showPublicMeetingLinks = source === "public";
   const [cursor, setCursor] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
   const [selectedDate, setSelectedDate] = useState(() =>
     startOfDay(new Date()),
   );
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [meetings, setMeetings] = useState<MeetingCalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -72,9 +110,28 @@ export default function MeetingsPage({
       setLoading(true);
       setError(null);
 
-      getMeetings({ from: from.toISOString(), to: to.toISOString() })
-        .then((data) => {
-          if (!cancelled) setMeetings(data);
+      const loadMeetings =
+        source === "agenda"
+          ? getMeetingAgenda({
+              from: from.toISOString(),
+              to: to.toISOString(),
+            }).then((data) => data.items)
+          : source === "accessibles"
+            ? getMeetings({
+                from: from.toISOString(),
+                to: to.toISOString(),
+              }).then((items) => items.map(meetingToCalendarEvent))
+            : getPublicSchedule({
+                from: from.toISOString(),
+                to: to.toISOString(),
+                limit: 100,
+              }).then((page) =>
+                page.items.map(publicMeetingToCalendarEvent),
+              );
+
+      loadMeetings
+        .then((items) => {
+          if (!cancelled) setMeetings(items);
         })
         .catch((reason) => {
           if (!cancelled) setError(getUserFacingError(reason));
@@ -88,7 +145,7 @@ export default function MeetingsPage({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [cursor, reloadKey]);
+  }, [cursor, reloadKey, source]);
 
   const days = useMemo(
     () => buildMonthGrid(cursor.getFullYear(), cursor.getMonth()),
@@ -111,80 +168,126 @@ export default function MeetingsPage({
   }
 
   return (
-    <div className="p-5 sm:p-7 lg:p-9">
-      <div className="mx-auto max-w-7xl space-y-7">
-        <PageHeader
-          title="Meetings"
-          description="Schedule and review internal lab meetings. Select a day to see its agenda."
-          action={
-            <LinkButton
-              href={`${basePath}/new?date=${dayKey(selectedDate)}`}
-            >
-              Schedule meeting
-            </LinkButton>
-          }
-        />
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mx-auto w-full max-w-[1560px]">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="font-display text-[1.75rem] font-semibold tracking-tight text-[var(--rams-charcoal)] sm:text-[2rem]">
+              {title}
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-[#6B6A64]">
+              {description}
+            </p>
+          </div>
+          {canCreate && (
+            <div className="shrink-0 sm:pb-1">
+              <LinkButton
+                href={`${basePath}/new?date=${dayKey(selectedDate)}`}
+              >
+                Schedule meeting
+              </LinkButton>
+            </div>
+          )}
+        </div>
 
         {error && (
-          <ErrorState
-            message={error}
-            onRetry={() => setReloadKey((value) => value + 1)}
-          />
+          <div className="mt-6">
+            <ErrorState
+              message={error}
+              onRetry={() => setReloadKey((value) => value + 1)}
+            />
+          </div>
         )}
 
         {loading ? (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <CalendarSkeleton />
-            <Card className="space-y-4 p-5">
+            <div className="rounded-lg border border-[#E7E2D8] bg-white p-4">
               <Skeleton className="h-5 w-48" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-            </Card>
+              <div className="mt-4 space-y-3">
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-            <Card className="p-4 sm:p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold text-[var(--rams-charcoal)]">
+          <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <section
+              aria-label="Month calendar"
+              className="min-w-0 overflow-hidden rounded-lg border border-[#E7E2D8] bg-white"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F0ECE4] px-5 py-4">
+                <div className="flex items-baseline gap-3">
+                  <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--rams-charcoal)]">
                     {formatMonthYear(cursor)}
                   </h2>
-                  <p className="mt-1 text-xs text-[var(--rams-gray)]">
+                  <span className="text-xs font-medium text-[#8A867D]">
                     {meetings.length} meeting
-                    {meetings.length === 1 ? "" : "s"} in this calendar view
-                  </p>
+                    {meetings.length === 1 ? "" : "s"}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="secondary"
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
                     aria-label="Show previous month"
                     onClick={() => shiftMonth(-1)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E7E2D8] text-[#6B6A64] transition hover:border-[var(--rams-red)]/40 hover:text-[var(--rams-red)]"
                   >
-                    Previous
-                  </Button>
-                  <Button variant="secondary" onClick={goToToday}>
-                    Today
-                  </Button>
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 5l-5 5 5 5" />
+                    </svg>
+                  </button>
                   <Button
                     variant="secondary"
+                    className="min-h-8 px-3 py-1 text-xs"
+                    onClick={goToToday}
+                  >
+                    Today
+                  </Button>
+                  <button
+                    type="button"
                     aria-label="Show next month"
                     onClick={() => shiftMonth(1)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E7E2D8] text-[#6B6A64] transition hover:border-[var(--rams-red)]/40 hover:text-[var(--rams-red)]"
                   >
-                    Next
-                  </Button>
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M8 5l5 5-5 5" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-7 border-l border-t border-black/10">
+              <div className="grid grid-cols-7 border-b border-[#F0ECE4] bg-[#FBFAF7]">
                 {WEEKDAYS.map((weekday) => (
                   <div
                     key={weekday}
-                    className="border-b border-r border-black/10 bg-[var(--rams-gray-light)] px-1 py-2 text-center text-[0.65rem] font-bold uppercase tracking-wide text-[var(--rams-charcoal)]"
+                    className="py-2 text-center text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#8A867D]"
                   >
                     <span className="hidden sm:inline">{weekday}</span>
                     <span className="sm:hidden">{weekday.slice(0, 1)}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-px bg-[#EDE8DE]">
                 {days.map((day) => {
                   const items = byDay.get(day.key) ?? [];
                   const selected = isSameDay(day.date, selectedDate);
@@ -198,102 +301,254 @@ export default function MeetingsPage({
                         items.length === 1 ? "" : "s"
                       }`}
                       onClick={() => setSelectedDate(startOfDay(day.date))}
-                      className={`min-h-[4.5rem] border-b border-r border-black/10 p-1.5 text-left align-top transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] ${
+                      className={`min-h-[5.5rem] p-1.5 text-left align-top transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] sm:min-h-[6.5rem] sm:p-2 ${
                         selected
-                          ? "bg-red-50"
+                          ? "bg-[#FBF8F2]"
                           : day.inMonth
-                            ? "bg-white hover:bg-[var(--rams-gray-light)]"
-                            : "bg-[var(--rams-gray-light)]"
+                            ? "bg-white hover:bg-[#FBFAF7]"
+                            : "bg-[#FBFAF7]"
                       }`}
                     >
-                      <span
-                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                          isToday
-                            ? "bg-[var(--rams-red)] text-white"
-                            : "text-[var(--rams-charcoal)]"
-                        }`}
-                      >
-                        {day.date.getDate()}
+                      <span className="flex items-center justify-between">
+                        <span
+                          className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[0.72rem] font-semibold ${
+                            isToday
+                              ? "bg-[var(--rams-red)] text-white"
+                              : selected
+                                ? "text-[var(--rams-red)]"
+                                : day.inMonth
+                                  ? "text-[var(--rams-charcoal)]"
+                                  : "text-[#C9C3B8]"
+                          }`}
+                        >
+                          {day.date.getDate()}
+                        </span>
+                        {selected && (
+                          <span
+                            className="h-1.5 w-1.5 rounded-full bg-[var(--rams-red)]"
+                            aria-hidden="true"
+                          />
+                        )}
                       </span>
-                      <span className="mt-1 block space-y-0.5">
+
+                      <span className="mt-1.5 hidden space-y-1 sm:block">
                         {items.slice(0, 2).map((meeting) => (
                           <span
                             key={meeting._id}
-                            className="hidden truncate text-[0.65rem] leading-4 text-[var(--rams-charcoal)] sm:block"
+                            className="flex items-center gap-1.5 rounded-md bg-[#F4F1EA] px-1.5 py-1"
                           >
-                            {formatTime(meeting.startAt)} {meeting.title}
+                            {meeting.canViewDetails ? (
+                              <>
+                                <CalendarModeMarker mode={meeting.mode} />
+                                <span className="sr-only">
+                                  {meetingModeAriaLabel(meeting.mode)}{" "}
+                                </span>
+                              </>
+                            ) : (
+                              <span
+                                className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#B8B1A8]"
+                                aria-hidden="true"
+                              />
+                            )}
+                            <span
+                              className={`truncate text-[0.64rem] font-medium leading-4 ${
+                                meeting.involvesHighlightedUser
+                                  ? "text-[var(--rams-red)]"
+                                  : "text-[#4B4A45]"
+                              }`}
+                            >
+                              {formatTime(meeting.startAt)} {meeting.title}
+                            </span>
                           </span>
                         ))}
                         {items.length > 2 && (
-                          <span className="hidden text-[0.65rem] text-[var(--rams-gray)] sm:block">
+                          <span className="block px-1.5 text-[0.62rem] font-medium text-[#8A867D]">
                             +{items.length - 2} more
                           </span>
                         )}
                       </span>
+
                       {items.length > 0 && (
-                        <span
-                          className="mt-1 block h-1 w-1 rounded-full bg-[var(--rams-red)] sm:hidden"
-                          aria-hidden="true"
-                        />
+                        <span className="mt-1.5 flex gap-0.5 sm:hidden">
+                          {items.slice(0, 3).map((meeting) => (
+                            <span
+                              key={meeting._id}
+                              className="h-1 w-1 rounded-full bg-[var(--rams-red)]"
+                              aria-hidden="true"
+                            />
+                          ))}
+                        </span>
                       )}
                     </button>
                   );
                 })}
               </div>
-            </Card>
+            </section>
 
-            <Card className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-base font-bold text-[var(--rams-charcoal)]">
-                  {formatDayLong(selectedDate)}
-                </h2>
-                <span className="shrink-0 text-xs text-[var(--rams-gray)]">
-                  {selectedMeetings.length} meeting
-                  {selectedMeetings.length === 1 ? "" : "s"}
-                </span>
-              </div>
+            <aside className="min-w-0 xl:sticky xl:top-6 xl:self-start">
+              <div className="overflow-hidden rounded-lg border border-[#E7E2D8] bg-white">
+                <div className="flex items-start justify-between gap-3 border-b border-[#F0ECE4] px-5 py-4">
+                  <div className="min-w-0">
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8A867D]">
+                      Selected day
+                    </p>
+                    <h2 className="mt-1 text-[0.95rem] font-semibold text-[var(--rams-charcoal)]">
+                      {formatDayLong(selectedDate)}
+                    </h2>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-[#E7E2D8] px-2.5 py-1 text-[0.65rem] font-semibold text-[#6B6A64]">
+                    {selectedMeetings.length}
+                  </span>
+                </div>
 
-              {selectedMeetings.length === 0 ? (
-                <div className="mt-4">
-                  <EmptyState
-                    title="No meetings on this day"
-                    description="Pick another day, or schedule a meeting for this date."
-                    action={
-                      <LinkButton
-                        href={`${basePath}/new?date=${dayKey(
-                          selectedDate,
-                        )}`}
+                {selectedMeetings.length === 0 ? (
+                  <div className="px-5 py-8 text-center">
+                    <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
+                      No meetings on this day
+                    </p>
+                    <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-[#6B6A64]">
+                      Pick another day, or schedule a meeting for this date.
+                    </p>
+                    {canCreate && (
+                      <Link
+                        href={`${basePath}/new?date=${dayKey(selectedDate)}`}
+                        className="mt-4 inline-flex text-xs font-semibold text-[var(--rams-red)] transition hover:text-[var(--rams-red-dark)]"
                       >
                         Schedule for this day
-                      </LinkButton>
-                    }
-                  />
-                </div>
-              ) : (
-                <ul className="mt-4 divide-y divide-black/8">
-                  {selectedMeetings.map((meeting) => (
-                    <li key={meeting._id} className="py-3 first:pt-0 last:pb-0">
-                      <Link
-                        href={`${basePath}/${meeting._id}`}
-                        className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2"
-                      >
-                        <p className="text-sm font-semibold text-[var(--rams-charcoal)] hover:text-[var(--rams-red)]">
-                          {meeting.title}
-                        </p>
-                        <p className="mt-1 text-xs text-[var(--rams-gray)]">
-                          {formatTimeRange(meeting.startAt, meeting.endAt)}
-                          {meeting.participants.length > 0
-                            ? `, ${meeting.participants.length} participant${
-                                meeting.participants.length === 1 ? "" : "s"
-                              }`
-                            : ""}
-                        </p>
                       </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
+                    )}
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-[#F0ECE4]">
+                    {selectedMeetings.map((meeting) => {
+                      const publicMeetingLink = showPublicMeetingLinks
+                        ? safeHttpUrl(meeting.meetingLink)
+                        : null;
+                      return (
+                      <li key={meeting._id}>
+                        {meeting.canViewDetails ? (
+                          <div className="px-5 py-4 transition hover:bg-[#FBFAF7]">
+                            <Link
+                              href={`${basePath}/${meeting._id}`}
+                              className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
+                            >
+                            <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
+                              {formatTimeRange(meeting.startAt, meeting.endAt)}
+                            </p>
+                            <p
+                              className={`mt-1 text-sm font-semibold ${
+                                meeting.involvesHighlightedUser
+                                  ? "text-[var(--rams-red)]"
+                                  : "text-[var(--rams-charcoal)]"
+                              }`}
+                            >
+                              {meeting.title}
+                            </p>
+                            <div className="mt-1.5">
+                              <MeetingHighlightBadge
+                                involvesHighlightedUser={
+                                  meeting.involvesHighlightedUser
+                                }
+                              />
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                              <MeetingModeBadge mode={meeting.mode} />
+                              {meeting.clientName !== undefined && (
+                                <span
+                                  className={`text-xs ${
+                                    meeting.clientName?.trim()
+                                      ? "font-medium text-[#4F4B46]"
+                                      : "text-[#8A867D]"
+                                  }`}
+                                >
+                                  {meeting.clientName?.trim() ||
+                                    "Client not specified"}
+                                </span>
+                              )}
+                              {meeting.mode === "OFFLINE" && (
+                                <span className="text-xs text-[#6B6A64]">
+                                  {meeting.location?.trim() ||
+                                    "Location not specified"}
+                                </span>
+                              )}
+                            </div>
+                            {meeting.createdBy?.displayName && (
+                              <p className="mt-1 text-xs text-[#6B6A64]">
+                                {meeting.createdBy.displayName}
+                              </p>
+                            )}
+                            {meeting.primaryPicName && (
+                              <p className="mt-1 text-xs text-[#6B6A64]">
+                                Primary PIC: {meeting.primaryPicName}
+                                {meeting.additionalPicNames &&
+                                  meeting.additionalPicNames.length > 0 &&
+                                  ` +${meeting.additionalPicNames.length} additional`}
+                              </p>
+                            )}
+                            {meeting.status && (
+                              <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
+                                {meetingStatusLabel(meeting.status)}
+                              </p>
+                            )}
+                            </Link>
+                            {publicMeetingLink && (
+                              <a
+                                href={publicMeetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-3 inline-flex min-h-11 items-center justify-center rounded-md bg-[var(--rams-red)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--rams-red-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2"
+                              >
+                                {meeting.mode === "ONLINE"
+                                  ? "Join Google Meet"
+                                  : "Open Meeting Link"}
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="px-5 py-4">
+                            <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
+                              {formatTimeRange(meeting.startAt, meeting.endAt)}
+                            </p>
+                            <p
+                              className={`mt-1 text-sm font-semibold ${
+                                meeting.involvesHighlightedUser
+                                  ? "text-[var(--rams-red)]"
+                                  : "text-[var(--rams-charcoal)]"
+                              }`}
+                            >
+                              {meeting.title}
+                            </p>
+                            <div className="mt-1.5">
+                              <MeetingHighlightBadge
+                                involvesHighlightedUser={
+                                  meeting.involvesHighlightedUser
+                                }
+                              />
+                            </div>
+                            {meeting.createdBy?.displayName && (
+                              <p className="mt-1 text-xs text-[#6B6A64]">
+                                {meeting.createdBy.displayName}
+                              </p>
+                            )}
+                            {meeting.primaryPicName && (
+                              <p className="mt-1 text-xs text-[#6B6A64]">
+                                Primary PIC: {meeting.primaryPicName}
+                              </p>
+                            )}
+                            {meeting.status && (
+                              <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
+                                {meetingStatusLabel(meeting.status)}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </aside>
           </div>
         )}
       </div>

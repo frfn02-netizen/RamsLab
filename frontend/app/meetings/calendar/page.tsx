@@ -8,5 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default function MeetingsCalendarPage() {
-  return <MeetingsPage basePath="/meetings" />;
+  return (
+    <MeetingsPage
+      basePath="/meetings"
+      title="Calendar"
+      description="Month view of scheduled meetings. Select a day to see its agenda."
+    />
+  );
 }
