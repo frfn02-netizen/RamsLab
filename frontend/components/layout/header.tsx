@@ -1,71 +1,89 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
 import { visibleDashboardNavigationItems } from "./dashboard-navigation";
 
 export default function Header() {
+  const pathname = usePathname();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const navigation = visibleDashboardNavigationItems(user?.role);
+  const currentPage =
+    navigation.find(
+      ({ href }) => pathname === href || pathname.startsWith(`${href}/`),
+    )?.label ?? "Dashboard";
+  const profileInitial = user?.email?.charAt(0).toUpperCase() ?? "R";
 
   return (
-    <header className="relative flex min-h-16 shrink-0 items-center justify-between border-b border-[#D9E2EA] bg-white px-4 sm:px-6">
+    <header className="relative flex min-h-[4.5rem] shrink-0 items-center justify-between border-b border-[#dedbd5] bg-white px-4 sm:px-6 lg:px-8">
       <div className="flex min-w-0 items-center gap-3 sm:gap-5">
+        <span
+          className="h-9 w-1 shrink-0 bg-[var(--rams-red)]"
+          aria-hidden="true"
+        />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-[var(--rams-charcoal)]">
-            Management console
+          <p className="truncate text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[var(--rams-gray)]">
+            RAMS management console
           </p>
-          <p className="hidden truncate text-xs text-[var(--rams-gray)] sm:block">
-            Research and academic Management
+          <p className="mt-0.5 truncate font-display text-lg font-semibold tracking-[-0.02em] text-[var(--rams-charcoal)]">
+            {currentPage}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
         <div className="hidden text-right sm:block">
-          <p className="max-w-48 truncate text-sm font-semibold text-[var(--rams-charcoal)]">
+          <p className="max-w-52 truncate text-sm font-semibold text-[var(--rams-charcoal)]">
             {user?.email ?? "Authenticated user"}
           </p>
-          <span className="mt-1 inline-flex rounded-full bg-[#FCEAEC] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red-dark)]">
+          <span className="mt-1 inline-flex text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
             {user?.role ?? "User"}
           </span>
         </div>
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[var(--rams-charcoal)] text-sm font-bold text-white sm:hidden"
+          aria-hidden="true"
+        >
+          {profileInitial}
+        </span>
         <button
           type="button"
           aria-expanded={open}
           aria-controls="mobile-dashboard-navigation"
           onClick={() => setOpen((value) => !value)}
-          className="rounded-md border border-[#C6D4DF] px-3 py-2 text-sm font-semibold text-[var(--rams-charcoal)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] lg:hidden"
+          className="inline-flex min-h-11 items-center rounded-md border border-[#d7d0c8] px-3 text-sm font-semibold text-[var(--rams-charcoal)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 lg:hidden"
         >
           Menu
         </button>
         <button
           type="button"
-          aria-label="Logout"
+          aria-label="Log out"
           onClick={() => void logout()}
-          className="group relative hidden h-[45px] w-[45px] shrink-0 items-center justify-start overflow-hidden rounded-full border-0 bg-[rgb(255,65,65)] p-0 text-white shadow-[2px_2px_10px_rgba(0,0,0,0.199)] transition-[width,border-radius,transform] duration-300 hover:w-[125px] hover:rounded-[40px] active:translate-x-[2px] active:translate-y-[2px] sm:flex"
+          className="hidden min-h-11 shrink-0 items-center gap-2 rounded-md border border-[#d7d0c8] bg-white px-3 text-sm font-semibold text-[var(--rams-charcoal)] transition hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 sm:inline-flex"
         >
-          <span className="flex h-full w-full shrink-0 items-center justify-center transition-[width,padding] duration-300 group-hover:w-[30%] group-hover:pl-5">
-            <svg
-              className="w-[17px] shrink-0 fill-white"
-              viewBox="0 0 512 512"
-              aria-hidden="true"
-            >
-              <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z" />
-            </svg>
-          </span>
-          <span className="absolute right-0 w-0 overflow-hidden whitespace-nowrap text-center text-[1.2em] font-semibold opacity-0 transition-[width,opacity,padding] duration-300 group-hover:w-[70%] group-hover:pr-[10px] group-hover:opacity-100">
-            Logout
-          </span>
+          <svg
+            className="h-4 w-4 shrink-0"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M8 3H4.5A1.5 1.5 0 003 4.5v11A1.5 1.5 0 004.5 17H8M12.5 6.5L16 10l-3.5 3.5M16 10H8" />
+          </svg>
+          Log out
         </button>
       </div>
 
       {open && (
         <nav
           id="mobile-dashboard-navigation"
-          className="absolute right-4 top-14 z-20 w-56 border border-[#D9E2EA] bg-white p-2 shadow-[0_12px_30px_rgba(16,38,61,0.12)] lg:hidden"
+          className="absolute right-4 top-[4.25rem] z-20 w-[min(18rem,calc(100vw-2rem))] border border-[#dedbd5] bg-white p-2 shadow-[0_14px_34px_rgba(37,39,44,0.14)] lg:hidden"
           aria-label="Dashboard navigation"
         >
           {navigation.map(({ label, href }) => (
@@ -73,7 +91,7 @@ export default function Header() {
               key={href}
               href={href}
               onClick={() => setOpen(false)}
-              className="block px-3 py-2.5 text-sm font-semibold text-[var(--rams-charcoal)] transition hover:bg-[var(--rams-gray-light)] hover:text-[var(--rams-red)]"
+              className="flex min-h-11 items-center px-3 text-sm font-semibold text-[var(--rams-charcoal)] transition hover:bg-[var(--rams-gray-light)] hover:text-[var(--rams-red)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
             >
               {label}
             </Link>
@@ -81,9 +99,9 @@ export default function Header() {
           <button
             type="button"
             onClick={() => void logout()}
-            className="mt-1 w-full border-t border-[#D9E2EA] px-3 py-2.5 text-left text-sm font-semibold text-[var(--rams-red)]"
+            className="mt-1 min-h-11 w-full border-t border-[#dedbd5] px-3 text-left text-sm font-semibold text-[var(--rams-red)] transition hover:bg-[#fff6f6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
           >
-            Logout
+            Log out
           </button>
         </nav>
       )}

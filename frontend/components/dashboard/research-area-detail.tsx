@@ -17,9 +17,10 @@ import {
   Card,
   ErrorState,
   Field,
-  LoadingState,
   inputClass,
 } from "@/components/ui";
+import { DetailSkeleton } from "@/components/skeletons";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   deleteResearchArea,
   getResearchAreaById,
@@ -27,6 +28,7 @@ import {
   updateResearchArea,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import Select from "@/components/select";
 import type {
   ResearchArea,
   ResearchAreaInput,
@@ -158,6 +160,7 @@ function toForm(area: ResearchArea): FormState {
 
 export default function ResearchAreaDetail({ id }: { id: string }) {
   const router = useRouter();
+  const { success, error: notifyError } = useToast();
 
   const [area, setArea] = useState<ResearchArea | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
@@ -165,7 +168,6 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
@@ -253,8 +255,6 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
     if (!form) return;
 
     setSaving(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       const result = await updateResearchArea(id, form as ResearchAreaInput);
@@ -263,9 +263,9 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
       setForm(toForm(result));
       setEditing(false);
       setDirty(false);
-      setSuccess("Research area saved successfully.");
+      success("Research area saved successfully.");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -280,23 +280,18 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
     }
 
     setDeleting(true);
-    setError(null);
 
     try {
       await deleteResearchArea(area._id);
       router.push("/dashboard/research");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
       setDeleting(false);
     }
   }
 
   if (!area && !error) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading research area" />
-      </div>
-    );
+    return <DetailSkeleton sections={2} />;
   }
 
   if (error && !area) {
@@ -328,17 +323,6 @@ export default function ResearchAreaDetail({ id }: { id: string }) {
         >
           &larr; All research areas
         </Link>
-
-        {error && <ErrorState message={error} />}
-
-        {success && (
-          <div
-            className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800"
-            role="status"
-          >
-            {success}
-          </div>
-        )}
 
         {dirty && (
           <p className="text-xs font-semibold text-amber-700" role="status">
@@ -593,22 +577,24 @@ function ResearchEditForm({
               to scale. The original image is not modified.
             </p>
             <div className="space-y-5">
-              <Field label="Image Fit">
-                <select
-                  className={inputClass}
+              <Field label="Image Fit" htmlFor="research-image-fit">
+                <Select
+                  id="research-image-fit"
                   value={form.imageFit}
-                  onChange={(event) =>
-                    update(
-                      "imageFit",
-                      event.target.value as "cover" | "contain",
-                    )
+                  onChange={(next) =>
+                    update("imageFit", next as "cover" | "contain")
                   }
-                >
-                  <option value="cover">Cover (fill frame, crop edges)</option>
-                  <option value="contain">
-                    Contain (fit inside, may letterbox)
-                  </option>
-                </select>
+                  options={[
+                    {
+                      value: "cover",
+                      label: "Cover (fill frame, crop edges)",
+                    },
+                    {
+                      value: "contain",
+                      label: "Contain (fit inside, may letterbox)",
+                    },
+                  ]}
+                />
               </Field>
               <ImageCropEditor
                 url={form.downloadablePng}

@@ -11,6 +11,10 @@ export type DashboardNavGroup = {
 export const dashboardNavigationGroups: readonly DashboardNavGroup[] = [
   { label: "Overview", items: [["Dashboard", "/dashboard", "dashboard"]] },
   {
+    label: "Workspace",
+    items: [["Meetings", "/meetings", "meetings"]],
+  },
+  {
     label: "Content",
     items: [
       ["Homepage", "/dashboard/content/homepage", "homepage"],
@@ -35,7 +39,9 @@ export const dashboardNavigationGroups: readonly DashboardNavGroup[] = [
       ["Lecturers", "/dashboard/dosen", "lecturers"],
       ["Experts", "/dashboard/experts", "experts"],
       ["Students", "/dashboard/students", "students"],
+      ["Agenda coordinators", "/dashboard/agenda-coordinators", "meetings"],
       ["Alumni", "/dashboard/alumni", "alumni"],
+      ["Lab Members", "/dashboard/lab-memberships", "lab-members"],
     ],
   },
   {
@@ -55,11 +61,11 @@ export function isDashboardNavItemVisible(
   role: UserRole | undefined,
   href: string,
 ): boolean {
+  if (role !== "ADMIN") return false;
   if (href === "/dashboard") return hasPermission(role, "dashboard.read");
   if (href === "/dashboard/publications")
     return hasPermission(role, "publication.read");
-  if (href === "/dashboard/research-highlights") return role === "ADMIN";
-  return role === "ADMIN" || role === "DOSEN";
+  return true;
 }
 
 export function visibleDashboardNavigation(

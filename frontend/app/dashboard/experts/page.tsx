@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button,
@@ -11,15 +12,16 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import { deleteExpert, getExpertList } from "@/lib/api/modules";
 import type { Expert } from "@/types/modules";
 
 export default function ExpertsPage() {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
 
   const [items, setItems] = useState<Expert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export default function ExpertsPage() {
       await deleteExpert(expert._id);
       setItems((current) => current.filter((item) => item._id !== expert._id));
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     }
   }
 
@@ -92,9 +94,7 @@ export default function ExpertsPage() {
         )}
 
         {loading ? (
-          <Card>
-            <LoadingState label="Loading experts" />
-          </Card>
+          <TableSkeleton rows={6} columns={5} minWidth="min-w-[640px]" />
         ) : !items.length ? (
           <EmptyState
             title="No experts"

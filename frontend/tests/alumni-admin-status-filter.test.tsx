@@ -1,13 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AlumniPage from "@/app/dashboard/alumni/page";
 import type { Alumni } from "@/types/alumni";
 
-const { getAlumniList, deleteAlumni } = vi.hoisted(() => ({
+const { getAlumniList, getAlumniStats, deleteAlumni } = vi.hoisted(() => ({
   getAlumniList: vi.fn(),
+  getAlumniStats: vi.fn(),
   deleteAlumni: vi.fn(),
 }));
-vi.mock("@/lib/api/alumni", () => ({ getAlumniList, deleteAlumni }));
+vi.mock("@/lib/api/alumni", () => ({
+  getAlumniList,
+  getAlumniStats,
+  deleteAlumni,
+}));
 vi.mock("@/components/providers/auth-providers", () => ({
   useAuth: () => ({ user: { role: "ADMIN" }, status: "authenticated" }),
 }));
@@ -30,8 +35,18 @@ function record(overrides: Partial<Alumni>): Alumni {
   };
 }
 
+beforeEach(() => {
+  getAlumniStats.mockResolvedValue({
+    total: 1,
+    approved: 0,
+    pending: 1,
+    rejected: 0,
+  });
+});
+
 afterEach(() => {
   getAlumniList.mockReset();
+  getAlumniStats.mockReset();
   deleteAlumni.mockReset();
   vi.restoreAllMocks();
 });

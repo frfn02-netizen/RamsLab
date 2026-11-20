@@ -3,15 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import {
   createPublicServiceExpert,
   getPublicPeopleList,
@@ -19,6 +20,7 @@ import {
   updatePublicServiceExpert,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import Select from "@/components/select";
 import type { PeopleRefKind, PublicServiceExpertInput } from "@/types/modules";
 import type { PublicPerson } from "@/types/people";
 
@@ -55,8 +57,10 @@ function toInput(form: FormState): PublicServiceExpertInput {
 
 export default function ExpertForm({ id }: { id?: string }) {
   const router = useRouter();
+  const { error: notifyError } = useToast();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [people, setPeople] = useState<PublicPerson[]>([]);
+  const [peopleLoading, setPeopleLoading] = useState(true);
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +77,8 @@ export default function ExpertForm({ id }: { id?: string }) {
           ...result.ALUMNI,
         ]),
       )
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setPeopleLoading(false));
   }, []);
 
   useEffect(() => {
@@ -100,31 +105,24 @@ export default function ExpertForm({ id }: { id?: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.peopleKey) {
-      setError("Select a People profile.");
+      notifyError("Select a People profile.");
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       const saved = id
         ? await updatePublicServiceExpert(id, toInput(form))
         : await createPublicServiceExpert(toInput(form));
       router.push(`/dashboard/public-service/experts/${saved._id}`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
   }
 
   if (loading) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <Card>
-          <LoadingState label="Loading expert" />
-        </Card>
-      </div>
-    );
+    return <FormSkeleton fields={6} actionCount={2} />;
   }
 
   return (
@@ -145,23 +143,20 @@ export default function ExpertForm({ id }: { id?: string }) {
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-7">
             <Field label="Existing People profile" htmlFor={peopleSelectId}>
-              <select
+              <Select
                 id={peopleSelectId}
-                className={inputClass}
                 value={form.peopleKey}
-                onChange={(event) => update("peopleKey", event.target.value)}
+                onChange={(next) => update("peopleKey", next)}
+                placeholder="Select a People profile"
                 required
-              >
-                <option value="">Select a People profile</option>
-                {people.map((person) => (
-                  <option
-                    key={`${kindForPerson(person)}:${person.id}`}
-                    value={`${kindForPerson(person)}:${person.id}`}
-                  >
-                    {person.fullName} ({person.category})
-                  </option>
-                ))}
-              </select>
+                loading={peopleLoading}
+                searchPlaceholder="Search people…"
+                emptyMessage="No People profiles found."
+                options={people.map((person) => ({
+                  value: `${kindForPerson(person)}:${person.id}`,
+                  label: `${person.fullName} (${person.category})`,
+                }))}
+              />
             </Field>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Display Order">

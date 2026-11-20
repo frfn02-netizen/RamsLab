@@ -6,15 +6,16 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   inputClass,
 } from "@/components/ui";
+import { DetailSkeleton } from "@/components/skeletons";
 import {
   deletePartner,
   getPartnerById,
@@ -40,6 +41,7 @@ export default function PartnerDetail({
   type: PartnerType;
 }) {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,7 +130,6 @@ export default function PartnerDetail({
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setError(null);
 
     try {
       const result = await updatePartner(type, id, {
@@ -155,7 +156,7 @@ export default function PartnerDetail({
       setPreviewUrl(null);
       setEditing(false);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -170,23 +171,18 @@ export default function PartnerDetail({
     }
 
     setDeleting(true);
-    setError(null);
 
     try {
       await deletePartner(type, id);
       router.push("/dashboard/partners");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
       setDeleting(false);
     }
   }
 
   if (!partner && !error) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading partner" />
-      </div>
-    );
+    return <DetailSkeleton sections={2} />;
   }
 
   if (error && !partner) {
@@ -219,8 +215,6 @@ export default function PartnerDetail({
         >
           back to partners
         </Link>
-
-        {error && <ErrorState message={error} />}
 
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>

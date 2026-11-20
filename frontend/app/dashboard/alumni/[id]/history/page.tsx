@@ -9,6 +9,7 @@ import {
 } from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Alumni } from "@/types/alumni";
+import { TimelineSkeleton } from "@/components/skeletons";
 
 const dateLabel = (value: string) => {
   const date = new Date(value);
@@ -81,7 +82,7 @@ export default function AdminAlumniAuditHistoryPage({
         )}
 
         {loading ? (
-          <p className="text-sm text-[var(--rams-gray)]">Loading history…</p>
+          <TimelineSkeleton items={0} />
         ) : logs.length === 0 ? (
           <p className="mt-10 text-center text-sm text-[var(--rams-gray)]">
             No changes have been recorded yet.

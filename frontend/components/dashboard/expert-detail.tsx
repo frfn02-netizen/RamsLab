@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import DosenPhotoField from "@/components/dashboard/dosen-photo-field";
 import {
   Badge,
@@ -12,9 +13,9 @@ import {
   Card,
   ErrorState,
   Field,
-  LoadingState,
   inputClass,
 } from "@/components/ui";
+import { DetailSkeleton } from "@/components/skeletons";
 import {
   deleteExpert,
   getExpertById,
@@ -110,6 +111,7 @@ function fromExpert(e: Expert): FormState {
 
 export default function ExpertDetail({ id }: { id: string }) {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
   const router = useRouter();
   const [expert, setExpert] = useState<Expert | null>(null);
   const [editing, setEditing] = useState(false);
@@ -168,7 +170,6 @@ export default function ExpertDetail({ id }: { id: string }) {
     event.preventDefault();
     if (!form || !expert) return;
     setSaving(true);
-    setError(null);
     try {
       const result = await updateExpert(id, {
         name: form.name,
@@ -210,7 +211,7 @@ export default function ExpertDetail({ id }: { id: string }) {
       setEditing(false);
       setPhoto(null);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -224,22 +225,16 @@ export default function ExpertDetail({ id }: { id: string }) {
       return;
     }
     setDeleting(true);
-    setError(null);
     try {
       await deleteExpert(id);
       router.push("/dashboard/experts");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
       setDeleting(false);
     }
   }
 
-  if (!expert && !error)
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading expert" />
-      </div>
-    );
+  if (!expert && !error) return <DetailSkeleton sections={2} />;
   if (error && !expert)
     return (
       <div className="p-5 sm:p-7 lg:p-9">
@@ -279,7 +274,6 @@ export default function ExpertDetail({ id }: { id: string }) {
           >
             ← Back to detail
           </Link>
-          <ErrorState message={error ?? ""} />
           <Card className="p-6">
             <form onSubmit={(e) => void save(e)} className="space-y-6">
               <Field label="Profile photo">
@@ -487,7 +481,6 @@ export default function ExpertDetail({ id }: { id: string }) {
         >
           ← Back to Experts
         </Link>
-        {error && <ErrorState message={error} />}
         <Card className="p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-col gap-5 sm:flex-row">

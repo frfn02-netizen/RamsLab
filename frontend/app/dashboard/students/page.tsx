@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button as UiButton,
@@ -9,15 +10,15 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import { deleteStudent, getStudentList } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import SuccessToast from "@/components/dashboard/success-toast";
 import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
 import DeleteButton from "@/components/dashboard/delete-button";
+import Select from "@/components/select";
 
 const Button = DeleteButton;
 import type { Student, StudentType } from "@/types/modules";
@@ -36,11 +37,11 @@ type VisibilityFilter = "all" | "public" | "hidden";
 
 export default function StudentsPage() {
   const { user } = useAuth();
+  const { success, error: notifyError } = useToast();
   const [items, setItems] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Student | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,16 +100,14 @@ export default function StudentsPage() {
 
   async function remove(item: Student) {
     setDeletingId(item._id);
-    setError(null);
-    setSuccess(null);
     try {
       await deleteStudent(item._id);
       setItems((current) =>
         current.filter((currentItem) => currentItem._id !== item._id),
       );
-      setSuccess(`${item.fullName} was deleted successfully.`);
+      success(`${item.fullName} was deleted successfully.`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setDeletingId(null);
       setPendingDelete(null);
@@ -117,9 +116,6 @@ export default function StudentsPage() {
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
-      {success && (
-        <SuccessToast message={success} onClose={() => setSuccess(null)} />
-      )}
       {pendingDelete && (
         <DeleteConfirmationModal
           personType="student"
@@ -149,9 +145,7 @@ export default function StudentsPage() {
           />
         )}
         {loading ? (
-          <Card>
-            <LoadingState label="Loading students" />
-          </Card>
+          <TableSkeleton rows={6} columns={6} minWidth="min-w-[760px]" />
         ) : items.length === 0 ? (
           <EmptyState
             title="No students found"
@@ -176,36 +170,40 @@ export default function StudentsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <select
-                  aria-label="Category"
-                  className={inputClass}
-                  style={{ width: "auto", minWidth: "10rem" }}
+                <Select
+                  ariaLabel="Category"
+                  className="w-full sm:w-[12rem]"
                   value={categoryFilter}
-                  onChange={(e) =>
-                    setCategoryFilter(e.target.value as StudentType | "all")
+                  onChange={(next) =>
+                    setCategoryFilter(next as StudentType | "all")
                   }
-                >
-                  <option value="all">All categories</option>
-                  <option value="PHD_STUDENT">Ph.D. Student</option>
-                  <option value="MASTER_STUDENT">Master Student</option>
-                  <option value="UNDERGRADUATE_STUDENT">
-                    Undergraduate Student
-                  </option>
-                  <option value="INTERNSHIP_STUDENT">Vocational Intern</option>
-                </select>
-                <select
-                  aria-label="Visibility"
-                  className={inputClass}
-                  style={{ width: "auto", minWidth: "9rem" }}
+                  options={[
+                    { value: "all", label: "All categories" },
+                    { value: "PHD_STUDENT", label: "Ph.D. Student" },
+                    { value: "MASTER_STUDENT", label: "Master Student" },
+                    {
+                      value: "UNDERGRADUATE_STUDENT",
+                      label: "Undergraduate Student",
+                    },
+                    {
+                      value: "INTERNSHIP_STUDENT",
+                      label: "Vocational Intern",
+                    },
+                  ]}
+                />
+                <Select
+                  ariaLabel="Visibility"
+                  className="w-full sm:w-[9rem]"
                   value={visibilityFilter}
-                  onChange={(e) =>
-                    setVisibilityFilter(e.target.value as VisibilityFilter)
+                  onChange={(next) =>
+                    setVisibilityFilter(next as VisibilityFilter)
                   }
-                >
-                  <option value="all">All</option>
-                  <option value="public">Public</option>
-                  <option value="hidden">Hidden</option>
-                </select>
+                  options={[
+                    { value: "all", label: "All" },
+                    { value: "public", label: "Public" },
+                    { value: "hidden", label: "Hidden" },
+                  ]}
+                />
                 {hasActiveFilters && (
                   <UiButton variant="secondary" onClick={resetFilters}>
                     Reset

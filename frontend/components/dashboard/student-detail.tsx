@@ -4,16 +4,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   inputClass,
 } from "@/components/ui";
+import { DetailSkeleton } from "@/components/skeletons";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
+import Select from "@/components/select";
 import {
   deleteStudent,
   getStudentById,
@@ -35,6 +37,7 @@ const typeLabel = (type: StudentType) =>
 
 export default function StudentDetail({ id }: { id: string }) {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
   const router = useRouter();
   const [student, setStudent] = useState<Student | null>(null);
   const [editing, setEditing] = useState(false);
@@ -92,7 +95,6 @@ export default function StudentDetail({ id }: { id: string }) {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setError(null);
     try {
       const result = await updateStudent(id, {
         fullName: form.fullName,
@@ -115,7 +117,7 @@ export default function StudentDetail({ id }: { id: string }) {
       setPhotoFile(null);
       setEditing(false);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -129,22 +131,16 @@ export default function StudentDetail({ id }: { id: string }) {
     )
       return;
     setDeleting(true);
-    setError(null);
     try {
       await deleteStudent(student._id);
       router.push("/dashboard/students");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
       setDeleting(false);
     }
   }
 
-  if (!student && !error)
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading student" />
-      </div>
-    );
+  if (!student && !error) return <DetailSkeleton sections={2} />;
   if (error && !student)
     return (
       <div className="p-5 sm:p-7 lg:p-9">
@@ -167,7 +163,6 @@ export default function StudentDetail({ id }: { id: string }) {
         >
           ← All students
         </Link>
-        {error && <ErrorState message={error} />}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Badge tone={student.isPublic ? "green" : "neutral"}>
@@ -210,23 +205,29 @@ export default function StudentDetail({ id }: { id: string }) {
                     onChange={(event) => update("fullName", event.target.value)}
                   />
                 </Field>
-                <Field label="Directory category">
-                  <select
-                    className={inputClass}
+                <Field
+                  label="Directory category"
+                  htmlFor="student-detail-category"
+                >
+                  <Select
+                    id="student-detail-category"
                     value={form.studentType}
-                    onChange={(event) =>
-                      update("studentType", event.target.value as StudentType)
+                    onChange={(next) =>
+                      update("studentType", next as StudentType)
                     }
-                  >
-                    <option value="PHD_STUDENT">Ph.D. Student</option>
-                    <option value="MASTER_STUDENT">Master Student</option>
-                    <option value="UNDERGRADUATE_STUDENT">
-                      Undergraduate Student
-                    </option>
-                    <option value="INTERNSHIP_STUDENT">
-                      Vocational Intern
-                    </option>
-                  </select>
+                    options={[
+                      { value: "PHD_STUDENT", label: "Ph.D. Student" },
+                      { value: "MASTER_STUDENT", label: "Master Student" },
+                      {
+                        value: "UNDERGRADUATE_STUDENT",
+                        label: "Undergraduate Student",
+                      },
+                      {
+                        value: "INTERNSHIP_STUDENT",
+                        label: "Vocational Intern",
+                      },
+                    ]}
+                  />
                 </Field>
                 <Field label="Program">
                   <input

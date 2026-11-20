@@ -171,10 +171,7 @@ describe("AlumniProfile – detail rendering", () => {
       "href",
       "https://linkedin.com/in/janesmith",
     );
-    expect(linkedinLink.closest("a")).toHaveAttribute(
-      "rel",
-      "noreferrer",
-    );
+    expect(linkedinLink.closest("a")).toHaveAttribute("rel", "noreferrer");
   });
 
   it("omits empty optional detail sections", async () => {

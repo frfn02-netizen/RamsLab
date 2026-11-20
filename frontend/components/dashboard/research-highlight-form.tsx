@@ -9,15 +9,16 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import {
   createResearchHighlight,
   getPublications,
@@ -27,6 +28,7 @@ import {
   uploadResearchHighlightImage,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import Select from "@/components/select";
 import type {
   Publication,
   ResearchHighlight,
@@ -52,6 +54,7 @@ const empty: FormState = {
 
 export default function ResearchHighlightForm({ id }: { id?: string }) {
   const router = useRouter();
+  const { error: notifyError } = useToast();
   const [form, setForm] = useState<FormState>(empty);
   const [publications, setPublications] = useState<Publication[]>([]);
   const [highlight, setHighlight] = useState<ResearchHighlight | null>(null);
@@ -155,7 +158,6 @@ export default function ResearchHighlightForm({ id }: { id?: string }) {
     event.preventDefault();
     if (!validate() || saving || imageUploading) return;
     setSaving(true);
-    setError(null);
     const input: ResearchHighlightInput = {
       headline: { en: form.en.trim(), id: form.id.trim() },
       publicationId: form.publicationId,
@@ -175,7 +177,7 @@ export default function ResearchHighlightForm({ id }: { id?: string }) {
             await uploadResearchHighlightImage(saved.id, selectedFile),
           );
         } catch (reason) {
-          setError(
+          notifyError(
             `Highlight saved, but image upload failed: ${getUserFacingError(reason)}`,
           );
           return;
@@ -185,20 +187,13 @@ export default function ResearchHighlightForm({ id }: { id?: string }) {
       }
       router.push("/dashboard/research-highlights");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading)
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <Card>
-          <LoadingState label="Loading highlight" />
-        </Card>
-      </div>
-    );
+  if (loading) return <FormSkeleton fields={6} actionCount={2} />;
   const currentImage = previewUrl ?? highlight?.image?.url ?? null;
 
   return (
@@ -236,21 +231,23 @@ export default function ResearchHighlightForm({ id }: { id?: string }) {
                   />
                 </Field>
               </div>
-              <Field label="Publication" error={errors.publicationId}>
-                <select
-                  className={inputClass}
+              <Field
+                label="Publication"
+                htmlFor="research-highlight-publication"
+                error={errors.publicationId}
+              >
+                <Select
+                  id="research-highlight-publication"
                   value={form.publicationId}
-                  onChange={(event) =>
-                    update("publicationId", event.target.value)
-                  }
-                >
-                  <option value="">Select a publication</option>
-                  {publications.map((publication) => (
-                    <option key={publication._id} value={publication._id}>
-                      {publication.title} ({publication.year})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(next) => update("publicationId", next)}
+                  placeholder="Select a publication"
+                  searchPlaceholder="Search publications…"
+                  emptyMessage="No publications found."
+                  options={publications.map((publication) => ({
+                    value: publication._id,
+                    label: `${publication.title} (${publication.year})`,
+                  }))}
+                />
               </Field>
             </section>
             <section className="space-y-5">

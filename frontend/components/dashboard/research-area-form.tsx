@@ -4,14 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type MouseEvent } from "react";
 
-import {
-  Button,
-  Card,
-  ErrorState,
-  Field,
-  PageHeader,
-  inputClass,
-} from "@/components/ui";
+import { useToast } from "@/components/providers/toast-providers";
+import { Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
 import { createResearchArea } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { ResearchAreaInput } from "@/types/modules";
@@ -100,10 +94,10 @@ function validate(form: FormState) {
 
 export default function ResearchAreaForm() {
   const router = useRouter();
+  const { error: notifyError } = useToast();
 
   const [form, setForm] = useState(emptyResearchAreaForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
@@ -154,7 +148,6 @@ export default function ResearchAreaForm() {
     }
 
     setSaving(true);
-    setError(null);
 
     try {
       const created = await createResearchArea(formToInput(form));
@@ -162,7 +155,7 @@ export default function ResearchAreaForm() {
       setDirty(false);
       router.push(`/dashboard/research/${created._id}`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -190,8 +183,6 @@ export default function ResearchAreaForm() {
             Unsaved changes
           </p>
         )}
-
-        {error && <ErrorState message={error} />}
 
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-8">

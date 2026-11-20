@@ -4,16 +4,18 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import RejectAlumniModal from "@/components/dashboard/reject-alumni-modal";
+import ResetPasswordPanel from "@/components/dashboard/reset-password-panel";
 import {
   Badge,
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   inputClass,
 } from "@/components/ui";
+import { DetailSkeleton } from "@/components/skeletons";
 import {
   getAlumniById,
   reviewAlumni,
@@ -21,6 +23,7 @@ import {
   updateAlumni,
 } from "@/lib/api/alumni";
 import { getTrackingByAlumniId } from "@/lib/api/modules";
+import Select from "@/components/select";
 import { getUserFacingError } from "@/lib/api/errors";
 import { formatAlumniClassLabel } from "@/lib/alumni-label";
 import { isCohortYearInputConstrained } from "@/lib/alumni-angkatan-suggestion";
@@ -58,6 +61,7 @@ const dateLabel = (value: string) => {
 
 export default function AlumniDetail({ id }: { id: string }) {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
 
   const [alumni, setAlumni] = useState<Alumni | null>(null);
   const [tracking, setTracking] = useState<AlumniTracking[]>([]);
@@ -146,7 +150,6 @@ export default function AlumniDetail({ id }: { id: string }) {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setError(null);
 
     try {
       const result = await updateAlumni(id, {
@@ -174,7 +177,7 @@ export default function AlumniDetail({ id }: { id: string }) {
       setTahunAngkatanChanged(false);
       setEditing(false);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -182,7 +185,6 @@ export default function AlumniDetail({ id }: { id: string }) {
 
   async function toggleAccount() {
     setAccountUpdating(true);
-    setError(null);
     const shouldEnable = alumni?.accountActive === false;
     try {
       await setAlumniActive(id, shouldEnable);
@@ -190,7 +192,7 @@ export default function AlumniDetail({ id }: { id: string }) {
         current ? { ...current, accountActive: shouldEnable } : current,
       );
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setAccountUpdating(false);
     }
@@ -198,7 +200,6 @@ export default function AlumniDetail({ id }: { id: string }) {
 
   async function review(action: "APPROVE" | "REJECT", rejectReason?: string) {
     setReviewing(true);
-    setError(null);
     try {
       setAlumni(
         action === "REJECT"
@@ -206,7 +207,7 @@ export default function AlumniDetail({ id }: { id: string }) {
           : await reviewAlumni(id, "APPROVE"),
       );
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setReviewing(false);
       // The modal closes for both outcomes so the page-level error (e.g. a
@@ -216,11 +217,7 @@ export default function AlumniDetail({ id }: { id: string }) {
   }
 
   if (!alumni && !error) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading alumni profile" />
-      </div>
-    );
+    return <DetailSkeleton sections={2} />;
   }
 
   if (error && !alumni) {
@@ -267,7 +264,6 @@ export default function AlumniDetail({ id }: { id: string }) {
           ← All alumni
         </Link>
 
-        {error && <ErrorState message={error} />}
         <div className="flex flex-wrap gap-2">
           <Badge tone={alumni.accountActive === false ? "amber" : "green"}>
             {alumni.accountActive === false ? "Disabled" : "Active"}
@@ -346,8 +342,7 @@ export default function AlumniDetail({ id }: { id: string }) {
                     ? "Enable account"
                     : "Disable account"}
               </Button>
-              {/* Always available: an incomplete profile may be approved and
-                  published (only a rejection has to carry a reason). */}
+
               <Button
                 disabled={reviewing}
                 onClick={() => void review("APPROVE")}
@@ -370,6 +365,20 @@ export default function AlumniDetail({ id }: { id: string }) {
             </div>
           )}
         </header>
+
+        {user?.role === "ADMIN" && (
+          <Card className="p-6">
+            <h2 className="text-lg font-bold">Account access</h2>
+            <div className="mt-4">
+              <ResetPasswordPanel
+                userId={alumni.userId}
+                email={alumni.accountEmail}
+                name={alumni.fullName || "this alumni"}
+                targetRole="ALUMNI"
+              />
+            </div>
+          </Card>
+        )}
 
         {editing ? (
           <Card className="p-6">
@@ -411,23 +420,18 @@ export default function AlumniDetail({ id }: { id: string }) {
                   />
                 </Field>
 
-                <Field label="Status">
-                  <select
-                    className={inputClass}
+                <Field label="Status" htmlFor="alumni-detail-status">
+                  <Select
+                    id="alumni-detail-status"
                     value={form.currentStatus}
-                    onChange={(event) =>
-                      update(
-                        "currentStatus",
-                        event.target.value as AlumniStatus,
-                      )
+                    onChange={(next) =>
+                      update("currentStatus", next as AlumniStatus)
                     }
-                  >
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>
-                        {label(status)}
-                      </option>
-                    ))}
-                  </select>
+                    options={statuses.map((status) => ({
+                      value: status,
+                      label: label(status),
+                    }))}
+                  />
                 </Field>
 
                 <Field label="Phone">

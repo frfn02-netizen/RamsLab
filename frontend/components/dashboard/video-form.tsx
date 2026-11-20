@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
@@ -11,6 +12,7 @@ import {
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import { createVideo, getVideo, updateVideo } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 
@@ -75,6 +77,7 @@ function extractVideoId(url: string): string | null {
 
 export default function VideoForm({ id }: { id?: string }) {
   const router = useRouter();
+  const { error: notifyError } = useToast();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
@@ -111,16 +114,15 @@ export default function VideoForm({ id }: { id?: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.youtubeUrl.trim()) {
-      setError("YouTube URL is required.");
+      notifyError("YouTube URL is required.");
       return;
     }
     const id = extractVideoId(form.youtubeUrl.trim());
     if (!id) {
-      setError("Please enter a valid YouTube URL.");
+      notifyError("Please enter a valid YouTube URL.");
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       const saved = id_param
         ? await updateVideo(id_param, toInput(form))
@@ -131,7 +133,7 @@ export default function VideoForm({ id }: { id?: string }) {
         router.push("/dashboard/videos");
       }
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -140,15 +142,7 @@ export default function VideoForm({ id }: { id?: string }) {
   const id_param = id;
 
   if (loading) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <Card>
-          <div className="p-6 text-sm text-[var(--rams-gray)]">
-            Loading video...
-          </div>
-        </Card>
-      </div>
-    );
+    return <FormSkeleton fields={6} actionCount={2} />;
   }
 
   const thumbnailPreview =

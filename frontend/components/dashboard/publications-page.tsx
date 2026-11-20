@@ -2,30 +2,32 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Card,
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import { getPublications, deletePublication } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import { canManagePublication, hasPermission } from "@/lib/authz";
 import type { Publication } from "@/types/modules";
 
 import DeleteButton from "./delete-button";
-import SuccessToast from "./success-toast";
 
 export default function PublicationsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { success, error: notifyError } = useToast();
+  const savedNoticeShown = useRef(false);
 
   const [publications, setPublications] = useState<Publication[]>([]);
   const [search, setSearch] = useState("");
@@ -65,18 +67,16 @@ export default function PublicationsPage() {
   }, [load]);
 
   useEffect(() => {
-    if (!showSavedNotice) {
+    if (!showSavedNotice || savedNoticeShown.current) {
       return;
     }
 
-    const timeout = window.setTimeout(() => {
-      router.replace("/dashboard/publications", {
-        scroll: false,
-      });
-    }, 4500);
-
-    return () => window.clearTimeout(timeout);
-  }, [router, showSavedNotice]);
+    savedNoticeShown.current = true;
+    success("Publication saved successfully.");
+    router.replace("/dashboard/publications", {
+      scroll: false,
+    });
+  }, [router, showSavedNotice, success]);
 
   async function remove(publication: Publication) {
     const confirmed = window.confirm(
@@ -88,7 +88,6 @@ export default function PublicationsPage() {
     }
 
     setDeletingId(publication._id);
-    setError(null);
 
     try {
       await deletePublication(publication._id);
@@ -97,7 +96,7 @@ export default function PublicationsPage() {
         current.filter((item) => item._id !== publication._id),
       );
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setDeletingId(null);
     }
@@ -107,17 +106,6 @@ export default function PublicationsPage() {
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
-      {showSavedNotice && (
-        <SuccessToast
-          message="Publication saved successfully."
-          onClose={() =>
-            router.replace("/dashboard/publications", {
-              scroll: false,
-            })
-          }
-        />
-      )}
-
       <div className="mx-auto max-w-7xl space-y-7">
         <PageHeader
           eyebrow="Research"
@@ -150,9 +138,7 @@ export default function PublicationsPage() {
         {error && <ErrorState message={error} onRetry={() => void load()} />}
 
         {loading ? (
-          <Card>
-            <LoadingState label="Loading publications" />
-          </Card>
+          <TableSkeleton rows={6} columns={6} minWidth="min-w-[980px]" />
         ) : publications.length === 0 ? (
           <EmptyState
             title={search ? "No publications found" : "No publications yet"}
@@ -200,7 +186,7 @@ export default function PublicationsPage() {
                   {publications.map((publication) => (
                     <tr key={publication._id}>
                       <td className="max-w-md px-5 py-4">
-                        {canManagePublication(user, publication) ? (
+                        {canManagePublication(user) ? (
                           <Link
                             href={`/dashboard/publications/${publication._id}/edit`}
                             className="font-semibold hover:text-[var(--rams-red)]"
@@ -232,7 +218,7 @@ export default function PublicationsPage() {
 
                       <td className="px-5 py-4">
                         <div className="flex w-full items-center justify-center gap-2">
-                          {canManagePublication(user, publication) && (
+                          {canManagePublication(user) && (
                             <>
                               <LinkButton
                                 href={`/dashboard/publications/${publication._id}/edit`}

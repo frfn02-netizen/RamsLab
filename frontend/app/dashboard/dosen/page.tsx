@@ -4,19 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Card,
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { ProfileCardsSkeleton } from "@/components/skeletons";
 import DeleteButton from "@/components/dashboard/delete-button";
 import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
-import SuccessToast from "@/components/dashboard/success-toast";
+import Select from "@/components/select";
 import { deleteDosen, getDosenList } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Dosen } from "@/types/modules";
@@ -25,12 +26,12 @@ const Button = DeleteButton;
 
 export default function DosenPage() {
   const { user } = useAuth();
+  const { success, error: notifyError } = useToast();
 
   const [items, setItems] = useState<Dosen[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Dosen | null>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,8 +96,6 @@ export default function DosenPage() {
 
   async function remove(item: Dosen) {
     setDeletingId(item._id);
-    setError(null);
-    setSuccess(null);
 
     try {
       await deleteDosen(item._id);
@@ -105,9 +104,9 @@ export default function DosenPage() {
         current.filter((currentItem) => currentItem._id !== item._id),
       );
 
-      setSuccess(`${item.fullName} was deleted successfully.`);
+      success(`${item.fullName} was deleted successfully.`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setDeletingId(null);
       setPendingDelete(null);
@@ -116,10 +115,6 @@ export default function DosenPage() {
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
-      {success && (
-        <SuccessToast message={success} onClose={() => setSuccess(null)} />
-      )}
-
       {pendingDelete && (
         <DeleteConfirmationModal
           personType="dosen"
@@ -171,9 +166,10 @@ export default function DosenPage() {
         )}
 
         {loading ? (
-          <Card>
-            <LoadingState label="Loading dosen" />
-          </Card>
+          <ProfileCardsSkeleton
+            count={10}
+            columns="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+          />
         ) : filteredItems.length === 0 ? (
           <EmptyState
             title={search.trim() ? "No matching dosen found" : "No dosen found"}
@@ -304,21 +300,21 @@ export default function DosenPage() {
                   <label htmlFor="dosen-page-size" className="sr-only">
                     Dosen per page
                   </label>
-                  <select
+                  <Select
                     id="dosen-page-size"
-                    className="rounded-md border border-black/15 bg-white px-2 py-2 font-semibold text-[var(--rams-charcoal)]"
-                    value={pageSize}
-                    onChange={(event) => {
-                      setPageSize(Number(event.target.value));
+                    ariaLabel="Dosen per page"
+                    className="w-[8.5rem]"
+                    size="sm"
+                    value={String(pageSize)}
+                    onChange={(next) => {
+                      setPageSize(Number(next));
                       setCurrentPage(1);
                     }}
-                  >
-                    {[10, 20, 50].map((size) => (
-                      <option key={size} value={size}>
-                        {size} / page
-                      </option>
-                    ))}
-                  </select>
+                    options={[10, 20, 50].map((size) => ({
+                      value: String(size),
+                      label: `${size} / page`,
+                    }))}
+                  />
                   <button
                     type="button"
                     aria-label="Previous page"

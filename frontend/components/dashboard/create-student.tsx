@@ -3,21 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import {
-  Button,
-  Card,
-  ErrorState,
-  Field,
-  PageHeader,
-  inputClass,
-} from "@/components/ui";
+import { Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
+import { useToast } from "@/components/providers/toast-providers";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
+import Select from "@/components/select";
 import { createStudent, uploadStudentPhoto } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { StudentType } from "@/types/modules";
 
 export default function CreateStudent() {
   const router = useRouter();
+  const { error: notifyError } = useToast();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -32,7 +28,6 @@ export default function CreateStudent() {
   });
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const update = (key: string, value: string | boolean) => {
@@ -46,7 +41,6 @@ export default function CreateStudent() {
     event.preventDefault();
 
     setSaving(true);
-    setError(null);
 
     try {
       const student = await createStudent({
@@ -70,7 +64,7 @@ export default function CreateStudent() {
 
       router.push(`/dashboard/students/${student._id}`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -92,8 +86,6 @@ export default function CreateStudent() {
           description="Create a student profile and choose the directory category that represents the current academic status."
         />
 
-        {error && <ErrorState message={error} />}
-
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-2">
@@ -107,21 +99,26 @@ export default function CreateStudent() {
                 />
               </Field>
 
-              <Field label="Directory category">
-                <select
-                  className={inputClass}
+              <Field label="Directory category" htmlFor="student-category">
+                <Select
+                  id="student-category"
                   value={form.studentType}
-                  onChange={(event) =>
-                    update("studentType", event.target.value as StudentType)
+                  onChange={(next) =>
+                    update("studentType", next as StudentType)
                   }
-                >
-                  <option value="PHD_STUDENT">Ph.D. Student</option>
-                  <option value="MASTER_STUDENT">Master Student</option>
-                  <option value="UNDERGRADUATE_STUDENT">
-                    Undergraduate Student
-                  </option>
-                  <option value="INTERNSHIP_STUDENT">Vocational Intern</option>
-                </select>
+                  options={[
+                    { value: "PHD_STUDENT", label: "Ph.D. Student" },
+                    { value: "MASTER_STUDENT", label: "Master Student" },
+                    {
+                      value: "UNDERGRADUATE_STUDENT",
+                      label: "Undergraduate Student",
+                    },
+                    {
+                      value: "INTERNSHIP_STUDENT",
+                      label: "Vocational Intern",
+                    },
+                  ]}
+                />
               </Field>
 
               <Field label="Program">

@@ -9,6 +9,7 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
@@ -17,6 +18,7 @@ import {
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import {
   createEvent,
   getEvent,
@@ -81,6 +83,7 @@ function toInput(form: FormState, image?: CmsEventImage): CmsEventInput {
 
 export default function EventForm({ id }: { id?: string }) {
   const router = useRouter();
+  const { error: notifyError } = useToast();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [currentImage, setCurrentImage] = useState<CmsEventImage | undefined>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -147,11 +150,10 @@ export default function EventForm({ id }: { id?: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.titleEn.trim() || !form.titleId.trim()) {
-      setError("English and Indonesian titles are required.");
+      notifyError("English and Indonesian titles are required.");
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       const saved = id
         ? await updateEvent(
@@ -168,22 +170,14 @@ export default function EventForm({ id }: { id?: string }) {
       }
       router.push(`/dashboard/events/${saved._id}`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
   }
 
   if (loading) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <Card>
-          <div className="p-6 text-sm text-[var(--rams-gray)]">
-            Loading event...
-          </div>
-        </Card>
-      </div>
-    );
+    return <FormSkeleton fields={7} actionCount={2} />;
   }
 
   const imagePreview = previewUrl ?? currentImage?.url ?? null;

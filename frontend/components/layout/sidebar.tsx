@@ -47,6 +47,9 @@ const ICONS: Record<string, ReactNode> = {
   events: (
     <Icon d="M5.5 2.5v2M14.5 2.5v2M2.5 7.5h15M3.5 2.5h13a1 1 0 011 1V17.5a1 1 0 01-1 1h-13a1 1 0 01-1-1V3.5a1 1 0 011-1zM7 11.5h.01M10 11.5h.01M13 11.5h.01M7 14.5h.01" />
   ),
+  meetings: (
+    <Icon d="M7 9.5a3 3 0 100-6 3 3 0 000 6zM1.5 17c0-2.5 2.46-4.5 5.5-4.5s5.5 2 5.5 4.5M13.5 4.5a2.5 2.5 0 010 5M14.5 12.7c2.3.4 4 2.1 4 4.3" />
+  ),
   videos: (
     <Icon d="M3 4.5h14a1 1 0 011 1v9a1 1 0 01-1 1H3a1 1 0 01-1-1v-9a1 1 0 011-1zM8 8l4.5 3L8 14z" />
   ),
@@ -61,6 +64,9 @@ const ICONS: Record<string, ReactNode> = {
   ),
   alumni: (
     <Icon d="M10 10a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM3 17.5c0-3.04 3.13-5.5 7-5.5s7 2.46 7 5.5M13 6l2 2 3-3" />
+  ),
+  "lab-members": (
+    <Icon d="M7 9.5a3 3 0 100-6 3 3 0 000 6zM1.5 17c0-2.5 2.46-4.5 5.5-4.5s5.5 2 5.5 4.5M13.5 4.5a3 3 0 010 6M15 12.5c2.3.4 4 2.1 4 4.5" />
   ),
   "public-service": (
     <Icon d="M3.5 4.5h13v12h-13zM7 2.5v4M13 2.5v4M2.5 8.5h15" />
@@ -77,8 +83,8 @@ export default function Sidebar() {
   const navigationGroups = visibleDashboardNavigation(user?.role);
 
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-[var(--rams-charcoal)] text-white lg:flex">
-      <div className="border-b border-white/10 px-5 py-5">
+    <aside className="hidden h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden border-r border-white/10 bg-[var(--rams-charcoal)] text-white lg:flex">
+      <div className="shrink-0 border-b border-white/10 px-5 py-5">
         <div className="flex items-center gap-3">
           <span className="relative h-10 w-12 shrink-0 rounded-sm bg-white p-1">
             <Image
@@ -104,7 +110,7 @@ export default function Sidebar() {
       </div>
 
       <nav
-        className="hide-scrollbar flex-1 overflow-y-auto px-3 py-4"
+        className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4"
         aria-label="Dashboard navigation"
       >
         {navigationGroups.map((group) => {
@@ -149,7 +155,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <footer className="border-t border-white/10 px-5 py-4">
+      <footer className="shrink-0 border-t border-white/10 px-5 py-4">
         <p className="text-[0.7rem] text-white/40">
           Signed in as{" "}
           <span className="font-semibold text-white/65">{user?.role}</span>

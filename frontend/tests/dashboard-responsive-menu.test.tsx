@@ -75,9 +75,10 @@ describe("dashboard responsive menu", () => {
     const header = render(<Header />);
     openMobileMenu();
 
-    expect(
-      screen.getByRole("link", { name: "Publications" }),
-    ).toHaveAttribute("href", "/dashboard/publications");
+    expect(screen.getByRole("link", { name: "Publications" })).toHaveAttribute(
+      "href",
+      "/dashboard/publications",
+    );
     expect(mobileMenuHrefs(header.container)).not.toContain(
       "/dashboard/content/publications",
     );
@@ -97,11 +98,11 @@ describe("dashboard responsive menu", () => {
   });
 
   it("applies the sidebar role filtering to the mobile menu as well", () => {
-    state.role = "PUBLICATION_EDITOR";
+    state.role = "DOSEN";
 
     const { mobile, desktop } = renderMenuPair();
 
-    expect(mobile).toEqual(["/dashboard", "/dashboard/publications"]);
+    expect(mobile).toEqual([]);
     expect(desktop).toEqual(mobile);
   });
 });

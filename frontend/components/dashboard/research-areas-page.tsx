@@ -5,6 +5,7 @@ import { useEffect, useState, type ComponentProps } from "react";
 
 import DeleteButton from "@/components/dashboard/delete-button";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button as RamsButton,
@@ -12,9 +13,9 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import { deleteResearchArea, getResearchAreas } from "@/lib/api/modules";
 import type { ResearchArea } from "@/types/modules";
@@ -29,11 +30,11 @@ function Button({ variant, ...props }: ComponentProps<typeof RamsButton>) {
 
 export default function ResearchAreasPage() {
   const { user } = useAuth();
+  const { success, error: notifyError } = useToast();
 
   const [areas, setAreas] = useState<ResearchArea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function load() {
@@ -80,17 +81,15 @@ export default function ResearchAreasPage() {
     }
 
     setBusyId(area._id);
-    setError(null);
-    setSuccess(null);
 
     try {
       await deleteResearchArea(area._id);
 
       setAreas((current) => current.filter((item) => item._id !== area._id));
 
-      setSuccess(`${area.code} was deleted.`);
+      success(`${area.code} was deleted.`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setBusyId(null);
     }
@@ -114,19 +113,8 @@ export default function ResearchAreasPage() {
 
         {error && <ErrorState message={error} onRetry={() => void load()} />}
 
-        {success && (
-          <div
-            className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800"
-            role="status"
-          >
-            {success}
-          </div>
-        )}
-
         {loading ? (
-          <Card>
-            <LoadingState label="Loading research areas" />
-          </Card>
+          <TableSkeleton rows={6} columns={5} minWidth="min-w-[900px]" />
         ) : areas.length === 0 ? (
           <EmptyState
             title="No research areas found"

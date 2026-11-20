@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button,
@@ -9,18 +10,18 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import { deleteVideo, getVideos } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { HomepageVideo } from "@/types/modules";
 
 export default function VideosPage() {
+  const { success, error: notifyError } = useToast();
   const [videos, setVideos] = useState<HomepageVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function load() {
@@ -45,14 +46,12 @@ export default function VideosPage() {
       return;
     }
     setBusyId(video._id);
-    setError(null);
-    setSuccess(null);
     try {
       await deleteVideo(video._id);
       setVideos((current) => current.filter((item) => item._id !== video._id));
-      setSuccess("Video was deleted.");
+      success("Video was deleted.");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setBusyId(null);
     }
@@ -70,15 +69,8 @@ export default function VideosPage() {
           }
         />
         {error && <ErrorState message={error} onRetry={() => void load()} />}
-        {success && (
-          <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-            {success}
-          </div>
-        )}
         {loading ? (
-          <Card>
-            <LoadingState label="Loading videos" />
-          </Card>
+          <TableSkeleton rows={6} columns={4} minWidth="min-w-[600px]" />
         ) : videos.length === 0 ? (
           <EmptyState
             title="No videos found"

@@ -9,22 +9,24 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import {
   deletePublicServiceProject,
   getPublicServiceProjects,
 } from "@/lib/api/modules";
+import { useToast } from "@/components/providers/toast-providers";
 import { getUserFacingError } from "@/lib/api/errors";
+import Select from "@/components/select";
 import type { PublicServiceProject } from "@/types/modules";
 
 export default function PublicServiceAdminPage() {
+  const { success, error: notifyError } = useToast();
   const [projects, setProjects] = useState<PublicServiceProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
@@ -87,9 +89,9 @@ export default function PublicServiceAdminPage() {
       setProjects((current) =>
         current.filter((item) => item._id !== project._id),
       );
-      setSuccess(`${project.title.en} was deleted.`);
+      success(`${project.title.en} was deleted.`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setBusyId(null);
     }
@@ -104,15 +106,8 @@ export default function PublicServiceAdminPage() {
           description="Manage public service and R&D work records shown on the public Public Service page."
         />
         {error && <ErrorState message={error} onRetry={() => void load()} />}
-        {success && (
-          <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-            {success}
-          </div>
-        )}
         {loading ? (
-          <Card>
-            <LoadingState label="Loading public service content" />
-          </Card>
+          <TableSkeleton rows={6} columns={6} minWidth="min-w-[720px]" />
         ) : (
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-4">
@@ -146,19 +141,20 @@ export default function PublicServiceAdminPage() {
                     <label htmlFor="admin-ps-year" className="sr-only">
                       Filter by year
                     </label>
-                    <select
+                    <Select
                       id="admin-ps-year"
-                      className={inputClass}
+                      ariaLabel="Filter by year"
+                      className="w-full sm:w-[11rem] sm:shrink-0"
                       value={selectedYear}
-                      onChange={(e) => setSelectedYear(e.target.value)}
-                    >
-                      <option value="all">All years</option>
-                      {availableYears.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(next) => setSelectedYear(next)}
+                      options={[
+                        { value: "all", label: "All years" },
+                        ...availableYears.map((y) => ({
+                          value: y,
+                          label: y,
+                        })),
+                      ]}
+                    />
                   </div>
                 </Card>
                 {filteredProjects.length === 0 ? (

@@ -11,15 +11,16 @@ import {
 } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import {
   createPublication,
@@ -30,9 +31,8 @@ import {
   uploadPublicationPdf,
 } from "@/lib/api/modules";
 import { canManagePublication, hasPermission } from "@/lib/authz";
+import Select from "@/components/select";
 import { PUBLICATION_TYPES, type Publication } from "@/types/modules";
-
-import SuccessToast from "./success-toast";
 
 type FormState = {
   title: string;
@@ -106,6 +106,7 @@ function addValue(values: string[], value: string) {
 export default function PublicationForm({ id }: { id?: string }) {
   const router = useRouter();
   const { user } = useAuth();
+  const { success, error: notifyError } = useToast();
   const editing = Boolean(id);
 
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -121,7 +122,6 @@ export default function PublicationForm({ id }: { id?: string }) {
 
   const [audit, setAudit] = useState<Publication | null>(null);
   const [canEditRecord, setCanEditRecord] = useState(true);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUploading, setPdfUploading] = useState(false);
   const [pdfUploadStatus, setPdfUploadStatus] = useState<
@@ -139,7 +139,7 @@ export default function PublicationForm({ id }: { id?: string }) {
 
         setForm(fromPublication(publication));
         setAudit(publication);
-        setCanEditRecord(canManagePublication(user, publication));
+        setCanEditRecord(canManagePublication(user));
       })
       .catch((reason) => {
         if (!cancelled) {
@@ -205,7 +205,6 @@ export default function PublicationForm({ id }: { id?: string }) {
     if (!validate()) return;
 
     setSaving(true);
-    setError(null);
 
     const metadataInput = {
       title: form.title.trim(),
@@ -231,12 +230,12 @@ export default function PublicationForm({ id }: { id?: string }) {
       if (editing) {
         setForm(fromPublication(saved));
         setAudit(saved);
-        setSuccessMessage("Publication updated successfully.");
+        success("Publication updated successfully.");
       } else {
         router.push("/dashboard/publications?saved=1");
       }
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -248,16 +247,15 @@ export default function PublicationForm({ id }: { id?: string }) {
     if (file.type !== "application/pdf") {
       setPdfFile(null);
       event.target.value = "";
-      setError("Please choose a PDF file.");
+      notifyError("Please choose a PDF file.");
       return;
     }
     if (file.size > MAX_PUBLICATION_PDF_BYTES) {
       setPdfFile(null);
       event.target.value = "";
-      setError("PDF must be 30 MB or smaller.");
+      notifyError("PDF must be 30 MB or smaller.");
       return;
     }
-    setError(null);
     setPdfFile(file);
     setPdfUploadStatus("uploading");
     setPdfUploading(true);
@@ -283,11 +281,11 @@ export default function PublicationForm({ id }: { id?: string }) {
         }
         setPdfFile(null);
         setPdfUploadStatus("success");
-        setSuccessMessage("PDF uploaded successfully.");
+        success("PDF uploaded successfully.");
       })
       .catch((reason) => {
         setPdfUploadStatus("failed");
-        setError(getUserFacingError(reason));
+        notifyError(getUserFacingError(reason));
       })
       .finally(() => {
         setPdfUploading(false);
@@ -357,26 +355,11 @@ export default function PublicationForm({ id }: { id?: string }) {
   }
 
   if (loading) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <div className="mx-auto max-w-3xl">
-          <Card>
-            <LoadingState label="Loading publication" />
-          </Card>
-        </div>
-      </div>
-    );
+    return <FormSkeleton fields={8} actionCount={2} />;
   }
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
-      {successMessage && (
-        <SuccessToast
-          message={successMessage}
-          onClose={() => setSuccessMessage(null)}
-        />
-      )}
-
       <div className="mx-auto max-w-4xl space-y-7">
         <Link
           href="/dashboard/publications"
@@ -458,21 +441,16 @@ export default function PublicationForm({ id }: { id?: string }) {
               htmlFor="publication-type"
               error={errors.publicationType}
             >
-              <select
+              <Select
                 id="publication-type"
                 required
-                className={inputClass}
                 value={form.publicationType}
-                onChange={(event) =>
-                  update("publicationType", event.target.value)
-                }
-              >
-                {PUBLICATION_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => update("publicationType", next)}
+                options={PUBLICATION_TYPES.map((type) => ({
+                  value: type,
+                  label: type,
+                }))}
+              />
             </Field>
 
             <div className="grid gap-5 sm:grid-cols-2">

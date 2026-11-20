@@ -4,16 +4,17 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { TimelineSkeleton } from "@/components/skeletons";
 import { getAlumniById } from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
 import {
@@ -21,6 +22,7 @@ import {
   deleteTracking,
   getTrackingByAlumniId,
 } from "@/lib/api/modules";
+import Select from "@/components/select";
 import type { Alumni } from "@/types/alumni";
 import type { AlumniTracking, TrackingType } from "@/types/modules";
 
@@ -48,6 +50,7 @@ function dateLabel(value: string) {
 
 export default function TrackingPage({ alumniId }: { alumniId: string }) {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
   const [alumni, setAlumni] = useState<Alumni | null>(null);
   const [events, setEvents] = useState<AlumniTracking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +91,6 @@ export default function TrackingPage({ alumniId }: { alumniId: string }) {
   async function addEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
-    setError(null);
     try {
       const created = await createTracking(alumniId, {
         ...form,
@@ -103,7 +105,7 @@ export default function TrackingPage({ alumniId }: { alumniId: string }) {
         description: "",
       });
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSubmitting(false);
     }
@@ -115,14 +117,16 @@ export default function TrackingPage({ alumniId }: { alumniId: string }) {
       await deleteTracking(item._id);
       setEvents((current) => current.filter((event) => event._id !== item._id));
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     }
   }
 
   if (loading)
     return (
       <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading tracking" />
+        <div className="mx-auto max-w-5xl space-y-7">
+          <TimelineSkeleton items={3} />
+        </div>
       </div>
     );
   return (
@@ -147,23 +151,21 @@ export default function TrackingPage({ alumniId }: { alumniId: string }) {
               onSubmit={addEvent}
               className="mt-5 grid gap-5 sm:grid-cols-2"
             >
-              <Field label="Type">
-                <select
-                  className={inputClass}
+              <Field label="Type" htmlFor="tracking-type">
+                <Select
+                  id="tracking-type"
                   value={form.type}
-                  onChange={(event) =>
+                  onChange={(next) =>
                     setForm({
                       ...form,
-                      type: event.target.value as TrackingType,
+                      type: next as TrackingType,
                     })
                   }
-                >
-                  {trackingTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {label(type)}
-                    </option>
-                  ))}
-                </select>
+                  options={trackingTypes.map((type) => ({
+                    value: type,
+                    label: label(type),
+                  }))}
+                />
               </Field>
               <Field label="Title">
                 <input

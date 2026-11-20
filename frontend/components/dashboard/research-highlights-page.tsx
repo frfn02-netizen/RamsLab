@@ -9,19 +9,21 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
   Button,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import {
   deleteResearchHighlight,
   getResearchHighlights,
 } from "@/lib/api/modules";
+import { useToast } from "@/components/providers/toast-providers";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { ResearchHighlight } from "@/types/modules";
 import DeleteConfirmationModal from "./delete-confirmation-modal";
 
 export default function ResearchHighlightsPage() {
+  const { error: notifyError } = useToast();
   const [items, setItems] = useState<ResearchHighlight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,13 +50,12 @@ export default function ResearchHighlightsPage() {
   async function remove() {
     if (!deleting) return;
     setDeletingNow(true);
-    setError(null);
     try {
       await deleteResearchHighlight(deleting.id);
       setItems((current) => current.filter((item) => item.id !== deleting.id));
       setDeleting(null);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setDeletingNow(false);
     }
@@ -77,9 +78,7 @@ export default function ResearchHighlightsPage() {
         {error && <ErrorState message={error} onRetry={() => void load()} />}
 
         {loading ? (
-          <Card>
-            <LoadingState label="Loading research highlights" />
-          </Card>
+          <TableSkeleton rows={6} columns={5} minWidth="min-w-[900px]" />
         ) : items.length === 0 ? (
           <EmptyState
             title="No research highlights yet"

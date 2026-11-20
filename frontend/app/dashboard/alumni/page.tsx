@@ -1,22 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ComponentType,
+  type ReactNode,
+  type SVGProps,
+} from "react";
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import DeleteButton from "@/components/dashboard/delete-button";
 import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
-import SuccessToast from "@/components/dashboard/success-toast";
 import {
   Badge,
   Card,
   EmptyState,
   ErrorState,
-  LoadingState,
   PageHeader,
   Pagination,
   inputClass,
 } from "@/components/ui";
-import { deleteAlumni, getAlumniList } from "@/lib/api/alumni";
+import { StatCardsSkeleton, TableSkeleton } from "@/components/skeletons";
+import {
+  deleteAlumni,
+  getAlumniList,
+  getAlumniStats,
+  type AlumniStats,
+} from "@/lib/api/alumni";
 import { getUserFacingError } from "@/lib/api/errors";
 import {
   formatMissingPublishFields,
@@ -52,8 +64,218 @@ function missingPublishText(item: Alumni) {
   return `Missing: ${formatMissingPublishFields(missing)}`;
 }
 
+type StatIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
+const statCards: {
+  key: keyof AlumniStats;
+  label: string;
+  icon: StatIcon;
+  color: string;
+  tint: string;
+  decor: string;
+}[] = [
+  {
+    key: "total",
+    label: "Total Alumni",
+    icon: UsersIcon,
+    color: "#2563EB",
+    tint: "#E8F1FF",
+    decor: "#BFD7FF",
+  },
+  {
+    key: "approved",
+    label: "Approved",
+    icon: CircleCheckIcon,
+    color: "#168A5B",
+    tint: "#E8F8EF",
+    decor: "#BFE9D2",
+  },
+  {
+    key: "pending",
+    label: "Pending",
+    icon: ClockIcon,
+    color: "#C47F0A",
+    tint: "#FFF4DF",
+    decor: "#FFE2AD",
+  },
+  {
+    key: "rejected",
+    label: "Rejected",
+    icon: XIcon,
+    color: "#C53030",
+    tint: "#FDEBEC",
+    decor: "#F8C9CB",
+  },
+];
+
+function StatIconBase({
+  children,
+  ...props
+}: SVGProps<SVGSVGElement> & { children: ReactNode }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      {children}
+    </svg>
+  );
+}
+
+function UsersIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <StatIconBase {...props}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </StatIconBase>
+  );
+}
+
+function CircleCheckIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <StatIconBase {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </StatIconBase>
+  );
+}
+
+function ClockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <StatIconBase {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </StatIconBase>
+  );
+}
+
+function XIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <StatIconBase {...props}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </StatIconBase>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  tint,
+  decor,
+}: {
+  label: string;
+  value: number;
+  icon: StatIcon;
+  color: string;
+  tint: string;
+  decor: string;
+}) {
+  return (
+    <article className="relative h-full overflow-hidden rounded-[16px] border border-[#E7EBF1] bg-white p-5 shadow-[0_10px_28px_rgba(11,32,56,0.06)]">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-12 -right-10 h-32 w-32 rounded-full opacity-80"
+        style={{
+          background: `radial-gradient(circle at center, ${decor} 0%, transparent 70%)`,
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-5 -right-2 h-16 w-16 rounded-full opacity-70"
+        style={{
+          background: `radial-gradient(circle at center, ${decor} 0%, transparent 72%)`,
+        }}
+      />
+
+      <div className="relative z-10 flex items-center gap-4">
+        <span
+          className="flex size-12 shrink-0 items-center justify-center rounded-full"
+          style={{ backgroundColor: tint, color }}
+        >
+          <Icon className="size-6" />
+        </span>
+
+        <div className="min-w-0">
+          <p className="text-[2rem] font-bold leading-none tracking-tight tabular-nums text-[var(--navy)]">
+            {value.toLocaleString("en-US")}
+          </p>
+          <p className="mt-2 text-sm font-medium text-[var(--rams-gray)]">
+            {label}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function AlumniStatsSummary({
+  stats,
+  loading,
+  error,
+  onRetry,
+}: {
+  stats: AlumniStats | null;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  return (
+    <section aria-label="Alumni statistics" className="space-y-4">
+      {error && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-md px-2 py-1 font-semibold text-red-800 underline underline-offset-2 transition-colors hover:bg-red-100"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {loading && !stats ? (
+        <StatCardsSkeleton
+          count={4}
+          columns="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        />
+      ) : stats ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statCards.map((card) => (
+            <StatCard
+              key={card.key}
+              label={card.label}
+              value={stats[card.key]}
+              icon={card.icon}
+              color={card.color}
+              tint={card.tint}
+              decor={card.decor}
+            />
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export default function AlumniPage() {
   const { user } = useAuth();
+  const { success, error: notifyError } = useToast();
 
   const [items, setItems] = useState<Alumni[]>([]);
   const [total, setTotal] = useState(0);
@@ -65,8 +287,42 @@ export default function AlumniPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Alumni | null>(null);
+  const [stats, setStats] = useState<AlumniStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+  const loadStats = useCallback(async () => {
+    try {
+      setStats(await getAlumniStats());
+      setStatsError(null);
+    } catch (reason) {
+      setStatsError(getUserFacingError(reason));
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getAlumniStats()
+      .then((result) => {
+        if (cancelled) return;
+        setStats(result);
+        setStatsError(null);
+      })
+      .catch((reason) => {
+        if (!cancelled) setStatsError(getUserFacingError(reason));
+      })
+      .finally(() => {
+        if (!cancelled) setStatsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,8 +374,7 @@ export default function AlumniPage() {
 
   async function confirmDelete(item: Alumni) {
     setDeletingId(item._id);
-    setError(null);
-    setSuccess(null);
+    // setPendingDelete(null);
 
     try {
       await deleteAlumni(item._id);
@@ -129,9 +384,10 @@ export default function AlumniPage() {
       );
 
       setTotal((current) => Math.max(0, current - 1));
-      setSuccess(`${item.fullName} was deleted successfully.`);
+      void loadStats();
+      success(`${item.fullName} was deleted successfully.`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setDeletingId(null);
       setPendingDelete(null);
@@ -142,10 +398,6 @@ export default function AlumniPage() {
 
   return (
     <div className="p-5 sm:p-7 lg:p-9">
-      {success && (
-        <SuccessToast message={success} onClose={() => setSuccess(null)} />
-      )}
-
       {pendingDelete && (
         <DeleteConfirmationModal
           personType="alumni"
@@ -163,8 +415,19 @@ export default function AlumniPage() {
           description="Browse alumni profiles and their current professional journey."
         />
 
+        <AlumniStatsSummary
+          stats={stats}
+          loading={statsLoading}
+          error={statsError}
+          onRetry={() => {
+            setStatsLoading(true);
+            setStatsError(null);
+            void loadStats();
+          }}
+        />
+
         <Card className="p-4">
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span
@@ -172,9 +435,6 @@ export default function AlumniPage() {
                   className="text-sm font-semibold"
                 >
                   Review status
-                </span>
-                <span className="text-xs text-[var(--rams-gray)]">
-                  {total} alumni
                 </span>
               </div>
 
@@ -192,7 +452,12 @@ export default function AlumniPage() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => selectReviewFilter(option.value)}
-                      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 ${
+                      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition 
+                        focus-visible:outline-none 
+                        focus-visible:ring-2 
+                        focus-visible:ring-[var(--rams-red)] 
+                        focus-visible:ring-offset-2 ${
+                          
                         active
                           ? "bg-[var(--rams-red)] text-white"
                           : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
@@ -205,7 +470,7 @@ export default function AlumniPage() {
               </div>
             </div>
 
-            <div>
+            <div className="w-full lg:w-[380px] lg:shrink-0">
               <label
                 htmlFor="alumni-search"
                 className="mb-2 block text-sm font-semibold"
@@ -222,7 +487,7 @@ export default function AlumniPage() {
                   setPage(1);
                 }}
                 placeholder="Name, NIM, or program"
-                className={`${inputClass} max-w-md`}
+                className={`${inputClass} w-full`}
               />
             </div>
           </div>
@@ -237,9 +502,7 @@ export default function AlumniPage() {
             )}
 
             {loading && items.length === 0 ? (
-              <Card>
-                <LoadingState label="Loading alumni" />
-              </Card>
+              <TableSkeleton rows={6} columns={7} minWidth="min-w-[760px]" />
             ) : items.length === 0 ? (
               <EmptyState
                 title={

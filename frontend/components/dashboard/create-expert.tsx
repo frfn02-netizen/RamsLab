@@ -4,19 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import DosenPhotoField from "@/components/dashboard/dosen-photo-field";
-import {
-  Button,
-  Card,
-  ErrorState,
-  Field,
-  PageHeader,
-  inputClass,
-} from "@/components/ui";
+import { useToast } from "@/components/providers/toast-providers";
+import { Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
 import { getUserFacingError } from "@/lib/api/errors";
 import { createExpert, uploadExpertPhoto } from "@/lib/api/modules";
 
 export default function CreateExpert() {
   const router = useRouter();
+  const { error: notifyError } = useToast();
 
   const [form, setForm] = useState({
     name: "",
@@ -41,7 +36,6 @@ export default function CreateExpert() {
   });
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const update = (key: string, value: string | boolean) => {
@@ -54,7 +48,6 @@ export default function CreateExpert() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setError(null);
 
     try {
       const expert = await createExpert({
@@ -88,7 +81,7 @@ export default function CreateExpert() {
 
       router.push(`/dashboard/experts/${expert._id}`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -109,8 +102,6 @@ export default function CreateExpert() {
           title="Add expert"
           description="Create an expert profile. Experts are standalone profiles, not user accounts."
         />
-
-        {error && <ErrorState message={error} />}
 
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-5">

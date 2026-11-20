@@ -5,9 +5,11 @@ import {
   waitFor,
   cleanup,
 } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import DosenPage from "@/app/dashboard/dosen/page";
 import StudentsPage from "@/app/dashboard/students/page";
+import { ToastProvider } from "@/components/providers/toast-providers";
 
 const mocks = vi.hoisted(() => ({
   getDosenList: vi.fn(),
@@ -44,11 +46,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function renderWithToast(ui: ReactNode) {
+  return render(<ToastProvider>{ui}</ToastProvider>);
+}
+
 describe("Admin People list deletion", () => {
   it("deletes the selected Dosen after confirmation", async () => {
     mocks.getDosenList.mockResolvedValue([dosen]);
     mocks.deleteDosen.mockResolvedValue(undefined);
-    render(<DosenPage />);
+    renderWithToast(<DosenPage />);
     await waitFor(() =>
       expect(screen.getByText("Dr. Sea Lecturer")).toBeInTheDocument(),
     );
@@ -65,7 +71,7 @@ describe("Admin People list deletion", () => {
 
   it("does not delete a Student when confirmation is cancelled", async () => {
     mocks.getStudentList.mockResolvedValue([student]);
-    render(<StudentsPage />);
+    renderWithToast(<StudentsPage />);
     await waitFor(() =>
       expect(screen.getByText("Marine Student")).toBeInTheDocument(),
     );
@@ -78,7 +84,7 @@ describe("Admin People list deletion", () => {
   it("keeps a Student row when deletion fails", async () => {
     mocks.getStudentList.mockResolvedValue([student]);
     mocks.deleteStudent.mockRejectedValue(new Error("Delete failed"));
-    render(<StudentsPage />);
+    renderWithToast(<StudentsPage />);
     await waitFor(() =>
       expect(screen.getByText("Marine Student")).toBeInTheDocument(),
     );

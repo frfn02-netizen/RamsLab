@@ -3,21 +3,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import {
   createPublicServiceProject,
   getPublicServiceProject,
   updatePublicServiceProject,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
+import Select from "@/components/select";
 import type { PublicServiceProjectInput } from "@/types/modules";
 
 const YEAR_GROUP_OPTIONS = [
@@ -80,6 +82,7 @@ function validate(form: FormState) {
 
 export default function ProjectForm({ id }: { id?: string }) {
   const router = useRouter();
+  const { error: notifyError } = useToast();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
@@ -131,7 +134,6 @@ export default function ProjectForm({ id }: { id?: string }) {
       return;
     }
     setSaving(true);
-    setServerError(null);
     try {
       if (id) {
         await updatePublicServiceProject(id, toInput(form));
@@ -141,22 +143,14 @@ export default function ProjectForm({ id }: { id?: string }) {
       router.replace("/dashboard/public-service");
       return;
     } catch (reason) {
-      setServerError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
   }
 
   if (loading) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <div className="mx-auto max-w-3xl">
-          <Card>
-            <LoadingState label="Loading project" />
-          </Card>
-        </div>
-      </div>
-    );
+    return <FormSkeleton fields={8} actionCount={2} />;
   }
 
   return (
@@ -193,18 +187,15 @@ export default function ProjectForm({ id }: { id?: string }) {
               htmlFor="yearGroup"
               error={errors.yearGroup}
             >
-              <select
+              <Select
                 id="yearGroup"
-                className={inputClass}
                 value={form.yearGroup}
-                onChange={(e) => updateField("yearGroup", e.target.value)}
-              >
-                {YEAR_GROUP_OPTIONS.map((yg) => (
-                  <option key={yg} value={yg}>
-                    {yg}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => updateField("yearGroup", next)}
+                options={YEAR_GROUP_OPTIONS.map((yg) => ({
+                  value: yg,
+                  label: yg,
+                }))}
+              />
             </Field>
             <div className="grid gap-6 sm:grid-cols-2">
               <Field

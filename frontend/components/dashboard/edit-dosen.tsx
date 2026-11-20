@@ -4,15 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import DosenPhotoField from "@/components/dashboard/dosen-photo-field";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import {
   getDosenById,
@@ -24,6 +25,7 @@ import {
   matchesAnyAuthor,
   normalizeAuthorName,
 } from "@/lib/publication-author-match";
+import Select from "@/components/select";
 import type { Dosen, DosenEducation, Publication } from "@/types/modules";
 
 type FormState = {
@@ -111,7 +113,6 @@ function DosenPublicationsSection({
   const [available, setAvailable] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const normalizedName = normalizeAuthorName(fullName);
 
@@ -179,7 +180,6 @@ function DosenPublicationsSection({
     if (!selectedIds.includes(id)) {
       onChange([...selectedIds, id]);
     }
-    setDropdownOpen(false);
   };
 
   const removePublication = (id: string) => {
@@ -226,52 +226,38 @@ function DosenPublicationsSection({
       )}
 
       {normalizedName && (
-        <div className="relative">
-          <button
-            type="button"
-            className={`w-full rounded border border-black/10 bg-white px-3 py-2 text-left text-sm ${inputClass} hover:border-[var(--rams-red)]`}
-            onClick={() => {
-              if (fetchError && !loading) {
-                setRetryCount((c) => c + 1);
-              } else {
-                setDropdownOpen((v) => !v);
-              }
-            }}
-            disabled={loading}
-          >
-            {loading
-              ? "Searching publications…"
-              : fetchError
-                ? "Retry loading publications"
-                : "+ Add publication"}
-          </button>
-          {fetchError && !loading && (
-            <p className="mt-1 text-xs text-red-600">
-              {fetchError}. Click the button above to retry.
-            </p>
-          )}
-          {dropdownOpen && !loading && !fetchError && (
-            <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded border border-black/10 bg-white shadow-lg">
-              {available.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-[var(--gray)]">
-                  No matching publications found
-                </li>
-              ) : (
-                available
-                  .filter((p) => !selectedIds.includes(p._id))
-                  .map((pub) => (
-                    <li key={pub._id}>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--paper)]"
-                        onClick={() => addPublication(pub._id)}
-                      >
-                        {publicationLabel(pub)}
-                      </button>
-                    </li>
-                  ))
-              )}
-            </ul>
+        <div>
+          {fetchError && !loading ? (
+            <>
+              <button
+                type="button"
+                className={`w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-left text-sm ${inputClass} hover:border-[var(--rams-red)]`}
+                onClick={() => setRetryCount((c) => c + 1)}
+              >
+                Retry loading publications
+              </button>
+              <p className="mt-1 text-xs text-red-600">
+                {fetchError}. Click the button above to retry.
+              </p>
+            </>
+          ) : (
+            <Select
+              ariaLabel="Add publication"
+              value=""
+              onChange={(publicationId) => addPublication(publicationId)}
+              loading={loading}
+              loadingMessage="Searching publications…"
+              searchable
+              searchPlaceholder="Search publications…"
+              emptyMessage="No matching publications found."
+              placeholder="+ Add publication"
+              options={available
+                .filter((publication) => !selectedIds.includes(publication._id))
+                .map((publication) => ({
+                  value: publication._id,
+                  label: publicationLabel(publication),
+                }))}
+            />
           )}
         </div>
       )}
@@ -281,6 +267,7 @@ function DosenPublicationsSection({
 
 export default function EditDosen({ id }: { id: string }) {
   const router = useRouter();
+  const { error: notifyError } = useToast();
   const [dosen, setDosen] = useState<Dosen | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -332,7 +319,6 @@ export default function EditDosen({ id }: { id: string }) {
     event.preventDefault();
     if (!form || !dosen) return;
     setSaving(true);
-    setError(null);
     try {
       const result = await updateDosen(id, {
         fullName: form.fullName,
@@ -373,7 +359,7 @@ export default function EditDosen({ id }: { id: string }) {
       if (photo) await uploadDosenPhoto(id, photo);
       router.push(`/dashboard/dosen/${result._id}`);
     } catch (e) {
-      setError(getUserFacingError(e));
+      notifyError(getUserFacingError(e));
     } finally {
       setSaving(false);
     }
@@ -390,12 +376,7 @@ export default function EditDosen({ id }: { id: string }) {
         </Link>
       </div>
     );
-  if (!form)
-    return (
-      <div className="p-7">
-        <LoadingState label="Loading dosen" />
-      </div>
-    );
+  if (!form) return <FormSkeleton fields={10} actionCount={2} />;
   const textFields: [keyof FormState, string][] = [
     ["fullName", "Full name"],
     ["employeeId", "Employee ID"],
@@ -425,7 +406,6 @@ export default function EditDosen({ id }: { id: string }) {
           title="Edit Dosen"
           description="Update the complete lecturer profile."
         />
-        {error && <ErrorState message={error} />}
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-6">
             {dosen && (

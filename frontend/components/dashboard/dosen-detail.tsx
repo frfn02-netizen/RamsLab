@@ -5,8 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
-import { Badge, Button, Card, ErrorState, LoadingState } from "@/components/ui";
+import { useToast } from "@/components/providers/toast-providers";
+import { Badge, Button, Card, ErrorState } from "@/components/ui";
+import { DetailSkeleton } from "@/components/skeletons";
 import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
+import ResetPasswordPanel from "@/components/dashboard/reset-password-panel";
 import { deleteDosen, getDosenById } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Dosen } from "@/types/modules";
@@ -31,6 +34,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 export default function DosenDetail({ id }: { id: string }) {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
   const router = useRouter();
   const [dosen, setDosen] = useState<Dosen | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,18 +62,13 @@ export default function DosenDetail({ id }: { id: string }) {
       await deleteDosen(dosen._id);
       router.push("/dashboard/dosen");
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
       setDeleting(false);
       setPendingDelete(false);
     }
   }
 
-  if (!dosen && !error)
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading dosen" />
-      </div>
-    );
+  if (!dosen && !error) return <DetailSkeleton sections={2} />;
   if (error && !dosen)
     return (
       <div className="p-5 sm:p-7 lg:p-9">
@@ -102,7 +101,6 @@ export default function DosenDetail({ id }: { id: string }) {
         >
           ← Back to Dosen
         </Link>
-        {error && <ErrorState message={error} />}
         <Card className="p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-col gap-5 sm:flex-row">
@@ -331,6 +329,16 @@ export default function DosenDetail({ id }: { id: string }) {
                 ) : null,
               )}
             </div>
+          </Section>
+        )}
+        {user?.role === "ADMIN" && (
+          <Section title="Account access">
+            <ResetPasswordPanel
+              userId={dosen.userId}
+              email={dosen.email}
+              name={dosen.fullName}
+              targetRole="DOSEN"
+            />
           </Section>
         )}
         <Section title="Visibility">

@@ -11,15 +11,16 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Button,
   Card,
   ErrorState,
   Field,
-  LoadingState,
   PageHeader,
   inputClass,
 } from "@/components/ui";
+import { FormSkeleton } from "@/components/skeletons";
 import {
   getAdminSiteContent,
   updateAdminSiteContent,
@@ -476,12 +477,16 @@ function EditorShell({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
 }) {
+  const { success: notifySuccess } = useToast();
+
+  useEffect(() => {
+    if (success) {
+      notifySuccess("Content saved successfully.");
+    }
+  }, [success, notifySuccess]);
+
   if (loading) {
-    return (
-      <div className="p-5 sm:p-7 lg:p-9">
-        <LoadingState label="Loading site content" />
-      </div>
-    );
+    return <FormSkeleton fields={8} actionCount={2} />;
   }
 
   return (
@@ -496,15 +501,6 @@ function EditorShell({
         )}
 
         {error && <ErrorState message={error} />}
-
-        {success && (
-          <div
-            className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800"
-            role="status"
-          >
-            Content saved successfully.
-          </div>
-        )}
 
         <Card className="p-6">
           <form onSubmit={onSubmit} className="space-y-8">
@@ -591,6 +587,7 @@ function PrincipleFields({
 }
 
 function HomepageEditor() {
+  const { error: notifyError } = useToast();
   const [content, setContent] = useState<HomepageContent | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -727,7 +724,7 @@ function HomepageEditor() {
       setLastUpdated(result.updatedAt);
       setSuccess(true);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -976,6 +973,7 @@ function HomepageEditor() {
 }
 
 function AboutEditor() {
+  const { error: notifyError } = useToast();
   const [content, setContent] = useState<AboutContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1143,7 +1141,7 @@ function AboutEditor() {
       setLastUpdated(result.updatedAt);
       setSuccess(true);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -1364,6 +1362,7 @@ function AboutEditor() {
 }
 
 function ContactEditor() {
+  const { error: notifyError } = useToast();
   const [content, setContent] = useState<ContactContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1460,7 +1459,7 @@ function ContactEditor() {
       setLastUpdated(result.updatedAt);
       setSuccess(true);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -1599,6 +1598,7 @@ function ContactEditor() {
 }
 
 function FooterEditor() {
+  const { error: notifyError } = useToast();
   const [content, setContent] = useState<FooterContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1686,7 +1686,7 @@ function FooterEditor() {
       setLastUpdated(result.updatedAt);
       setSuccess(true);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -1757,6 +1757,7 @@ function FooterEditor() {
 }
 
 function PublicServiceEditor() {
+  const { error: notifyError } = useToast();
   const [content, setContent] = useState<PublicServiceContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1848,7 +1849,7 @@ function PublicServiceEditor() {
       setLastUpdated(result.updatedAt);
       setSuccess(true);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }

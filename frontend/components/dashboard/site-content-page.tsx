@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Card, ErrorState, LoadingState, PageHeader } from "@/components/ui";
+import { Card, ErrorState, PageHeader } from "@/components/ui";
+import { ContentCardsSkeleton } from "@/components/skeletons";
 import { getAdminSiteContentList } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type {
@@ -72,9 +73,7 @@ export default function SiteContentPage() {
         />
         {error && <ErrorState message={error} />}
         {loading ? (
-          <Card>
-            <LoadingState label="Loading site content" />
-          </Card>
+          <ContentCardsSkeleton count={4} />
         ) : (
           <div className="grid gap-5 md:grid-cols-2">
             {(Object.keys(pageDetails) as SiteContentKey[]).map((key) => {

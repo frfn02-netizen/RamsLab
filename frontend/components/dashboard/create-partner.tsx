@@ -4,15 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import {
-  Button,
-  Card,
-  ErrorState,
-  Field,
-  PageHeader,
-  inputClass,
-} from "@/components/ui";
+import { useToast } from "@/components/providers/toast-providers";
+import { Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
 import { createPartner, uploadPartnerLogo } from "@/lib/api/modules";
+import Select from "@/components/select";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { PartnerType } from "@/types/modules";
 
@@ -26,6 +21,7 @@ const ALLOWED_LOGO_TYPES = new Set([
 
 export default function CreatePartner() {
   const router = useRouter();
+  const { error: notifyError } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [type, setType] = useState<PartnerType>("UNIVERSITY");
@@ -45,7 +41,6 @@ export default function CreatePartner() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
 
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   function chooseLogo(file: File | null) {
@@ -74,7 +69,6 @@ export default function CreatePartner() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setError(null);
 
     try {
       const partner = await createPartner(type, {
@@ -93,7 +87,7 @@ export default function CreatePartner() {
 
       router.push(`/dashboard/partners/${partner._id}?type=${type}`);
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     } finally {
       setSaving(false);
     }
@@ -114,8 +108,6 @@ export default function CreatePartner() {
           title="Add partner"
           description="Create a university or industrial partner record."
         />
-
-        {error && <ErrorState message={error} />}
 
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-5">
@@ -207,17 +199,16 @@ export default function CreatePartner() {
                 />
               </Field>
 
-              <Field label="Type">
-                <select
-                  className={inputClass}
+              <Field label="Type" htmlFor="partner-type">
+                <Select
+                  id="partner-type"
                   value={type}
-                  onChange={(event) =>
-                    setType(event.target.value as PartnerType)
-                  }
-                >
-                  <option value="UNIVERSITY">University</option>
-                  <option value="INDUSTRIAL">Industrial</option>
-                </select>
+                  onChange={(next) => setType(next as PartnerType)}
+                  options={[
+                    { value: "UNIVERSITY", label: "University" },
+                    { value: "INDUSTRIAL", label: "Industrial" },
+                  ]}
+                />
               </Field>
             </div>
 

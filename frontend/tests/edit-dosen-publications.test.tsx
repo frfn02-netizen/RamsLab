@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import EditDosen from "@/components/dashboard/edit-dosen";
 import type { Dosen, Publication } from "@/types/modules";
@@ -114,14 +120,11 @@ function mockApi(records: Publication[], selectedIds: string[] = []) {
 }
 
 async function openDropdown() {
-  const button = await screen.findByRole("button", {
-    name: "+ Add publication",
+  const trigger = await screen.findByRole("combobox", {
+    name: "Add publication",
   });
-  fireEvent.click(button);
-  await waitFor(() => {
-    expect(document.querySelector("ul.absolute")).not.toBeNull();
-  });
-  return document.querySelector("ul.absolute") as HTMLElement;
+  fireEvent.click(trigger);
+  return screen.findByRole("listbox");
 }
 
 describe("admin edit dosen publication matching", () => {
@@ -163,7 +166,7 @@ describe("admin edit dosen publication matching", () => {
     fireEvent.click(within(dropdown).getByText(label(shortName)));
 
     await waitFor(() => {
-      expect(document.querySelector("ul.absolute")).toBeNull();
+      expect(screen.queryByRole("listbox")).toBeNull();
     });
     expect(screen.getByText(label(shortName))).toBeInTheDocument();
     expect(screen.getAllByText("Remove")).toHaveLength(1);

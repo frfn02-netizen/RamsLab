@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
+import { useToast } from "@/components/providers/toast-providers";
 import {
   Badge,
   Button,
@@ -11,9 +12,9 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
-  LoadingState,
   PageHeader,
 } from "@/components/ui";
+import { TableSkeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import { deletePartner, getPartners } from "@/lib/api/modules";
 import type { Partner, PartnerType } from "@/types/modules";
@@ -115,6 +116,7 @@ function PartnerTable({
 
 export default function PartnersPage() {
   const { user } = useAuth();
+  const { error: notifyError } = useToast();
 
   const [university, setUniversity] = useState<Partner[]>([]);
   const [industrial, setIndustrial] = useState<Partner[]>([]);
@@ -173,7 +175,7 @@ export default function PartnersPage() {
         setIndustrial(update);
       }
     } catch (reason) {
-      setError(getUserFacingError(reason));
+      notifyError(getUserFacingError(reason));
     }
   }
 
@@ -203,9 +205,10 @@ export default function PartnersPage() {
         )}
 
         {loading ? (
-          <Card>
-            <LoadingState label="Loading partners" />
-          </Card>
+          <div className="space-y-10">
+            <TableSkeleton rows={4} columns={5} minWidth="min-w-[720px]" />
+            <TableSkeleton rows={4} columns={5} minWidth="min-w-[720px]" />
+          </div>
         ) : (
           <>
             <section className="space-y-4">
