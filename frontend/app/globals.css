@@ -35,6 +35,21 @@
 * {
   box-sizing: border-box;
 }
+button:not(:disabled),
+a[href],
+summary,
+select,
+label[for],
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
 html {
   scroll-behavior: auto;
 }
@@ -53,6 +68,32 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    #eceff3 25%,
+    #f7f9fb 50%,
+    #eceff3 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
 .font-display {
   font-family: var(--font-display);
 }
@@ -69,7 +110,29 @@ body {
 }
 
 .research-highlight-enter {
-  animation: research-highlight-enter 420ms ease-out both;
+  animation: research-highlight-enter 2.4s ease-out forwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
 }
 
 .home-people-portrait-in {
@@ -118,6 +181,95 @@ body {
   text-transform: uppercase;
 }
 
+.team-page {
+  --team-navy: #142a45;
+  --team-blue: #1769aa;
+  --team-accent: #2878c7;
+  --team-sky: #69b7f0;
+  --team-bg: #ffffff;
+  --team-bg-soft: #f5f8fc;
+  --team-border: #dfe7f0;
+  --team-text: #344256;
+  --team-muted: #5b6b80;
+  --team-hero-base: #f7fafe;
+  --team-hero-light: #eaf3fc;
+}
+
+.team-hero-surface {
+  background:
+    radial-gradient(
+      900px 380px at 78% 42%,
+      rgba(105, 183, 240, 0.16),
+      transparent 62%
+    ),
+    linear-gradient(
+      108deg,
+      #ffffff 0%,
+      var(--team-hero-base) 48%,
+      var(--team-hero-light) 100%
+    );
+}
+
+.team-blueprint-grid {
+  background-image:
+    linear-gradient(rgba(20, 42, 69, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 42, 69, 0.055) 1px, transparent 1px);
+  background-position: center top;
+  background-size: 72px 72px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-page *,
+  .team-page *::before,
+  .team-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes rams-select-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rams-select-enter-y, -4px)) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes rams-select-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--rams-select-enter-y, -4px)) scale(0.99);
+  }
+}
+
+.rams-select-panel {
+  will-change: transform, opacity;
+}
+
+.rams-select-panel[data-state="open"] {
+  animation: rams-select-enter 150ms ease-out both;
+}
+
+.rams-select-panel[data-state="closing"] {
+  animation: rams-select-exit 150ms ease-in both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rams-select-panel[data-state="open"],
+  .rams-select-panel[data-state="closing"] {
+    animation: none;
+  }
+}
+
 .maritime-loader {
   width: 6rem;
   overflow: hidden;
@@ -145,12 +297,18 @@ body {
 }
 
 /* Dashboard-only brand tokens and interactions. */
+html:has(.dashboard-shell),
+body:has(.dashboard-shell) {
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .dashboard-shell {
-  --rams-charcoal: #10263d;
-  --rams-gray-light: #f5f8fa;
-  --rams-gray: #64748b;
+  --rams-charcoal: #25272c;
+  --rams-gray-light: #f8f6f3;
+  --rams-gray: #77736d;
   --rams-red: #c91c24;
-  --rams-red-dark: #9f161d;
+  --rams-red-dark: #a8161d;
   --rams-red-light: #e36a70;
 }
 .dashboard-stat-card {
@@ -900,75 +1058,6 @@ body {
   }
 }
 
-/* ========================================
-   YOUTUBE CAROUSEL
-   ======================================== */
-
-.youtube-carousel-shell {
-  --carousel-accent: var(--rams-red);
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 48px;
-  align-items: center;
-  column-gap: 20px;
-  width: 100%;
-}
-
-.youtube-carousel-viewport {
-  grid-column: 2;
-  overflow: hidden;
-  position: relative;
-}
-
-.youtube-carousel-card {
-  flex: 0 0 500px;
-  flex-shrink: 0;
-}
-
-.youtube-marquee-track {
-  --youtube-gap: 28px;
-  display: flex;
-  gap: var(--youtube-gap);
-  width: max-content;
-  will-change: transform;
-}
-
-/* Desktop medium */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .youtube-carousel-card {
-    flex: 0 0 440px;
-  }
-}
-
-/* Tablet: 2 cards */
-@media (max-width: 1024px) {
-  .youtube-carousel-card {
-    flex: 0 0
-      calc(
-        (var(--youtube-viewport-width, 800px) - var(--youtube-gap, 28px)) / 2
-      );
-  }
-}
-
-/* Mobile: 1 card */
-@media (max-width: 640px) {
-  .youtube-carousel-shell {
-    grid-template-columns: 36px minmax(0, 1fr) 36px;
-    column-gap: 12px;
-  }
-  .youtube-carousel-card {
-    flex: 0 0 300px;
-  }
-  .youtube-marquee-track {
-    --youtube-gap: 16px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .youtube-marquee-track {
-    will-change: auto;
-  }
-}
-
 .homepage-contact-form {
   border-radius: 0.4rem;
   box-shadow: 0 12px 30px rgba(11, 32, 56, 0.06);
@@ -1038,20 +1127,43 @@ body {
 }
 
 .rams-principles .rams-item {
+  position: relative;
+  border-bottom: 1px solid var(--border);
   transition: background-color 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.rams-principles .rams-letter {
-  display: inline-block;
-  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+.rams-principles .rams-item:last-child {
+  border-bottom: none;
+}
+.rams-principles .rams-watermark {
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  font-family: var(--font-display);
+  font-size: 7rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: rgba(200, 16, 46, 0.08);
+  pointer-events: none;
+  user-select: none;
+  transition: color 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rams-principles .rams-rule {
+  display: block;
+  width: 2.25rem;
+  height: 2px;
+  background: var(--rams-red);
 }
 .rams-principles .rams-title {
-  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .rams-principles .rams-accent {
   position: absolute;
   top: 0;
-  left: 2rem;
-  right: 2rem;
+  left: 0;
+  right: 0;
   height: 2px;
   background: var(--rams-red);
   transform: scaleX(0);
@@ -1060,6 +1172,23 @@ body {
   transition:
     opacity 300ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (min-width: 640px) {
+  .rams-principles .rams-item:nth-child(n + 3) {
+    border-bottom: none;
+  }
+  .rams-principles .rams-item:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+}
+@media (min-width: 1024px) {
+  .rams-principles .rams-item {
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+  }
+  .rams-principles .rams-item:last-child {
+    border-right: none;
+  }
 }
 
 @media (hover: hover) {
@@ -1119,10 +1248,10 @@ body {
       transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .rams-principles .rams-item:hover {
-    background-color: #f8fafc;
+    background-color: var(--background-light);
   }
-  .rams-principles .rams-item:hover .rams-letter {
-    transform: translateY(-3px);
+  .rams-principles .rams-item:hover .rams-watermark {
+    color: rgba(200, 16, 46, 0.14);
   }
   .rams-principles .rams-item:hover .rams-title {
     transform: translateY(-1px);
@@ -1161,7 +1290,7 @@ body {
   .homepage-contact-icon,
   .homepage-contact-value,
   .rams-principles .rams-item,
-  .rams-principles .rams-letter,
+  .rams-principles .rams-watermark,
   .rams-principles .rams-title,
   .rams-principles .rams-accent {
     transition: none;
@@ -1184,7 +1313,7 @@ body {
     > .public-card-interaction:hover,
   .reveal-on-scroll[data-reveal-children].is-visible
     > .public-logo-interaction:hover,
-  .rams-principles .rams-item:hover .rams-letter,
+  .rams-principles .rams-item:hover .rams-watermark,
   .rams-principles .rams-item:hover .rams-title,
   .rams-principles .rams-item:hover .rams-accent {
     transform: none;

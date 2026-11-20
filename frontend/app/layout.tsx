@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-providers";
+import { ToastProvider } from "@/components/providers/toast-providers";
 import { assetPath } from "@/lib/asset-path";
+import AnalyticsGate from "@/components/analytics-gate";
 
 export const metadata: Metadata = {
   title: {
@@ -44,9 +45,11 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
 
-        <SpeedInsights />
+        <AnalyticsGate />
       </body>
     </html>
   );

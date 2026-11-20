@@ -54,7 +54,7 @@ export function Button({
   return (
     <button
       {...props}
-      className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]} ${className}`}
     >
       {children}
     </button>
@@ -72,7 +72,7 @@ export function LinkButton({
   return (
     <Link
       href={href}
-      className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 ${variant === "primary" ? "bg-[var(--rams-red)] text-white hover:bg-[var(--rams-red-dark)]" : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"}`}
+      className={`inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 ${variant === "primary" ? "bg-[var(--rams-red)] text-white hover:bg-[var(--rams-red-dark)]" : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"}`}
     >
       {children}
     </Link>
@@ -112,17 +112,6 @@ export function Badge({
     >
       {children}
     </span>
-  );
-}
-export function LoadingState({ label = "Loading" }: { label?: string }) {
-  return (
-    <div
-      className="flex items-center justify-center py-16 text-sm text-[var(--rams-gray)]"
-      role="status"
-    >
-      <span className="mr-3 h-4 w-4 animate-spin rounded-full border-2 border-[var(--rams-red)] border-t-transparent" />
-      {label}…
-    </div>
   );
 }
 export function ErrorState({
@@ -215,6 +204,7 @@ export function Field({
   return (
     <div className={className}>
       <label
+        id={htmlFor ? `${htmlFor}-label` : undefined}
         htmlFor={htmlFor}
         className="mb-2 block text-sm font-semibold text-[var(--rams-charcoal)]"
       >
