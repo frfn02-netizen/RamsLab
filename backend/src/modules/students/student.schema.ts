@@ -11,8 +11,11 @@ const studentType = z.enum([
 
 export const createStudentSchema = z.object({
   fullName: z.string().trim().min(2).max(150),
+  nim: z.string().trim().min(1).max(50).optional(),
   studentType,
   program: z.string().trim().max(150).optional(),
+  faculty: z.string().trim().max(200).optional(),
+  department: z.string().trim().max(200).optional(),
   specialization: z
     .array(z.string().trim().min(1).max(120))
     .max(50)

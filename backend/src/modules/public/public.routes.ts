@@ -21,6 +21,10 @@ import { getPublicPublicationListController } from "../publications/publication.
 import { getPublicResearchHighlightListController } from "../research-highlights/research-highlight.controller.js";
 import { getPublicEventListController } from "../events/event.controller.js";
 import {
+  getPublicScheduleByIdController,
+  getPublicScheduleController,
+} from "../public-schedule/public-schedule.controller.js";
+import {
   getPublicPublicServiceDetailController,
   getPublicPublicServiceListController,
   getPublicServiceProjectListPublicController,
@@ -77,6 +81,10 @@ router.get("/alumni", getPublicAlumniController);
 router.get("/alumni/:id", getPublicAlumniByIdController);
 
 router.get("/events", getPublicEventListController);
+
+router.get("/schedule", getPublicScheduleController);
+
+router.get("/schedule/:id", getPublicScheduleByIdController);
 
 router.get("/public-services", getPublicPublicServiceListController);
 

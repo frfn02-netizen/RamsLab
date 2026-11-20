@@ -10,5 +10,9 @@ export async function createStudentIndexes() {
     { fullName: 1 },
     { name: "students_name_index" },
   );
+  await collection.createIndex(
+    { nim: 1 },
+    { unique: true, sparse: true, name: "students_nim_unique" },
+  );
   console.log("Student indexes created");
 }

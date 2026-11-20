@@ -12,8 +12,11 @@ export type StudentType = (typeof STUDENT_TYPES)[keyof typeof STUDENT_TYPES];
 export interface Student {
   _id?: ObjectId;
   fullName: string;
+  nim?: string;
   studentType: StudentType;
   program?: string;
+  faculty?: string;
+  department?: string;
   specialization: string[];
   photo?: string;
   bio?: string;
