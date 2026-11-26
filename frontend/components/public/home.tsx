@@ -125,22 +125,22 @@ export default async function PublicHome({
                 return (
                   <article
                     key={item.key}
-                    className="group flex items-center justify-between gap-3 p-4 transition-colors duration-200 hover:bg-stone-50/90 sm:p-5"
+                    className="group flex flex-col justify-between min-h-[220px] p-7 lg:p-8 bg-white transition-colors duration-200 hover:bg-stone-50/90"
                   >
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-stone-900">
-                        {titleText}
-                      </h3>
-                      <p className="mt-1 text-xs leading-relaxed text-stone-600">
-                        {descriptionText}
-                      </p>
-                    </div>
                     <span
                       aria-hidden="true"
-                      className="shrink-0 select-none font-bold text-4xl leading-none tracking-tight text-stone-200 transition-colors duration-200 group-hover:text-red-700 sm:text-5xl"
+                      className="select-none font-bold text-5xl leading-none tracking-tight text-stone-200 transition-colors duration-200 group-hover:text-red-700 lg:text-6xl"
                     >
                       {item.key}
                     </span>
+                    <div>
+                      <h3 className="mt-8 text-lg font-semibold tracking-tight text-stone-900">
+                        {titleText}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                        {descriptionText}
+                      </p>
+                    </div>
                   </article>
                 );
               })}
