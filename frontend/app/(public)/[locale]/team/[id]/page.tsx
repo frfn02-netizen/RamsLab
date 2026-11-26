@@ -14,7 +14,7 @@ export async function generateMetadata({
 
   return localizedMetadata({
     locale: locale as Locale,
-    title: `${t("heroBreadcrumbCurrent")} | RAMS Laboratory`,
+    title: `${t("heroEyebrow")} | RAMS Laboratory`,
     description: t("heroDescription"),
     path: "/team",
   });

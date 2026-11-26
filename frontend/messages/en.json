@@ -381,12 +381,9 @@
     "showPerPage": "Show"
   },
   "team": {
-    "breadcrumbLabel": "Breadcrumb",
-    "heroEyebrow": "RAMS LABORATORY / PEOPLE",
-    "heroBreadcrumbCurrent": "People & Expertise",
+    "heroEyebrow": "PEOPLE & EXPERTISE",
     "heroTitle": "The people behind reliable research.",
     "heroDescription": "Meet the researchers, academics, and emerging talents driving RAMS Laboratory forward.",
-    "heroVisualLabel": "Technical blueprint of a maritime research vessel with radar rings, survey markers, and ocean wave lines.",
     "categoriesLabel": "People categories",
     "categories": {
       "DOSEN": "Lecturers",

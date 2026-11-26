@@ -381,12 +381,9 @@
     "showPerPage": "Tampilkan"
   },
   "team": {
-    "breadcrumbLabel": "Navigasi halaman",
-    "heroEyebrow": "LABORATORIUM RAMS / TIM",
-    "heroBreadcrumbCurrent": "Orang & Keahlian",
+    "heroEyebrow": "ORANG & KEAHLIAN",
     "heroTitle": "Orang-orang di balik riset yang andal.",
     "heroDescription": "Kenali para peneliti, akademisi, dan talenta muda yang mendorong Laboratorium RAMS maju.",
-    "heroVisualLabel": "Ilustrasi cetak biru teknis kapal riset maritim dengan lingkaran radar, penanda survei, dan garis gelombang laut.",
     "categoriesLabel": "Kategori orang",
     "categories": {
       "DOSEN": "Dosen",

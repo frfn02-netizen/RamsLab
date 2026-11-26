@@ -86,7 +86,7 @@ export function ProfilePhoto({
           onError={() => setImageFailed(true)}
           className={
             isCard
-              ? "h-full w-full object-cover object-[center_24%] transition-transform duration-300 group-hover:scale-[1.02]"
+              ? "h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               : "public-image-zoom object-cover object-[center_24%]"
           }
         />
@@ -102,7 +102,7 @@ export function ProfilePhoto({
           <span
             className={
               isCard
-                ? "font-display text-4xl font-semibold tracking-[-0.04em]"
+                ? "text-base font-semibold"
                 : "font-display text-4xl font-semibold tracking-[-0.04em] text-white/85 sm:text-5xl"
             }
           >
@@ -114,18 +114,29 @@ export function ProfilePhoto({
   );
 }
 
-function ExpertiseTags({ tags }: { tags: string[] }) {
-  if (tags.length === 0) return null;
+function ExpertiseTags({
+  tags,
+  extraCount,
+}: {
+  tags: string[];
+  extraCount: number;
+}) {
+  if (tags.length === 0 && extraCount === 0) return null;
   return (
-    <ul className="mt-3 flex flex-wrap gap-1.5">
+    <ul className="mt-2.5 flex flex-wrap gap-1">
       {tags.map((tag) => (
         <li
           key={tag}
-          className="rounded bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-700"
+          className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-700"
         >
           {tag}
         </li>
       ))}
+      {extraCount > 0 ? (
+        <li className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-700">
+          +{extraCount}
+        </li>
+      ) : null}
     </ul>
   );
 }
@@ -142,7 +153,9 @@ export function MemberCard({
   const classOfLabel = isAlumni
     ? formatAlumniClassLabel(member, alumniT("classOf"))
     : null;
-  const tags = member.specialization.filter(Boolean).slice(0, 3);
+  const tags = member.specialization.filter(Boolean);
+  const visibleTags = tags.slice(0, 2);
+  const extraTags = tags.length - visibleTags.length;
   const href = isAlumni ? `/alumni/${member.id}` : `/team/${member.id}`;
   const role =
     [member.title, member.position].filter(Boolean).join(" · ") || roleFallback;
@@ -155,31 +168,31 @@ export function MemberCard({
     .join(" · ");
 
   return (
-    <article className="group min-w-0 overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:border-stone-300 hover:shadow-sm">
+    <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:border-stone-300 hover:shadow-sm">
       <Link
         href={href}
         aria-label={member.fullName}
-        className="block h-full focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-red-700"
+        className="flex h-full flex-1 flex-col focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-red-700"
       >
         <ProfilePhoto
           variant="card"
           name={member.fullName}
           photo={member.photo}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
           aspectClassName="aspect-[4/3]"
         />
 
-        <div className="p-4">
-          <h3 className="text-sm font-semibold leading-snug text-stone-900 transition-colors group-hover:text-red-700">
+        <div className="flex flex-1 flex-col p-3.5">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-stone-900 transition-colors group-hover:text-red-700">
             {member.fullName}
           </h3>
 
           <p className="mt-0.5 line-clamp-1 text-xs text-stone-500">{role}</p>
 
-          <ExpertiseTags tags={tags} />
+          <ExpertiseTags tags={visibleTags} extraCount={extraTags} />
 
           {credential ? (
-            <p className="mt-2.5 line-clamp-1 text-[11px] text-stone-500">
+            <p className="mt-auto line-clamp-1 pt-2.5 text-[11px] text-stone-400">
               {credential}
             </p>
           ) : null}
@@ -198,7 +211,7 @@ function ProfileGrid({
 }) {
   return (
     <RevealOnScroll
-      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+      className="grid grid-cols-1 gap-4 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5"
       stagger={60}
     >
       {members.map((member) => (
@@ -217,19 +230,19 @@ function DirectorySkeleton({ label }: { label: string }) {
     <div role="status" aria-label={label}>
       <span className="sr-only">{label}</span>
       <div
-        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-4 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5"
         aria-hidden="true"
       >
-        {Array.from({ length: 8 }).map((_, index) => (
+        {Array.from({ length: 10 }).map((_, index) => (
           <div
             key={index}
             className="overflow-hidden rounded-xl border border-stone-200 bg-white"
           >
             <div className="skeleton aspect-[4/3] w-full" />
-            <div className="space-y-2.5 p-4">
+            <div className="space-y-2.5 p-3.5">
               <div className="skeleton h-3.5 w-3/4 rounded" />
               <div className="skeleton h-3 w-1/2 rounded" />
-              <div className="flex gap-1.5">
+              <div className="flex gap-1">
                 <div className="skeleton h-4 w-14 rounded" />
                 <div className="skeleton h-4 w-12 rounded" />
               </div>
@@ -441,16 +454,18 @@ export default function TeamDirectory({
           </div>
         </div>
 
-        <div className="pt-8" aria-live="polite">
+        <div aria-live="polite">
           {loading ? <DirectorySkeleton label={t("loading")} /> : null}
 
           {!loading && error ? (
-            <DirectoryError
-              message={t("error")}
-              eyebrow={common("requestUnavailable")}
-              retryLabel={common("tryAgain")}
-              onRetry={reload}
-            />
+            <div className="pt-8">
+              <DirectoryError
+                message={t("error")}
+                eyebrow={common("requestUnavailable")}
+                retryLabel={common("tryAgain")}
+                onRetry={reload}
+              />
+            </div>
           ) : null}
 
           {!loading && !error && activeCategory === "STUDENTS" ? (
@@ -468,14 +483,12 @@ export default function TeamDirectory({
                       {group.label}
                     </h3>
                     {group.members.length > 0 ? (
-                      <div className="mt-4">
-                        <ProfileGrid
-                          members={group.members}
-                          roleFallback={t("roleFallback")}
-                        />
-                      </div>
+                      <ProfileGrid
+                        members={group.members}
+                        roleFallback={t("roleFallback")}
+                      />
                     ) : (
-                      <p className="mt-4 text-sm leading-6 text-stone-500">
+                      <p className="pt-8 text-sm leading-6 text-stone-500">
                         {t("studentGroupEmpty")}
                       </p>
                     )}
@@ -483,10 +496,12 @@ export default function TeamDirectory({
                 ))}
               </div>
             ) : (
-              <DirectoryEmpty
-                title={emptyTitle}
-                description={emptyDescription}
-              />
+              <div className="pt-8">
+                <DirectoryEmpty
+                  title={emptyTitle}
+                  description={emptyDescription}
+                />
+              </div>
             )
           ) : null}
 
@@ -497,10 +512,12 @@ export default function TeamDirectory({
                 roleFallback={t("roleFallback")}
               />
             ) : (
-              <DirectoryEmpty
-                title={emptyTitle}
-                description={emptyDescription}
-              />
+              <div className="pt-8">
+                <DirectoryEmpty
+                  title={emptyTitle}
+                  description={emptyDescription}
+                />
+              </div>
             )
           ) : null}
         </div>
