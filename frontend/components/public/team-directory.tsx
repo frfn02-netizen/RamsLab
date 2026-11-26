@@ -72,7 +72,7 @@ export function ProfilePhoto({
 
   if (variant === "card") {
     return (
-      <div className="relative aspect-[4/5] w-full shrink-0 overflow-hidden rounded-md bg-stone-100">
+      <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-stone-100">
         {photo && !imageFailed ? (
           <Image
             src={photo}
@@ -179,6 +179,23 @@ export function MemberCard({
         ) : null}
       </Link>
     </article>
+  );
+}
+
+function NameOnlyGrid({ members }: { members: PublicPerson[] }) {
+  return (
+    <ul className="grid grid-cols-1 gap-x-6 gap-y-3 py-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {members.map((member) => (
+        <li key={member.id} className="min-w-0">
+          <Link
+            href={`/team/${member.id}`}
+            className="block text-left text-sm font-medium text-stone-900 transition-colors hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+          >
+            {member.fullName}
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -457,10 +474,7 @@ export default function TeamDirectory({
                       {group.label}
                     </h3>
                     {group.members.length > 0 ? (
-                      <ProfileGrid
-                        members={group.members}
-                        roleFallback={t("roleFallback")}
-                      />
+                      <NameOnlyGrid members={group.members} />
                     ) : (
                       <p className="pt-8 text-sm leading-6 text-stone-500">
                         {t("studentGroupEmpty")}
@@ -481,10 +495,14 @@ export default function TeamDirectory({
 
           {!loading && !error && activeCategory !== "STUDENTS" ? (
             filteredMembers.length > 0 ? (
-              <ProfileGrid
-                members={filteredMembers}
-                roleFallback={t("roleFallback")}
-              />
+              activeCategory === "UNDERGRADUATE" ? (
+                <NameOnlyGrid members={filteredMembers} />
+              ) : (
+                <ProfileGrid
+                  members={filteredMembers}
+                  roleFallback={t("roleFallback")}
+                />
+              )
             ) : (
               <div className="pt-8">
                 <DirectoryEmpty

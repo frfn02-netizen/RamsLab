@@ -335,16 +335,10 @@ describe("People directory – search", () => {
 });
 
 describe("People directory – cards", () => {
-  it("uses the same unboxed centered structure across every category", async () => {
+  it("uses the same unboxed centered structure across portrait categories", async () => {
     await renderDirectory();
 
-    for (const label of [
-      "Lecturers",
-      "Graduate Students",
-      "Undergraduate Students",
-      "Vocational Interns",
-      "Alumni",
-    ]) {
+    for (const label of ["Lecturers", "Vocational Interns", "Alumni"]) {
       fireEvent.click(screen.getByRole("button", { name: label }));
 
       const card = screen.getAllByRole("article")[0]!;
@@ -369,6 +363,66 @@ describe("People directory – cards", () => {
       expect(card.querySelector("ul")).toBeNull();
       expect(card.querySelector("li")).toBeNull();
     }
+  });
+
+  it("renders graduate students as name-only links", async () => {
+    await renderDirectory();
+    fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
+
+    const phd = screen.getByRole("link", { name: "Phd Candidate" });
+    const master = screen.getByRole("link", { name: "Master Candidate" });
+
+    expect(phd).toHaveAttribute("href", "/team/phd-1");
+    expect(master).toHaveAttribute("href", "/team/master-1");
+    expect(phd.textContent).toBe("Phd Candidate");
+    expect(phd.className).toContain("text-sm");
+    expect(phd.className).toContain("font-medium");
+    expect(phd.className).toContain("text-stone-900");
+    expect(phd.className).toContain("hover:text-red-700");
+    expect(phd.className).toContain("transition-colors");
+    expect(phd.className).toContain("text-left");
+
+    expect(screen.queryByRole("article")).toBeNull();
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.queryByText("Doctor of Engineering")).toBeNull();
+    expect(screen.queryByText("Simulation")).toBeNull();
+
+    const list = phd.closest("ul")!;
+    expect(list.className).toContain("grid-cols-1");
+    expect(list.className).toContain("sm:grid-cols-2");
+    expect(list.className).toContain("md:grid-cols-3");
+    expect(list.className).toContain("lg:grid-cols-4");
+    expect(list.className).toContain("gap-x-6");
+    expect(list.className).toContain("gap-y-3");
+    expect(list.className).toContain("py-2");
+  });
+
+  it("renders undergraduate students as name-only links", async () => {
+    await renderDirectory();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Undergraduate Students" }),
+    );
+
+    const link = screen.getByRole("link", { name: "Undergraduate Student" });
+    expect(link).toHaveAttribute("href", "/team/ug-1");
+    expect(link.textContent).toBe("Undergraduate Student");
+
+    expect(screen.queryByRole("article")).toBeNull();
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.queryByText("Bachelor of Engineering")).toBeNull();
+    expect(screen.queryByText("Marine Systems")).toBeNull();
+  });
+
+  it("shows the search empty state for name-only student lists", async () => {
+    await renderDirectory();
+    fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
+
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "zzz-no-match" },
+    });
+
+    expect(screen.getByText("No people match this search")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Phd Candidate" })).toBeNull();
   });
 
   it("renders only the fields that exist for a minimal profile", async () => {
@@ -401,7 +455,7 @@ describe("People directory – cards", () => {
     expect(screen.getByText("Compilers")).toBeInTheDocument();
   });
 
-  it("renders an unboxed 4:5 portrait above the copy", async () => {
+  it("renders an unboxed square portrait above the copy", async () => {
     const people = basePeople();
     people.DOSEN = [
       person({
@@ -436,7 +490,8 @@ describe("People directory – cards", () => {
     expect(link.className).toContain("flex-1");
     expect(link.className).toContain("flex-col");
     expect(link.className).toContain("items-center");
-    expect(portrait.className).toContain("aspect-[4/5]");
+    expect(portrait.className).toContain("aspect-square");
+    expect(portrait.className).not.toContain("aspect-[4/5]");
     expect(portrait.className).toContain("w-full");
     expect(portrait.className).toContain("rounded-md");
     expect(portrait.className).toContain("bg-stone-100");
