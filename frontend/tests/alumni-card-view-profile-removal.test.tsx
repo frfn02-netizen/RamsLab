@@ -199,7 +199,7 @@ describe("MemberCard – Alumni on People/Team page", () => {
     });
     render(<MemberCard member={member} roleFallback="Role" />);
 
-    expect(screen.getByText("Tech Corp")).toBeInTheDocument();
+    expect(screen.getByText(/Tech Corp/)).toBeInTheDocument();
   });
 
   it("does not render company when specialization is empty", () => {

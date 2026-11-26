@@ -335,6 +335,37 @@ describe("People directory – search", () => {
 });
 
 describe("People directory – cards", () => {
+  it("uses the same centered card structure across every category", async () => {
+    await renderDirectory();
+
+    for (const label of [
+      "Lecturers",
+      "Graduate Students",
+      "Undergraduate Students",
+      "Vocational Interns",
+      "Alumni",
+    ]) {
+      fireEvent.click(screen.getByRole("button", { name: label }));
+
+      const card = screen.getAllByRole("article")[0]!;
+      expect(card.className).toContain("items-center");
+      expect(card.className).toContain("text-center");
+      expect(card.className).toContain("rounded-lg");
+      expect(card.className).toContain("border-stone-200/80");
+
+      const heading = card.querySelector("h3")!;
+      expect(heading.className).toContain("text-sm");
+      expect(heading.className).toContain("font-bold");
+
+      const role = card.querySelector("p")!;
+      expect(role.className).toContain("uppercase");
+      expect(role.className).toContain("text-red-700");
+
+      expect(card.querySelector("ul")).toBeNull();
+      expect(card.querySelector("li")).toBeNull();
+    }
+  });
+
   it("renders only the fields that exist for a minimal profile", async () => {
     const people = basePeople();
     people.DOSEN = [person({ id: "bare", fullName: "Bare Profile" })];
@@ -347,33 +378,25 @@ describe("People directory – cards", () => {
     expect(article.querySelectorAll("li")).toHaveLength(0);
   });
 
-  it("shows the first two expertise tags with an overflow count", async () => {
+  it("renders focus topics as dot-separated text without pills", async () => {
     await renderDirectory();
     const card = screen.getByText("Dr. Ada Lovelace").closest("article")!;
-    const tags = Array.from(card.querySelectorAll("li")).map(
-      (node) => node.textContent,
-    );
-    expect(tags).toEqual(["Reliability", "Safety", "+2"]);
+    const topics = screen.getByText("Reliability · Safety · AIS · Extra");
 
-    for (const tag of card.querySelectorAll("li")) {
-      expect(tag.className).toContain("rounded");
-      expect(tag.className).toContain("bg-stone-100");
-      expect(tag.className).toContain("px-1.5");
-      expect(tag.className).toContain("text-[10px]");
-      expect(tag.className).toContain("text-stone-700");
-    }
+    expect(topics.className).toContain("mt-2");
+    expect(topics.className).toContain("text-[11px]");
+    expect(topics.className).toContain("leading-relaxed");
+    expect(topics.className).toContain("text-stone-500");
+    expect(card.querySelectorAll("li")).toHaveLength(0);
   });
 
-  it("does not show an overflow count when two or fewer tags exist", async () => {
+  it("renders a single focus topic without a separator", async () => {
     await renderDirectory();
-    const card = screen.getByText("Dr. Grace Hopper").closest("article")!;
-    const tags = Array.from(card.querySelectorAll("li")).map(
-      (node) => node.textContent,
-    );
-    expect(tags).toEqual(["Compilers"]);
+
+    expect(screen.getByText("Compilers")).toBeInTheDocument();
   });
 
-  it("renders a vertical portrait card with the photo above the copy", async () => {
+  it("renders a centered square portrait above the copy", async () => {
     const people = basePeople();
     people.DOSEN = [
       person({
@@ -395,27 +418,36 @@ describe("People directory – cards", () => {
 
     expect(card.className).toContain("flex");
     expect(card.className).toContain("flex-col");
-    expect(card.className).toContain("rounded-xl");
-    expect(card.className).toContain("border-stone-200");
-    expect(card.className).toContain("hover:shadow-sm");
+    expect(card.className).toContain("items-center");
+    expect(card.className).toContain("text-center");
+    expect(card.className).toContain("rounded-lg");
+    expect(card.className).toContain("border-stone-200/80");
+    expect(card.className).toContain("p-4");
+    expect(card.className).toContain("hover:border-stone-300");
+    expect(card.className).not.toContain("hover:shadow-sm");
     expect(card.className).toContain("group");
 
     expect(link.className).toContain("flex");
     expect(link.className).toContain("flex-1");
     expect(link.className).toContain("flex-col");
-    expect(portrait.className).toContain("aspect-[4/3]");
+    expect(link.className).toContain("items-center");
+    expect(portrait.className).toContain("aspect-square");
+    expect(portrait.className).toContain("w-28");
+    expect(portrait.className).toContain("sm:w-32");
+    expect(portrait.className).toContain("rounded-md");
     expect(portrait.className).toContain("bg-stone-100");
-    expect(portrait.className).toContain("overflow-hidden");
+    expect(portrait.className).toContain("mx-auto");
     expect(img.className).toContain("h-full");
     expect(img.className).toContain("w-full");
     expect(img.className).toContain("object-cover");
-    expect(img.className).toContain("group-hover:scale-[1.02]");
+    expect(img.className).not.toContain("group-hover:scale-[1.02]");
 
     const heading = screen.getByRole("heading", { name: "Photo Person" });
-    const body = heading.closest("div")!;
-    expect(body.className).toContain("flex-1");
-    expect(body.className).toContain("flex-col");
-    expect(body.className).toContain("p-3.5");
+    expect(heading.className).toContain("mt-3.5");
+    expect(heading.className).toContain("text-sm");
+    expect(heading.className).toContain("font-bold");
+    expect(heading.className).toContain("leading-snug");
+    expect(heading.className).toContain("group-hover:text-red-700");
 
     expect(
       portrait.compareDocumentPosition(heading) &
@@ -435,12 +467,15 @@ describe("People directory – cards", () => {
     expect(initials.className).toContain("font-semibold");
   });
 
-  it("renders the role line below the name in muted text", async () => {
+  it("renders the role line below the name in crimson uppercase", async () => {
     await renderDirectory();
     const role = screen.getByText("Lecturer · Head of Laboratory");
-    expect(role.className).toContain("text-xs");
-    expect(role.className).toContain("text-stone-500");
-    expect(role.className).toContain("line-clamp-1");
+    expect(role.className).toContain("text-[10px]");
+    expect(role.className).toContain("font-semibold");
+    expect(role.className).toContain("uppercase");
+    expect(role.className).toContain("tracking-wider");
+    expect(role.className).toContain("text-red-700");
+    expect(role.className).toContain("leading-snug");
 
     const heading = screen.getByRole("heading", {
       name: "Dr. Ada Lovelace",
@@ -464,7 +499,7 @@ describe("People directory – cards", () => {
     expect(links[0].contains(nameNode)).toBe(true);
   });
 
-  it("clamps long names to two lines instead of truncating them", async () => {
+  it("keeps long names fully readable without truncation classes", async () => {
     const people = basePeople();
     const longName =
       "Prof. Dr. Ir. Alexander Maximilian Fitzgerald-Wibowo, M.Sc.";
@@ -476,22 +511,28 @@ describe("People directory – cards", () => {
     const heading = screen.getByRole("heading", { name: longName });
     expect(heading).toBeInTheDocument();
     expect(heading.className).not.toContain("truncate");
-    expect(heading.className).toContain("line-clamp-2");
+    expect(heading.className).not.toContain("line-clamp");
+    expect(heading.className).toContain("text-sm");
+    expect(heading.className).toContain("font-bold");
     expect(heading.className).toContain("leading-snug");
   });
 
-  it("renders alumni cohort, position, company, program and location", async () => {
+  it("maps alumni role, cohort, company, program and location", async () => {
     await renderDirectory();
     fireEvent.click(screen.getByRole("button", { name: "Alumni" }));
 
-    expect(screen.getByText(/classOf 2015 \(P55\)/)).toBeInTheDocument();
-    expect(screen.getByText("Engineer")).toBeInTheDocument();
-    expect(screen.getByText("Acme Corp")).toBeInTheDocument();
-    expect(screen.getByText(/Marine Engineering/)).toBeInTheDocument();
-    expect(screen.getByText(/Surabaya/)).toBeInTheDocument();
+    const role = screen.getByText("Engineer");
+    expect(role.className).toContain("text-red-700");
+    expect(role.className).toContain("uppercase");
+
+    expect(
+      screen.getByText(
+        "classOf 2015 (P55) · Acme Corp · Marine Engineering · Surabaya",
+      ),
+    ).toBeInTheDocument();
   });
 
-  it("uses a five column portrait grid on desktop", async () => {
+  it("uses a five column grid on desktop", async () => {
     const { container } = await renderDirectory();
     const grid = container.querySelector(".grid");
     expect(grid).not.toBeNull();
@@ -499,31 +540,9 @@ describe("People directory – cards", () => {
     expect(grid!.className).toContain("sm:grid-cols-2");
     expect(grid!.className).toContain("md:grid-cols-3");
     expect(grid!.className).toContain("lg:grid-cols-5");
-    expect(grid!.className).toContain("gap-4");
-    expect(grid!.className).toContain("lg:gap-5");
+    expect(grid!.className).toContain("gap-6");
+    expect(grid!.className).not.toContain("lg:gap-5");
     expect(grid!.className).toContain("pt-8");
-  });
-
-  it("pins the credential line to the bottom in muted stone", async () => {
-    const people = basePeople();
-    people.DOSEN = [
-      person({
-        id: "meta",
-        fullName: "Metadata Person",
-        title: "Lecturer",
-        department: "Marine Engineering",
-      }),
-    ];
-    getPublicPeopleList.mockResolvedValue(people);
-
-    await renderDirectory();
-
-    const credential = screen.getByText("Marine Engineering");
-    expect(credential.className).toContain("mt-auto");
-    expect(credential.className).toContain("pt-2.5");
-    expect(credential.className).toContain("text-[11px]");
-    expect(credential.className).toContain("text-stone-400");
-    expect(credential.className).toContain("line-clamp-1");
   });
 });
 

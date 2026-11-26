@@ -69,13 +69,34 @@ export function ProfilePhoto({
   variant?: "default" | "card";
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const isCard = variant === "card";
+
+  if (variant === "card") {
+    return (
+      <div className="relative mx-auto aspect-square w-28 shrink-0 overflow-hidden rounded-md bg-stone-100 sm:w-32">
+        {photo && !imageFailed ? (
+          <Image
+            src={photo}
+            alt={name}
+            fill
+            sizes={sizes}
+            onError={() => setImageFailed(true)}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div
+            className="grid h-full w-full place-items-center bg-stone-100 text-stone-500"
+            aria-label={`${name} avatar`}
+          >
+            <span className="text-base font-semibold">{getInitials(name)}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
-      className={`relative w-full overflow-hidden ${aspectClassName} ${
-        isCard ? "bg-stone-100" : "bg-[var(--navy)]"
-      }`}
+      className={`relative w-full overflow-hidden bg-[var(--navy)] ${aspectClassName}`}
     >
       {photo && !imageFailed ? (
         <Image
@@ -84,60 +105,19 @@ export function ProfilePhoto({
           fill
           sizes={sizes}
           onError={() => setImageFailed(true)}
-          className={
-            isCard
-              ? "h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-              : "public-image-zoom object-cover object-[center_24%]"
-          }
+          className="public-image-zoom object-cover object-[center_24%]"
         />
       ) : (
         <div
-          className={`grid h-full place-items-center ${
-            isCard
-              ? "bg-stone-100 text-stone-500"
-              : "bg-[var(--navy)] text-white"
-          }`}
+          className="grid h-full place-items-center bg-[var(--navy)] text-white"
           aria-label={`${name} avatar`}
         >
-          <span
-            className={
-              isCard
-                ? "text-base font-semibold"
-                : "font-display text-4xl font-semibold tracking-[-0.04em] text-white/85 sm:text-5xl"
-            }
-          >
+          <span className="font-display text-4xl font-semibold tracking-[-0.04em] text-white/85 sm:text-5xl">
             {getInitials(name)}
           </span>
         </div>
       )}
     </div>
-  );
-}
-
-function ExpertiseTags({
-  tags,
-  extraCount,
-}: {
-  tags: string[];
-  extraCount: number;
-}) {
-  if (tags.length === 0 && extraCount === 0) return null;
-  return (
-    <ul className="mt-2.5 flex flex-wrap gap-1">
-      {tags.map((tag) => (
-        <li
-          key={tag}
-          className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-700"
-        >
-          {tag}
-        </li>
-      ))}
-      {extraCount > 0 ? (
-        <li className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-700">
-          +{extraCount}
-        </li>
-      ) : null}
-    </ul>
   );
 }
 
@@ -153,50 +133,50 @@ export function MemberCard({
   const classOfLabel = isAlumni
     ? formatAlumniClassLabel(member, alumniT("classOf"))
     : null;
-  const tags = member.specialization.filter(Boolean);
-  const visibleTags = tags.slice(0, 2);
-  const extraTags = tags.length - visibleTags.length;
   const href = isAlumni ? `/alumni/${member.id}` : `/team/${member.id}`;
-  const role =
-    [member.title, member.position].filter(Boolean).join(" · ") || roleFallback;
-  const credential = (
+  const alumniRole = isAlumni ? member.position || member.title || null : null;
+  const role = isAlumni
+    ? alumniRole || classOfLabel || roleFallback
+    : [member.title, member.position].filter(Boolean).join(" · ") ||
+      roleFallback;
+  const focus = (
     isAlumni
-      ? [classOfLabel, member.program, member.location]
-      : [member.department, member.faculty, member.program]
-  )
-    .filter(Boolean)
-    .join(" · ");
+      ? [
+          alumniRole ? classOfLabel : null,
+          member.specialization[0],
+          member.program,
+          member.location,
+        ]
+      : member.specialization
+  ).filter(Boolean);
 
   return (
-    <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:border-stone-300 hover:shadow-sm">
+    <article className="group flex min-w-0 flex-col items-center rounded-lg border border-stone-200/80 bg-white p-4 text-center transition-colors hover:border-stone-300">
       <Link
         href={href}
         aria-label={member.fullName}
-        className="flex h-full flex-1 flex-col focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-red-700"
+        className="flex w-full flex-1 flex-col items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
       >
         <ProfilePhoto
           variant="card"
           name={member.fullName}
           photo={member.photo}
-          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-          aspectClassName="aspect-[4/3]"
+          sizes="(max-width: 640px) 112px, 128px"
         />
 
-        <div className="flex flex-1 flex-col p-3.5">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-stone-900 transition-colors group-hover:text-red-700">
-            {member.fullName}
-          </h3>
+        <h3 className="mt-3.5 text-sm font-bold leading-snug text-stone-900 transition-colors group-hover:text-red-700">
+          {member.fullName}
+        </h3>
 
-          <p className="mt-0.5 line-clamp-1 text-xs text-stone-500">{role}</p>
+        <p className="mt-1 text-[10px] font-semibold uppercase leading-snug tracking-wider text-red-700">
+          {role}
+        </p>
 
-          <ExpertiseTags tags={visibleTags} extraCount={extraTags} />
-
-          {credential ? (
-            <p className="mt-auto line-clamp-1 pt-2.5 text-[11px] text-stone-400">
-              {credential}
-            </p>
-          ) : null}
-        </div>
+        {focus.length > 0 ? (
+          <p className="mt-2 text-[11px] leading-relaxed text-stone-500">
+            {focus.join(" · ")}
+          </p>
+        ) : null}
       </Link>
     </article>
   );
@@ -211,7 +191,7 @@ function ProfileGrid({
 }) {
   return (
     <RevealOnScroll
-      className="grid grid-cols-1 gap-4 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5"
+      className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
       stagger={60}
     >
       {members.map((member) => (
@@ -230,22 +210,19 @@ function DirectorySkeleton({ label }: { label: string }) {
     <div role="status" aria-label={label}>
       <span className="sr-only">{label}</span>
       <div
-        className="grid grid-cols-1 gap-4 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5"
+        className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
         aria-hidden="true"
       >
         {Array.from({ length: 10 }).map((_, index) => (
           <div
             key={index}
-            className="overflow-hidden rounded-xl border border-stone-200 bg-white"
+            className="flex flex-col items-center rounded-lg border border-stone-200/80 bg-white p-4"
           >
-            <div className="skeleton aspect-[4/3] w-full" />
-            <div className="space-y-2.5 p-3.5">
-              <div className="skeleton h-3.5 w-3/4 rounded" />
-              <div className="skeleton h-3 w-1/2 rounded" />
-              <div className="flex gap-1">
-                <div className="skeleton h-4 w-14 rounded" />
-                <div className="skeleton h-4 w-12 rounded" />
-              </div>
+            <div className="skeleton mx-auto aspect-square w-28 rounded-md sm:w-32" />
+            <div className="mt-3.5 w-full space-y-2">
+              <div className="skeleton mx-auto h-3.5 w-3/4 rounded" />
+              <div className="skeleton mx-auto h-2.5 w-1/2 rounded" />
+              <div className="skeleton mx-auto h-2.5 w-2/3 rounded" />
             </div>
           </div>
         ))}

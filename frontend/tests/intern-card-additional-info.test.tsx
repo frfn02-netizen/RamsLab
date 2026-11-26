@@ -87,7 +87,7 @@ describe("MemberCard – Vocational Intern additional info", () => {
     );
   });
 
-  it("does not render role line when title and position are absent", () => {
+  it("falls back to the category label when title and position are absent", () => {
     const member = intern({
       fullName: "Arfan Saputra",
       title: undefined,
@@ -95,9 +95,9 @@ describe("MemberCard – Vocational Intern additional info", () => {
     });
     render(<MemberCard member={member} roleFallback="Role" />);
 
-    const article = screen.getByRole("article");
-    const paragraphs = article.querySelectorAll("p.mt-2.font-mono");
-    expect(paragraphs.length).toBe(0);
+    const role = screen.getByText("Role");
+    expect(role).toHaveClass("text-red-700");
+    expect(role).toHaveClass("uppercase");
   });
 
   it("renders specialization when present", () => {
@@ -110,30 +110,34 @@ describe("MemberCard – Vocational Intern additional info", () => {
     expect(screen.getByText("Marine Systems")).toBeInTheDocument();
   });
 
-  it("renders each specialization as its own expertise tag", () => {
+  it("renders specializations as dot-separated plain text", () => {
     const member = intern({
       fullName: "Arfan Saputra",
       specialization: ["Reliability Engineering", "Safety Systems"],
     });
     render(<MemberCard member={member} roleFallback="Role" />);
 
-    expect(screen.getByText("Reliability Engineering")).toBeInTheDocument();
-    expect(screen.getByText("Safety Systems")).toBeInTheDocument();
+    const focus = screen.getByText(
+      "Reliability Engineering · Safety Systems",
+    );
+    expect(focus.className).toContain("text-[11px]");
+    expect(focus.className).toContain("text-stone-500");
+    expect(focus.closest("article")!.querySelectorAll("li")).toHaveLength(0);
   });
 
-  it("caps expertise tags at three", () => {
+  it("renders every specialization topic without pill badges", () => {
     const member = intern({
       fullName: "Arfan Saputra",
       specialization: ["One", "Two", "Three", "Four"],
     });
     render(<MemberCard member={member} roleFallback="Role" />);
 
+    expect(screen.getByText("One · Two · Three · Four")).toBeInTheDocument();
     const article = screen.getByRole("article");
-    expect(article.querySelectorAll("li")).toHaveLength(3);
-    expect(screen.queryByText("Four")).not.toBeInTheDocument();
+    expect(article.querySelectorAll("li")).toHaveLength(0);
   });
 
-  it("does not render expertise tags when array is empty", () => {
+  it("does not render a focus line when the array is empty", () => {
     const member = intern({
       fullName: "Arfan Saputra",
       specialization: [],
@@ -141,10 +145,11 @@ describe("MemberCard – Vocational Intern additional info", () => {
     render(<MemberCard member={member} roleFallback="Role" />);
 
     const article = screen.getByRole("article");
-    expect(article.querySelectorAll("li")).toHaveLength(0);
+    const paragraphs = article.querySelectorAll("p");
+    expect(paragraphs).toHaveLength(1);
   });
 
-  it("hides role and specialization lines when data is absent", () => {
+  it("hides the focus line when specialization data is absent", () => {
     const member = intern({
       fullName: "Minimal Intern",
       title: undefined,
@@ -155,8 +160,7 @@ describe("MemberCard – Vocational Intern additional info", () => {
 
     expect(screen.getByText("Minimal Intern")).toBeInTheDocument();
     const article = screen.getByRole("article");
-    const extraParagraphs = article.querySelectorAll("p.mt-2");
-    expect(extraParagraphs.length).toBe(0);
+    expect(article.querySelectorAll("p")).toHaveLength(1);
   });
 
   it("renders intern name as clickable link to team detail", () => {
