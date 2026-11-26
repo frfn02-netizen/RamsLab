@@ -16,21 +16,17 @@ import {
   cancelMeeting as cancelMeetingRequest,
   deleteMeeting,
   getMeeting,
-  getMeetingAudit,
 } from "@/lib/api/meetings";
 import { formatBytes, formatTimeRange } from "@/lib/meetings/calendar";
-import { meetingModeLabel, safeHttpUrl } from "@/lib/meetings/mode";
+import { safeHttpUrl } from "@/lib/meetings/mode";
 import { getMeetingStatus, meetingStatusLabel } from "@/lib/meetings/status";
 import type {
   Meeting,
-  MeetingAuditEntry,
-  MeetingMode,
-  MeetingStatus,
   MeetingUserSummary,
 } from "@/types/meetings";
 
 const PANEL =
-  "rounded-xl border border-[#E3DED7] bg-white shadow-[0_8px_22px_rgba(31,35,40,0.025)]";
+  "rounded-xl border border-stone-200 bg-white shadow-[0_8px_22px_rgba(31,35,40,0.025)]";
 
 type IconName =
   | "calendar"
@@ -162,94 +158,12 @@ function durationLabel(startAt: string, endAt: string) {
     : `${hours}h ${remainder}m`;
 }
 
-function timelineDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 function participantDisplayName(participant: Meeting["participants"][number]) {
   return participant.displayName?.trim() || participant.email;
 }
 
 function picDisplayName(pic: MeetingUserSummary) {
   return pic.displayName?.trim() || pic.email;
-}
-
-function auditActionLabel(action: MeetingAuditEntry["action"]) {
-  if (action === "CREATE") return "Meeting created";
-  if (action === "CANCEL") return "Meeting cancelled";
-  if (action === "DELEGATE_ASSIGNED") return "Delegate assigned";
-  if (action === "DELEGATE_REVOKED") return "Delegate revoked";
-  if (action === "ATTACHMENT_ADDED") return "Attachment added";
-  if (action === "ATTACHMENT_REMOVED") return "Attachment removed";
-  if (action === "GUEST_INVITATION_CREATED") return "Guest invitation created";
-  if (action === "GUEST_INVITATION_REVOKED") return "Guest invitation revoked";
-  if (action === "GUEST_INVITATION_REGENERATED")
-    return "Guest invitation regenerated";
-  return "Meeting updated";
-}
-
-function auditFieldLabel(field: string) {
-  const labels: Record<string, string> = {
-    title: "Title",
-    description: "Description",
-    guestDescription: "Guest-facing description",
-    clientName: "Client / organization",
-    mode: "Meeting mode",
-    location: "Physical location",
-    startAt: "Start time",
-    endAt: "End time",
-    visibility: "Visibility",
-    participantIds: "Internal participants",
-    externalParticipants: "External participants",
-    guestInvitationIds: "Guest invitations",
-    delegatedUserIds: "Delegated users",
-    meetingLink: "Meeting link",
-    status: "Status",
-    cancellationReason: "Cancellation reason",
-    attachment: "Attachment",
-    invitation: "Guest invitation",
-  };
-  return labels[field] ?? field;
-}
-
-function auditValueLabel(value: unknown, field: string) {
-  if (value === null || value === undefined || value === "") {
-    return "Not specified";
-  }
-  if (field === "status" && typeof value === "string") {
-    return meetingStatusLabel(value as MeetingStatus);
-  }
-  if (field === "mode" && typeof value === "string") {
-    return meetingModeLabel(value as MeetingMode);
-  }
-  if ((field === "startAt" || field === "endAt") && typeof value === "string") {
-    return timelineDate(value);
-  }
-  if (field === "participantIds" && Array.isArray(value)) {
-    return `${value.length} internal participant${value.length === 1 ? "" : "s"}`;
-  }
-  if (field === "externalParticipants" && Array.isArray(value)) {
-    return `${value.length} external participant${value.length === 1 ? "" : "s"}`;
-  }
-  if (field === "delegatedUserIds" && Array.isArray(value)) {
-    return `${value.length} delegate${value.length === 1 ? "" : "s"}`;
-  }
-  if (field === "guestInvitationIds" && Array.isArray(value)) {
-    return `${value.length} guest invitation${value.length === 1 ? "" : "s"}`;
-  }
-  if (field === "invitation" && typeof value === "object") {
-    return "Guest invitation state changed";
-  }
-  if (typeof value === "object") {
-    return JSON.stringify(value);
-  }
-  return String(value);
 }
 
 export default function MeetingDetail({
@@ -264,8 +178,6 @@ export default function MeetingDetail({
   const router = useRouter();
   const { success, error: notifyError } = useToast();
   const [meeting, setMeeting] = useState<Meeting | null>(null);
-  const [audit, setAudit] = useState<MeetingAuditEntry[]>([]);
-  const [auditError, setAuditError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -281,19 +193,11 @@ export default function MeetingDetail({
       if (cancelled) return;
       setLoading(true);
       setError(null);
-      setAuditError(null);
 
       getMeeting(id)
         .then((data) => {
           if (cancelled) return;
           setMeeting(data);
-          return getMeetingAudit(id)
-            .then((history) => {
-              if (!cancelled) setAudit(history);
-            })
-            .catch((reason) => {
-              if (!cancelled) setAuditError(getUserFacingError(reason));
-            });
         })
         .catch((reason) => {
           if (!cancelled) setError(getUserFacingError(reason));
@@ -341,7 +245,6 @@ export default function MeetingDetail({
         cancellationReason,
       );
       setMeeting(updated);
-      setAudit(await getMeetingAudit(meeting._id));
       setCancellationReason("");
       setConfirmingCancel(false);
       success("Meeting cancelled.");
@@ -385,12 +288,6 @@ export default function MeetingDetail({
   const canDelete = meeting.canDelete ?? meeting.canEdit;
   const meetingUrl = safeHttpUrl(meeting.meetingLink);
   const canJoinOnline = meeting.mode === "ONLINE" && Boolean(meetingUrl);
-  const visibilityLabel =
-    meeting.visibility === "INTERNAL"
-      ? "Internal"
-      : meeting.visibility === "PRIVATE"
-        ? "Private"
-        : "Not specified";
   const statusClass =
     status === "CANCELLED"
       ? "bg-[#FBE4E2] text-[var(--rams-red-dark)]"
@@ -498,94 +395,9 @@ export default function MeetingDetail({
             </div>
 
             <div className="mt-8 space-y-5">
-              <section className={`${PANEL} px-5 py-5 sm:px-6 sm:py-6`}>
-                <div className="flex items-center gap-3 border-b border-[#EEEAE4] pb-4">
-                  <Icon
-                    name="people"
-                    className="h-6 w-6 text-[var(--rams-red)]"
-                  />
-                  <h2 className="font-display text-[1.05rem] font-semibold text-[var(--rams-charcoal)]">
-                    People in charge
-                  </h2>
-                </div>
-                {meeting.primaryPic || meeting.pics?.length ? (
-                  <div className="mt-2 space-y-4">
-                    {meeting.primaryPic && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
-                          Primary PIC
-                        </p>
-                        <div className="mt-2 flex items-center gap-3">
-                          <Initials
-                            value={picDisplayName(meeting.primaryPic)}
-                            className="h-9 w-9 shrink-0"
-                          />
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
-                              {picDisplayName(meeting.primaryPic)}
-                            </span>
-                            <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
-                              {meeting.primaryPic.email}
-                            </span>
-                          </span>
-                          <Badge
-                            tone={
-                              meeting.primaryPic.role === "ADMIN"
-                                ? "red"
-                                : "neutral"
-                            }
-                          >
-                            {meeting.primaryPic.role}
-                          </Badge>
-                        </div>
-                      </div>
-                    )}
-                    {meeting.additionalPics &&
-                      meeting.additionalPics.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
-                            Additional PICs
-                          </p>
-                          <ul className="mt-2 divide-y divide-[#EEEAE4]">
-                            {meeting.additionalPics.map((pic) => (
-                              <li
-                                key={pic.id}
-                                className="flex items-center gap-3 py-3"
-                              >
-                                <Initials
-                                  value={picDisplayName(pic)}
-                                  className="h-9 w-9 shrink-0"
-                                />
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
-                                    {picDisplayName(pic)}
-                                  </span>
-                                  <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
-                                    {pic.email}
-                                  </span>
-                                </span>
-                                <Badge
-                                  tone={
-                                    pic.role === "ADMIN" ? "red" : "neutral"
-                                  }
-                                >
-                                  {pic.role}
-                                </Badge>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-[#6B6A64]">
-                    No PIC assignment is stored for this legacy meeting.
-                  </p>
-                )}
-              </section>
 
               <section className={`${PANEL} px-5 py-5 sm:px-6 sm:py-6`}>
-                <div className="flex items-center gap-3 border-b border-[#EEEAE4] pb-4">
+                <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
                   <Icon
                     name="calendar"
                     className="h-6 w-6 text-[var(--rams-red)]"
@@ -600,7 +412,7 @@ export default function MeetingDetail({
               </section>
 
               <section className={`${PANEL} px-5 py-5 sm:px-6 sm:py-6`}>
-                <div className="flex items-center justify-between gap-3 border-b border-[#EEEAE4] pb-4">
+                <div className="flex items-center justify-between gap-3 border-b border-stone-200 pb-4">
                   <div className="flex items-center gap-3">
                     <Icon
                       name="paperclip"
@@ -671,7 +483,7 @@ export default function MeetingDetail({
               </section>
 
               <section className={`${PANEL} px-5 py-5 sm:px-6 sm:py-6`}>
-                <div className="flex items-center gap-3 border-b border-[#EEEAE4] pb-4">
+                <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
                   <Icon
                     name="people"
                     className="h-6 w-6 text-[var(--rams-red)]"
@@ -688,7 +500,7 @@ export default function MeetingDetail({
                     No participants were added.
                   </p>
                 ) : (
-                  <ul className="mt-2 divide-y divide-[#EEEAE4]">
+                  <ul className="mt-2 divide-y divide-stone-200">
                     {meeting.participants.map((participant) => (
                       <li
                         key={participant.id}
@@ -723,7 +535,7 @@ export default function MeetingDetail({
 
           <aside className="min-w-0 space-y-5 xl:sticky xl:top-6">
             <section className={`${PANEL} px-5 py-5 sm:px-6 sm:py-6`}>
-              <div className="flex items-center gap-3 border-b border-[#EEEAE4] pb-4">
+              <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
                 <Icon
                   name="calendar"
                   className="h-6 w-6 text-[var(--rams-red)]"
@@ -732,8 +544,8 @@ export default function MeetingDetail({
                   Meeting information
                 </h2>
               </div>
-              <dl className="divide-y divide-[#EEEAE4]">
-                <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
+              <dl className="divide-y divide-stone-200">
+                <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-4 py-3.5">
                   <dt className="text-sm text-[#5F5A54]">
                     Client / organization
                   </dt>
@@ -745,13 +557,13 @@ export default function MeetingDetail({
                     )}
                   </dd>
                 </div>
-                <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
+                <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-4 py-3.5">
                   <dt className="text-sm text-[#5F5A54]">Meeting mode</dt>
                   <dd className="flex min-w-0 items-center">
                     <MeetingModeBadge mode={meeting.mode} />
                   </dd>
                 </div>
-                <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
+                <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-4 py-3.5">
                   <dt className="text-sm text-[#5F5A54]">Date &amp; time</dt>
                   <dd className="text-sm font-medium leading-6 text-[var(--rams-charcoal)]">
                     <span className="block">
@@ -762,14 +574,14 @@ export default function MeetingDetail({
                     </span>
                   </dd>
                 </div>
-                <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
+                <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-4 py-3.5">
                   <dt className="text-sm text-[#5F5A54]">Duration</dt>
                   <dd className="text-sm font-medium text-[var(--rams-charcoal)]">
                     {durationLabel(meeting.startAt, meeting.endAt)}
                   </dd>
                 </div>
                 {meeting.mode !== "ONLINE" && (
-                  <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
+                  <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-4 py-3.5">
                     <dt className="text-sm text-[#5F5A54]">
                       Physical location
                     </dt>
@@ -792,7 +604,7 @@ export default function MeetingDetail({
                 )}
                 {(meeting.mode !== "OFFLINE" ||
                   Boolean(meeting.meetingLink)) && (
-                  <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
+                  <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-4 py-3.5">
                     <dt className="text-sm text-[#5F5A54]">Meeting link</dt>
                     <dd className="min-w-0">
                       {meetingUrl ? (
@@ -820,7 +632,7 @@ export default function MeetingDetail({
                     </dd>
                   </div>
                 )}
-                <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
+                <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-4 py-3.5">
                   <dt className="text-sm text-[#5F5A54]">Created by</dt>
                   <dd className="flex min-w-0 items-center gap-2 text-sm font-medium text-[var(--rams-charcoal)]">
                     <Initials
@@ -844,78 +656,92 @@ export default function MeetingDetail({
                     </span>
                   </dd>
                 </div>
-                <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
-                  <dt className="text-sm text-[#5F5A54]">Visibility</dt>
-                  <dd className="text-sm font-medium text-[var(--rams-charcoal)]">
-                    {visibilityLabel}
-                  </dd>
-                </div>
               </dl>
             </section>
 
             <section className={`${PANEL} px-5 py-5 sm:px-6 sm:py-6`}>
-              <div className="flex items-center gap-3 border-b border-[#EEEAE4] pb-4">
+              <div className="flex items-center gap-3 border-b border-stone-200 pb-4">
                 <Icon
                   name="people"
                   className="h-6 w-6 text-[var(--rams-red)]"
                 />
                 <h2 className="font-display text-[1.05rem] font-semibold text-[var(--rams-charcoal)]">
-                  Audit history
+                  People in charge
                 </h2>
               </div>
-              {auditError ? (
-                <p
-                  role="alert"
-                  className="mt-4 text-sm leading-6 text-[#8B3732]"
-                >
-                  {auditError}
-                </p>
-              ) : audit.length === 0 ? (
-                <p className="mt-4 rounded-lg border border-dashed border-[#DCD6CE] px-4 py-5 text-sm text-[#6B6A64]">
-                  No audit events are available for this legacy meeting.
-                </p>
-              ) : (
-                <ol className="relative ml-3 mt-5 border-l border-[#E0D9D1]">
-                  {audit.map((entry, index) => (
-                    <li
-                      key={entry.id}
-                      className={`relative pl-7 ${
-                        index === audit.length - 1 ? "" : "pb-6"
-                      }`}
-                    >
-                      <span className="absolute -left-[0.62rem] top-0 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--rams-red)] ring-4 ring-white">
-                        <span className="h-2 w-2 rounded-full bg-white" />
-                      </span>
-                      <p className="text-sm font-semibold text-[var(--rams-red)]">
-                        {auditActionLabel(entry.action)}
+              {meeting.primaryPic || meeting.pics?.length ? (
+                <div className="mt-2 space-y-4">
+                  {meeting.primaryPic && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
+                        Primary PIC
                       </p>
-                      <p className="mt-1 text-xs text-[#7D7972]">
-                        {entry.actor?.displayName ??
-                          entry.actor?.email ??
-                          "Unknown actor"}{" "}
-                        · {timelineDate(entry.timestamp)}
-                      </p>
-                      <ul className="mt-3 space-y-2 text-xs text-[#5F5A54]">
-                        {Object.entries(entry.changes).map(
-                          ([field, change]) => (
+                      <div className="mt-2 flex items-center gap-3">
+                        <Initials
+                          value={picDisplayName(meeting.primaryPic)}
+                          className="h-9 w-9 shrink-0"
+                        />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
+                            {picDisplayName(meeting.primaryPic)}
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
+                            {meeting.primaryPic.email}
+                          </span>
+                        </span>
+                        <Badge
+                          tone={
+                            meeting.primaryPic.role === "ADMIN"
+                              ? "red"
+                              : "neutral"
+                          }
+                        >
+                          {meeting.primaryPic.role}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                  {meeting.additionalPics &&
+                    meeting.additionalPics.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
+                          Additional PICs
+                        </p>
+                        <ul className="mt-2 divide-y divide-stone-200">
+                          {meeting.additionalPics.map((pic) => (
                             <li
-                              key={field}
-                              className="rounded-md bg-[#FBFAF7] px-3 py-2"
+                              key={pic.id}
+                              className="flex items-center gap-3 py-3"
                             >
-                              <span className="font-semibold text-[var(--rams-charcoal)]">
-                                {auditFieldLabel(field)}
+                              <Initials
+                                value={picDisplayName(pic)}
+                                className="h-9 w-9 shrink-0"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
+                                  {picDisplayName(pic)}
+                                </span>
+                                <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
+                                  {pic.email}
+                                </span>
                               </span>
-                              <span className="mx-1.5 text-[#A8A399]">:</span>
-                              {auditValueLabel(change.oldValue, field)}
-                              <span className="mx-1.5 text-[#A8A399]">to</span>
-                              {auditValueLabel(change.newValue, field)}
+                              <Badge
+                                tone={
+                                  pic.role === "ADMIN" ? "red" : "neutral"
+                                }
+                              >
+                                {pic.role}
+                              </Badge>
                             </li>
-                          ),
-                        )}
-                      </ul>
-                    </li>
-                  ))}
-                </ol>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-[#6B6A64]">
+                  No PIC assignment is stored for this legacy meeting.
+                </p>
               )}
             </section>
 

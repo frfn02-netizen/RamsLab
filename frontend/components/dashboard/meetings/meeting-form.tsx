@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useAuth } from "@/components/providers/auth-providers";
 import { useToast } from "@/components/providers/toast-providers";
 import { Initials } from "@/components/meetings-workspace/day-chip";
@@ -36,7 +42,6 @@ import type {
   MeetingMode,
   MeetingSaveResult,
   MeetingUpdateInput,
-  MeetingVisibility,
   UserDirectoryEntry,
 } from "@/types/meetings";
 
@@ -82,7 +87,6 @@ type FormState = {
   date: string;
   startTime: string;
   endTime: string;
-  visibility: MeetingVisibility;
   meetingLink: string;
   primaryPicId: string;
   additionalPicIds: string[];
@@ -102,7 +106,6 @@ function initialForm(date?: string): FormState {
     date: validDate,
     startTime: "",
     endTime: "",
-    visibility: "INTERNAL",
     meetingLink: "",
     primaryPicId: "",
     additionalPicIds: [],
@@ -121,7 +124,6 @@ function meetingFormState(meeting: Meeting): FormState {
     date: toDateInput(new Date(meeting.startAt)),
     startTime: toTimeInput(new Date(meeting.startAt)),
     endTime: toTimeInput(new Date(meeting.endAt)),
-    visibility: meeting.visibility ?? "PRIVATE",
     meetingLink: meeting.meetingLink ?? "",
     primaryPicId: meeting.primaryPicId ?? "",
     additionalPicIds: (meeting.picIds ?? []).filter(
@@ -179,7 +181,6 @@ export default function MeetingForm({
   const { user } = useAuth();
   const copy = meetingCopy();
   const { success, error: notifyError } = useToast();
-  const canCreatePrivate = canManageOwnMeetings(user?.role);
 
   const [form, setForm] = useState<FormState>(() => initialForm(initialDate));
   const [initialFormState, setInitialFormState] = useState<FormState | null>(
@@ -295,6 +296,26 @@ export default function MeetingForm({
     }));
   }
 
+  function toggleFilteredParticipants() {
+    const shownIds = new Set(filteredParticipantIds);
+    setForm((current) => {
+      const allSelected = filteredParticipantIds.every((id) =>
+        current.participantIds.includes(id),
+      );
+      return {
+        ...current,
+        participantIds: allSelected
+          ? current.participantIds.filter((id) => !shownIds.has(id))
+          : [
+              ...current.participantIds,
+              ...filteredParticipantIds.filter(
+                (id) => !current.participantIds.includes(id),
+              ),
+            ],
+      };
+    });
+  }
+
   function toggleAdditionalPic(userId: string) {
     setForm((current) => ({
       ...current,
@@ -320,6 +341,26 @@ export default function MeetingForm({
         .includes(userQuery.trim().toLowerCase()),
   );
   const selectedInternalCount = form.participantIds.length;
+  const filteredParticipantIds = participantDirectory.map((entry) => entry.id);
+  const participantTotal = internalUsers.filter(
+    (entry) => entry.id !== user?.id,
+  ).length;
+  const selectedFilteredCount = filteredParticipantIds.filter((id) =>
+    form.participantIds.includes(id),
+  ).length;
+  const allFilteredSelected =
+    filteredParticipantIds.length > 0 &&
+    selectedFilteredCount === filteredParticipantIds.length;
+  const someFilteredSelected =
+    selectedFilteredCount > 0 && !allFilteredSelected;
+  const selectAllRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someFilteredSelected;
+    }
+  }, [someFilteredSelected]);
+
   const existingAttachmentCount = meeting?.attachments.length ?? 0;
   const canManageAttachments =
     user?.role === "ADMIN" ||
@@ -462,7 +503,6 @@ export default function MeetingForm({
         description: form.description.trim(),
         startAt: startAt.toISOString(),
         endAt: endAt.toISOString(),
-        visibility: form.visibility,
         participantIds: form.participantIds,
         additionalReminderEmails: reminderEmails.emails,
       };
@@ -732,31 +772,6 @@ export default function MeetingForm({
                 />
               </Field>
 
-              <Field label="Visibility" htmlFor="meeting-visibility">
-                <CustomSelect
-                  id="meeting-visibility"
-                  value={form.visibility}
-                  ariaDescribedby="meeting-visibility-help"
-                  onChange={(next) =>
-                    update("visibility", next as MeetingVisibility)
-                  }
-                  options={[
-                    { value: "INTERNAL", label: "Internal calendar" },
-                    ...(canCreatePrivate
-                      ? [{ value: "PRIVATE", label: "Private" }]
-                      : []),
-                  ]}
-                />
-                <p
-                  id="meeting-visibility-help"
-                  className="mt-1.5 text-xs leading-5 text-[#6B6A64]"
-                >
-                  {canCreatePrivate
-                    ? "Internal shows the agenda to RAMS accounts. Private shows others only a Busy block and time."
-                    : "Administrators and lecturers create shared internal meetings. Private meetings remain limited to their creator and participants."}
-                </p>
-              </Field>
-
               <Field label="Mode" htmlFor="meeting-mode">
                 <CustomSelect
                   id="meeting-mode"
@@ -920,6 +935,25 @@ export default function MeetingForm({
                 value={userQuery}
                 onChange={(event) => setUserQuery(event.target.value)}
               />
+              {participantDirectory.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-200 bg-[#FBFAF7] px-4 py-2.5">
+                  <label className="flex cursor-pointer items-center gap-2.5 text-xs font-semibold text-[var(--rams-charcoal)]">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      onChange={toggleFilteredParticipants}
+                      className="h-4 w-4 accent-[var(--rams-red)]"
+                    />
+                    {copy.selectAllParticipants}
+                  </label>
+                  <span className="text-xs text-[#6B6A64]">
+                    {copy.selectedParticipants
+                      .replace("{selected}", String(selectedInternalCount))
+                      .replace("{total}", String(participantTotal))}
+                  </span>
+                </div>
+              )}
               {participantDirectory.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-[#DDD6C9] px-4 py-5 text-sm text-[#6B6A64]">
                   No registered accounts match this search.

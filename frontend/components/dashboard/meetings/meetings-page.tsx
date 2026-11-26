@@ -45,6 +45,13 @@ function CalendarModeMarker({ mode }: { mode: MeetingCalendarEvent["mode"] }) {
   );
 }
 
+function statusPillClass(status: MeetingCalendarEvent["status"]) {
+  if (status === "CANCELLED") return "bg-[#FBE4E2] text-[var(--rams-red-dark)]";
+  if (status === "PAST") return "bg-[#F1F0EE] text-[#69645E]";
+  if (status === "ONGOING") return "bg-[#FFF3D9] text-[#94631A]";
+  return "bg-[#EAF3E8] text-[#356B35]";
+}
+
 function CalendarSkeleton() {
   return (
     <div className="rounded-lg border border-[#E7E2D8] bg-white p-4">
@@ -282,10 +289,10 @@ export default function MeetingsPage({
                       onClick={() => setSelectedDate(startOfDay(day.date))}
                       className={`min-h-[5.5rem] p-1.5 text-left align-top transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] sm:min-h-[6.5rem] sm:p-2 ${
                         selected
-                          ? "bg-[#FBF8F2]"
+                          ? "bg-[#FDF6F1] ring-1 ring-inset ring-[var(--rams-red)]/35"
                           : day.inMonth
                             ? "bg-white hover:bg-[#FBFAF7]"
-                            : "bg-[#FBFAF7]"
+                            : "bg-stone-50"
                       }`}
                     >
                       <span className="flex items-center justify-between">
@@ -296,15 +303,15 @@ export default function MeetingsPage({
                               : selected
                                 ? "text-[var(--rams-red)]"
                                 : day.inMonth
-                                  ? "text-[var(--rams-charcoal)]"
-                                  : "text-[#C9C3B8]"
+                                  ? "text-stone-900"
+                                  : "text-stone-400"
                           }`}
                         >
                           {day.date.getDate()}
                         </span>
                         {selected && (
                           <span
-                            className="h-1.5 w-1.5 rounded-full bg-[var(--rams-red)]"
+                            className="h-2 w-2 rounded-full bg-[var(--rams-red)]"
                             aria-hidden="true"
                           />
                         )}
@@ -314,7 +321,7 @@ export default function MeetingsPage({
                         {items.slice(0, 2).map((meeting) => (
                           <span
                             key={meeting._id}
-                            className="flex items-center gap-1.5 rounded-md bg-[#F4F1EA] px-1.5 py-1"
+                            className="flex items-center gap-1.5 rounded-md border border-stone-200/80 bg-white px-1.5 py-1"
                           >
                             {meeting.canViewDetails ? (
                               <>
@@ -333,7 +340,7 @@ export default function MeetingsPage({
                               className={`truncate text-[0.64rem] font-medium leading-4 ${
                                 meeting.involvesHighlightedUser
                                   ? "text-[var(--rams-red)]"
-                                  : "text-[#4B4A45]"
+                                  : "text-stone-700"
                               }`}
                             >
                               {formatTime(meeting.startAt)} {meeting.title}
@@ -341,7 +348,7 @@ export default function MeetingsPage({
                           </span>
                         ))}
                         {items.length > 2 && (
-                          <span className="block px-1.5 text-[0.62rem] font-medium text-[#8A867D]">
+                          <span className="block px-1.5 text-[0.62rem] font-medium text-stone-500">
                             +{items.length - 2} more
                           </span>
                         )}
@@ -368,14 +375,14 @@ export default function MeetingsPage({
               <div className="overflow-hidden rounded-lg border border-[#E7E2D8] bg-white">
                 <div className="flex items-start justify-between gap-3 border-b border-[#F0ECE4] px-5 py-4">
                   <div className="min-w-0">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#8A867D]">
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-stone-500">
                       Selected day
                     </p>
                     <h2 className="mt-1 text-[0.95rem] font-semibold text-[var(--rams-charcoal)]">
                       {formatDayLong(selectedDate)}
                     </h2>
                   </div>
-                  <span className="shrink-0 rounded-full border border-[#E7E2D8] px-2.5 py-1 text-[0.65rem] font-semibold text-[#6B6A64]">
+                  <span className="shrink-0 rounded-full bg-stone-100 px-2.5 py-1 text-[0.65rem] font-semibold text-stone-700">
                     {selectedMeetings.length}
                   </span>
                 </div>
@@ -408,17 +415,32 @@ export default function MeetingsPage({
                                 href={`${basePath}/${meeting._id}`}
                                 className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
                               >
-                                <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
-                                  {formatTimeRange(
-                                    meeting.startAt,
-                                    meeting.endAt,
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-[0.68rem] font-semibold text-[var(--rams-red)]">
+                                    {formatTimeRange(
+                                      meeting.startAt,
+                                      meeting.endAt,
+                                    )}
+                                  </p>
+                                  {meeting.status && (
+                                    <span
+                                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.62rem] font-semibold ${statusPillClass(
+                                        meeting.status,
+                                      )}`}
+                                    >
+                                      <span
+                                        className="h-1.5 w-1.5 rounded-full bg-current"
+                                        aria-hidden="true"
+                                      />
+                                      {meetingStatusLabel(meeting.status)}
+                                    </span>
                                   )}
-                                </p>
+                                </div>
                                 <p
-                                  className={`mt-1 text-sm font-semibold ${
+                                  className={`mt-1.5 text-sm font-semibold ${
                                     meeting.involvesHighlightedUser
                                       ? "text-[var(--rams-red)]"
-                                      : "text-[var(--rams-charcoal)]"
+                                      : "text-stone-900"
                                   }`}
                                 >
                                   {meeting.title}
@@ -430,43 +452,28 @@ export default function MeetingsPage({
                                     }
                                   />
                                 </div>
-                                <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                                  <span className="text-sm font-semibold text-stone-900">
+                                    {meeting.clientName?.trim() ||
+                                      "Client not specified"}
+                                  </span>
                                   <MeetingModeBadge mode={meeting.mode} />
-                                  {meeting.clientName !== undefined && (
-                                    <span
-                                      className={`text-xs ${
-                                        meeting.clientName?.trim()
-                                          ? "font-medium text-[#4F4B46]"
-                                          : "text-[#8A867D]"
-                                      }`}
-                                    >
-                                      {meeting.clientName?.trim() ||
-                                        "Client not specified"}
-                                    </span>
-                                  )}
-                                  {meeting.mode === "OFFLINE" && (
-                                    <span className="text-xs text-[#6B6A64]">
-                                      {meeting.location?.trim() ||
-                                        "Location not specified"}
-                                    </span>
-                                  )}
+                                  {meeting.mode === "OFFLINE" &&
+                                    meeting.location?.trim() && (
+                                      <span className="text-xs text-stone-600">
+                                        {meeting.location}
+                                      </span>
+                                    )}
                                 </div>
-                                {meeting.createdBy?.displayName && (
-                                  <p className="mt-1 text-xs text-[#6B6A64]">
-                                    {meeting.createdBy.displayName}
-                                  </p>
-                                )}
                                 {meeting.primaryPicName && (
-                                  <p className="mt-1 text-xs text-[#6B6A64]">
-                                    Primary PIC: {meeting.primaryPicName}
+                                  <p className="mt-2 text-xs text-stone-600">
+                                    PIC{" "}
+                                    <span className="font-medium text-stone-800">
+                                      {meeting.primaryPicName}
+                                    </span>
                                     {meeting.additionalPicNames &&
                                       meeting.additionalPicNames.length > 0 &&
                                       ` +${meeting.additionalPicNames.length} additional`}
-                                  </p>
-                                )}
-                                {meeting.status && (
-                                  <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
-                                    {meetingStatusLabel(meeting.status)}
                                   </p>
                                 )}
                               </Link>
@@ -506,9 +513,17 @@ export default function MeetingsPage({
                                 </p>
                               )}
                               {meeting.status && (
-                                <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
+                                <span
+                                  className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.62rem] font-semibold ${statusPillClass(
+                                    meeting.status,
+                                  )}`}
+                                >
+                                  <span
+                                    className="h-1.5 w-1.5 rounded-full bg-current"
+                                    aria-hidden="true"
+                                  />
                                   {meetingStatusLabel(meeting.status)}
-                                </p>
+                                </span>
                               )}
                             </div>
                           )}

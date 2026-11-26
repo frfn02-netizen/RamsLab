@@ -610,7 +610,9 @@
     "updated": "Meeting updated.",
     "additionalReminderEmailsLabel": "Additional reminder emails",
     "additionalReminderEmailsHint": "Optional. Staff without an account receive the H-24h reminder at these addresses. Separate multiple emails with commas.",
-    "additionalReminderEmailsInvalid": "Enter only valid email addresses in the reminder list."
+    "additionalReminderEmailsInvalid": "Enter only valid email addresses in the reminder list.",
+    "selectAllParticipants": "Select all",
+    "selectedParticipants": "{selected} of {total} selected"
   },
   "dashboardDosen": {
     "createdTitle": "Dosen created",

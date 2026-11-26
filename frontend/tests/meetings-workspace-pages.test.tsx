@@ -19,7 +19,6 @@ const state = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
   getMeeting: vi.fn(),
-  getMeetingAudit: vi.fn(),
   getUserDirectory: vi.fn(),
   createMeeting: vi.fn(),
   updateMeeting: vi.fn(),
@@ -69,7 +68,6 @@ vi.mock("@/lib/api/meetings", () => ({
   getMeetings: vi.fn().mockResolvedValue([]),
   getMeetingCalendar: vi.fn().mockResolvedValue([]),
   getMeeting: state.getMeeting,
-  getMeetingAudit: state.getMeetingAudit,
   getUserDirectory: state.getUserDirectory,
   createMeeting: state.createMeeting,
   updateMeeting: state.updateMeeting,
@@ -126,7 +124,6 @@ beforeEach(() => {
   ]);
   state.checkMeetingConflicts.mockResolvedValue([]);
   state.getMeeting.mockResolvedValue(makeMeeting());
-  state.getMeetingAudit.mockResolvedValue([]);
 });
 
 describe("workspace create meeting page", () => {
@@ -189,9 +186,6 @@ describe("workspace create meeting page", () => {
       }),
     );
     await screen.findByRole("heading", { name: "Schedule meeting" });
-    expect(screen.getByRole("combobox", { name: "Visibility" })).toHaveTextContent(
-      "Internal calendar",
-    );
     selectOption("Primary PIC", /^other \(DOSEN\)$/);
     fireEvent.click(
       screen.getByRole("checkbox", {
@@ -223,7 +217,6 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("End time"), {
       target: { value: "10:00" },
     });
-    selectOption("Visibility", "Private");
 
     const file = new File(["%PDF-1.4"], "agenda.pdf", {
       type: "application/pdf",
@@ -238,7 +231,6 @@ describe("workspace create meeting page", () => {
     await waitFor(() => expect(state.createMeeting).toHaveBeenCalledTimes(1));
     expect(state.createMeeting).toHaveBeenCalledWith(
       expect.objectContaining({
-        visibility: "PRIVATE",
         clientName: "Planning Client",
         mode: "OFFLINE",
         location: "Planning Room",
@@ -251,6 +243,45 @@ describe("workspace create meeting page", () => {
       expect(state.uploadMeetingAttachment).toHaveBeenCalledWith("new-1", file),
     );
     expect(state.push).toHaveBeenCalledWith("/meetings/new-1");
+  });
+
+  it("selects only the filtered internal participants with the select-all control", async () => {
+    render(
+      await MeetingsNewPage({
+        searchParams: Promise.resolve({ date: "2031-03-04" }),
+      }),
+    );
+    await screen.findByRole("heading", { name: "Schedule meeting" });
+
+    const selectAll = screen.getByRole("checkbox", { name: "Select all" });
+    fireEvent.click(selectAll);
+
+    expect(
+      screen.getByRole("checkbox", { name: "Participant: other@example.com" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Participant: third@example.com" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Participant: fourth@example.com" }),
+    ).toBeChecked();
+    expect(screen.getByText("3 of 3 selected")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Search internal participants"), {
+      target: { value: "third" },
+    });
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Participant: other@example.com",
+      }),
+    ).not.toBeInTheDocument();
+    expect(selectAll).toBeChecked();
+
+    fireEvent.click(selectAll);
+    expect(
+      screen.getByRole("checkbox", { name: "Participant: third@example.com" }),
+    ).not.toBeChecked();
+    expect(screen.getByText("2 of 3 selected")).toBeInTheDocument();
   });
 
   it("creates an online meeting with null location and a valid URL", async () => {
@@ -592,7 +623,6 @@ describe("workspace edit meeting page", () => {
         clientName: "Offline Client",
         mode: "OFFLINE",
         location: "Offline Room",
-        visibility: "PRIVATE",
         participantIds: ["user-2"],
       }),
     );
@@ -618,7 +648,6 @@ describe("workspace edit meeting page", () => {
         mode: "OFFLINE",
         location: "Offline Room",
         meetingLink: null,
-        visibility: "PRIVATE",
         participantIds: ["user-2"],
       }),
     );
@@ -816,14 +845,13 @@ describe("workspace meeting detail page", () => {
     expect(screen.getByText("Involves Pak Dhimas")).toBeInTheDocument();
   });
 
-  it("renders an offline meeting with client, mode, location, visibility, and no online link", async () => {
+  it("renders an offline meeting with client, mode, location, and no online link", async () => {
     state.getMeeting.mockResolvedValue(
       makeMeeting({
         mode: "OFFLINE",
         clientName: "Offline Client",
         location: "Meeting Room A",
         meetingLink: "https://meet.google.com/must-not-render",
-        visibility: "INTERNAL",
       }),
     );
 
@@ -835,7 +863,7 @@ describe("workspace meeting detail page", () => {
     expect(screen.getByText("Offline Client")).toBeInTheDocument();
     expect(screen.getByLabelText("Offline meeting")).toBeInTheDocument();
     expect(screen.getByText("Meeting Room A")).toBeInTheDocument();
-    expect(screen.getByText("Internal")).toBeInTheDocument();
+    expect(screen.queryByText("Visibility")).not.toBeInTheDocument();
     expect(screen.getByText("Meeting link")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /meet\.google\.com\/must-not-render/ }),
@@ -852,7 +880,6 @@ describe("workspace meeting detail page", () => {
         clientName: "Remote Client",
         location: "Ignored physical room",
         meetingLink: "https://meet.google.com/online-room",
-        visibility: "PRIVATE",
       }),
     );
 
@@ -861,7 +888,6 @@ describe("workspace meeting detail page", () => {
     await screen.findByRole("heading", { name: "Weekly sync" });
     expect(screen.getByLabelText("Online meeting")).toBeInTheDocument();
     expect(screen.getByText("Remote Client")).toBeInTheDocument();
-    expect(screen.getByText("Private")).toBeInTheDocument();
     expect(screen.queryByText("Physical location")).not.toBeInTheDocument();
     expect(screen.queryByText("Ignored physical room")).not.toBeInTheDocument();
 
@@ -885,7 +911,6 @@ describe("workspace meeting detail page", () => {
         clientName: null,
         location: null,
         meetingLink: "https://meet.google.com/legacy-link",
-        visibility: "PRIVATE",
       }),
     );
 
@@ -904,105 +929,6 @@ describe("workspace meeting detail page", () => {
     expect(
       screen.getByRole("link", { name: /meet\.google\.com\/legacy-link/ }),
     ).toHaveAttribute("href", "https://meet.google.com/legacy-link");
-  });
-
-  it("labels client, mode, location, and meeting link changes in audit history", async () => {
-    state.getMeeting.mockResolvedValue(makeMeeting());
-    state.getMeetingAudit.mockResolvedValue([
-      {
-        id: "audit-fields",
-        actorId: "user-1",
-        actor: {
-          id: "user-1",
-          displayName: "Meeting organizer",
-          email: "dosen@example.com",
-          role: "DOSEN",
-        },
-        action: "UPDATE",
-        changes: {
-          clientName: { oldValue: null, newValue: "Audit Client" },
-          mode: { oldValue: "OFFLINE", newValue: "ONLINE" },
-          location: { oldValue: "Audit Room", newValue: null },
-          meetingLink: {
-            oldValue: null,
-            newValue: "https://meet.google.com/audit-link",
-          },
-        },
-        timestamp: "2031-02-01T00:00:00.000Z",
-      },
-    ]);
-
-    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
-    await screen.findByRole("heading", { name: "Weekly sync" });
-
-    const auditSection = screen
-      .getByText("Audit history")
-      .closest("section") as HTMLElement;
-    const audit = within(auditSection);
-    expect(await audit.findByText("Client / organization")).toBeInTheDocument();
-    expect(audit.getByText("Meeting mode")).toBeInTheDocument();
-    expect(audit.getByText("Physical location")).toBeInTheDocument();
-    expect(audit.getByText("Meeting link")).toBeInTheDocument();
-
-    const clientRow = audit
-      .getByText("Client / organization")
-      .closest("li") as HTMLElement;
-    expect(clientRow).toHaveTextContent("Not specified");
-    expect(clientRow).toHaveTextContent("Audit Client");
-
-    const modeRow = audit
-      .getByText("Meeting mode")
-      .closest("li") as HTMLElement;
-    expect(modeRow).toHaveTextContent("Offline");
-    expect(modeRow).toHaveTextContent("Online");
-
-    const locationRow = audit
-      .getByText("Physical location")
-      .closest("li") as HTMLElement;
-    expect(locationRow).toHaveTextContent("Audit Room");
-    expect(locationRow).toHaveTextContent("Not specified");
-
-    const linkRow = audit
-      .getByText("Meeting link")
-      .closest("li") as HTMLElement;
-    expect(linkRow).toHaveTextContent("https://meet.google.com/audit-link");
-    expect(linkRow).toHaveTextContent("Not specified");
-  });
-
-  it("renders old audit entries that do not include the new meeting fields", async () => {
-    state.getMeeting.mockResolvedValue(makeMeeting());
-    state.getMeetingAudit.mockResolvedValue([
-      {
-        id: "audit-legacy",
-        actorId: "user-1",
-        actor: {
-          id: "user-1",
-          displayName: "Meeting organizer",
-          email: "dosen@example.com",
-          role: "DOSEN",
-        },
-        action: "UPDATE",
-        changes: {
-          title: { oldValue: null, newValue: "Weekly sync" },
-        },
-        timestamp: "2031-02-01T00:00:00.000Z",
-      },
-    ]);
-
-    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
-    await screen.findByRole("heading", { name: "Weekly sync" });
-
-    const auditSection = screen
-      .getByText("Audit history")
-      .closest("section") as HTMLElement;
-    const audit = within(auditSection);
-    expect(await audit.findByText("Title")).toBeInTheDocument();
-    expect(
-      audit.getByText("Title").closest("li") as HTMLElement,
-    ).toHaveTextContent("Weekly sync");
-    expect(audit.queryByText("Client / organization")).not.toBeInTheDocument();
-    expect(audit.queryByText("Meeting mode")).not.toBeInTheDocument();
-    expect(audit.queryByText("Physical location")).not.toBeInTheDocument();
   });
 
   it("refreshes the meeting when cancellation reports that it already ended", async () => {
@@ -1049,27 +975,10 @@ describe("workspace meeting detail page", () => {
     );
   });
 
-  it("renders real audit history and allows the organizer to cancel explicitly", async () => {
+  it("allows the organizer to cancel explicitly", async () => {
     state.getMeeting.mockResolvedValue(
       makeMeeting({ status: "UPCOMING", canEdit: true }),
     );
-    state.getMeetingAudit.mockResolvedValue([
-      {
-        id: "audit-1",
-        actorId: "user-1",
-        actor: {
-          id: "user-1",
-          displayName: "Meeting organizer",
-          email: "dosen@example.com",
-          role: "DOSEN",
-        },
-        action: "CREATE",
-        changes: {
-          title: { oldValue: null, newValue: "Weekly sync" },
-        },
-        timestamp: "2031-02-01T00:00:00.000Z",
-      },
-    ]);
     state.cancelMeeting.mockResolvedValue(
       makeMeeting({
         status: "CANCELLED",
@@ -1080,9 +989,7 @@ describe("workspace meeting detail page", () => {
     render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
-    expect(screen.getByText("Audit history")).toBeInTheDocument();
-    expect(screen.getByText("Meeting created")).toBeInTheDocument();
-    expect(screen.getByText(/Meeting organizer/)).toBeInTheDocument();
+    expect(screen.queryByText("Audit history")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel meeting" }));
     expect(

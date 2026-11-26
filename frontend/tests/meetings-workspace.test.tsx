@@ -849,7 +849,7 @@ describe("my meetings", () => {
     expect(
       screen.queryByLabelText("Meeting mode not specified"),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText("Client not specified")).not.toBeInTheDocument();
+    expect(screen.getByText("Client not specified")).toBeInTheDocument();
   });
 
   it("shows a calendar error state when the agenda request fails", async () => {

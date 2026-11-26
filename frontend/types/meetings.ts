@@ -1,8 +1,5 @@
 import type { UserRole } from "@/types/auth";
 
-export const MEETING_VISIBILITIES = ["INTERNAL", "PRIVATE"] as const;
-export type MeetingVisibility = (typeof MEETING_VISIBILITIES)[number];
-
 export const MEETING_MODES = ["OFFLINE", "ONLINE"] as const;
 export type MeetingMode = (typeof MEETING_MODES)[number];
 
@@ -13,32 +10,6 @@ export const MEETING_STATUSES = [
   "CANCELLED",
 ] as const;
 export type MeetingStatus = (typeof MEETING_STATUSES)[number];
-
-export type MeetingAuditAction =
-  | "CREATE"
-  | "UPDATE"
-  | "CANCEL"
-  | "ATTACHMENT_ADDED"
-  | "ATTACHMENT_REMOVED"
-  | "DELEGATE_ASSIGNED"
-  | "DELEGATE_REVOKED"
-  | "GUEST_INVITATION_CREATED"
-  | "GUEST_INVITATION_REVOKED"
-  | "GUEST_INVITATION_REGENERATED";
-
-export interface MeetingAuditChange {
-  oldValue: unknown;
-  newValue: unknown;
-}
-
-export interface MeetingAuditEntry {
-  id: string;
-  actorId: string;
-  actor: MeetingUserSummary | null;
-  action: MeetingAuditAction;
-  changes: Record<string, MeetingAuditChange>;
-  timestamp: string;
-}
 
 export interface MeetingUserSummary {
   id: string;
@@ -65,7 +36,6 @@ export interface Meeting {
   location: string | null;
   startAt: string;
   endAt: string;
-  visibility?: MeetingVisibility;
   createdBy: MeetingUserSummary | null;
   primaryPicId?: string;
   picIds?: string[];
@@ -142,7 +112,6 @@ export interface MeetingInput {
   location: string | null;
   startAt: string;
   endAt: string;
-  visibility: MeetingVisibility;
   primaryPicId: string;
   picIds: string[];
   participantIds: string[];

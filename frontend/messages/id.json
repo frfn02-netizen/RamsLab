@@ -610,7 +610,9 @@
     "updated": "Rapat berhasil diperbarui.",
     "additionalReminderEmailsLabel": "Email pengingat tambahan",
     "additionalReminderEmailsHint": "Opsional. Staf tanpa akun menerima pengingat H-24 jam di alamat ini. Pisahkan beberapa email dengan koma.",
-    "additionalReminderEmailsInvalid": "Masukkan hanya alamat email yang valid pada daftar pengingat."
+    "additionalReminderEmailsInvalid": "Masukkan hanya alamat email yang valid pada daftar pengingat.",
+    "selectAllParticipants": "Pilih semua",
+    "selectedParticipants": "{selected} dari {total} dipilih"
   },
   "dashboardDosen": {
     "createdTitle": "Dosen berhasil dibuat",
