@@ -99,6 +99,6 @@ Check `NEXT_PUBLIC_API_URL`, the backend port, CORS/`FRONTEND_URL`, cookies, CSR
 
 Check `CRON_SECRET`, Mailjet configuration diagnostics, the cron response counts, recipient account activity and role, and the `reminderSentAt` field. Keep `MEETING_REMINDERS_ENABLED=false` while using the H-24 cron endpoint so the legacy scheduler does not send duplicates.
 
-### Private meeting access or missing records
+### Meeting access or missing records
 
-Check the access token, role (`ADMIN` or `DOSEN`), persisted `visibility` and `cancelledAt` fields, and the authenticated meeting serializer. Missing visibility is treated as PRIVATE.
+Check the access token, role (`ADMIN` or `DOSEN`), persisted `cancelledAt`, and the authenticated meeting serializer. Legacy `visibility` values are ignored and do not affect access.

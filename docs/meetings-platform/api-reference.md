@@ -7,7 +7,7 @@ All paths below are relative to the backend API origin. Authenticated endpoints 
 | Method and path                                      | Purpose                                                                   | Authorization                                                                                          |
 | ---------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `GET /api/meetings/agenda`                           | Shared agenda list, with `from`, `to`, `limit`, and `offset` query values | Authenticated `ADMIN` or `DOSEN`                               |
-| `GET /api/meetings/calendar`                         | Calendar items and privacy-safe Busy items                                | Authenticated `ADMIN` or `DOSEN`                               |
+| `GET /api/meetings/calendar`                         | Calendar items for the requested range                                    | Authenticated `ADMIN` or `DOSEN`                               |
 | `GET /api/meetings`                                  | Meeting list with the existing list query contract                        | Authenticated `ADMIN` or `DOSEN`                                                              |
 | `POST /api/meetings/conflicts/check`                 | Validate a proposed time, PIC, and participant conflict set               | Authenticated `ADMIN` or `DOSEN`                                                              |
 | `GET /api/meetings/:id`                              | Authenticated detail                                                      | Authentication plus service-level detail access                                                        |
@@ -15,11 +15,10 @@ All paths below are relative to the backend API origin. Authenticated endpoints 
 | `PATCH /api/meetings/:id`                            | Update                                                                    | `ADMIN`, or the `DOSEN` creator                                                                        |
 | `POST /api/meetings/:id/cancel`                      | Cancel with optional reason                                               | `ADMIN`, or the `DOSEN` creator                                                                        |
 | `DELETE /api/meetings/:id`                           | Delete                                                                    | `ADMIN`, or the `DOSEN` creator                                                                        |
-| `GET /api/meetings/:id/audit`                        | Audit history                                                             | Authentication plus meeting access checks                                                              |
 | `POST /api/meetings/:id/attachments`                 | Upload a meeting attachment                                               | `ADMIN`, or the `DOSEN` creator                                                                        |
 | `DELETE /api/meetings/:id/attachments/:attachmentId` | Delete an attachment                                                      | `ADMIN`, or the `DOSEN` creator                                                                        |
 
-The route-level permissions are only the first gate. The meeting service still checks creator ownership, role, visibility, private access, persisted timestamps, and current account state.
+The route-level permissions are only the first gate. The meeting service still checks creator ownership, role, persisted timestamps, and current account state.
 
 ## Create request
 
@@ -34,7 +33,6 @@ The create body uses these fields:
   "location": null,
   "startAt": "2040-01-01T09:00:00.000Z",
   "endAt": "2040-01-01T10:00:00.000Z",
-  "visibility": "INTERNAL",
   "primaryPicId": "507f1f77bcf86cd799439011",
   "picIds": ["507f1f77bcf86cd799439011"],
   "participantIds": [],
@@ -62,7 +60,6 @@ The authenticated detail response includes the meeting fields plus:
 
 ```json
 {
-  "visibility": "INTERNAL",
   "createdBy": {
     "id": "...",
     "displayName": "...",

@@ -19,7 +19,7 @@
 
 - New meeting writes require PIC data, but legacy meeting documents may omit `primaryPicId` and `picIds`. The implementation reads those documents compatibly; a migration is not included in this phase.
 - The internal meeting response contains account identifiers and emails for authorized users because the existing UI and authorization-aware workflows use them. No meeting response is exposed through a public schedule route, which was removed.
-- A PIC is not an access grant. If product owners expect PICs to open PRIVATE meetings, that would be a business-rule change requiring explicit authorization design and tests. The current implementation intentionally keeps ownership, PIC, and participant roles separate.
+- A PIC is not an access grant. Detail access follows the internal `ADMIN` or `DOSEN` role, while mutation remains limited to admins and the creator. If product owners want per-meeting restrictions, that would be a new authorization feature requiring explicit design and tests. The current implementation intentionally keeps ownership, PIC, and participant roles separate.
 - Reminder delivery is a scheduler/provider integration. Unit tests cover configuration, recipient resolution, claims, leases, retries, and idempotency, but provider delivery and mailbox behavior require a controlled environment.
 - Final consent, account, and meeting checks run immediately before the external adapter call. A small race remains between the final check and the provider request, and an already-started external request cannot be transactionally cancelled. Exactly-once delivery is not guaranteed.
 - WhatsApp recipients created before the consent-number invariant was introduced have no stored consent number and remain ineligible until they grant consent again.
@@ -33,7 +33,7 @@
 
 - Provide a disposable MongoDB instance or CI service for the complete backend integration suite.
 - Run authenticated browser workflows for admin, dosen, alumni, owner, participant, PIC, and deactivated-account cases.
-- Run authenticated privacy tests against persisted PRIVATE, CANCELLED, legacy, online, offline, past, and highlighted meetings.
+- Run authenticated privacy tests against persisted CANCELLED, legacy, online, offline, past, and highlighted meetings.
 - Run cancellation tests at the exact `endAt` boundary through the HTTP API, including concurrent cancellation attempts.
 - Run reminder dispatch against a fake or sandbox provider and inspect duplicate, retry, lease expiry, and provider failure behavior.
 - Run Cloudinary upload/delete tests with non-sensitive fixture files.

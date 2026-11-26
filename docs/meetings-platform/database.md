@@ -19,7 +19,6 @@ The `meetings` collection stores the `Meeting` document. Relevant fields are:
 | `mode`                                             | `ONLINE` or `OFFLINE`                         | Meeting mode                                        |
 | `location`                                         | string or null                                | Physical location for offline meetings              |
 | `startAt`, `endAt`                                 | Date                                          | Meeting window                                      |
-| `visibility`                                       | `INTERNAL` or `PRIVATE`                       | Access/public visibility                            |
 | `createdBy`                                        | ObjectId                                      | Active owner and creator                            |
 | `primaryPicId`                                     | ObjectId, optional for legacy documents       | Primary internal PIC                                |
 | `picIds`                                           | ObjectId array, optional for legacy documents | All internal PICs, including primary for new writes |
@@ -28,10 +27,9 @@ The `meetings` collection stores the `Meeting` document. Relevant fields are:
 | `meetingLink`                                      | string or null                                | Online meeting URL                                  |
 | `cancelledAt`, `cancelledBy`, `cancellationReason` | optional                                      | Cancellation state and actor                        |
 | `attachments`                                      | object array                                  | Attachment metadata and Cloudinary identifiers      |
-| `auditHistory`                                     | object array                                  | Embedded audit records                              |
 | `createdAt`, `updatedAt`                           | Date                                          | Record timestamps                                   |
 
-Attachment objects contain `id`, `url`, `publicId`, `filename`, `mimeType`, `size`, and `uploadedAt`. Audit entries contain an `id`, `actorUserId`, action, field changes, and timestamp. The active actions are `CREATE`, `UPDATE`, `CANCEL`, `ATTACHMENT_ADDED`, and `ATTACHMENT_REMOVED`. Legacy delegate and guest invitation action values remain part of the type for compatibility.
+Attachment objects contain `id`, `url`, `publicId`, `filename`, `mimeType`, `size`, and `uploadedAt`.
 
 ## User document relationships
 
@@ -68,10 +66,10 @@ The meeting index unit tests verify idempotent creation, incompatible-index dete
 
 ## Legacy compatibility
 
-Meeting reads use an effective visibility rule: only an explicit `INTERNAL` value is internal; a missing or other value is treated as `PRIVATE`. This prevents legacy documents with no visibility field from becoming public accidentally.
+Legacy documents may still contain `visibility` or `auditHistory` fields from earlier versions. Meeting reads ignore them, and writes remove them with `$unset`. They have no effect on access checks or serialization.
 
 Legacy documents can also lack PIC fields. The internal serializer returns empty/absent PIC collections for those records. New create requests require PIC data, so old data remains readable while new writes follow the multiple-PIC contract.
 
 ## Data mutation behavior
 
-Meeting updates use persisted values and an optional `expectedUpdatedAt` for optimistic concurrency. Cancellation uses a conditional update that checks the existing cancellation state and server time. Audit entries are written with the authenticated actor. No test in this QA pass targeted a production or shared demo database.
+Meeting updates use persisted values and an optional `expectedUpdatedAt` for optimistic concurrency. Cancellation uses a conditional update that checks the existing cancellation state and server time. No test in this QA pass targeted a production or shared demo database.

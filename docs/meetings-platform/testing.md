@@ -51,7 +51,7 @@ The following matrix reports the strongest evidence available from executed test
 | ONLINE/OFFLINE validation and Google Meet URL safety              | PASS       | Schema/service unit coverage passed                                                                               |
 | Client, location, mode, and date fields                           | PASS       | Frontend and focused backend tests passed                                                                         |
 | Ownership, participant separation, and conflicts                  | BLOCKED    | Source and unit logic verified; authenticated persistence/integration tests blocked                               |
-| Attachments and audit history                                     | BLOCKED    | Routes/source inspected; Cloudinary and MongoDB integration not executed                                          |
+| Attachments                                                       | BLOCKED    | Routes/source inspected; Cloudinary and MongoDB integration not executed                                          |
 | Cancellation guard including `endAt <= now`                       | PASS       | Service/unit coverage passed; live API integration blocked                                                        |
 | Primary and multiple PICs                                         | PASS       | Schema, serializer, frontend form tests, and focused backend tests passed                                         |
 | Active internal PIC validation, duplicate rejection, edit/removal | BLOCKED    | Validation logic and regression tests passed; database-backed account scenarios blocked                           |
@@ -60,13 +60,13 @@ The following matrix reports the strongest evidence available from executed test
 | Public PIC display names without IDs/emails                       | PASS       | Public serializer tests passed                                                                                    |
 | Shared agenda ADMIN/DOSEN access                                  | PASS       | Route guards and service-level authorization tests                                                                 |
 | Coordinator grant/revoke and immediate revocation                 | BLOCKED    | Integration tests exist; MongoDB blocked execution                                                                |
-| Coordinator shared create/edit/cancel and audit actor             | BLOCKED    | Integration tests exist; MongoDB blocked execution                                                                |
-| PRIVATE coordinator restriction                                   | PASS       | Service logic and focused permission logic; live API path blocked                                                 |
+| Shared create/edit/cancel integration                             | BLOCKED    | Integration tests exist; MongoDB blocked execution                                                                |
+| Shared meeting mutation restriction                               | PASS       | Service logic and focused permission logic; live API path blocked                                                 |
 | Public dashboard/calendar/detail                                  | BLOCKED    | Frontend tests passed; live API/browser was not available                                                         |
 | Public search/filter/pagination/date navigation                   | PASS       | Public UI/unit test coverage passed; live response path blocked                                                   |
-| PRIVATE/CANCELLED exclusion and historical PAST                   | PASS       | Public repository/filter and serializer tests passed                                                              |
+| CANCELLED exclusion and historical PAST                           | PASS       | Public repository/filter and serializer tests passed                                                              |
 | Public link and PIC output                                        | PASS       | Public serializer tests passed                                                                                    |
-| Public no-leak boundary and private 404                           | BLOCKED    | Serializer unit tests passed; database-backed HTTP response not executed                                          |
+| Public no-leak boundary and inaccessible 404                      | BLOCKED    | Serializer unit tests passed; database-backed HTTP response not executed                                          |
 | Pak Dhimas creator/participant highlight                          | BLOCKED    | Integration regression tests added; MongoDB blocked execution                                                     |
 | Highlight title/badge/calendar/detail consistency                 | PASS       | Frontend highlight tests and focused backend logic passed                                                         |
 | No highlighted-user ID in frontend                                | PASS       | Source contract and response tests use boolean only                                                               |

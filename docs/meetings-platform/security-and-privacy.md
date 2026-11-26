@@ -12,48 +12,26 @@ Authorization has multiple layers:
 
 1. Authentication resolves an active account and JWT identity.
 2. Route middleware checks broad role or permission requirements.
-3. Meeting services check ownership, visibility, coordinator status, account roles, and requested operation.
+3. Meeting services check ownership, account roles, cancellation state, and the requested operation.
 4. Serializers remove fields that the actor or audience cannot receive.
 
-This means a PIC reference is not itself an access grant. A participant can have detail access according to the service rule. Only admins and lecturers manage shared non-private meetings, subject to ownership rules.
+This means a PIC reference is not itself an access grant. Detail access is available to authenticated `ADMIN` and `DOSEN` accounts, while mutation remains limited to admins and the creator.
 
-## PRIVATE behavior
+## Internal meeting access
 
-The effective visibility function returns `INTERNAL` only for an explicit `INTERNAL` value. Missing visibility is treated as `PRIVATE`.
+All meeting routes require an authenticated `ADMIN` or `DOSEN` account. There is no per-meeting visibility flag, so every internal account receives the full internal detail and calendar serialization. Mutation is limited to `ADMIN` accounts and the meeting creator.
 
-For authenticated meeting detail, private access is restricted by the current service rule to admins, the creator, or an internal participant. A PIC who is not otherwise authorized does not receive detail access solely from PIC membership.
+Legacy `visibility` and `auditHistory` values on stored documents are ignored by reads and stripped by writes. They do not grant or restrict access.
 
-For the authenticated calendar, an inaccessible private meeting is reduced to:
+## Serializer boundary
 
-```json
-{
-  "_id": "...",
-  "title": "Busy",
-  "startAt": "...",
-  "endAt": "...",
-  "createdBy": null,
-  "canViewDetails": false
-}
-```
+Meeting responses are private to authenticated internal accounts and are served with `Cache-Control: private, no-store`. The internal serializer includes creator, participant, PIC, and attachment data because the authorization-aware UI uses it. There is no public meeting or schedule serializer.
 
-No private title, client, mode, location, link, participant, PIC, highlight, attachment, or audit data is included in that Busy item. The exact shape is enforced by the meeting service and unit tests.
-
-## Public serializer boundary
-
-Public schedule queries enforce `visibility: INTERNAL` and no cancellation timestamp. Public detail applies the same filter, so PRIVATE, CANCELLED, and legacy missing-visibility records return HTTP 404. Past INTERNAL meetings remain eligible.
-
-The public serializer returns only:
-
-```text
-id, title, clientName, startAt, endAt, mode, location,
-meetingLink, primaryPicName, additionalPicNames, status
-```
-
-It deliberately omits creator, participant, attachment, description, audit, permission, highlight, PIC IDs, and PIC emails. PIC names use a resolved display name and fall back to the email local part; the email itself is not returned.
+PIC names use a resolved display name and fall back to the email local part.
 
 ## Highlight privacy
 
-`MEETINGS_HIGHLIGHTED_USER_IDS` is server-only configuration. The backend returns only `involvesHighlightedUser` in authorized internal responses. It does not return the configured list. Private Busy output also omits it.
+`MEETINGS_HIGHLIGHTED_USER_IDS` is server-only configuration. The backend returns only `involvesHighlightedUser` in authenticated internal responses. It does not return the configured list.
 
 ## Account and permission separation
 

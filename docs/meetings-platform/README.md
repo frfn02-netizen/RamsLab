@@ -1,6 +1,6 @@
 # RAMS Meetings Platform Documentation
 
-This directory documents the implemented RAMS meeting, shared agenda, PIC, highlight, attachment, audit, and reminder behavior.
+This directory documents the implemented RAMS meeting, shared agenda, PIC, highlight, attachment, and reminder behavior.
 
 The documentation is based on the current backend and frontend source and on the tests actually executed on 2026-11-21. It does not describe unimplemented product intent as if it were behavior. Items that could not be exercised are marked explicitly in [testing.md](./testing.md) and [known-limitations.md](./known-limitations.md).
 
@@ -8,9 +8,9 @@ The documentation is based on the current backend and frontend source and on the
 
 - [Architecture](./architecture.md): application boundaries, data flow, lifecycle, and permission boundaries.
 - [Features](./features.md): implemented workflows and the role matrix.
-- [API reference](./api-reference.md): authenticated meeting, agenda, PIC, attachment, audit, coordinator, account, and cron endpoints.
-- [Database](./database.md): collections, meeting fields, indexes, relationships, audit data, and legacy behavior.
-- [Security and privacy](./security-and-privacy.md): authentication, authorization, public serializers, PRIVATE meetings, Busy events, and sensitive fields.
+- [API reference](./api-reference.md): authenticated meeting, agenda, PIC, attachment, account, and cron endpoints.
+- [Database](./database.md): collections, meeting fields, indexes, relationships, and legacy behavior.
+- [Security and privacy](./security-and-privacy.md): authentication, authorization, internal serializers, calendar output, and sensitive fields.
 - [Testing](./testing.md): test architecture, exact commands, results, evidence, and execution limits.
 - [Deployment and operations](./deployment-and-operations.md): configuration, startup, reminders, email, Cloudinary, and troubleshooting.
 - [Known limitations](./known-limitations.md): remaining gaps and blocked verification.
@@ -19,7 +19,7 @@ The documentation is based on the current backend and frontend source and on the
 
 The backend is an Express and TypeScript API backed by MongoDB. The frontend is a Next.js and TypeScript application. Both packages are independent npm projects under this repository.
 
-Meeting data is stored in the `meetings` collection. A meeting has an owner in `createdBy`, internal PIC references in `primaryPicId` and `picIds`, internal participants in `participantIds`, optional external guest metadata in `externalParticipants`, optional attachments, and embedded audit history. PICs are not automatically granted meeting detail access.
+Meeting data is stored in the `meetings` collection. A meeting has an owner in `createdBy`, internal PIC references in `primaryPicId` and `picIds`, internal participants in `participantIds`, optional external guest metadata in `externalParticipants`, and optional attachments. PIC assignment is a responsibility marker, not a separate permission.
 
 The authenticated meetings API is mounted at `/api/meetings`. The frontend exposes the private workspace under `/meetings`, with legacy `/schedule` URLs permanently redirected to the meetings workspace. The H-24 reminder endpoint is `/api/cron/meeting-reminders` and requires the cron bearer secret.
 
