@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Button, Field, inputClass } from "@/components/ui";
+import { Button, Field } from "@/components/ui";
+import CustomSelect from "@/components/ui/custom-select";
 import { useToast } from "@/components/providers/toast-providers";
 import { getUserFacingError } from "@/lib/api/errors";
 import { createInternalAccount } from "@/lib/api/modules";
@@ -12,6 +13,9 @@ type CreatedAccount = {
   role: "ADMIN" | "DOSEN";
   temporaryPassword: string;
 };
+
+const fieldClass =
+  "min-h-11 w-full rounded-xl border border-stone-200 bg-stone-50/70 px-3.5 py-2.5 text-sm text-stone-950 outline-none transition placeholder:text-stone-400 focus:border-red-700 focus:bg-white focus:ring-2 focus:ring-red-700/15";
 
 export default function AddInternalAccount() {
   const { error: notifyError } = useToast();
@@ -32,6 +36,9 @@ export default function AddInternalAccount() {
     if (!open) return;
 
     function handleKeyDown(event: KeyboardEvent) {
+      // A nested dropdown handles Escape first and prevents the default. Do not
+      // close the whole dialog on that same key press.
+      if (event.defaultPrevented) return;
       if (event.key === "Escape" && !saving) setOpen(false);
     }
 
@@ -89,145 +96,204 @@ export default function AddInternalAccount() {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-950/45 p-4 backdrop-blur-[2px]"
           role="presentation"
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-internal-account-title"
-            className="w-full max-w-md border border-black/8 bg-white p-6 shadow-2xl"
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-white shadow-2xl"
           >
-            <h2
-              id="add-internal-account-title"
-              className="text-xl font-bold text-[var(--rams-charcoal)]"
-            >
-              {created
-                ? copy.internalAccountCreatedTitle
-                : copy.internalAccountTitle}
-            </h2>
+            <header className="flex items-start justify-between gap-4 border-b border-stone-200/80 px-6 pb-4 pt-6">
+              <div className="min-w-0">
+                <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-red-700">
+                  {copy.internalAccountEyebrow}
+                </p>
+                <h2
+                  id="add-internal-account-title"
+                  className="mt-2 font-display text-xl font-semibold tracking-tight text-stone-950"
+                >
+                  {created
+                    ? copy.internalAccountCreatedTitle
+                    : copy.internalAccountTitle}
+                </h2>
+                <p className="mt-1.5 text-sm leading-6 text-stone-600">
+                  {created
+                    ? copy.internalAccountCreatedHint
+                    : copy.internalAccountDescription}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label={copy.internalAccountCloseLabel}
+                disabled={saving}
+                onClick={close}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-stone-200 text-lg leading-none text-stone-500 transition hover:border-stone-300 hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700/30 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ×
+              </button>
+            </header>
 
             {created ? (
-              <div className="mt-4 space-y-4">
-                <p className="text-sm leading-6 text-[var(--rams-gray)]">
-                  {copy.internalAccountCreatedHint}
-                </p>
-                <dl className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
-                  <div>
-                    <dt className="text-xs font-bold uppercase tracking-wide text-amber-900">
-                      Email
-                    </dt>
-                    <dd className="mt-1 break-all text-sm text-amber-900">
-                      {created.email}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-bold uppercase tracking-wide text-amber-900">
-                      {copy.internalAccountRole}
-                    </dt>
-                    <dd className="mt-1 text-sm text-amber-900">
-                      {created.role === "ADMIN"
-                        ? copy.internalAccountRoleAdmin
-                        : copy.internalAccountRoleDosen}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-bold uppercase tracking-wide text-amber-900">
-                      Temporary password
-                    </dt>
-                    <dd className="mt-1 flex flex-wrap items-center gap-2">
-                      <code className="rounded bg-white px-3 py-2 text-sm font-semibold text-[var(--rams-charcoal)]">
-                        {showPassword ? created.temporaryPassword : "••••••••"}
-                      </code>
-                      <Button
+              <>
+                <div className="px-6 py-5">
+                  <div className="rounded-xl border border-stone-200 bg-stone-50/80 p-5">
+                    <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-stone-500">
+                      {copy.internalAccountReceiptEyebrow}
+                    </p>
+
+                    <div className="mt-4 flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
+                          {copy.internalAccountEmailLabel}
+                        </p>
+                        <p className="mt-1 break-all text-sm font-medium text-stone-950">
+                          {created.email}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-red-700">
+                        {created.role}
+                      </span>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
+                        {copy.internalAccountPasswordLabel}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <code className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm font-semibold tracking-[0.08em] text-stone-950">
+                          {showPassword
+                            ? created.temporaryPassword
+                            : "••••••••"}
+                        </code>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => void copyPassword()}
+                        >
+                          {copied ? copy.copied : copy.copyPassword}
+                        </Button>
+                      </div>
+                      <button
                         type="button"
-                        variant="secondary"
-                        onClick={() => void copyPassword()}
-                      >
-                        {copied ? copy.copied : copy.copyPassword}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
                         onClick={() => setShowPassword((current) => !current)}
+                        className="mt-2 text-xs font-semibold text-stone-500 underline-offset-4 transition hover:text-stone-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700/30"
                       >
                         {showPassword ? copy.hidePassword : copy.showPassword}
-                      </Button>
-                    </dd>
+                      </button>
+                    </div>
+
+                    <p className="mt-4 border-t border-stone-200 pt-3 text-xs leading-5 text-stone-500">
+                      {copy.internalAccountReceiptReminder}
+                    </p>
                   </div>
-                </dl>
-                <div className="flex justify-end gap-3">
+                </div>
+
+                <div className="flex items-center justify-end gap-3 rounded-b-2xl border-t border-stone-200 bg-stone-50 px-6 py-4">
                   <Button type="button" variant="secondary" onClick={close}>
                     {copy.internalAccountClose}
                   </Button>
                 </div>
-              </div>
+              </>
             ) : (
-              <form onSubmit={submit} className="mt-4 space-y-4">
-                <p className="text-sm leading-6 text-[var(--rams-gray)]">
-                  {copy.internalAccountDescription}
-                </p>
-                <Field
-                  label={copy.internalAccountName}
-                  htmlFor="internal-account-name"
-                >
-                  <input
-                    id="internal-account-name"
-                    required
-                    minLength={2}
-                    className={inputClass}
-                    value={form.fullName}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        fullName: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-                <Field
-                  label={copy.internalAccountEmail}
-                  htmlFor="internal-account-email"
-                >
-                  <input
-                    id="internal-account-email"
-                    required
-                    type="email"
-                    autoComplete="email"
-                    className={inputClass}
-                    value={form.email}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        email: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-                <Field
-                  label={copy.internalAccountRole}
-                  htmlFor="internal-account-role"
-                >
-                  <select
-                    id="internal-account-role"
-                    className={inputClass}
-                    value={form.role}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        role: event.target.value as "ADMIN" | "DOSEN",
-                      }))
-                    }
+              <form onSubmit={submit}>
+                <div className="space-y-4 px-6 py-5">
+                  <Field
+                    label={copy.internalAccountName}
+                    htmlFor="internal-account-name"
                   >
-                    <option value="DOSEN">
-                      {copy.internalAccountRoleDosen}
-                    </option>
-                    <option value="ADMIN">
-                      {copy.internalAccountRoleAdmin}
-                    </option>
-                  </select>
-                </Field>
-                <div className="flex justify-end gap-3">
+                    <input
+                      id="internal-account-name"
+                      required
+                      minLength={2}
+                      autoComplete="name"
+                      className={fieldClass}
+                      value={form.fullName}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          fullName: event.target.value,
+                        }))
+                      }
+                    />
+                  </Field>
+
+                  <Field
+                    label={copy.internalAccountEmail}
+                    htmlFor="internal-account-email"
+                  >
+                    <input
+                      id="internal-account-email"
+                      required
+                      type="email"
+                      autoComplete="email"
+                      className={fieldClass}
+                      value={form.email}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          email: event.target.value,
+                        }))
+                      }
+                    />
+                  </Field>
+
+                  <Field
+                    label={copy.internalAccountRole}
+                    htmlFor="internal-account-role"
+                  >
+                    <CustomSelect
+                      id="internal-account-role"
+                      value={form.role}
+                      onChange={(next) =>
+                        setForm((current) => ({
+                          ...current,
+                          role: next as "ADMIN" | "DOSEN",
+                        }))
+                      }
+                      options={[
+                        {
+                          value: "DOSEN",
+                          label: copy.internalAccountRoleDosen,
+                          description: copy.internalAccountRoleDosenHint,
+                        },
+                        {
+                          value: "ADMIN",
+                          label: copy.internalAccountRoleAdmin,
+                          description: copy.internalAccountRoleAdminHint,
+                        },
+                      ]}
+                      ariaDescribedby="internal-account-role-help"
+                      triggerClassName="min-h-11 rounded-xl border-stone-200 bg-stone-50/70 px-3.5 focus-visible:border-red-700 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-red-700/15"
+                    />
+                    <p
+                      id="internal-account-role-help"
+                      className="mt-1.5 text-xs leading-5 text-stone-500"
+                    >
+                      {form.role === "ADMIN"
+                        ? copy.internalAccountRoleAdminHint
+                        : copy.internalAccountRoleDosenHint}
+                    </p>
+                  </Field>
+
+                  <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3.5">
+                    <span
+                      aria-hidden="true"
+                      className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-600"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-amber-950">
+                        {copy.internalAccountNoticeTitle}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-amber-900/80">
+                        {copy.internalAccountNoticeBody}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 rounded-b-2xl border-t border-stone-200 bg-stone-50 px-6 py-4">
                   <Button
                     type="button"
                     variant="secondary"

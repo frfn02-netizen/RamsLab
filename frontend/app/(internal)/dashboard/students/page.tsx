@@ -18,7 +18,7 @@ import { deleteStudent, getStudentList } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
 import DeleteButton from "@/components/dashboard/delete-button";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 
 const Button = DeleteButton;
 import type { Student, StudentType } from "@/types/modules";
@@ -170,7 +170,7 @@ export default function StudentsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Select
+                <CustomSelect
                   ariaLabel="Category"
                   className="w-full sm:w-[12rem]"
                   value={categoryFilter}
@@ -191,7 +191,7 @@ export default function StudentsPage() {
                     },
                   ]}
                 />
-                <Select
+                <CustomSelect
                   ariaLabel="Visibility"
                   className="w-full sm:w-[9rem]"
                   value={visibilityFilter}

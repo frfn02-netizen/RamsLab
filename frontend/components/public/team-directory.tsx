@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { formatAlumniClassLabel } from "@/lib/alumni-label";
 import { getPublicPeopleList } from "@/lib/api/modules";
 import type { PublicPeopleResponse, PublicPerson } from "@/types/people";
+import CustomSelect from "@/components/ui/custom-select";
 import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
 
@@ -676,17 +677,17 @@ export default function TeamDirectory({
             >
               {t("sortLabel")}
             </label>
-            <select
+            <CustomSelect
               id="people-sort"
+              className="w-[190px]"
               value={sortOrder}
-              onChange={(event) =>
-                setSortOrder(event.target.value as SortOrder)
-              }
-              className="min-h-11 rounded-[6px] border border-[var(--team-border)] bg-white px-3 text-sm font-medium text-[var(--team-text)] outline-none transition focus:border-[var(--team-blue)] focus:ring-2 focus:ring-[var(--team-blue)]/20"
-            >
-              <option value="default">{t("sortDefault")}</option>
-              <option value="name">{t("sortName")}</option>
-            </select>
+              onChange={(next) => setSortOrder(next as SortOrder)}
+              options={[
+                { value: "default", label: t("sortDefault") },
+                { value: "name", label: t("sortName") },
+              ]}
+              triggerClassName="min-h-11 rounded-[6px] border-[var(--team-border)] px-3 font-medium"
+            />
           </div>
         </div>
 

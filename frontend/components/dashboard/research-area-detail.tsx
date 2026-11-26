@@ -28,7 +28,7 @@ import {
   updateResearchArea,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type {
   ResearchArea,
   ResearchAreaInput,
@@ -578,7 +578,7 @@ function ResearchEditForm({
             </p>
             <div className="space-y-5">
               <Field label="Image Fit" htmlFor="research-image-fit">
-                <Select
+                <CustomSelect
                   id="research-image-fit"
                   value={form.imageFit}
                   onChange={(next) =>

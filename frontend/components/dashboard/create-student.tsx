@@ -6,7 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
 import { useToast } from "@/components/providers/toast-providers";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { createStudent, uploadStudentPhoto } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { StudentType } from "@/types/modules";
@@ -104,7 +104,7 @@ export default function CreateStudent() {
               </Field>
 
               <Field label="Directory category" htmlFor="student-category">
-                <Select
+                <CustomSelect
                   id="student-category"
                   value={form.studentType}
                   onChange={(next) =>

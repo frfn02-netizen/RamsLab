@@ -12,9 +12,10 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-export type SelectOption = {
+export type CustomSelectOption = {
   value: string;
   label: string;
+  description?: string;
   disabled?: boolean;
 };
 
@@ -29,12 +30,12 @@ type PanelPosition = {
   placement: "top" | "bottom";
 };
 
-export type SelectProps = {
+export type CustomSelectProps = {
   id?: string;
   name?: string;
   value: string;
   onChange: (value: string) => void;
-  options: SelectOption[];
+  options: CustomSelectOption[];
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
@@ -47,6 +48,7 @@ export type SelectProps = {
   triggerClassName?: string;
   ariaLabel?: string;
   ariaLabelledby?: string;
+  ariaDescribedby?: string;
   emptyMessage?: string;
   searchPlaceholder?: string;
   loadingMessage?: string;
@@ -129,7 +131,7 @@ function ClearIcon({ className = "" }: { className?: string }) {
   );
 }
 
-function filterOptions(options: SelectOption[], query: string) {
+function filterOptions(options: CustomSelectOption[], query: string) {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return options;
   return options.filter((option) =>
@@ -137,18 +139,18 @@ function filterOptions(options: SelectOption[], query: string) {
   );
 }
 
-function firstEnabledIndex(options: SelectOption[]) {
+function firstEnabledIndex(options: CustomSelectOption[]) {
   return options.findIndex((option) => !option.disabled);
 }
 
-function enabledIndexFromEnd(options: SelectOption[]) {
+function enabledIndexFromEnd(options: CustomSelectOption[]) {
   for (let index = options.length - 1; index >= 0; index -= 1) {
     if (!options[index].disabled) return index;
   }
   return -1;
 }
 
-export default function Select({
+export default function CustomSelect({
   id,
   name,
   value,
@@ -166,11 +168,12 @@ export default function Select({
   triggerClassName = "",
   ariaLabel,
   ariaLabelledby,
+  ariaDescribedby,
   emptyMessage = "No results found.",
   searchPlaceholder = "Search…",
   loadingMessage = "Loading…",
   clearLabel = "Clear selection",
-}: SelectProps) {
+}: CustomSelectProps) {
   const generatedId = useId();
   const resolvedId = id ?? generatedId;
   const listboxId = `${resolvedId}-listbox`;
@@ -360,7 +363,7 @@ export default function Select({
   );
 
   const chooseOption = useCallback(
-    (option: SelectOption) => {
+    (option: CustomSelectOption) => {
       if (option.disabled) return;
       onChange(option.value);
       closeMenu(true);
@@ -514,8 +517,11 @@ export default function Select({
         aria-activedescendant={activeDescendant}
         aria-required={required || undefined}
         aria-invalid={invalid || undefined}
-        aria-labelledby={ariaLabelledby ?? `${resolvedId}-label`}
+        aria-labelledby={
+          ariaLabelledby ?? (ariaLabel ? undefined : `${resolvedId}-label`)
+        }
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedby}
         disabled={disabled || loading}
         onClick={() => {
           if (open) closeMenu();
@@ -603,7 +609,10 @@ export default function Select({
             <ul
               id={listboxId}
               role="listbox"
-              aria-labelledby={ariaLabelledby}
+              aria-labelledby={
+                ariaLabelledby ??
+                (ariaLabel ? undefined : `${resolvedId}-label`)
+              }
               aria-label={ariaLabel}
               className="min-h-0 flex-1 list-none overflow-y-auto p-1"
             >
@@ -628,6 +637,7 @@ export default function Select({
                       onMouseMove={() => {
                         if (!option.disabled) setHighlightedIndex(index);
                       }}
+                      aria-label={option.label}
                       onClick={() => chooseOption(option)}
                       className={`flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-150 ${
                         option.disabled
@@ -639,11 +649,15 @@ export default function Select({
                               : "text-[var(--rams-charcoal)]"
                       }`}
                     >
-                      <span
-                        className="min-w-0 flex-1 truncate"
-                        title={option.label}
-                      >
-                        {option.label}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate" title={option.label}>
+                          {option.label}
+                        </span>
+                        {option.description && (
+                          <span className="mt-0.5 block text-xs leading-5 text-[var(--rams-gray)]">
+                            {option.description}
+                          </span>
+                        )}
                       </span>
                       {selected && (
                         <CheckIcon className="h-4 w-4 shrink-0 text-[var(--rams-red)]" />

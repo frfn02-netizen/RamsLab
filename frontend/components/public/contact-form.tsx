@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 
 const topicKeys = [
   "risk",
@@ -99,7 +99,7 @@ export default function ContactForm({
             </label>
             <label className="grid gap-2 text-sm font-semibold text-[var(--navy)]">
               {t("topic")}
-              <Select
+              <CustomSelect
                 name="topic"
                 required
                 size="lg"

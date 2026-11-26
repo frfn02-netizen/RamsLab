@@ -65,14 +65,13 @@ describe("Alumni profile cohort year", () => {
     getMyAlumni.mockResolvedValue(profile);
     render(<AlumniProfile />);
 
-    const program = await screen.findByLabelText("Program *", {
-      selector: "select",
+    const program = await screen.findByRole("combobox", {
+      name: "Program *",
     });
-    expect(program.tagName).toBe("SELECT");
-    expect(program.querySelectorAll("option")).toHaveLength(7);
 
-    fireEvent.click(screen.getByRole("combobox", { name: "Program *" }));
+    fireEvent.click(program);
     const listbox = await screen.findByRole("listbox");
+    expect(within(listbox).getAllByRole("option")).toHaveLength(6);
     expect(
       within(listbox).getByRole("option", {
         name: "S1 TEKNIK SISTEM PERKAPALAN",
@@ -105,15 +104,17 @@ describe("Alumni profile cohort year", () => {
     updateMyAlumni.mockResolvedValue({ ...profile, program: legacyProgram });
     render(<AlumniProfile />);
 
-    const program = await screen.findByLabelText("Program *", {
-      selector: "select",
+    const program = await screen.findByRole("combobox", {
+      name: "Program *",
     });
-    expect(program).toHaveValue(legacyProgram);
-    const legacyOption = Array.from(program.querySelectorAll("option")).find(
-      (option) => option.value === legacyProgram,
-    );
-    expect(legacyOption?.textContent).toBe(`${legacyProgram} (legacy program)`);
-    expect(legacyOption?.hasAttribute("disabled")).toBe(true);
+    expect(program).toHaveTextContent(`${legacyProgram} (legacy program)`);
+
+    fireEvent.click(program);
+    const legacyOption = screen.getByRole("option", {
+      name: `${legacyProgram} (legacy program)`,
+    });
+    expect(legacyOption).toHaveAttribute("aria-disabled", "true");
+    fireEvent.keyDown(program, { key: "Escape" });
 
     fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
     await waitFor(() => expect(updateMyAlumni).toHaveBeenCalledOnce());
@@ -127,11 +128,13 @@ describe("Alumni profile cohort year", () => {
     updateMyAlumni.mockResolvedValueOnce({ ...profile, program: replacement });
 
     const firstView = render(<AlumniProfile />);
-    const program = await screen.findByLabelText("Program *", {
-      selector: "select",
+    const program = await screen.findByRole("combobox", {
+      name: "Program *",
     });
-    expect(program).toHaveValue(legacyProgram);
-    fireEvent.change(program, { target: { value: replacement } });
+    expect(program).toHaveTextContent(`${legacyProgram} (legacy program)`);
+
+    fireEvent.click(program);
+    fireEvent.click(screen.getByRole("option", { name: replacement }));
     fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
 
     await waitFor(() =>
@@ -139,15 +142,15 @@ describe("Alumni profile cohort year", () => {
         expect.objectContaining({ program: replacement }),
       ),
     );
-    await waitFor(() => expect(program).toHaveValue(replacement));
+    await waitFor(() => expect(program).toHaveTextContent(replacement));
 
     firstView.unmount();
     getMyAlumni.mockResolvedValueOnce({ ...profile, program: replacement });
     render(<AlumniProfile />);
 
     expect(
-      await screen.findByLabelText("Program *", { selector: "select" }),
-    ).toHaveValue(replacement);
+      await screen.findByRole("combobox", { name: "Program *" }),
+    ).toHaveTextContent(replacement);
   });
 
   it("does not render an editable Angkatan (P) field", async () => {

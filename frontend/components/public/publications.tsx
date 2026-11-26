@@ -16,7 +16,7 @@ import {
   type SortOrder,
 } from "@/lib/public/publication-filters";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type { Publication, PublicationFacets } from "@/types/modules";
 import PublicContainer from "./public-container";
 import { PublicError, PublicLoading } from "./public-states";
@@ -73,7 +73,7 @@ function PublicationFiltersPanel({
         <label htmlFor={`${prefix}-year`} className={FILTER_LABEL}>
           {t("year")}
         </label>
-        <Select
+        <CustomSelect
           id={`${prefix}-year`}
           ariaLabel={t("year")}
           className="mt-2.5"
@@ -575,7 +575,7 @@ export default function Publications({
             <div className="flex items-center justify-end gap-4 border-b border-[var(--border)] pb-4">
               <label className="flex items-center gap-2 text-sm text-[var(--gray)]">
                 {t("sort")}
-                <Select
+                <CustomSelect
                   ariaLabel={t("sort")}
                   className="w-[8.5rem] shrink-0"
                   size="sm"

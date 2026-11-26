@@ -20,7 +20,7 @@ import {
   updatePublicServiceExpert,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type { PeopleRefKind, PublicServiceExpertInput } from "@/types/modules";
 import type { PublicPerson } from "@/types/people";
 
@@ -143,7 +143,7 @@ export default function ExpertForm({ id }: { id?: string }) {
         <Card className="p-6">
           <form onSubmit={submit} className="space-y-7">
             <Field label="Existing People profile" htmlFor={peopleSelectId}>
-              <Select
+              <CustomSelect
                 id={peopleSelectId}
                 value={form.peopleKey}
                 onChange={(next) => update("peopleKey", next)}

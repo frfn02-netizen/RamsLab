@@ -31,7 +31,7 @@ import {
   uploadPublicationPdf,
 } from "@/lib/api/modules";
 import { canManagePublication, hasPermission } from "@/lib/authz";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { PUBLICATION_TYPES, type Publication } from "@/types/modules";
 
 type FormState = {
@@ -441,7 +441,7 @@ export default function PublicationForm({ id }: { id?: string }) {
               htmlFor="publication-type"
               error={errors.publicationType}
             >
-              <Select
+              <CustomSelect
                 id="publication-type"
                 required
                 value={form.publicationType}

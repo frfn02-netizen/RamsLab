@@ -27,7 +27,7 @@ import {
   isAlumniProgram,
 } from "@/lib/alumni-program-options";
 import type { Alumni, AlumniStatus } from "@/types/alumni";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 
 const statuses: AlumniStatus[] = [
   "WORKING",
@@ -373,7 +373,7 @@ export default function AlumniProfile() {
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <Field label="Program *" htmlFor="program">
-                      <Select
+                      <CustomSelect
                         id="program"
                         required
                         placeholder="Select program"
@@ -429,7 +429,7 @@ export default function AlumniProfile() {
                       />
                     </Field>
                     <Field label="Status *" htmlFor="currentStatus">
-                      <Select
+                      <CustomSelect
                         id="currentStatus"
                         required
                         placeholder="Select status"

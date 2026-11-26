@@ -11,7 +11,7 @@ import type {
   PublicServiceProjectFacets,
   PublicServiceProjectListResponse,
 } from "@/types/modules";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import PageHero from "../page-hero";
 import PublicContainer from "../public-container";
 
@@ -357,7 +357,7 @@ function ProjectsSection({
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full rounded-md border border-[var(--border)] bg-white px-4 py-2.5 text-sm text-[var(--navy)] outline-none transition placeholder:text-[var(--gray)] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-red-100 sm:max-w-xs"
           />
-          <Select
+          <CustomSelect
             ariaLabel={t("projectsSort")}
             className="w-full sm:w-[10rem] sm:shrink-0"
             size="lg"
@@ -375,7 +375,7 @@ function ProjectsSection({
 
         <div className="flex flex-wrap gap-3">
           {facets && facets.yearGroups.length > 0 && (
-            <Select
+            <CustomSelect
               ariaLabel={t("projectsFilterYear")}
               className="w-full sm:w-[10rem]"
               size="lg"
@@ -394,7 +394,7 @@ function ProjectsSection({
             />
           )}
           {facets && facets.clients.length > 0 && (
-            <Select
+            <CustomSelect
               ariaLabel={t("projectsFilterClient")}
               className="w-full sm:w-[14rem]"
               size="lg"

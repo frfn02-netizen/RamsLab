@@ -19,7 +19,7 @@ import {
 } from "@/lib/api/modules";
 import { useToast } from "@/components/providers/toast-providers";
 import { getUserFacingError } from "@/lib/api/errors";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type { PublicServiceProject } from "@/types/modules";
 
 export default function PublicServiceAdminPage() {
@@ -141,7 +141,7 @@ export default function PublicServiceAdminPage() {
                     <label htmlFor="admin-ps-year" className="sr-only">
                       Filter by year
                     </label>
-                    <Select
+                    <CustomSelect
                       id="admin-ps-year"
                       ariaLabel="Filter by year"
                       className="w-full sm:w-[11rem] sm:shrink-0"

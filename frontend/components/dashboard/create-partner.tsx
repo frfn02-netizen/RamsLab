@@ -7,7 +7,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useToast } from "@/components/providers/toast-providers";
 import { Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
 import { createPartner, uploadPartnerLogo } from "@/lib/api/modules";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { PartnerType } from "@/types/modules";
 
@@ -200,7 +200,7 @@ export default function CreatePartner() {
               </Field>
 
               <Field label="Type" htmlFor="partner-type">
-                <Select
+                <CustomSelect
                   id="partner-type"
                   value={type}
                   onChange={(next) => setType(next as PartnerType)}

@@ -13,13 +13,39 @@ vi.mock("@/components/providers/toast-providers", () => ({
   useToast: () => ({ success: vi.fn(), error: notifyError }),
 }));
 
+const clipboardWrite = vi.fn().mockResolvedValue(undefined);
+
+function openModal() {
+  render(<AddInternalAccount />);
+  fireEvent.click(screen.getByRole("button", { name: "Add internal account" }));
+}
+
+function chooseRole(option: string) {
+  fireEvent.click(screen.getByRole("combobox", { name: "Role" }));
+  fireEvent.click(screen.getByRole("option", { name: option }));
+}
+
+function fillRequiredFields() {
+  fireEvent.change(screen.getByLabelText("Full name"), {
+    target: { value: "Lab Staff" },
+  });
+  fireEvent.change(screen.getByLabelText("Email"), {
+    target: { value: "lab@test.local" },
+  });
+}
+
 beforeEach(() => {
   createInternalAccount.mockReset();
   notifyError.mockReset();
+  clipboardWrite.mockClear();
+  Object.defineProperty(navigator, "clipboard", {
+    value: { writeText: clipboardWrite },
+    configurable: true,
+  });
 });
 
 describe("add internal account", () => {
-  it("creates a standalone account and shows the one-time password", async () => {
+  it("creates a standalone account through the custom role dropdown", async () => {
     createInternalAccount.mockResolvedValue({
       id: "user-1",
       displayName: "Lab Staff",
@@ -30,20 +56,16 @@ describe("add internal account", () => {
       temporaryPassword: "OneTimePass123!",
     });
 
-    render(<AddInternalAccount />);
+    openModal();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add internal account" }),
+    expect(screen.getByRole("combobox", { name: "Role" })).toHaveTextContent(
+      "Lecturer (DOSEN)",
     );
-    fireEvent.change(screen.getByLabelText("Full name"), {
-      target: { value: "Lab Staff" },
-    });
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "lab@test.local" },
-    });
-    fireEvent.change(screen.getByLabelText("Role"), {
-      target: { value: "ADMIN" },
-    });
+    fillRequiredFields();
+    chooseRole("Admin (ADMIN)");
+    expect(screen.getByRole("combobox", { name: "Role" })).toHaveTextContent(
+      "Admin (ADMIN)",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() =>
@@ -57,10 +79,17 @@ describe("add internal account", () => {
       role: "ADMIN",
     });
     expect(screen.getByText("OneTimePass123!")).toBeInTheDocument();
+    expect(screen.getByText(/email address/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/No onboarding email is sent\./),
+      screen.getByText(/cannot be retrieved again after you close/i),
     ).toBeInTheDocument();
     expect(notifyError).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy password" }));
+    await waitFor(() => expect(clipboardWrite).toHaveBeenCalledWith("OneTimePass123!"));
+    expect(
+      screen.getByRole("button", { name: "Copied" }),
+    ).toBeInTheDocument();
   });
 
   it("reports API errors without closing the form", async () => {
@@ -68,21 +97,37 @@ describe("add internal account", () => {
       response: { data: { message: "Email is already registered" } },
     });
 
-    render(<AddInternalAccount />);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add internal account" }),
-    );
-    fireEvent.change(screen.getByLabelText("Full name"), {
-      target: { value: "Duplicate" },
-    });
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "lab@test.local" },
-    });
+    openModal();
+    fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() => expect(notifyError).toHaveBeenCalled());
     expect(
       screen.getByRole("button", { name: "Create account" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("closes the role dropdown before the dialog on Escape", async () => {
+    openModal();
+    const role = screen.getByRole("combobox", { name: "Role" });
+    fireEvent.click(role);
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    fireEvent.keyDown(role, { key: "Escape" });
+
+    await waitFor(() =>
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("closes with Escape", () => {
+    openModal();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

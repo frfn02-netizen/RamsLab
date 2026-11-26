@@ -94,11 +94,9 @@ describe("AlumniProfile – save notifications", () => {
     fireEvent.change(screen.getByLabelText(/full name/i), {
       target: { value: "New Alumni" },
     });
-    fireEvent.change(
-      screen.getByLabelText(/program/i, { selector: "select" }),
-      {
-        target: { value: "S1 TEKNIK SISTEM PERKAPALAN" },
-      },
+    fireEvent.click(screen.getByRole("combobox", { name: /program/i }));
+    fireEvent.click(
+      screen.getByRole("option", { name: "S1 TEKNIK SISTEM PERKAPALAN" }),
     );
     fireEvent.change(screen.getByLabelText(/nim/i), {
       target: { value: "NIM-NEW" },
@@ -106,9 +104,8 @@ describe("AlumniProfile – save notifications", () => {
     fireEvent.change(screen.getByLabelText("Tahun Angkatan"), {
       target: { value: "2015" },
     });
-    fireEvent.change(screen.getByLabelText(/status/i, { selector: "select" }), {
-      target: { value: "WORKING" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: /status/i }));
+    fireEvent.click(screen.getByRole("option", { name: "Working" }));
 
     fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
 

@@ -7,6 +7,7 @@ import { useAuth } from "@/components/providers/auth-providers";
 import { useToast } from "@/components/providers/toast-providers";
 import { Initials } from "@/components/meetings-workspace/day-chip";
 import { Badge, Button, ErrorState, Field, inputClass } from "@/components/ui";
+import CustomSelect from "@/components/ui/custom-select";
 import { FormSkeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import {
@@ -548,7 +549,6 @@ export default function MeetingForm({
     id && initialFormState && !initialFormState.mode,
   );
   const clientNameRequired = !id || Boolean(initialFormState?.clientName);
-  const modeRequired = !id || Boolean(initialFormState?.mode);
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -585,13 +585,10 @@ export default function MeetingForm({
 
             <div className="mt-5 grid gap-5 sm:grid-cols-2">
               <Field label="Primary PIC" htmlFor="meeting-primary-pic">
-                <select
+                <CustomSelect
                   id="meeting-primary-pic"
-                  required={!id || Boolean(initialFormState?.primaryPicId)}
-                  className={`${inputClass} cursor-pointer`}
                   value={form.primaryPicId}
-                  onChange={(event) => {
-                    const primaryPicId = event.target.value;
+                  onChange={(primaryPicId) => {
                     setForm((current) => ({
                       ...current,
                       primaryPicId,
@@ -600,15 +597,13 @@ export default function MeetingForm({
                       ),
                     }));
                   }}
-                  aria-describedby="meeting-primary-pic-help"
-                >
-                  <option value="">Select primary PIC</option>
-                  {picDirectory.map((entry) => (
-                    <option key={entry.id} value={entry.id}>
-                      {directoryDisplayName(entry)} ({entry.role})
-                    </option>
-                  ))}
-                </select>
+                  options={picDirectory.map((entry) => ({
+                    value: entry.id,
+                    label: `${directoryDisplayName(entry)} (${entry.role})`,
+                  }))}
+                  placeholder="Select primary PIC"
+                  ariaDescribedby="meeting-primary-pic-help"
+                />
                 <p
                   id="meeting-primary-pic-help"
                   className="mt-1.5 text-xs leading-5 text-[#6B6A64]"
@@ -738,21 +733,20 @@ export default function MeetingForm({
               </Field>
 
               <Field label="Visibility" htmlFor="meeting-visibility">
-                <select
+                <CustomSelect
                   id="meeting-visibility"
-                  className={`${inputClass} cursor-pointer`}
                   value={form.visibility}
-                  aria-describedby="meeting-visibility-help"
-                  onChange={(event) =>
-                    update(
-                      "visibility",
-                      event.target.value as MeetingVisibility,
-                    )
+                  ariaDescribedby="meeting-visibility-help"
+                  onChange={(next) =>
+                    update("visibility", next as MeetingVisibility)
                   }
-                >
-                  <option value="INTERNAL">Internal calendar</option>
-                  {canCreatePrivate && <option value="PRIVATE">Private</option>}
-                </select>
+                  options={[
+                    { value: "INTERNAL", label: "Internal calendar" },
+                    ...(canCreatePrivate
+                      ? [{ value: "PRIVATE", label: "Private" }]
+                      : []),
+                  ]}
+                />
                 <p
                   id="meeting-visibility-help"
                   className="mt-1.5 text-xs leading-5 text-[#6B6A64]"
@@ -764,24 +758,28 @@ export default function MeetingForm({
               </Field>
 
               <Field label="Mode" htmlFor="meeting-mode">
-                <select
+                <CustomSelect
                   id="meeting-mode"
-                  required={modeRequired}
-                  className={`${inputClass} cursor-pointer`}
                   value={form.mode}
-                  aria-describedby="meeting-mode-help"
-                  onChange={(event) =>
-                    update("mode", event.target.value as MeetingMode | "")
+                  ariaDescribedby="meeting-mode-help"
+                  onChange={(next) =>
+                    update("mode", next as MeetingMode | "")
                   }
-                >
-                  {!id || allowLegacyMode ? (
-                    <option value="">
-                      {id ? "Not specified (legacy)" : "Select mode"}
-                    </option>
-                  ) : null}
-                  <option value="OFFLINE">Offline</option>
-                  <option value="ONLINE">Online</option>
-                </select>
+                  options={[
+                    ...(!id || allowLegacyMode
+                      ? [
+                          {
+                            value: "",
+                            label: id
+                              ? "Not specified (legacy)"
+                              : "Select mode",
+                          },
+                        ]
+                      : []),
+                    { value: "OFFLINE", label: "Offline" },
+                    { value: "ONLINE", label: "Online" },
+                  ]}
+                />
                 <p
                   id="meeting-mode-help"
                   className="mt-1.5 text-xs leading-5 text-[#6B6A64]"

@@ -102,6 +102,11 @@ function makeMeeting(overrides: Partial<Meeting> = {}): Meeting {
   };
 }
 
+function selectOption(label: string, option: string | RegExp) {
+  fireEvent.click(screen.getByRole("combobox", { name: label }));
+  fireEvent.click(screen.getByRole("option", { name: option }));
+}
+
 const attachment = {
   id: "att-1",
   url: "https://res.cloudinary.com/test/agenda.pdf",
@@ -184,10 +189,10 @@ describe("workspace create meeting page", () => {
       }),
     );
     await screen.findByRole("heading", { name: "Schedule meeting" });
-    expect(screen.getByLabelText("Visibility")).toHaveValue("INTERNAL");
-    fireEvent.change(screen.getByLabelText("Primary PIC"), {
-      target: { value: "user-2" },
-    });
+    expect(screen.getByRole("combobox", { name: "Visibility" })).toHaveTextContent(
+      "Internal calendar",
+    );
+    selectOption("Primary PIC", /^other \(DOSEN\)$/);
     fireEvent.click(
       screen.getByRole("checkbox", {
         name: "Additional PIC: third@example.com",
@@ -205,9 +210,7 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("Client or organization"), {
       target: { value: "Planning Client" },
     });
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "OFFLINE" },
-    });
+    selectOption("Mode", "Offline");
     fireEvent.change(screen.getByLabelText("Physical location"), {
       target: { value: "Planning Room" },
     });
@@ -220,9 +223,7 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("End time"), {
       target: { value: "10:00" },
     });
-    fireEvent.change(screen.getByLabelText("Visibility"), {
-      target: { value: "PRIVATE" },
-    });
+    selectOption("Visibility", "Private");
 
     const file = new File(["%PDF-1.4"], "agenda.pdf", {
       type: "application/pdf",
@@ -264,9 +265,7 @@ describe("workspace create meeting page", () => {
       }),
     );
     await screen.findByRole("heading", { name: "Schedule meeting" });
-    fireEvent.change(screen.getByLabelText("Primary PIC"), {
-      target: { value: "user-2" },
-    });
+    selectOption("Primary PIC", /^other \(DOSEN\)$/);
 
     fireEvent.change(screen.getByLabelText("Title"), {
       target: { value: "Online sync" },
@@ -274,9 +273,7 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("Client or organization"), {
       target: { value: "Online Client" },
     });
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "ONLINE" },
-    });
+    selectOption("Mode", "Online");
     fireEvent.change(screen.getByLabelText("Meeting Link"), {
       target: { value: "https://meet.google.com/online-sync" },
     });
@@ -311,9 +308,7 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("Title"), {
       target: { value: "Missing client" },
     });
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "OFFLINE" },
-    });
+    selectOption("Mode", "Offline");
     fireEvent.change(screen.getByLabelText("Physical location"), {
       target: { value: "Room" },
     });
@@ -345,9 +340,7 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("Client or organization"), {
       target: { value: "Client" },
     });
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "OFFLINE" },
-    });
+    selectOption("Mode", "Offline");
     fireEvent.change(screen.getByLabelText("Start time"), {
       target: { value: "09:00" },
     });
@@ -376,9 +369,7 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("Client or organization"), {
       target: { value: "Client" },
     });
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "ONLINE" },
-    });
+    selectOption("Mode", "Online");
     fireEvent.change(screen.getByLabelText("Start time"), {
       target: { value: "09:00" },
     });
@@ -407,9 +398,7 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("Client or organization"), {
       target: { value: "Client" },
     });
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "ONLINE" },
-    });
+    selectOption("Mode", "Online");
     fireEvent.change(screen.getByLabelText("Meeting Link"), {
       target: { value: "ftp://example.com/meeting" },
     });
@@ -442,17 +431,13 @@ describe("workspace create meeting page", () => {
       screen.getByLabelText("Meeting Link (optional)"),
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "OFFLINE" },
-    });
+    selectOption("Mode", "Offline");
     expect(screen.getByLabelText("Physical location")).toBeInTheDocument();
     expect(
       screen.getByLabelText("Meeting Link (optional)"),
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "ONLINE" },
-    });
+    selectOption("Mode", "Online");
     expect(
       screen.queryByLabelText("Physical location"),
     ).not.toBeInTheDocument();
@@ -536,7 +521,9 @@ describe("workspace edit meeting page", () => {
     expect(screen.getByLabelText("Client or organization")).toHaveValue(
       "RAMS Test Client",
     );
-    expect(screen.getByLabelText("Mode")).toHaveValue("OFFLINE");
+    expect(screen.getByRole("combobox", { name: "Mode" })).toHaveTextContent(
+      "Offline",
+    );
     expect(screen.getByLabelText("Physical location")).toHaveValue(
       "RAMS Meeting Room",
     );
@@ -698,7 +685,9 @@ describe("workspace edit meeting page", () => {
     render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
-    expect(screen.getByLabelText("Mode")).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Mode" })).toHaveTextContent(
+      "Not specified (legacy)",
+    );
     expect(screen.getByLabelText("Client or organization")).toHaveValue("");
     expect(
       screen.queryByLabelText("Physical location"),
@@ -746,9 +735,7 @@ describe("workspace edit meeting page", () => {
     render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
-    fireEvent.change(screen.getByLabelText("Mode"), {
-      target: { value: "OFFLINE" },
-    });
+    selectOption("Mode", "Offline");
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(state.notifyError).toHaveBeenCalledWith(

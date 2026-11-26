@@ -22,7 +22,7 @@ import {
   deleteTracking,
   getTrackingByAlumniId,
 } from "@/lib/api/modules";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type { Alumni } from "@/types/alumni";
 import type { AlumniTracking, TrackingType } from "@/types/modules";
 
@@ -152,7 +152,7 @@ export default function TrackingPage({ alumniId }: { alumniId: string }) {
               className="mt-5 grid gap-5 sm:grid-cols-2"
             >
               <Field label="Type" htmlFor="tracking-type">
-                <Select
+                <CustomSelect
                   id="tracking-type"
                   value={form.type}
                   onChange={(next) =>

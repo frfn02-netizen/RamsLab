@@ -28,7 +28,7 @@ import {
   uploadResearchHighlightImage,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type {
   Publication,
   ResearchHighlight,
@@ -236,7 +236,7 @@ export default function ResearchHighlightForm({ id }: { id?: string }) {
                 htmlFor="research-highlight-publication"
                 error={errors.publicationId}
               >
-                <Select
+                <CustomSelect
                   id="research-highlight-publication"
                   value={form.publicationId}
                   onChange={(next) => update("publicationId", next)}

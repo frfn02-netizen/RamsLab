@@ -15,7 +15,7 @@ import {
 } from "@/components/ui";
 import { DetailSkeleton } from "@/components/skeletons";
 import ProfilePhotoField from "@/components/dashboard/profile-photo-field";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import {
   deleteStudent,
   getStudentById,
@@ -215,7 +215,7 @@ export default function StudentDetail({ id }: { id: string }) {
                   label="Directory category"
                   htmlFor="student-detail-category"
                 >
-                  <Select
+                  <CustomSelect
                     id="student-detail-category"
                     value={form.studentType}
                     onChange={(next) =>

@@ -8,6 +8,7 @@ import MeetingHighlightBadge from "@/components/meetings-workspace/meeting-highl
 import MeetingModeBadge from "@/components/meetings-workspace/meeting-mode-badge";
 import { SkeletonLines } from "@/components/skeletons";
 import { ErrorState } from "@/components/ui";
+import CustomSelect from "@/components/ui/custom-select";
 import { getUserFacingError } from "@/lib/api/errors";
 import { getMeetings } from "@/lib/api/meetings";
 import { assetPath } from "@/lib/asset-path";
@@ -744,28 +745,25 @@ export default function MyMeetings({
                       className="h-11 w-full rounded-xl border border-[#DED6CD] bg-white pl-11 pr-4 text-sm text-[#24262B] outline-none transition placeholder:text-[#77736D] focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[#F9D9D5]"
                     />
                   </label>
-                  <label className="relative block sm:w-[156px]">
-                    <span className="sr-only">Meeting time filter</span>
+                  <div className="relative block w-full sm:w-[156px]">
                     <Icon
                       path={ICONS.filter}
-                      className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#55534F]"
+                      className="pointer-events-none absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-[#55534F]"
                     />
-                    <select
+                    <CustomSelect
+                      ariaLabel="Meeting time filter"
                       value={timeFilter}
-                      onChange={(event) =>
-                        setTimeFilter(event.target.value as TimeFilter)
+                      onChange={(next) =>
+                        setTimeFilter(next as TimeFilter)
                       }
-                      aria-label="Meeting time filter"
-                      className="h-11 w-full appearance-none rounded-xl border border-[#DED6CD] bg-white pl-11 pr-9 text-sm font-medium text-[#24262B] outline-none transition focus:border-[var(--rams-red)] focus:ring-2 focus:ring-[#F9D9D5]"
-                    >
-                      <option value="all">All time</option>
-                      <option value="month">This month</option>
-                      <option value="next30">Next 30 days</option>
-                    </select>
-                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#55534F]">
-                      ⌄
-                    </span>
-                  </label>
+                      options={[
+                        { value: "all", label: "All time" },
+                        { value: "month", label: "This month" },
+                        { value: "next30", label: "Next 30 days" },
+                      ]}
+                      triggerClassName="min-h-11 rounded-xl pl-11"
+                    />
+                  </div>
                 </div>
               </div>
             </section>

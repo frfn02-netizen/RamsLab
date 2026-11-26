@@ -18,7 +18,7 @@ import { ProfileCardsSkeleton } from "@/components/skeletons";
 import AddInternalAccount from "@/components/dashboard/add-internal-account";
 import DeleteButton from "@/components/dashboard/delete-button";
 import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { deleteDosen, getDosenList } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
 import type { Dosen } from "@/types/modules";
@@ -304,7 +304,7 @@ export default function DosenPage() {
                   <label htmlFor="dosen-page-size" className="sr-only">
                     Dosen per page
                   </label>
-                  <Select
+                  <CustomSelect
                     id="dosen-page-size"
                     ariaLabel="Dosen per page"
                     className="w-[8.5rem]"

@@ -423,9 +423,8 @@ describe("People directory – sorting", () => {
     await renderDirectory();
     expect(cardNames()).toEqual(["Zara Rahman", "Amir Kusuma"]);
 
-    fireEvent.change(screen.getByLabelText("Sort"), {
-      target: { value: "name" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: "Sort" }));
+    fireEvent.click(screen.getByRole("option", { name: "Name (A-Z)" }));
 
     expect(cardNames()).toEqual(["Amir Kusuma", "Zara Rahman"]);
   });

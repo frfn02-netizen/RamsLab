@@ -23,7 +23,7 @@ import {
   updateAlumni,
 } from "@/lib/api/alumni";
 import { getTrackingByAlumniId } from "@/lib/api/modules";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { getUserFacingError } from "@/lib/api/errors";
 import { formatAlumniClassLabel } from "@/lib/alumni-label";
 import { isCohortYearInputConstrained } from "@/lib/alumni-angkatan-suggestion";
@@ -421,7 +421,7 @@ export default function AlumniDetail({ id }: { id: string }) {
                 </Field>
 
                 <Field label="Status" htmlFor="alumni-detail-status">
-                  <Select
+                  <CustomSelect
                     id="alumni-detail-status"
                     value={form.currentStatus}
                     onChange={(next) =>

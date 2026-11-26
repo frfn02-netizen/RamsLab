@@ -19,7 +19,7 @@ import {
   updatePublicServiceProject,
 } from "@/lib/api/modules";
 import { getUserFacingError } from "@/lib/api/errors";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type { PublicServiceProjectInput } from "@/types/modules";
 
 const YEAR_GROUP_OPTIONS = [
@@ -187,7 +187,7 @@ export default function ProjectForm({ id }: { id?: string }) {
               htmlFor="yearGroup"
               error={errors.yearGroup}
             >
-              <Select
+              <CustomSelect
                 id="yearGroup"
                 value={form.yearGroup}
                 onChange={(next) => updateField("yearGroup", next)}

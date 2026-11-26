@@ -27,7 +27,7 @@ import {
   normalizeAuthorName,
 } from "@/lib/publication-author-match";
 import { dosenCopy } from "@/lib/dosen-copy";
-import Select from "@/components/select";
+import CustomSelect from "@/components/ui/custom-select";
 import type { Dosen, DosenEducation, Publication } from "@/types/modules";
 
 type FormState = {
@@ -247,7 +247,7 @@ function DosenPublicationsSection({
               </p>
             </>
           ) : (
-            <Select
+            <CustomSelect
               ariaLabel="Add publication"
               value=""
               onChange={(publicationId) => addPublication(publicationId)}
