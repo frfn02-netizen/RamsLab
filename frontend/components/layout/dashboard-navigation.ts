@@ -39,9 +39,7 @@ export const dashboardNavigationGroups: readonly DashboardNavGroup[] = [
       ["Lecturers", "/dashboard/dosen", "lecturers"],
       ["Experts", "/dashboard/experts", "experts"],
       ["Students", "/dashboard/students", "students"],
-      ["Agenda coordinators", "/dashboard/agenda-coordinators", "meetings"],
       ["Alumni", "/dashboard/alumni", "alumni"],
-      ["Lab Members", "/dashboard/lab-memberships", "lab-members"],
     ],
   },
   {

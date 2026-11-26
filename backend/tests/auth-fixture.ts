@@ -7,7 +7,6 @@ import type { User } from "../src/modules/users/user.types.js";
 export const TEST_ADMIN_USER_ID = "00000000000000000000a001";
 export const TEST_DOSEN_USER_ID = "00000000000000000000a002";
 export const TEST_ALUMNI_USER_ID = "00000000000000000000a003";
-export const TEST_STUDENT_USER_ID = "00000000000000000000a004";
 
 export type UserFixtureSnapshot = {
   id: ObjectId;
@@ -110,7 +109,7 @@ export async function ensureTestUsers() {
 
 export function signTestToken(
   userId: string,
-  role: "ADMIN" | "DOSEN" | "STUDENT" | "ALUMNI",
+  role: "ADMIN" | "DOSEN" | "ALUMNI",
 ) {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is required for tests");
@@ -125,7 +124,7 @@ export async function ensurePasswordUser(input: {
   id: string;
   email: string;
   password: string;
-  role: "ADMIN" | "DOSEN" | "STUDENT" | "ALUMNI";
+  role: "ADMIN" | "DOSEN" | "ALUMNI";
   isActive?: boolean;
   mustChangePassword?: boolean;
   tokenVersion?: number;

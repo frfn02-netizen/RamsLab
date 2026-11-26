@@ -1,9 +1,4 @@
-export type UserRole = "ADMIN" | "DOSEN" | "STUDENT" | "ALUMNI";
-
-export interface LabMembershipSummary {
-  labId: string;
-  status: "ACTIVE" | "INACTIVE";
-}
+export type UserRole = "ADMIN" | "DOSEN" | "ALUMNI";
 
 export interface AuthUser {
   id: string;
@@ -13,7 +8,6 @@ export interface AuthUser {
   isActive: boolean;
   permissions?: string[];
   mustChangePassword?: boolean;
-  labMembership?: LabMembershipSummary | null;
 }
 
 export interface LoginInput {
@@ -31,14 +25,6 @@ export interface RegisterInput {
 
 export interface LoginResponse {
   user: AuthUser;
-}
-
-export interface ManagedAccount {
-  id: string;
-  email: string;
-  role: UserRole;
-  isActive: boolean;
-  temporaryPassword?: string;
 }
 
 export interface AdminPasswordResetResult {

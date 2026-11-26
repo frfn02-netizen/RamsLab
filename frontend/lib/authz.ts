@@ -2,7 +2,7 @@ import type { AuthUser, UserRole } from "@/types/auth";
 
 /**
  * Keep authorization decisions named and centralized. Persisted grants are
- * additive to role defaults, except for grant-only permissions.
+ * additive to role defaults.
  */
 export const PERMISSIONS = {
   DASHBOARD_READ: "dashboard.read",
@@ -11,8 +11,6 @@ export const PERMISSIONS = {
   MEETINGS_CREATE: "meetings.create",
   MEETINGS_MANAGE_OWN: "meetings.manage-own",
   MEETINGS_DIRECTORY_READ: "meetings.directory.read",
-  AGENDA_MANAGE: "agenda.manage",
-  SCHEDULE_PORTAL_ACCESS: "schedule.portal.access",
   PUBLICATION_READ: "publication.read",
   PUBLICATION_CREATE: "publication.create",
   PUBLICATION_UPDATE: "publication.update",
@@ -22,15 +20,8 @@ export const PERMISSIONS = {
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 export type AdminPermission = Permission;
 
-const GRANT_ONLY_PERMISSIONS = new Set<Permission>([
-  PERMISSIONS.AGENDA_MANAGE,
-  PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-]);
-
 const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
-  ADMIN: Object.values(PERMISSIONS).filter(
-    (permission) => !GRANT_ONLY_PERMISSIONS.has(permission),
-  ),
+  ADMIN: Object.values(PERMISSIONS),
   DOSEN: [
     PERMISSIONS.MEETINGS_ACCESS,
     PERMISSIONS.MEETINGS_READ,
@@ -38,7 +29,6 @@ const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     PERMISSIONS.MEETINGS_MANAGE_OWN,
     PERMISSIONS.MEETINGS_DIRECTORY_READ,
   ],
-  STUDENT: [],
   ALUMNI: [],
 };
 
@@ -48,25 +38,12 @@ export function hasPermission(
   grantedPermissions: readonly string[] = [],
 ) {
   if (!role) return false;
-  const granted = new Set(grantedPermissions);
-  if (GRANT_ONLY_PERMISSIONS.has(permission)) {
-    return granted.has(permission);
-  }
-  return (
-    granted.has(permission) ||
-    ROLE_PERMISSIONS[role]?.includes(permission) === true
-  );
-}
-
-export function canAccessSchedulePortal(
-  role: UserRole | undefined,
-  grantedPermissions: readonly string[] = [],
-) {
-  return hasPermission(role, PERMISSIONS.SCHEDULE_PORTAL_ACCESS, grantedPermissions);
+  if (grantedPermissions.includes(permission)) return true;
+  return ROLE_PERMISSIONS[role]?.includes(permission) === true;
 }
 
 function isInternalRole(role: UserRole | undefined) {
-  return role === "ADMIN" || role === "DOSEN" || role === "STUDENT";
+  return role === "ADMIN" || role === "DOSEN";
 }
 
 export function canViewMeetingsAgenda(role: UserRole | undefined) {
@@ -77,41 +54,12 @@ export function canAccessMeetingsWorkspace(role: UserRole | undefined) {
   return isInternalRole(role);
 }
 
-export function canManageSharedAgenda(
-  role: UserRole | undefined,
-  grantedPermissions: readonly string[] = [],
-) {
-  return (
-    role === "ADMIN" ||
-    (isInternalRole(role) &&
-      hasPermission(role, PERMISSIONS.AGENDA_MANAGE, grantedPermissions))
-  );
+export function canManageOwnMeetings(role: UserRole | undefined) {
+  return role === "ADMIN" || role === "DOSEN";
 }
 
-export function canManageOwnMeetings(
-  role: UserRole | undefined,
-  grantedPermissions: readonly string[] = [],
-) {
-  return (
-    role === "ADMIN" ||
-    role === "DOSEN" ||
-    hasPermission(
-      role,
-      PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-      grantedPermissions,
-    )
-  );
-}
-
-export function canCreateMeetings(
-  role: UserRole | undefined,
-  grantedPermissions: readonly string[] = [],
-) {
-  return (
-    role === "ADMIN" ||
-    role === "DOSEN" ||
-    canManageSharedAgenda(role, grantedPermissions)
-  );
+export function canCreateMeetings(role: UserRole | undefined) {
+  return role === "ADMIN" || role === "DOSEN";
 }
 
 function normalizePath(pathname: string) {
@@ -158,9 +106,6 @@ export function canAccessAuthenticatedPath(
   grantedPermissions: readonly string[] = [],
 ) {
   if (canAccessDashboardPath(role, pathname, grantedPermissions)) return true;
-  if (hasPathPrefix(pathname, "/schedule")) {
-    return canAccessSchedulePortal(role, grantedPermissions);
-  }
   if (hasPathPrefix(pathname, "/meetings")) {
     return canAccessMeetingsWorkspace(role);
   }
@@ -169,17 +114,6 @@ export function canAccessAuthenticatedPath(
 
 export function defaultAuthenticatedDestination(account: AuthUser) {
   if (account.mustChangePassword) return "/change-password";
-  if (account.role === "STUDENT") {
-    return canAccessSchedulePortal(account.role, account.permissions)
-      ? "/schedule"
-      : "/meetings";
-  }
-  if (
-    account.role === "ALUMNI" &&
-    canAccessSchedulePortal(account.role, account.permissions)
-  ) {
-    return "/schedule";
-  }
   if (account.role === "ADMIN") return "/dashboard";
   if (account.role === "DOSEN") return "/meetings";
   return "/dashboard/alumni/profile";
