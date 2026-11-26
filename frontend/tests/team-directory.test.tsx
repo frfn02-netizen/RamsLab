@@ -16,8 +16,8 @@ const messages: Record<string, string> = {
   "categories.UNDERGRADUATE": "Undergraduate Students",
   "categories.INTERNSHIP": "Vocational Interns",
   "categories.ALUMNI": "Alumni",
-  "graduateGroups.MAHASISWA": "PhD",
-  "graduateGroups.MASTER": "Master's",
+  "graduateGroups.MAHASISWA": "Ph.D. Candidates",
+  "graduateGroups.MASTER": "Master's Students",
   roleFallback: "Role not listed",
   searchLabel: "Search people",
   searchPlaceholder: "Search people...",
@@ -228,9 +228,11 @@ describe("People directory – categories and switching", () => {
     await renderDirectory();
 
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
-    expect(screen.getByRole("heading", { name: "PhD" })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Master's" }),
+      screen.getByRole("heading", { name: "Ph.D. Candidates" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Master's Students" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Phd Candidate")).toBeInTheDocument();
     expect(screen.getByText("Master Candidate")).toBeInTheDocument();
@@ -369,6 +371,39 @@ describe("People directory – cards", () => {
       expect(card.querySelector("ul")).toBeNull();
       expect(card.querySelector("li")).toBeNull();
     }
+  });
+
+  it("renders editorial graduate group headings with a count", async () => {
+    await renderDirectory();
+    fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
+
+    const heading = screen.getByRole("heading", {
+      name: "Ph.D. Candidates",
+    });
+    expect(heading.className).toContain("text-base");
+    expect(heading.className).toContain("font-semibold");
+    expect(heading.className).toContain("tracking-tight");
+    expect(heading.className).toContain("text-stone-900");
+
+    const header = heading.parentElement!;
+    expect(header.className).toContain("flex");
+    expect(header.className).toContain("items-baseline");
+    expect(header.className).toContain("justify-between");
+    expect(header.className).toContain("border-b");
+    expect(header.className).toContain("border-stone-200");
+    expect(header.className).toContain("pb-2.5");
+    expect(header.className).toContain("mb-6");
+
+    const count = header.querySelector("span")!;
+    expect(count.textContent).toBe("1");
+    expect(count.className).toContain("text-xs");
+    expect(count.className).toContain("font-medium");
+    expect(count.className).toContain("tabular-nums");
+    expect(count.className).toContain("text-stone-400");
+
+    expect(
+      screen.getByRole("heading", { name: "Master's Students" }),
+    ).toBeInTheDocument();
   });
 
   it("renders 1:1 fallback frames and clickable names for students", async () => {

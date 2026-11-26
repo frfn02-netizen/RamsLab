@@ -185,13 +185,15 @@ export function MemberCard({
 function ProfileGrid({
   members,
   roleFallback,
+  className = "pt-8",
 }: {
   members: PublicPerson[];
   roleFallback: string;
+  className?: string;
 }) {
   return (
     <RevealOnScroll
-      className="grid grid-cols-1 gap-x-6 gap-y-8 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+      className={`grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 ${className}`}
       stagger={60}
     >
       {members.map((member) => (
@@ -450,16 +452,22 @@ export default function TeamDirectory({
                     key={group.key}
                     aria-labelledby={`${group.key.toLowerCase()}-heading`}
                   >
-                    <h3
-                      id={`${group.key.toLowerCase()}-heading`}
-                      className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500"
-                    >
-                      {group.label}
-                    </h3>
+                    <div className="mb-6 flex items-baseline justify-between border-b border-stone-200 pb-2.5">
+                      <h3
+                        id={`${group.key.toLowerCase()}-heading`}
+                        className="text-base font-semibold tracking-tight text-stone-900"
+                      >
+                        {group.label}
+                      </h3>
+                      <span className="text-xs font-medium tabular-nums text-stone-400">
+                        {group.members.length}
+                      </span>
+                    </div>
                     {group.members.length > 0 ? (
                       <ProfileGrid
                         members={group.members}
                         roleFallback={t("roleFallback")}
+                        className="pt-0"
                       />
                     ) : (
                       <p className="pt-8 text-sm leading-6 text-stone-500">

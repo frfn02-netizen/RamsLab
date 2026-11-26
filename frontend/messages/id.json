@@ -393,8 +393,8 @@
       "ALUMNI": "Alumni"
     },
     "graduateGroups": {
-      "MAHASISWA": "Doktoral",
-      "MASTER": "Magister"
+      "MAHASISWA": "Kandidat Doktor",
+      "MASTER": "Mahasiswa Magister"
     },
     "searchLabel": "Cari orang",
     "searchPlaceholder": "Cari orang...",
