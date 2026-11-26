@@ -82,6 +82,20 @@ export function formatTimeRange(start: string, end: string) {
   return `${formatTime(start)} - ${formatTime(end)}`;
 }
 
+export function formatDurationCompact(
+  start: string | Date,
+  end: string | Date,
+) {
+  const startTime = new Date(start).getTime();
+  const endTime = new Date(end).getTime();
+  const minutes = Math.round((endTime - startTime) / 60000);
+  if (!Number.isFinite(minutes) || minutes <= 0) return "";
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder === 0 ? `${hours}h` : `${hours}h ${remainder}m`;
+}
+
 export function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

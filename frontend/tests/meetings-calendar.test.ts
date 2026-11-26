@@ -4,6 +4,7 @@ import {
   combineDateTime,
   dayKey,
   formatBytes,
+  formatDurationCompact,
   groupByDay,
   isSameDay,
   monthVisibleRange,
@@ -70,5 +71,17 @@ describe("meeting calendar helpers", () => {
     expect(formatBytes(512)).toBe("512 B");
     expect(formatBytes(2048)).toBe("2.0 KB");
     expect(formatBytes(5 * 1024 * 1024)).toBe("5.0 MB");
+  });
+
+  it("formats compact meeting durations", () => {
+    const start = "2026-01-15T09:00:00.000Z";
+
+    expect(formatDurationCompact(start, "2026-01-15T09:05:00.000Z")).toBe("5m");
+    expect(formatDurationCompact(start, "2026-01-15T10:30:00.000Z")).toBe(
+      "1h 30m",
+    );
+    expect(formatDurationCompact(start, "2026-01-15T11:00:00.000Z")).toBe("2h");
+    expect(formatDurationCompact(start, start)).toBe("");
+    expect(formatDurationCompact(start, "2026-01-15T08:00:00.000Z")).toBe("");
   });
 });

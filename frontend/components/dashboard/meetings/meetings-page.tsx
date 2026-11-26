@@ -13,9 +13,9 @@ import {
   buildMonthGrid,
   dayKey,
   formatDayLong,
+  formatDurationCompact,
   formatMonthYear,
   formatTime,
-  formatTimeRange,
   groupByDay,
   isSameDay,
   monthVisibleRange,
@@ -367,20 +367,20 @@ export default function MeetingsPage({
               <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
                 <div className="flex items-baseline justify-between gap-3 border-b border-stone-200/80 px-5 py-4">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-400">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">
                       Selected day
                     </p>
                     <h2 className="mt-0.5 text-base font-semibold tracking-tight text-stone-900">
                       {formatDayLong(selectedDate)}
                     </h2>
                   </div>
-                  <span className="shrink-0 text-xs font-medium tabular-nums text-stone-400">
+                  <span className="shrink-0 text-xs font-medium tabular-nums text-stone-500">
                     {selectedMeetings.length}
                   </span>
                 </div>
 
                 {selectedMeetings.length === 0 ? (
-                  <div className="px-5 py-10 text-center text-xs text-stone-400">
+                  <div className="px-5 py-10 text-center text-xs text-stone-500">
                     <p>No meetings on this day.</p>
                     {canCreate && (
                       <Link
@@ -401,38 +401,48 @@ export default function MeetingsPage({
                         ? "bg-stone-300"
                         : "bg-red-700";
                       const statusText = inactive
-                        ? "text-stone-400"
+                        ? "text-stone-500"
                         : "text-red-700";
+                      const duration = formatDurationCompact(
+                        meeting.startAt,
+                        meeting.endAt,
+                      );
 
                       return (
                         <li key={meeting._id}>
                           {meeting.canViewDetails ? (
                             <Link
                               href={`${basePath}/${meeting._id}`}
-                              className="group flex items-start justify-between gap-3 px-5 py-4 transition-colors hover:bg-stone-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
+                              className="group grid grid-cols-[5.5rem_1fr_auto] items-start gap-3.5 px-5 py-4 transition-colors hover:bg-stone-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
                             >
+                              <div className="border-r border-stone-200/80 pr-3 tabular-nums">
+                                <p className="text-xs font-semibold leading-tight text-stone-900">
+                                  {formatTime(meeting.startAt)}
+                                </p>
+                                <p className="mt-0.5 text-[11px] font-medium leading-tight text-stone-500">
+                                  – {formatTime(meeting.endAt)}
+                                </p>
+                                {duration && (
+                                  <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wider text-stone-500">
+                                    {duration}
+                                  </p>
+                                )}
+                              </div>
+
                               <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <span className="text-xs font-medium tabular-nums text-stone-500">
-                                    {formatTimeRange(
-                                      meeting.startAt,
-                                      meeting.endAt,
-                                    )}
-                                  </span>
-                                  {meeting.status && (
-                                    <span className="inline-flex items-center gap-1.5">
-                                      <span
-                                        className={`h-1.5 w-1.5 rounded-full ${statusDot}`}
-                                        aria-hidden="true"
-                                      />
-                                      <span
-                                        className={`text-[11px] font-medium ${statusText}`}
-                                      >
-                                        {meetingStatusLabel(meeting.status)}
-                                      </span>
+                                {meeting.status && (
+                                  <span className="flex items-center gap-1.5">
+                                    <span
+                                      className={`h-1.5 w-1.5 rounded-full ${statusDot}`}
+                                      aria-hidden="true"
+                                    />
+                                    <span
+                                      className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${statusText}`}
+                                    >
+                                      {meetingStatusLabel(meeting.status)}
                                     </span>
-                                  )}
-                                </div>
+                                  </span>
+                                )}
 
                                 <p
                                   className={`mt-1 text-[15px] font-semibold leading-snug transition-colors ${
@@ -445,11 +455,14 @@ export default function MeetingsPage({
                                 </p>
 
                                 <p className="mt-1.5 text-xs leading-relaxed text-stone-500">
+                                  Client:{" "}
                                   <strong className="font-bold text-stone-900">
                                     {meeting.clientName?.trim() ||
                                       "Client not specified"}
                                   </strong>
-                                  <span aria-hidden="true"> · </span>
+                                </p>
+
+                                <p className="mt-1 text-xs leading-relaxed text-stone-500">
                                   <span
                                     aria-label={meetingModeAriaLabel(
                                       meeting.mode,
@@ -494,41 +507,49 @@ export default function MeetingsPage({
                                 strokeWidth="1.7"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="mt-5 h-4 w-4 shrink-0 text-stone-300 transition-transform group-hover:translate-x-0.5 group-hover:text-stone-600"
+                                className="mt-4 h-4 w-4 shrink-0 text-stone-300 transition-transform group-hover:translate-x-0.5 group-hover:text-stone-600"
                                 aria-hidden="true"
                               >
                                 <path d="m8 5 5 5-5 5" />
                               </svg>
                             </Link>
                           ) : (
-                            <div className="px-5 py-4">
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <span className="text-xs font-medium tabular-nums text-stone-500">
-                                  {formatTimeRange(
-                                    meeting.startAt,
-                                    meeting.endAt,
-                                  )}
-                                </span>
+                            <div className="grid grid-cols-[5.5rem_1fr] items-start gap-3.5 px-5 py-4">
+                              <div className="border-r border-stone-200/80 pr-3 tabular-nums">
+                                <p className="text-xs font-semibold leading-tight text-stone-900">
+                                  {formatTime(meeting.startAt)}
+                                </p>
+                                <p className="mt-0.5 text-[11px] font-medium leading-tight text-stone-500">
+                                  – {formatTime(meeting.endAt)}
+                                </p>
+                                {duration && (
+                                  <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wider text-stone-500">
+                                    {duration}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
                                 {meeting.status && (
-                                  <span className="inline-flex items-center gap-1.5">
+                                  <span className="flex items-center gap-1.5">
                                     <span
                                       className={`h-1.5 w-1.5 rounded-full ${statusDot}`}
                                       aria-hidden="true"
                                     />
                                     <span
-                                      className={`text-[11px] font-medium ${statusText}`}
+                                      className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${statusText}`}
                                     >
                                       {meetingStatusLabel(meeting.status)}
                                     </span>
                                   </span>
                                 )}
+                                <p className="mt-1 text-[15px] font-semibold leading-snug text-stone-900">
+                                  {meeting.title}
+                                </p>
+                                <p className="mt-1.5 text-xs leading-relaxed text-stone-500">
+                                  Details are not shared for this meeting.
+                                </p>
                               </div>
-                              <p className="mt-1 text-[15px] font-semibold leading-snug text-stone-900">
-                                {meeting.title}
-                              </p>
-                              <p className="mt-1.5 text-xs leading-relaxed text-stone-400">
-                                Details are not shared for this meeting.
-                              </p>
                             </div>
                           )}
                         </li>
