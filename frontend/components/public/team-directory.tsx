@@ -130,6 +130,7 @@ export function MemberCard({
 }) {
   const alumniT = useTranslations("alumni");
   const isAlumni = member.category === "ALUMNI";
+  const isUndergraduate = member.category === "UNDERGRADUATE";
   const classOfLabel = isAlumni
     ? formatAlumniClassLabel(member, alumniT("classOf"))
     : null;
@@ -168,15 +169,19 @@ export function MemberCard({
           {member.fullName}
         </h3>
 
-        <p className="mt-1 text-[10px] font-semibold uppercase leading-snug tracking-wider text-red-700">
-          {role}
-        </p>
+        {isUndergraduate ? null : (
+          <>
+            <p className="mt-1 text-[10px] font-semibold uppercase leading-snug tracking-wider text-red-700">
+              {role}
+            </p>
 
-        {focus.length > 0 ? (
-          <p className="mt-1.5 text-[11px] leading-relaxed text-stone-500">
-            {focus.join(" · ")}
-          </p>
-        ) : null}
+            {focus.length > 0 ? (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-stone-500">
+                {focus.join(" · ")}
+              </p>
+            ) : null}
+          </>
+        )}
       </Link>
     </article>
   );

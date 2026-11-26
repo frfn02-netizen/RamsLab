@@ -364,13 +364,48 @@ describe("People directory – cards", () => {
       expect(heading.className).toContain("text-sm");
       expect(heading.className).toContain("font-bold");
 
-      const role = card.querySelector("p")!;
-      expect(role.className).toContain("uppercase");
-      expect(role.className).toContain("text-red-700");
+      if (label === "Undergraduate Students") {
+        expect(card.querySelector("p")).toBeNull();
+      } else {
+        const role = card.querySelector("p")!;
+        expect(role.className).toContain("uppercase");
+        expect(role.className).toContain("text-red-700");
+      }
 
       expect(card.querySelector("ul")).toBeNull();
       expect(card.querySelector("li")).toBeNull();
     }
+  });
+
+  it("shows only the 1:1 photo and name for undergraduate students", async () => {
+    await renderDirectory();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Undergraduate Students" }),
+    );
+
+    const link = screen.getByRole("link", { name: "Undergraduate Student" });
+    expect(link).toHaveAttribute("href", "/team/ug-1");
+
+    const card = link.closest("article")!;
+    expect(
+      screen.getByRole("heading", { name: "Undergraduate Student" }),
+    ).toBeInTheDocument();
+    expect(card.querySelectorAll("p")).toHaveLength(0);
+    expect(screen.queryByText("Bachelor of Engineering")).toBeNull();
+    expect(screen.queryByText("Marine Systems")).toBeNull();
+
+    const portrait = link.querySelector("div")!;
+    expect(portrait.className).toContain("aspect-square");
+    expect(portrait.className).toContain("w-full");
+    expect(portrait.className).toContain("overflow-hidden");
+    expect(portrait.className).toContain("rounded-md");
+    expect(portrait.className).toContain("bg-stone-100");
+    expect(
+      screen.getByLabelText("Undergraduate Student avatar"),
+    ).toBeInTheDocument();
+
+    const grid = card.parentElement!;
+    expect(grid.className).toContain("lg:grid-cols-5");
   });
 
   it("renders editorial graduate group headings with a count", async () => {
