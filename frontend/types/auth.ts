@@ -27,6 +27,24 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
+export type InternalAccountRole = "ADMIN" | "DOSEN";
+
+export interface InternalAccountInput {
+  fullName: string;
+  email: string;
+  role: InternalAccountRole;
+}
+
+export interface InternalAccountResult {
+  id: string;
+  displayName: string;
+  email: string;
+  role: InternalAccountRole;
+  isActive: boolean;
+  mustChangePassword: boolean;
+  temporaryPassword: string;
+}
+
 export interface AdminPasswordResetResult {
   userId: string;
   email: string;

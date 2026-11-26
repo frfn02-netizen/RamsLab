@@ -75,6 +75,7 @@ export interface Meeting {
   participants: MeetingUserSummary[];
   participantIds: string[];
   meetingLink: string | null;
+  additionalReminderEmails?: string[];
   status?: MeetingStatus;
   cancelledAt?: string | null;
   cancelledBy?: string | null;
@@ -146,6 +147,7 @@ export interface MeetingInput {
   picIds: string[];
   participantIds: string[];
   meetingLink: string | null;
+  additionalReminderEmails: string[];
 }
 
 export type MeetingUpdateInput = Partial<MeetingInput> & {
@@ -155,10 +157,6 @@ export type MeetingUpdateInput = Partial<MeetingInput> & {
 export interface MeetingSaveResult {
   meeting: Meeting;
   conflicts: MeetingConflict[];
-  notification?: {
-    sent: boolean;
-    warning?: string;
-  };
 }
 
 export interface UserDirectoryEntry {

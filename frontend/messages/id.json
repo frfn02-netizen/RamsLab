@@ -608,16 +608,15 @@
     "accessRestricted": "Ruang kerja ini hanya tersedia untuk akun staf RAMS.",
     "created": "Rapat berhasil dijadwalkan.",
     "updated": "Rapat berhasil diperbarui.",
-    "notificationFailed": "Rapat tersimpan, tetapi notifikasi email tidak dapat dikirim.",
-    "notificationSent": "Notifikasi email dikirim ke anggota RAMS aktif."
+    "additionalReminderEmailsLabel": "Email pengingat tambahan",
+    "additionalReminderEmailsHint": "Opsional. Staf tanpa akun menerima pengingat H-24 jam di alamat ini. Pisahkan beberapa email dengan koma.",
+    "additionalReminderEmailsInvalid": "Masukkan hanya alamat email yang valid pada daftar pengingat."
   },
   "dashboardDosen": {
     "createdTitle": "Dosen berhasil dibuat",
     "createdDescription": "Akun masuk dan profil publik sudah tersimpan. Periksa detail akses di bawah ini sebelum meninggalkan halaman.",
-    "emailSent": "Email orientasi telah dikirim ke {email}.",
-    "emailFailed": "Akun dan profil tersimpan, tetapi email orientasi tidak dapat dikirim. Bagikan detail akses di bawah ini secara langsung.",
     "temporaryPasswordTitle": "Kata sandi sementara, hanya ditampilkan sekali",
-    "temporaryPasswordHint": "Salinannya dikirim ke dosen jika pengiriman email dikonfigurasi. Jika tidak diterima, bagikan kata sandi ini melalui saluran yang aman. Kata sandi tidak dapat ditampilkan lagi setelah Anda meninggalkan halaman ini.",
+    "temporaryPasswordHint": "Bagikan kata sandi ini melalui saluran yang aman jika dosen membutuhkannya. Kata sandi tidak dapat ditampilkan lagi setelah Anda meninggalkan halaman ini.",
     "temporaryPasswordClearedTitle": "Kata sandi sementara dihapus",
     "temporaryPasswordClearedHint": "Kata sandi tidak lagi ditampilkan. Buat kata sandi sementara baru hanya jika dosen masih membutuhkannya.",
     "copyPassword": "Salin kata sandi",
@@ -632,6 +631,20 @@
     "accountStatusTitle": "Akses masuk",
     "accountActiveLabel": "Akun aktif",
     "accountActiveHint": "Jika dimatikan, dosen tidak dapat masuk atau menerima email rapat. Profil publik dan riwayat rapat tetap tersimpan.",
-    "accessUpdateFailed": "Profil tersimpan, tetapi pengaturan akses masuk tidak dapat diperbarui."
+    "accessUpdateFailed": "Profil tersimpan, tetapi pengaturan akses masuk tidak dapat diperbarui.",
+    "addInternalAccount": "Tambah akun internal",
+    "internalAccountTitle": "Tambah akun internal",
+    "internalAccountDescription": "Buat akun masuk untuk staf laboratorium tanpa profil dosen publik.",
+    "internalAccountName": "Nama lengkap",
+    "internalAccountEmail": "Email",
+    "internalAccountRole": "Peran",
+    "internalAccountRoleAdmin": "Administrator",
+    "internalAccountRoleDosen": "Dosen",
+    "internalAccountCancel": "Batal",
+    "internalAccountSubmit": "Buat akun",
+    "internalAccountCreating": "Membuat...",
+    "internalAccountCreatedTitle": "Akun internal dibuat",
+    "internalAccountCreatedHint": "Bagikan kata sandi sementara ini melalui saluran yang aman. Akun harus menggantinya saat pertama masuk. Tidak ada email orientasi yang dikirim.",
+    "internalAccountClose": "Tutup"
   }
 }

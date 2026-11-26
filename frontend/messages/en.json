@@ -608,16 +608,15 @@
     "accessRestricted": "This workspace is available to RAMS staff accounts only.",
     "created": "Meeting scheduled.",
     "updated": "Meeting updated.",
-    "notificationFailed": "Meeting saved, but email notifications could not be sent.",
-    "notificationSent": "Email notifications sent to active RAMS members."
+    "additionalReminderEmailsLabel": "Additional reminder emails",
+    "additionalReminderEmailsHint": "Optional. Staff without an account receive the H-24h reminder at these addresses. Separate multiple emails with commas.",
+    "additionalReminderEmailsInvalid": "Enter only valid email addresses in the reminder list."
   },
   "dashboardDosen": {
     "createdTitle": "Dosen created",
     "createdDescription": "The login and public profile are saved. Review the sign-in details below before leaving this page.",
-    "emailSent": "Onboarding email sent to {email}.",
-    "emailFailed": "Account and profile saved, but the onboarding email could not be sent. Share the sign-in details below directly.",
     "temporaryPasswordTitle": "Temporary password, shown once",
-    "temporaryPasswordHint": "A copy is sent to the lecturer when email delivery is configured. If it did not arrive, share this password through a secure channel. It cannot be shown again after you leave this page.",
+    "temporaryPasswordHint": "Share this password through a secure channel if the lecturer needs it. It cannot be shown again after you leave this page.",
     "temporaryPasswordClearedTitle": "Temporary password cleared",
     "temporaryPasswordClearedHint": "The password is no longer shown. Generate a new temporary password only if the lecturer still needs one.",
     "copyPassword": "Copy password",
@@ -632,6 +631,20 @@
     "accountStatusTitle": "Sign-in access",
     "accountActiveLabel": "Account active",
     "accountActiveHint": "When off, the lecturer cannot sign in or receive meeting emails. The public profile and meeting history stay intact.",
-    "accessUpdateFailed": "Profile saved, but the sign-in access setting could not be updated."
+    "accessUpdateFailed": "Profile saved, but the sign-in access setting could not be updated.",
+    "addInternalAccount": "Add internal account",
+    "internalAccountTitle": "Add internal account",
+    "internalAccountDescription": "Create a sign-in account for lab staff without a public lecturer profile.",
+    "internalAccountName": "Full name",
+    "internalAccountEmail": "Email",
+    "internalAccountRole": "Role",
+    "internalAccountRoleAdmin": "Administrator",
+    "internalAccountRoleDosen": "Lecturer",
+    "internalAccountCancel": "Cancel",
+    "internalAccountSubmit": "Create account",
+    "internalAccountCreating": "Creating...",
+    "internalAccountCreatedTitle": "Internal account created",
+    "internalAccountCreatedHint": "Share this one-time temporary password securely. The account must change it on first sign-in. No onboarding email is sent.",
+    "internalAccountClose": "Close"
   }
 }

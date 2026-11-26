@@ -49,6 +49,22 @@ const ALLOWED_ATTACHMENT_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 const ALLOWED_ATTACHMENT_EXTENSION = /\.(pdf|ppt|pptx|doc|docx)$/i;
+const REMINDER_EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+
+function parseReminderEmails(value: string) {
+  const unique = [
+    ...new Set(
+      value
+        .split(/[\s,;]+/)
+        .map((entry) => entry.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+  return {
+    emails: unique.filter((email) => REMINDER_EMAIL_PATTERN.test(email)),
+    invalid: unique.filter((email) => !REMINDER_EMAIL_PATTERN.test(email)),
+  };
+}
 
 type PendingFile = { key: string; file: File };
 
@@ -70,6 +86,7 @@ type FormState = {
   primaryPicId: string;
   additionalPicIds: string[];
   participantIds: string[];
+  additionalReminderEmails: string;
 };
 
 function initialForm(date?: string): FormState {
@@ -89,6 +106,7 @@ function initialForm(date?: string): FormState {
     primaryPicId: "",
     additionalPicIds: [],
     participantIds: [],
+    additionalReminderEmails: "",
   };
 }
 
@@ -109,6 +127,9 @@ function meetingFormState(meeting: Meeting): FormState {
       (userId) => userId !== meeting.primaryPicId,
     ),
     participantIds: meeting.participantIds,
+    additionalReminderEmails: (meeting.additionalReminderEmails ?? []).join(
+      "\n",
+    ),
   };
 }
 
@@ -427,6 +448,12 @@ export default function MeetingForm({
       return;
     }
 
+    const reminderEmails = parseReminderEmails(form.additionalReminderEmails);
+    if (reminderEmails.invalid.length > 0) {
+      notifyError(copy.additionalReminderEmailsInvalid);
+      return;
+    }
+
     setSaving(true);
     try {
       const commonInput = {
@@ -436,6 +463,7 @@ export default function MeetingForm({
         endAt: endAt.toISOString(),
         visibility: form.visibility,
         participantIds: form.participantIds,
+        additionalReminderEmails: reminderEmails.emails,
       };
 
       let result: MeetingSaveResult;
@@ -486,9 +514,6 @@ export default function MeetingForm({
         );
       } else {
         success(id ? copy.updated : copy.created);
-      }
-      if (!id && result.notification && !result.notification.sent) {
-        notifyError(copy.notificationFailed);
       }
       router.push(`${basePath}/${savedId}`);
     } catch (reason) {
@@ -936,6 +961,29 @@ export default function MeetingForm({
                   })}
                 </ul>
               )}
+            </div>
+
+            <div className="mt-6 space-y-3 border-t border-[#F0ECE4] pt-5">
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--rams-charcoal)]">
+                  {copy.additionalReminderEmailsLabel}
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-[#6B6A64]">
+                  {copy.additionalReminderEmailsHint}
+                </p>
+              </div>
+              <textarea
+                className={`${inputClass} min-h-24`}
+                aria-label={copy.additionalReminderEmailsLabel}
+                placeholder="staff@example.com"
+                value={form.additionalReminderEmails}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    additionalReminderEmails: event.target.value,
+                  }))
+                }
+              />
             </div>
           </section>
 

@@ -32,7 +32,6 @@ beforeEach(() => {
       email: "dosen@test.local",
     },
     temporaryPassword: "TempPass123!",
-    notification: { sent: true },
   });
   resetUserPassword.mockResolvedValue({ temporaryPassword: "TempPass456!" });
 });
@@ -49,8 +48,8 @@ describe("create dosen temporary password", () => {
     );
     expect(screen.getByText("TempPass123!")).toBeInTheDocument();
     expect(
-      screen.getByText("Onboarding email sent to dosen@test.local."),
-    ).toBeInTheDocument();
+      screen.queryByText(/Onboarding email/i),
+    ).not.toBeInTheDocument();
     expect(createDosen).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
@@ -75,7 +74,7 @@ describe("create dosen temporary password", () => {
     expect(resetUserPassword).toHaveBeenCalledWith("user-1");
   });
 
-  it("keeps the created account and warns when the onboarding email fails", async () => {
+  it("keeps the public profile off by default and never mentions onboarding email", async () => {
     createDosen.mockResolvedValue({
       dosen: {
         _id: "dosen-2",
@@ -83,23 +82,25 @@ describe("create dosen temporary password", () => {
         email: "failed@test.local",
       },
       temporaryPassword: "TempPass789!",
-      notification: { sent: false, warning: "onboarding email failed" },
     });
 
     const { container } = render(<CreateDosen />);
+    const publicToggle = screen.getByRole("checkbox", {
+      name: "Show public profile",
+    });
+    expect(publicToggle).not.toBeChecked();
+
     fireEvent.submit(container.querySelector("form")!);
 
     await waitFor(() =>
       expect(screen.getByText("Dosen created")).toBeInTheDocument(),
     );
-    expect(
-      screen.getByText(
-        "Account and profile saved, but the onboarding email could not be sent. Share the sign-in details below directly.",
-      ),
-    ).toBeInTheDocument();
+    expect(createDosen).toHaveBeenCalledWith(
+      expect.objectContaining({ isPublic: false }),
+    );
     expect(screen.getByText("TempPass789!")).toBeInTheDocument();
     expect(
-      screen.queryByText("Onboarding email sent to failed@test.local."),
+      screen.queryByText(/Onboarding email/i),
     ).not.toBeInTheDocument();
     expect(notifyError).not.toHaveBeenCalled();
   });

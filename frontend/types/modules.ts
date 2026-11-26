@@ -233,7 +233,6 @@ export type DosenCreateInput = Omit<
 };
 export type DosenCreationResult = {
   dosen: Dosen;
-  notification?: { sent: boolean; warning?: string };
   temporaryPassword?: string;
 };
 export type DosenUpdateInput = Partial<

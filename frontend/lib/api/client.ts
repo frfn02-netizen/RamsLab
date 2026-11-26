@@ -59,7 +59,6 @@ export type ApiResponse<T> = {
   errors?: unknown;
   code?: string;
   reauthenticate?: boolean;
-  notification?: { sent: boolean; warning?: string };
   temporaryPassword?: string;
 };
 

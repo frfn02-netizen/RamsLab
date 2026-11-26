@@ -15,6 +15,7 @@ import {
   inputClass,
 } from "@/components/ui";
 import { ProfileCardsSkeleton } from "@/components/skeletons";
+import AddInternalAccount from "@/components/dashboard/add-internal-account";
 import DeleteButton from "@/components/dashboard/delete-button";
 import DeleteConfirmationModal from "@/components/dashboard/delete-confirmation-modal";
 import Select from "@/components/select";
@@ -132,7 +133,10 @@ export default function DosenPage() {
           description="Browse lecturer profiles and areas of specialization."
           action={
             user?.role === "ADMIN" ? (
-              <LinkButton href="/dashboard/dosen/new">Add dosen</LinkButton>
+              <div className="flex flex-wrap items-center gap-3">
+                <AddInternalAccount />
+                <LinkButton href="/dashboard/dosen/new">Add dosen</LinkButton>
+              </div>
             ) : undefined
           }
         />

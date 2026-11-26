@@ -25,7 +25,6 @@ type CreatedLecturer = {
   userId: string;
   email: string;
   temporaryPassword?: string;
-  notification?: { sent: boolean; warning?: string };
 };
 
 export default function CreateDosen() {
@@ -49,7 +48,7 @@ export default function CreateDosen() {
     showNip: false,
     showNidn: false,
     showEmail: false,
-    isPublic: true,
+    isPublic: false,
   });
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -138,7 +137,6 @@ export default function CreateDosen() {
         userId: result.dosen.userId,
         email: result.dosen.email ?? form.email,
         temporaryPassword: result.temporaryPassword,
-        notification: result.notification,
       });
     } catch (reason) {
       notifyError(getUserFacingError(reason));
@@ -241,20 +239,6 @@ export default function CreateDosen() {
             title={copy.createdTitle}
             description={copy.createdDescription}
           />
-
-          {created.notification?.sent ? (
-            <Card className="border-emerald-300 bg-emerald-50 p-4">
-              <p className="text-sm font-semibold text-emerald-900">
-                {copy.emailSent.replace("{email}", created.email)}
-              </p>
-            </Card>
-          ) : created.notification ? (
-            <Card className="border-amber-300 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-900">
-                {copy.emailFailed}
-              </p>
-            </Card>
-          ) : null}
 
           {credentialsPanel}
 

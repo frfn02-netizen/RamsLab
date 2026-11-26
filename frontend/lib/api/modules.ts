@@ -6,6 +6,10 @@ import {
 } from "./client";
 import { ApiError } from "./errors";
 import type {
+  InternalAccountInput,
+  InternalAccountResult,
+} from "@/types/auth";
+import type {
   Dosen,
   DosenCreateInput,
   DosenCreationResult,
@@ -96,10 +100,15 @@ export const createDosen = async (
   }
   return {
     dosen: response.data,
-    notification: response.notification,
     temporaryPassword: response.temporaryPassword,
   };
 };
+export const createInternalAccount = (input: InternalAccountInput) =>
+  apiRequest<InternalAccountResult>("/users/internal", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
 export const setDosenAccountActive = (id: string, isActive: boolean) =>
   apiRequest<{ isActive: boolean }>(
     `/dosen/${encodeURIComponent(id)}/access`,
