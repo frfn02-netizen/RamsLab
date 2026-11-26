@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-providers";
 import MeetingHighlightBadge from "@/components/meetings-workspace/meeting-highlight-badge";
-import MeetingModeBadge from "@/components/meetings-workspace/meeting-mode-badge";
 import { Button, ErrorState, LinkButton } from "@/components/ui";
 import { Skeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
@@ -22,7 +21,7 @@ import {
   monthVisibleRange,
   startOfDay,
 } from "@/lib/meetings/calendar";
-import { meetingModeAriaLabel } from "@/lib/meetings/mode";
+import { meetingModeAriaLabel, meetingModeLabel } from "@/lib/meetings/mode";
 import { meetingToCalendarEvent } from "@/lib/meetings/calendar-event";
 import { canCreateMeetings } from "@/lib/authz";
 import { meetingStatusLabel } from "@/lib/meetings/status";
@@ -43,13 +42,6 @@ function CalendarModeMarker({ mode }: { mode: MeetingCalendarEvent["mode"] }) {
   return (
     <span className={`h-1.5 w-1.5 shrink-0 ${shape}`} aria-hidden="true" />
   );
-}
-
-function statusPillClass(status: MeetingCalendarEvent["status"]) {
-  if (status === "CANCELLED") return "bg-[#FBE4E2] text-[var(--rams-red-dark)]";
-  if (status === "PAST") return "bg-[#F1F0EE] text-[#69645E]";
-  if (status === "ONGOING") return "bg-[#FFF3D9] text-[#94631A]";
-  return "bg-[#EAF3E8] text-[#356B35]";
 }
 
 function CalendarSkeleton() {
@@ -372,173 +364,171 @@ export default function MeetingsPage({
             </section>
 
             <aside className="min-w-0 xl:sticky xl:top-6 xl:self-start">
-              <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-                <div className="flex items-start justify-between gap-3 border-b border-stone-200/80 bg-stone-50/80 px-5 py-4">
+              <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+                <div className="flex items-baseline justify-between gap-3 border-b border-stone-200/80 px-5 py-4">
                   <div className="min-w-0">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-stone-500">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-400">
                       Selected day
                     </p>
-                    <h2 className="mt-1 text-base font-semibold text-stone-900">
+                    <h2 className="mt-0.5 text-base font-semibold tracking-tight text-stone-900">
                       {formatDayLong(selectedDate)}
                     </h2>
                   </div>
-                  <span className="shrink-0 rounded-full bg-stone-200/70 px-2.5 py-0.5 text-xs font-semibold text-stone-700">
+                  <span className="shrink-0 text-xs font-medium tabular-nums text-stone-400">
                     {selectedMeetings.length}
                   </span>
                 </div>
 
                 {selectedMeetings.length === 0 ? (
-                  <div className="px-5 py-10 text-center">
-                    <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-stone-100 text-stone-500">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-6 w-6"
-                        aria-hidden="true"
-                      >
-                        <path d="M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19V7a1.5 1.5 0 0 1 1.5-1.5Z" />
-                        <path d="M7.5 3.5v4M16.5 3.5v4M3 10h18" />
-                      </svg>
-                    </span>
-                    <p className="mt-3 text-sm font-semibold text-stone-900">
-                      No meetings on this day
-                    </p>
-                    <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-stone-500">
-                      Pick another day, or schedule a meeting for this date.
-                    </p>
+                  <div className="px-5 py-10 text-center text-xs text-stone-400">
+                    <p>No meetings on this day.</p>
                     {canCreate && (
                       <Link
                         href={`${basePath}/new?date=${dayKey(selectedDate)}`}
-                        className="mt-4 inline-flex text-xs font-semibold text-[var(--rams-red)] transition hover:text-[var(--rams-red-dark)]"
+                        className="mt-3 inline-flex font-semibold text-[var(--rams-red)] transition hover:text-[var(--rams-red-dark)]"
                       >
                         Schedule for this day
                       </Link>
                     )}
                   </div>
                 ) : (
-                  <ul className="space-y-2.5 p-3">
+                  <ul className="divide-y divide-stone-100">
                     {selectedMeetings.map((meeting) => {
-                      const accentBar =
+                      const inactive =
                         meeting.status === "PAST" ||
-                        meeting.status === "CANCELLED"
-                          ? "border-l-stone-300"
-                          : "border-l-red-700";
+                        meeting.status === "CANCELLED";
+                      const statusDot = inactive
+                        ? "bg-stone-300"
+                        : "bg-red-700";
+                      const statusText = inactive
+                        ? "text-stone-400"
+                        : "text-red-700";
+
                       return (
                         <li key={meeting._id}>
                           {meeting.canViewDetails ? (
                             <Link
                               href={`${basePath}/${meeting._id}`}
-                              className={`group block rounded-xl border border-stone-200 border-l-4 bg-white p-4 transition-all hover:border-red-700/40 hover:bg-stone-50/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2 ${accentBar}`}
+                              className="group flex items-start justify-between gap-3 px-5 py-4 transition-colors hover:bg-stone-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
                             >
-                              <div className="flex items-start justify-between gap-3">
-                                <p className="min-w-0 break-words text-sm font-bold tracking-tight text-stone-900">
-                                  {meeting.clientName?.trim() ||
-                                    "Client not specified"}
-                                </p>
-                                {meeting.status && (
-                                  <span
-                                    className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusPillClass(
-                                      meeting.status,
-                                    )}`}
-                                  >
-                                    {meetingStatusLabel(meeting.status)}
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                  <span className="text-xs font-medium tabular-nums text-stone-500">
+                                    {formatTimeRange(
+                                      meeting.startAt,
+                                      meeting.endAt,
+                                    )}
                                   </span>
-                                )}
-                              </div>
+                                  {meeting.status && (
+                                    <span className="inline-flex items-center gap-1.5">
+                                      <span
+                                        className={`h-1.5 w-1.5 rounded-full ${statusDot}`}
+                                        aria-hidden="true"
+                                      />
+                                      <span
+                                        className={`text-[11px] font-medium ${statusText}`}
+                                      >
+                                        {meetingStatusLabel(meeting.status)}
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
 
-                              <div className="mt-1.5 flex items-start justify-between gap-2">
                                 <p
-                                  className={`line-clamp-2 text-sm font-medium ${
+                                  className={`mt-1 text-[15px] font-semibold leading-snug transition-colors ${
                                     meeting.involvesHighlightedUser
                                       ? "text-[var(--rams-red)]"
-                                      : "text-stone-700 group-hover:text-stone-950"
+                                      : "text-stone-900 group-hover:text-red-700"
                                   }`}
                                 >
                                   {meeting.title}
                                 </p>
-                                <svg
-                                  viewBox="0 0 20 20"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="1.7"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="mt-0.5 h-4 w-4 shrink-0 text-stone-400 transition-transform group-hover:translate-x-0.5 group-hover:text-red-700"
-                                  aria-hidden="true"
-                                >
-                                  <path d="m8 5 5 5-5 5" />
-                                </svg>
-                              </div>
 
-                              <div className="mt-1.5">
-                                <MeetingHighlightBadge
-                                  involvesHighlightedUser={
-                                    meeting.involvesHighlightedUser
-                                  }
-                                />
-                              </div>
-
-                              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-stone-100 pt-2.5">
-                                <span className="tabular-nums text-xs font-semibold text-red-700">
-                                  {formatTimeRange(
-                                    meeting.startAt,
-                                    meeting.endAt,
-                                  )}
-                                </span>
-                                <MeetingModeBadge mode={meeting.mode} />
-                                {meeting.mode === "OFFLINE" &&
-                                  meeting.location?.trim() && (
-                                    <span className="text-xs text-stone-500">
-                                      {meeting.location}
-                                    </span>
-                                  )}
-                                {meeting.primaryPicName && (
-                                  <span className="inline-flex min-w-0 items-center gap-1.5">
-                                    <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-                                      PIC
-                                    </span>
-                                    <span className="truncate text-xs font-medium text-stone-700">
-                                      {meeting.primaryPicName}
-                                      {meeting.additionalPicNames &&
-                                        meeting.additionalPicNames.length >
-                                          0 &&
-                                        ` +${meeting.additionalPicNames.length}`}
-                                    </span>
+                                <p className="mt-1.5 text-xs leading-relaxed text-stone-500">
+                                  <strong className="font-bold text-stone-900">
+                                    {meeting.clientName?.trim() ||
+                                      "Client not specified"}
+                                  </strong>
+                                  <span aria-hidden="true"> · </span>
+                                  <span
+                                    aria-label={meetingModeAriaLabel(
+                                      meeting.mode,
+                                    )}
+                                  >
+                                    {meetingModeLabel(meeting.mode)}
                                   </span>
-                                )}
+                                  {meeting.mode === "OFFLINE" &&
+                                    meeting.location?.trim() && (
+                                      <>
+                                        <span aria-hidden="true"> · </span>
+                                        <span>{meeting.location}</span>
+                                      </>
+                                    )}
+                                  {meeting.primaryPicName && (
+                                    <>
+                                      <span aria-hidden="true"> · </span>
+                                      <span>
+                                        PIC {meeting.primaryPicName}
+                                        {meeting.additionalPicNames &&
+                                          meeting.additionalPicNames.length >
+                                            0 &&
+                                          ` +${meeting.additionalPicNames.length}`}
+                                      </span>
+                                    </>
+                                  )}
+                                </p>
+
+                                <div className="mt-1.5">
+                                  <MeetingHighlightBadge
+                                    involvesHighlightedUser={
+                                      meeting.involvesHighlightedUser
+                                    }
+                                  />
+                                </div>
                               </div>
+
+                              <svg
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.7"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="mt-5 h-4 w-4 shrink-0 text-stone-300 transition-transform group-hover:translate-x-0.5 group-hover:text-stone-600"
+                                aria-hidden="true"
+                              >
+                                <path d="m8 5 5 5-5 5" />
+                              </svg>
                             </Link>
                           ) : (
-                            <div className="block rounded-xl border border-stone-200 border-l-4 border-l-stone-300 bg-stone-50/60 p-4">
-                              <div className="flex items-start justify-between gap-3">
-                                <p className="text-sm font-bold tracking-tight text-stone-800">
-                                  {meeting.title}
-                                </p>
-                                {meeting.status && (
-                                  <span
-                                    className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusPillClass(
-                                      meeting.status,
-                                    )}`}
-                                  >
-                                    {meetingStatusLabel(meeting.status)}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="mt-1.5 text-sm font-medium text-stone-500">
-                                Details are not shared for this meeting.
-                              </p>
-                              <div className="mt-3 border-t border-stone-100 pt-2.5">
-                                <span className="tabular-nums text-xs font-semibold text-stone-500">
+                            <div className="px-5 py-4">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <span className="text-xs font-medium tabular-nums text-stone-500">
                                   {formatTimeRange(
                                     meeting.startAt,
                                     meeting.endAt,
                                   )}
                                 </span>
+                                {meeting.status && (
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span
+                                      className={`h-1.5 w-1.5 rounded-full ${statusDot}`}
+                                      aria-hidden="true"
+                                    />
+                                    <span
+                                      className={`text-[11px] font-medium ${statusText}`}
+                                    >
+                                      {meetingStatusLabel(meeting.status)}
+                                    </span>
+                                  </span>
+                                )}
                               </div>
+                              <p className="mt-1 text-[15px] font-semibold leading-snug text-stone-900">
+                                {meeting.title}
+                              </p>
+                              <p className="mt-1.5 text-xs leading-relaxed text-stone-400">
+                                Details are not shared for this meeting.
+                              </p>
                             </div>
                           )}
                         </li>
