@@ -95,6 +95,53 @@ export interface CreateDosenUserInput {
   password?: string;
 }
 
+export interface CreateInternalAccountInput {
+  fullName: string;
+  email: string;
+  role: "ADMIN" | "DOSEN";
+}
+
+/**
+ * Provision a standalone internal account without a public lecturer profile.
+ * The generated password is returned once and must be changed on first login.
+ */
+export async function createInternalAccount(input: CreateInternalAccountInput) {
+  const users = getUsersCollection();
+  const email = input.email.trim().toLowerCase();
+  const displayName = input.fullName.trim();
+
+  if (await users.findOne({ email })) {
+    throw new HttpError(409, "Email is already registered");
+  }
+
+  const temporaryPassword = generateTemporaryPassword();
+  const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+  const now = new Date();
+
+  const result = await users.insertOne({
+    displayName,
+    email,
+    passwordHash,
+    role: input.role,
+    isActive: true,
+    mustChangePassword: true,
+    tokenVersion: 0,
+    lastLoginAt: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return {
+    id: result.insertedId.toString(),
+    displayName,
+    email,
+    role: input.role,
+    isActive: true,
+    mustChangePassword: true,
+    temporaryPassword,
+  };
+}
+
 export async function createDosenUser(input: CreateDosenUserInput) {
   const users = getUsersCollection();
 

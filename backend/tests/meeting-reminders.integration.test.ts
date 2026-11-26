@@ -236,6 +236,37 @@ afterAll(async () => {
 });
 
 describe("meeting reminder delivery", () => {
+  it("adds extra reminder addresses and deduplicates internal recipients", async () => {
+    const extraEmail = "lab.staff@test.local";
+    const meeting = await insertMeeting({
+      additionalReminderEmails: [
+        extraEmail,
+        `${PARTICIPANT_ID.toString()}@test.local`.toUpperCase(),
+        "  Lab.Staff@Test.Local  ",
+        "not-an-email",
+      ],
+    });
+    const { adapter, messages } = fakeAdapter();
+
+    await run({ adapter });
+
+    const recipients = messages.map((message) => message.recipient.email);
+    expect(recipients.sort()).toEqual(
+      [
+        `${ORGANIZER_ID.toString()}@test.local`,
+        `${PARTICIPANT_ID.toString()}@test.local`,
+        extraEmail,
+      ].sort(),
+    );
+    expect(recipients.filter((email) => email === extraEmail)).toHaveLength(1);
+    expect(recipients).not.toContain("not-an-email");
+
+    const extraDelivery = (await deliveriesFor(meeting._id!)).find(
+      (delivery) => delivery.recipientId === `email:${extraEmail}`,
+    );
+    expect(extraDelivery?.recipientKind).toBe("USER");
+  });
+
   it("sends one 24-hour reminder to the organizer and active participant only", async () => {
     const meeting = await insertMeeting();
     const { adapter, messages } = fakeAdapter();

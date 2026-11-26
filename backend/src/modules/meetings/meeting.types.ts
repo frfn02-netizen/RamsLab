@@ -102,14 +102,14 @@ export interface Meeting {
   participantIds: ObjectId[];
   externalParticipants?: ExternalParticipant[];
   meetingLink: string | null;
+  /** Extra reminder recipients without internal accounts. Email channel only. */
+  additionalReminderEmails?: string[];
   cancelledAt?: Date;
   cancelledBy?: ObjectId;
   cancellationReason?: string;
   auditHistory?: MeetingAuditEntry[];
   guestInvitations?: MeetingGuestInvitation[];
   attachments: MeetingAttachment[];
-  /** Set after the creation notification has been accepted by Mailjet. */
-  createdNotificationSentAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -149,6 +149,7 @@ export interface MeetingResponse {
   participants: MeetingUserSummary[];
   participantIds: string[];
   meetingLink: string | null;
+  additionalReminderEmails: string[];
   status: MeetingStatus;
   cancelledAt: string | null;
   cancelledBy: string | null;

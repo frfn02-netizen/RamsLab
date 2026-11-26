@@ -24,7 +24,6 @@ import { createDosenUser } from "../users/user.service.js";
 import { getPublicationsCollection } from "../publications/publication.repository.js";
 import { removeDosenPhoto, saveDosenPhoto } from "./dosen-photo.js";
 import { toPublicDosenProfile } from "../public/public-profile.js";
-import { sendLecturerOnboardingEmail } from "../../lib/mailjet.js";
 
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
@@ -334,38 +333,11 @@ export async function createDosenController(req: Request, res: Response) {
       publicationIds: (await resolvePublicationIds(input.publicationIds)) ?? [],
     });
 
-    // The account and profile are committed. Email delivery is best effort and
-    // never rolls either record back.
-    let notification: { sent: boolean; warning?: string } | undefined;
-    if (!input.userId) {
-      const recipientEmail = dosen.email ?? input.email!;
-      try {
-        const emailResult = await sendLecturerOnboardingEmail({
-          recipient: { email: recipientEmail, name: dosen.fullName },
-          fullName: dosen.fullName,
-          email: recipientEmail,
-          ...(temporaryPassword ? { temporaryPassword } : {}),
-        });
-        notification = emailResult.success
-          ? { sent: true }
-          : {
-              sent: false,
-              warning:
-                "Account and profile saved, but the onboarding email could not be sent.",
-            };
-      } catch {
-        notification = {
-          sent: false,
-          warning:
-            "Account and profile saved, but the onboarding email could not be sent.",
-        };
-      }
-    }
-
+    // The one-time temporary password is returned to the admin UI. No email is
+    // sent here; Mailjet is reserved for H-24h meeting reminders.
     return res.status(201).json({
       success: true,
       data: dosen,
-      ...(notification ? { notification } : {}),
       ...(temporaryPassword ? { temporaryPassword } : {}),
     });
   } catch (error: any) {

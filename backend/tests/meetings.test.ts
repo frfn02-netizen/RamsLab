@@ -195,6 +195,36 @@ describe("Meetings API", () => {
     expect(response.body.data.conflicts).toEqual([]);
   });
 
+  it("stores extra reminder emails without duplicating internal staff", async () => {
+    const admin = await getUsersCollection().findOne({
+      _id: new ObjectId(TEST_ADMIN_USER_ID),
+    });
+    expect(admin?.email).toBeTruthy();
+
+    const response = await request(app)
+      .post("/api/meetings")
+      .set("Cookie", `rams_access_token=${creatorToken}`)
+      .send({
+        ...ONLINE_MEETING,
+        title: `${TITLE_PREFIX} reminder recipients`,
+        startAt: "2030-03-02T09:00:00.000Z",
+        endAt: "2030-03-02T10:00:00.000Z",
+        meetingLink: "https://meet.google.com/abc-defg-hij",
+        participantIds: [],
+        additionalReminderEmails: [
+          "Lab.Staff@Test.Local",
+          "lab.staff@test.local",
+          admin!.email,
+          "not-an-email@",
+        ].filter((email) => !email.endsWith("@")),
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.meeting.additionalReminderEmails).toEqual([
+      "lab.staff@test.local",
+    ]);
+  });
+
   it("keeps multiple PICs separate from ownership, participants, and access", async () => {
     const created = await request(app)
       .post("/api/meetings")

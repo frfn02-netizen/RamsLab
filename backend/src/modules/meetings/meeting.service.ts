@@ -12,10 +12,6 @@ import {
   findActiveInternalEmailContacts,
   findUsersByIds,
 } from "../users/user.repository.js";
-import {
-  sendMeetingEmail,
-  type MeetingEmailRecipient,
-} from "../../lib/mailjet.js";
 import type { JwtPayload } from "../auth/auth.types.js";
 import type { UserDirectoryEntry } from "../users/user.types.js";
 import {
@@ -28,7 +24,6 @@ import {
   findMeetingsForCalendar,
   findMeetingsForUser,
   findOverlappingMeetings,
-  markCreatedNotificationSent,
   removeMeetingAttachment as removeMeetingAttachmentRecord,
   toObjectId,
   updateMeeting as updateMeetingRecord,
@@ -74,11 +69,27 @@ export function assertMeetingWindow(startAt: Date, endAt: Date) {
   }
 }
 
+async function withoutInternalRecipientEmails(
+  emails: string[] | undefined,
+): Promise<string[] | undefined> {
+  if (!emails || emails.length === 0) return emails;
+
+  // Internal staff should be added as participants, not duplicated through the
+  // free-form reminder list. Match against every active ADMIN/DOSEN address.
+  const internalEmails = new Set(
+    (await findActiveInternalEmailContacts()).map((contact) =>
+      contact.email.trim().toLowerCase(),
+    ),
+  );
+  return emails.filter((email) => !internalEmails.has(email.trim().toLowerCase()));
+}
+
 type MeetingDetailFields = {
   clientName?: string | null;
   mode?: MeetingMode | null;
   location?: string | null;
   meetingLink?: string | null;
+  additionalReminderEmails?: string[];
 };
 
 function normalizeMeetingDetails<T extends MeetingDetailFields>(meeting: T): T {
@@ -91,6 +102,15 @@ function normalizeMeetingDetails<T extends MeetingDetailFields>(meeting: T): T {
   }
   if (typeof normalized.meetingLink === "string") {
     normalized.meetingLink = normalized.meetingLink.trim() || null;
+  }
+  if (Array.isArray(normalized.additionalReminderEmails)) {
+    normalized.additionalReminderEmails = [
+      ...new Set(
+        normalized.additionalReminderEmails
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ];
   }
 
   if (normalized.mode === "OFFLINE") {
@@ -365,6 +385,7 @@ function serialize(
       .filter((value): value is MeetingUserSummary => Boolean(value)),
     participantIds: (meeting.participantIds ?? []).map((id) => id.toString()),
     meetingLink: meeting.meetingLink ?? null,
+    additionalReminderEmails: meeting.additionalReminderEmails ?? [],
     status: getMeetingStatus(meeting),
     cancelledAt: meeting.cancelledAt?.toISOString() ?? null,
     cancelledBy: meeting.cancelledBy?.toString() ?? null,
@@ -644,34 +665,6 @@ async function creatorIdFor(actor: JwtPayload): Promise<ObjectId> {
   return creatorId;
 }
 
-export async function sendMeetingEmailsToActiveInternalUsers(
-  meeting: Meeting,
-  organizerName: string,
-  kind: "created" | "reminder",
-) {
-  const contacts = await findActiveInternalEmailContacts();
-  if (contacts.length === 0) {
-    return { success: false, error: "no_active_internal_recipients" };
-  }
-
-  const results = await Promise.all(
-    contacts.map((contact) =>
-      sendMeetingEmail({
-        recipient: {
-          email: contact.email,
-          ...(contact.displayName ? { name: contact.displayName } : {}),
-        } satisfies MeetingEmailRecipient,
-        meeting,
-        organizerName,
-        kind,
-        locale: "id",
-      }),
-    ),
-  );
-  const failed = results.find((result) => !result.success);
-  return failed ? { success: false, error: failed.error } : { success: true };
-}
-
 export async function getMeetings(
   actor: JwtPayload,
   range: { from?: Date; to?: Date },
@@ -787,6 +780,10 @@ export async function createMeeting(
   actor: JwtPayload,
 ) {
   const normalizedInput = normalizeMeetingDetails(input);
+  normalizedInput.additionalReminderEmails =
+    (await withoutInternalRecipientEmails(
+      normalizedInput.additionalReminderEmails,
+    )) ?? [];
   assertMeetingWindow(normalizedInput.startAt, normalizedInput.endAt);
   assertCanCreateMeeting(actor);
   const creatorId = await creatorIdFor(actor);
@@ -838,44 +835,7 @@ export async function createMeeting(
     audit,
   );
   const [response] = await hydrate([meeting], actor);
-  const organizerName = response.createdBy?.displayName || "RAMS Platform";
-  let notification: { success: boolean; error?: string };
-  try {
-    notification = await sendMeetingEmailsToActiveInternalUsers(
-      meeting,
-      organizerName,
-      "created",
-    );
-  } catch {
-    notification = { success: false, error: "notification_failed" };
-  }
-  if (notification.success) {
-    const sentAt = new Date();
-    const marked = await markCreatedNotificationSent(
-      meeting._id?.toString() ?? "",
-      sentAt,
-    );
-    if (!marked) {
-      return {
-        meeting: response,
-        conflicts,
-        notification: {
-          sent: false,
-          warning: "Meeting saved, but notification state could not be recorded.",
-        },
-      };
-    }
-  }
-  return {
-    meeting: response,
-    conflicts,
-    notification: notification.success
-      ? { sent: true }
-      : {
-          sent: false,
-          warning: "Meeting saved, but the email notification could not be sent.",
-        },
-  };
+  return { meeting: response, conflicts };
 }
 
 export async function updateMeeting(
@@ -938,6 +898,12 @@ export async function updateMeeting(
     excludeId: id,
   });
 
+  const additionalReminderEmails =
+    input.additionalReminderEmails === undefined
+      ? existing.additionalReminderEmails
+      : await withoutInternalRecipientEmails(
+          input.additionalReminderEmails,
+        );
   const candidate = normalizeMeetingDetails({
     ...existing,
     title: input.title ?? existing.title,
@@ -956,6 +922,7 @@ export async function updateMeeting(
       input.meetingLink === undefined
         ? existing.meetingLink
         : (input.meetingLink ?? null),
+    additionalReminderEmails,
   });
   const normalizedInput: UpdateMeetingInput = {
     ...input,
@@ -969,6 +936,9 @@ export async function updateMeeting(
       ? { clientName: candidate.clientName ?? undefined }
       : {}),
     ...(input.mode !== undefined ? { mode: candidate.mode ?? undefined } : {}),
+    ...(input.additionalReminderEmails !== undefined
+      ? { additionalReminderEmails: candidate.additionalReminderEmails }
+      : {}),
     ...(input.location !== undefined ||
     input.mode !== undefined ||
     input.meetingLink !== undefined

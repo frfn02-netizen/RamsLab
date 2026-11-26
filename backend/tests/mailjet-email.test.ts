@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getMailjetConfigurationDiagnostics,
   sendEmail,
-  sendPasswordResetEmail,
   setMailjetTransportForTesting,
 } from "../src/lib/mailjet.js";
 
@@ -222,23 +221,4 @@ describe("Mailjet client", () => {
     expect(JSON.stringify(diagnostics)).not.toContain(SECRET_KEY);
   });
 
-  it("renders password reset links with the token fragment", async () => {
-    const transport = vi.fn().mockResolvedValue(successResponse());
-    setMailjetTransportForTesting(transport);
-
-    const result = await sendPasswordResetEmail(
-      RECIPIENT,
-      "https://rams.example/reset-password#token=abc123",
-    );
-
-    expect(result.sent).toBe(true);
-    const body = JSON.parse(String(transport.mock.calls[0][1].body));
-    expect(body.Messages[0].Subject).toBe("Reset your RAMS password");
-    expect(body.Messages[0].TextPart).toContain(
-      "https://rams.example/reset-password#token=abc123",
-    );
-    expect(body.Messages[0].HTMLPart).toContain(
-      "https://rams.example/reset-password#token=abc123",
-    );
-  });
 });

@@ -11,29 +11,16 @@ import {
 import { createAlumniUser } from "../users/user.service.js";
 import { USER_ROLES } from "../users/user.types.js";
 import { createAlumniShell } from "../alumni/alumni.service.js";
-import {
-  getFrontendBasePath,
-  getPrimaryFrontendOrigin,
-} from "../../config/security.js";
 import { HttpError } from "../../middlewares/error.middleware.js";
-import {
-  getMailjetConfigurationDiagnostics,
-  isMailjetConfigured,
-  sendPasswordResetEmail,
-} from "../../lib/mailjet.js";
 
 import {
   generateAccessToken,
-  generatePasswordResetToken,
   generateTemporaryPassword,
-  getPasswordResetTokenExpiry,
   hashPasswordResetToken,
   waitForPasswordResetFloor,
 } from "./auth.utils.js";
 import {
   consumePasswordResetToken,
-  createPasswordResetToken,
-  deletePasswordResetTokenByHash,
   deletePasswordResetTokensForUser,
 } from "./password-reset.repository.js";
 import { recordAuthAudit } from "./auth.audit.js";
@@ -177,98 +164,10 @@ export async function changePassword(
   return { tokenVersion };
 }
 
-async function deliverPasswordResetEmail(input: {
-  userId: ObjectId;
-  to: string;
-  resetUrl: string;
-  tokenHash: string;
-}) {
-  try {
-    const result = await sendPasswordResetEmail(input.to, input.resetUrl);
-
-    if (result.sent) {
-      // "accepted" is not "delivered". Delivery, bounce, and failure are
-      // provider-asynchronous and must be checked in the provider dashboard.
-      console.info("Password reset email accepted by provider", {
-        provider: result.provider,
-        status: result.status,
-        providerMessageId: result.providerMessageId ?? null,
-        userId: input.userId.toString(),
-      });
-      return;
-    }
-
-    await deletePasswordResetTokenByHash(input.tokenHash);
-    console.error("Password reset email delivery failed", {
-      provider: result.provider,
-      status: result.status,
-      httpStatus: result.httpStatus ?? null,
-      reason: result.reason ?? null,
-      userId: input.userId.toString(),
-    });
-  } catch (error) {
-    await deletePasswordResetTokenByHash(input.tokenHash).catch(
-      () => undefined,
-    );
-    console.error("Password reset email delivery threw", {
-      userId: input.userId.toString(),
-      error: error instanceof Error ? error.message : "unknown error",
-    });
-  }
-}
-
-export async function requestPasswordReset(email: string): Promise<void> {
-  const user = await findUserByEmail(email);
-  if (!user || !user.isActive) {
-    await waitForPasswordResetFloor();
-    return;
-  }
-
-  if (!isMailjetConfigured()) {
-    // Keep the response generic. The operator sees this warning; the client
-    // does not learn whether the address exists or why no email arrived.
-    console.warn(
-      "Password reset requested but email delivery is not configured",
-      {
-        ...getMailjetConfigurationDiagnostics(),
-        userId: user._id?.toString(),
-      },
-    );
-    await waitForPasswordResetFloor();
-    return;
-  }
-
-  const rawToken = generatePasswordResetToken();
-  const tokenHash = hashPasswordResetToken(rawToken);
-  await deletePasswordResetTokensForUser(user._id!);
-  await createPasswordResetToken({
-    userId: user._id!,
-    tokenHash,
-    expiresAt: getPasswordResetTokenExpiry(),
-    usedAt: null,
-    createdAt: new Date(),
-  });
-
-  try {
-    const resetUrl = `${getPrimaryFrontendOrigin()}${getFrontendBasePath()}/reset-password#token=${encodeURIComponent(
-      rawToken,
-    )}`;
-    // Await delivery so a serverless or short-lived runtime cannot terminate
-    // before the provider request is sent. The API response stays generic.
-    await deliverPasswordResetEmail({
-      userId: user._id!,
-      to: user.email,
-      resetUrl,
-      tokenHash,
-    });
-  } catch (error) {
-    await deletePasswordResetTokenByHash(tokenHash).catch(() => undefined);
-    console.error("Password reset email scheduling failed", {
-      userId: user._id!.toString(),
-      error: error instanceof Error ? error.message : "unknown error",
-    });
-  }
-
+export async function requestPasswordReset(_email: string): Promise<void> {
+  // Self-service reset email is disabled so Mailjet quota is reserved for
+  // H-24h meeting reminders. Keep the generic response and the timing floor so
+  // callers cannot enumerate accounts.
   await waitForPasswordResetFloor();
 }
 

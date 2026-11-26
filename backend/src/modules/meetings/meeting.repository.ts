@@ -152,9 +152,9 @@ export async function createMeeting(
     picIds: picIds.length > 0 ? picIds : undefined,
     participantIds,
     meetingLink: input.meetingLink ?? null,
+    additionalReminderEmails: input.additionalReminderEmails ?? [],
     auditHistory: [audit],
     attachments: [],
-    createdNotificationSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -183,6 +183,8 @@ export async function updateMeeting(
   if (input.visibility !== undefined) set.visibility = input.visibility;
   if (input.meetingLink !== undefined)
     set.meetingLink = input.meetingLink || null;
+  if (input.additionalReminderEmails !== undefined)
+    set.additionalReminderEmails = input.additionalReminderEmails;
   if (participantIds !== undefined) set.participantIds = participantIds;
   if (input.primaryPicId !== undefined) {
     set.primaryPicId = toObjectId(input.primaryPicId) ?? undefined;
@@ -256,26 +258,6 @@ export async function deleteMeeting(id: string): Promise<boolean> {
   if (!objectId) return false;
   const result = await getMeetingsCollection().deleteOne({ _id: objectId });
   return result.deletedCount === 1;
-}
-
-export async function markCreatedNotificationSent(
-  id: string,
-  sentAt: Date,
-): Promise<boolean> {
-  const objectId = toObjectId(id);
-  if (!objectId) return false;
-
-  const result = await getMeetingsCollection().updateOne(
-    {
-      _id: objectId,
-      $or: [
-        { createdNotificationSentAt: null },
-        { createdNotificationSentAt: { $exists: false } },
-      ],
-    },
-    { $set: { createdNotificationSentAt: sentAt } },
-  );
-  return result.modifiedCount === 1;
 }
 
 export async function addMeetingAttachment(

@@ -1,46 +1,9 @@
-// Server-only mailer. The backend has no client runtime, so the Next.js
-// `server-only` marker package is intentionally not used here.
-import type { Meeting } from "../modules/meetings/meeting.types.js";
-
+// Generic Mailjet transport. Mailjet is reserved for the H-24h meeting
+// reminder engine; password reset and lecturer onboarding do not send email.
 const MAILJET_SEND_ENDPOINT = "https://api.mailjet.com/v3.1/send";
 const MAILJET_TIMEOUT_MS = 8000;
-const TIME_ZONE = "Asia/Jakarta";
 const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 const DEFAULT_SENDER_NAME = "RAMS Platform";
-const DEFAULT_APP_ORIGIN = "http://localhost:3000";
-
-export type MeetingEmailKind = "created" | "reminder";
-
-export interface MeetingEmailRecipient {
-  email: string;
-  name?: string;
-}
-
-export interface MeetingEmailOptions {
-  recipient: MeetingEmailRecipient;
-  meeting: Pick<
-    Meeting,
-    "title" | "startAt" | "endAt" | "location" | "meetingLink"
-  >;
-  organizerName: string;
-  kind: MeetingEmailKind;
-  locale?: "en" | "id";
-}
-
-export interface MeetingEmailResult {
-  success: boolean;
-  error?: string;
-}
-
-export interface LecturerOnboardingEmailOptions {
-  recipient: MeetingEmailRecipient;
-  fullName: string;
-  email: string;
-  /** Present only when the backend generated the initial password. */
-  temporaryPassword?: string;
-  /** Overrides the FRONTEND_URL-derived login URL. */
-  loginUrl?: string;
-}
 
 export type EmailFailureReason =
   | "not_configured"
@@ -99,28 +62,6 @@ export function setMailjetTransportForTesting(impl: typeof fetch | null) {
   transportOverride = impl;
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(
-    /[&<>"']/g,
-    (character) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[character] ?? character,
-  );
-}
-
-function formatMeetingTime(date: Date, locale: "en" | "id") {
-  return new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-    dateStyle: "full",
-    timeStyle: "short",
-    timeZone: TIME_ZONE,
-  }).format(date);
-}
-
 function readConfiguration(): MailjetConfiguration {
   const apiKey = process.env.MAILJET_API_KEY?.trim();
   const secretKey =
@@ -169,88 +110,6 @@ export function getMailjetConfigurationDiagnostics(): MailjetDiagnostics {
       process.env.MAILJET_SENDER_NAME?.trim(),
     ),
     dryRun: isMailjetDryRun(),
-  };
-}
-
-function renderMessage(options: MeetingEmailOptions) {
-  const locale = options.locale ?? "id";
-  const isReminder = options.kind === "reminder";
-  const title = isReminder
-    ? `Reminder: ${options.meeting.title}`
-    : `New RAMS meeting: ${options.meeting.title}`;
-  const start = formatMeetingTime(options.meeting.startAt, locale);
-  const end = formatMeetingTime(options.meeting.endAt, locale);
-  const location = options.meeting.location?.trim() || "Online meeting";
-  const link = options.meeting.meetingLink?.trim();
-  const greeting = options.recipient.name?.trim()
-    ? `Hello ${options.recipient.name.trim()},`
-    : "Hello,";
-  const intro = isReminder
-    ? `This is a reminder for the RAMS meeting "${options.meeting.title}".`
-    : `A new RAMS meeting, "${options.meeting.title}", has been scheduled.`;
-  const text = [
-    greeting,
-    "",
-    intro,
-    `Time: ${start} to ${end} WIB`,
-    `Location: ${location}`,
-    ...(link ? [`Meeting link: ${link}`] : []),
-    `Organizer: ${options.organizerName}`,
-    "",
-    "RAMS Platform",
-  ].join("\n");
-  const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;line-height:1.5;color:#242424"><p>${escapeHtml(greeting)}</p><p>${escapeHtml(intro)}</p><table role="presentation" style="border-collapse:collapse"><tr><td style="padding:4px 16px 4px 0"><strong>Title</strong></td><td style="padding:4px 0">${escapeHtml(options.meeting.title)}</td></tr><tr><td style="padding:4px 16px 4px 0"><strong>Time</strong></td><td style="padding:4px 0">${escapeHtml(start)} to ${escapeHtml(end)} WIB</td></tr><tr><td style="padding:4px 16px 4px 0"><strong>Location</strong></td><td style="padding:4px 0">${escapeHtml(location)}</td></tr><tr><td style="padding:4px 16px 4px 0"><strong>Organizer</strong></td><td style="padding:4px 0">${escapeHtml(options.organizerName)}</td></tr>${link ? `<tr><td style="padding:4px 16px 4px 0"><strong>Meeting link</strong></td><td style="padding:4px 0"><a href="${escapeHtml(link)}">${escapeHtml(link)}</a></td></tr>` : ""}</table><p>RAMS Platform</p></body></html>`;
-
-  return { subject: title, text, html };
-}
-
-function loginUrlFromEnvironment() {
-  const configured = process.env.FRONTEND_URL?.split(",")[0]?.trim();
-  const origin = configured || DEFAULT_APP_ORIGIN;
-  return `${origin.replace(/\/+$/, "")}/login`;
-}
-
-function renderOnboardingMessage(
-  options: LecturerOnboardingEmailOptions,
-  loginUrl: string,
-) {
-  const subject = "Your RAMS lecturer account";
-  const passwordLine = options.temporaryPassword
-    ? `Temporary password: ${options.temporaryPassword}`
-    : "Initial password: use the password provided by the RAMS administrator.";
-  const text = [
-    `Hello ${options.fullName},`,
-    "",
-    "An administrator created a RAMS lecturer account for you.",
-    "",
-    `Login page: ${loginUrl}`,
-    `Email: ${options.email}`,
-    passwordLine,
-    "",
-    "Change the password the first time you sign in. You will be asked to set a new password before you can open the meetings workspace.",
-    "",
-    "If you were not expecting this account, contact the RAMS administrator.",
-    "",
-    "RAMS Platform",
-  ].join("\n");
-  const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;line-height:1.5;color:#242424"><p>${escapeHtml(`Hello ${options.fullName},`)}</p><p>An administrator created a RAMS lecturer account for you.</p><table role="presentation" style="border-collapse:collapse"><tr><td style="padding:4px 16px 4px 0"><strong>Login page</strong></td><td style="padding:4px 0"><a href="${escapeHtml(loginUrl)}">${escapeHtml(loginUrl)}</a></td></tr><tr><td style="padding:4px 16px 4px 0"><strong>Email</strong></td><td style="padding:4px 0">${escapeHtml(options.email)}</td></tr><tr><td style="padding:4px 16px 4px 0"><strong>${options.temporaryPassword ? "Temporary password" : "Initial password"}</strong></td><td style="padding:4px 0">${escapeHtml(options.temporaryPassword ?? "Use the password provided by the RAMS administrator.")}</td></tr></table><p>Change the password the first time you sign in. You will be asked to set a new password before you can open the meetings workspace.</p><p>If you were not expecting this account, contact the RAMS administrator.</p><p>RAMS Platform</p></body></html>`;
-
-  return { subject, text, html };
-}
-
-function renderPasswordResetMessage(resetUrl: string) {
-  return {
-    subject: "Reset your RAMS password",
-    text: [
-      "Use this link to reset your RAMS password:",
-      "",
-      resetUrl,
-      "",
-      "This link expires soon and can be used only once. If you did not request a password reset, you can ignore this email.",
-      "",
-      "RAMS Platform",
-    ].join("\n"),
-    html: `<!doctype html><html><body style="font-family:Arial,sans-serif;line-height:1.5;color:#242424"><p>Use this link to reset your RAMS password:</p><p><a href="${escapeHtml(resetUrl)}">${escapeHtml(resetUrl)}</a></p><p>This link expires soon and can be used only once. If you did not request a password reset, you can ignore this email.</p><p>RAMS Platform</p></body></html>`,
   };
 }
 
@@ -388,54 +247,4 @@ export async function sendEmail(
     provider: "mailjet",
     ...(providerMessageId ? { providerMessageId } : {}),
   };
-}
-
-export async function sendMeetingEmail(
-  options: MeetingEmailOptions,
-): Promise<MeetingEmailResult> {
-  if (!EMAIL_PATTERN.test(options.recipient.email)) {
-    return { success: false, error: "invalid_recipient_email" };
-  }
-
-  const rendered = renderMessage(options);
-  const result = await sendEmail({
-    to: options.recipient.email,
-    subject: rendered.subject,
-    text: rendered.text,
-    html: rendered.html,
-  });
-
-  return result.sent
-    ? { success: true }
-    : { success: false, error: result.reason ?? "mailjet_request_failed" };
-}
-
-export async function sendLecturerOnboardingEmail(
-  options: LecturerOnboardingEmailOptions,
-): Promise<MeetingEmailResult> {
-  const loginUrl = options.loginUrl?.trim() || loginUrlFromEnvironment();
-  const rendered = renderOnboardingMessage(options, loginUrl);
-  const result = await sendEmail({
-    to: options.recipient.email,
-    subject: rendered.subject,
-    text: rendered.text,
-    html: rendered.html,
-  });
-
-  return result.sent
-    ? { success: true }
-    : { success: false, error: result.reason ?? "mailjet_request_failed" };
-}
-
-export async function sendPasswordResetEmail(
-  to: string,
-  resetUrl: string,
-): Promise<EmailSendResult> {
-  const rendered = renderPasswordResetMessage(resetUrl);
-  return sendEmail({
-    to,
-    subject: rendered.subject,
-    text: rendered.text,
-    html: rendered.html,
-  });
 }

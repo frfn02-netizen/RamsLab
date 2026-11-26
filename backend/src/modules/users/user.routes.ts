@@ -8,6 +8,7 @@ import { requireRole } from "../../middlewares/role.middlewares.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 import {
+  createInternalAccountController,
   getNotificationPreferencesController,
   getUserDirectoryController,
   resetUserPasswordController,
@@ -26,6 +27,13 @@ router.patch(
   "/me/notification-preferences",
   authenticate,
   updateNotificationPreferencesController,
+);
+
+router.post(
+  "/internal",
+  authenticate,
+  requireRole("ADMIN"),
+  createInternalAccountController,
 );
 
 router.get(

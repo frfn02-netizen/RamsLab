@@ -150,26 +150,25 @@ GET /api/admin/health
 
 The response includes `emailDeliveryConfigured`, `provider`, boolean Mailjet credential status, `mailjetSenderDomain`, `dryRun`, and trust proxy status. It never returns the Mailjet API key, secret, or reset token. The public `/api/health` does not expose these fields.
 
+Mailjet is reserved for the H-24h meeting reminder cycle. Lecturer onboarding and self-service password reset do not send email; admins share one-time temporary passwords directly.
+
 Backend logs use these safe events:
 
-- `Password reset email accepted by provider`: provider, status, provider message ID, user ID.
-- `Password reset email delivery failed`: provider, status, HTTP status or sanitized reason, user ID.
-- `Gmail SMTP send failed`: provider, status, sanitized reason, SMTP error code.
 - `Mailjet send failed`: provider, status, sanitized reason.
 - `Mailjet rejected a message`: provider, status, sanitized reason, HTTP status.
 - `Mailjet returned an unexpected response`: provider, status, sanitized reason, HTTP status.
 
-Recipients, reset tokens, reset URLs, App Passwords, and API keys are never logged.
+Recipients, temporary passwords, reset URLs, App Passwords, and API keys are never logged.
 
 ### Provider status limits
 
 `accepted` means the provider accepted the send request. It is not proof of inbox delivery. Gmail delivery, spam placement, bounces, and complaints must be checked in the Gmail account, Resend dashboard, or provider webhooks.
 
-### Manual email test
+### Manual reminder email test
 
-1. Configure the provider and restart the backend.
+1. Configure Mailjet and restart the backend.
 2. Sign in as ADMIN and check `GET /api/admin/health`.
-3. Request a reset from the Forgot Password page for a real account.
-4. Check the backend log for `Password reset email accepted by provider` and the provider message ID.
-5. Check the Gmail inbox, spam folder, and Sent folder. Do not treat the HTTP 200 response as delivery proof.
-6. If sending fails, use the sanitized log reason and the provider dashboard. Admin password reset remains available as a fallback.
+3. Schedule a meeting that starts within the next 24 hours and includes an additional reminder email.
+4. Trigger `POST /api/cron/meeting-reminders` with `CRON_SECRET`.
+5. Check the recipient inbox and the sanitized Mailjet log events. Do not treat accepted provider status as delivery proof.
+6. If sending fails, use the sanitized log reason and the Mailjet dashboard.

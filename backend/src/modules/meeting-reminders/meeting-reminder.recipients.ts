@@ -15,8 +15,14 @@ import type {
   MeetingReminderRecipient,
 } from "./meeting-reminder.types.js";
 
-type ReminderMeeting = Pick<Meeting, "_id" | "createdBy" | "participantIds">;
+type ReminderMeeting = Pick<
+  Meeting,
+  "_id" | "createdBy" | "participantIds" | "additionalReminderEmails"
+>;
 type EligibleRole = "ADMIN" | "DOSEN";
+
+const EXTRA_RECIPIENT_PREFIX = "email:";
+const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 function isEligibleRole(
   role: UserReminderContact["role"],
@@ -98,7 +104,33 @@ export async function resolveMeetingReminderRecipients(
   const entries = await findReminderContactsByIds(
     meetingReminderUserIds(meeting),
   );
-  return filterEligibleReminderRecipients(entries, channel);
+  const recipients = filterEligibleReminderRecipients(entries, channel);
+
+  // WhatsApp reminders require a consenting phone number, so extra addresses
+  // only apply to the email channel.
+  if (channel !== "EMAIL") return recipients;
+
+  // Deduplicate against the active ADMIN/DOSEN addresses already resolved for
+  // this meeting so nobody receives the same reminder twice.
+  const seen = new Set(
+    recipients.map((recipient) => recipient.email.trim().toLowerCase()),
+  );
+  for (const candidate of meeting.additionalReminderEmails ?? []) {
+    const email = candidate.trim().toLowerCase();
+    if (!email || seen.has(email) || !EMAIL_PATTERN.test(email)) continue;
+    seen.add(email);
+    recipients.push({
+      userId: `${EXTRA_RECIPIENT_PREFIX}${email}`,
+      email,
+      displayName: email,
+      role: "DOSEN",
+      whatsappNumber: null,
+    });
+  }
+
+  return recipients.sort((left, right) =>
+    left.userId.localeCompare(right.userId),
+  );
 }
 
 export async function resolveEligibleReminderRecipient(
@@ -106,6 +138,22 @@ export async function resolveEligibleReminderRecipient(
   userId: string,
   channel: MeetingReminderChannel = "EMAIL",
 ): Promise<MeetingReminderRecipient | null> {
+  if (userId.startsWith(EXTRA_RECIPIENT_PREFIX)) {
+    if (channel !== "EMAIL") return null;
+    const email = userId.slice(EXTRA_RECIPIENT_PREFIX.length);
+    const stillListed = (meeting.additionalReminderEmails ?? []).some(
+      (candidate) => candidate.trim().toLowerCase() === email,
+    );
+    if (!stillListed || !EMAIL_PATTERN.test(email)) return null;
+    return {
+      userId,
+      email,
+      displayName: email,
+      role: "DOSEN",
+      whatsappNumber: null,
+    };
+  }
+
   if (!ObjectId.isValid(userId)) return null;
 
   const isCreator = meeting.createdBy?.toString() === userId;

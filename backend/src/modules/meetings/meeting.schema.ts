@@ -41,6 +41,18 @@ const location = z
   .nullable()
   .optional();
 
+const additionalReminderEmail = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email("Reminder email must be a valid email address")
+  .max(320, "Reminder email is too long");
+
+const additionalReminderEmails = z
+  .array(additionalReminderEmail)
+  .max(50, "Too many reminder email addresses")
+  .default([]);
+
 const meetingFields = {
   title: z.string().trim().min(1, "Title is required").max(200),
   description: z.string().trim().max(5000).default(""),
@@ -54,6 +66,7 @@ const meetingFields = {
   picIds: z.array(objectId).min(1).max(10),
   participantIds: z.array(objectId).max(100).default([]),
   meetingLink,
+  additionalReminderEmails,
 };
 
 export const createMeetingSchema = z
@@ -105,6 +118,10 @@ export const updateMeetingSchema = z
     picIds: z.array(objectId).min(1).max(10).optional(),
     participantIds: z.array(objectId).max(100).optional(),
     meetingLink,
+    additionalReminderEmails: z
+      .array(additionalReminderEmail)
+      .max(50, "Too many reminder email addresses")
+      .optional(),
   })
   .superRefine((meeting, context) => {
     if (

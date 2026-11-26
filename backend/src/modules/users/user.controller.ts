@@ -1,13 +1,52 @@
 import type { Request, Response } from "express";
-import { ObjectId } from "mongodb";
+import { MongoServerError, ObjectId } from "mongodb";
+import { ZodError } from "zod";
 import { adminResetPassword } from "../auth/auth.service.js";
 import { HttpError } from "../../middlewares/error.middleware.js";
 import {
+  createInternalAccount,
   getNotificationPreferences,
   updateNotificationPreferences,
 } from "./user.service.js";
-import { updateNotificationPreferencesSchema } from "./user.schema.js";
+import {
+  createInternalAccountSchema,
+  updateNotificationPreferencesSchema,
+} from "./user.schema.js";
 import { findActiveUsersDirectory } from "./user.repository.js";
+
+export async function createInternalAccountController(
+  req: Request,
+  res: Response,
+) {
+  res.setHeader("Cache-Control", "no-store");
+  try {
+    const input = createInternalAccountSchema.parse(req.body);
+    const account = await createInternalAccount(input);
+    return res.status(201).json({ success: true, data: account });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.issues.map(({ path, message }) => ({ path, message })),
+      });
+    }
+    if (error instanceof HttpError) {
+      return res
+        .status(error.statusCode)
+        .json({ success: false, message: error.message });
+    }
+    if (error instanceof MongoServerError && error.code === 11000) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Email is already registered" });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create internal account",
+    });
+  }
+}
 
 export async function getUserDirectoryController(_req: Request, res: Response) {
   try {

@@ -91,7 +91,7 @@ export const createDosenSchema = z
     awardCount: z.number().int().min(0).max(100000).optional(),
 
     /** Public profile visibility, independent from account login access. */
-    isPublic: z.boolean().default(true),
+    isPublic: z.boolean().default(false),
 
     publicationIds: publicationIdsField.default([]),
   })

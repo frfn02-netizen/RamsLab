@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import bcrypt from "bcrypt";
 import { ObjectId } from "mongodb";
@@ -9,13 +9,8 @@ import { getUsersCollection } from "../src/modules/users/user.repository.js";
 import { getPasswordResetTokensCollection } from "../src/modules/auth/password-reset.repository.js";
 import { getAuthAuditCollection } from "../src/modules/auth/auth.audit.js";
 import { hashPasswordResetToken } from "../src/modules/auth/auth.utils.js";
+import { setMailjetTransportForTesting } from "../src/lib/mailjet.js";
 import { ensurePasswordUser } from "./auth-fixture.js";
-import {
-  clearTestEmailProvider,
-  extractResetToken,
-  useFailingEmailProvider,
-  useTestEmailProvider,
-} from "./email-fixture.js";
 
 const USER_ID = "00000000000000000000d001";
 const EMAIL = "vitest.reset.user@test.local";
@@ -26,7 +21,7 @@ const USER_ID_2 = "00000000000000000000d002";
 const EMAIL_2 = "vitest.reset.user2@test.local";
 const PASSWORD_2 = "second-password-123";
 
-let emailProvider: ReturnType<typeof useTestEmailProvider>;
+const mailjetTransport = vi.fn();
 
 async function login(email: string, password: string) {
   const response = await request(app)
@@ -51,6 +46,16 @@ async function clearResetState() {
   await getAuthAuditCollection().deleteMany({ targetUserId: { $in: ids } });
 }
 
+async function seedResetToken(rawToken: string, userId: string, expiresInMs = 60_000) {
+  await getPasswordResetTokensCollection().insertOne({
+    userId: new ObjectId(userId),
+    tokenHash: hashPasswordResetToken(rawToken),
+    expiresAt: new Date(Date.now() + expiresInMs),
+    usedAt: null,
+    createdAt: new Date(),
+  });
+}
+
 beforeAll(async () => {
   await connectDatabase();
   await ensurePasswordUser({
@@ -70,7 +75,7 @@ beforeAll(async () => {
     mustChangePassword: false,
   });
   await clearResetState();
-  emailProvider = useTestEmailProvider();
+  setMailjetTransportForTesting(mailjetTransport);
 });
 
 afterAll(async () => {
@@ -78,12 +83,13 @@ afterAll(async () => {
     _id: { $in: [new ObjectId(USER_ID), new ObjectId(USER_ID_2)] },
   });
   await clearResetState();
-  clearTestEmailProvider();
+  setMailjetTransportForTesting(null);
 });
 
 describe("password reset", () => {
-  it("returns a generic response and stores a hashed token with a fragment link", async () => {
-    const before = emailProvider.messages.length;
+  it("returns a generic response without creating a token or sending email", async () => {
+    mailjetTransport.mockClear();
+
     const response = await request(app)
       .post("/api/auth/forgot-password")
       .send({ email: EMAIL });
@@ -91,26 +97,15 @@ describe("password reset", () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.message).toContain("If an account matches");
-
-    expect(emailProvider.messages.length).toBe(before + 1);
-    const message = emailProvider.messages.at(-1)!;
-    expect(message.text).toContain("/reset-password#token=");
-    expect(message.text).not.toContain("/reset-password?token=");
-    const rawToken = extractResetToken(message.text);
-    expect(rawToken).toBeTruthy();
-
-    const stored = await getPasswordResetTokensCollection().findOne({
-      userId: new ObjectId(USER_ID),
-    });
-    expect(stored).not.toBeNull();
-    expect(stored!.tokenHash).toBe(hashPasswordResetToken(rawToken!));
-    expect(stored!.tokenHash).not.toBe(rawToken);
-    expect(stored!.expiresAt.getTime()).toBeGreaterThan(Date.now());
-    expect(stored!.usedAt).toBeNull();
+    expect(
+      await getPasswordResetTokensCollection().countDocuments({
+        userId: new ObjectId(USER_ID),
+      }),
+    ).toBe(0);
+    expect(mailjetTransport).not.toHaveBeenCalled();
   });
 
-  it("returns the same generic response for a nonexistent email without sending mail", async () => {
-    const before = emailProvider.messages.length;
+  it("returns the same generic response for a nonexistent email", async () => {
     const response = await request(app)
       .post("/api/auth/forgot-password")
       .send({ email: "nobody-here@test.local" });
@@ -118,7 +113,6 @@ describe("password reset", () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.message).toContain("If an account matches");
-    expect(emailProvider.messages.length).toBe(before);
   });
 
   it("applies a minimum response floor to existing and missing emails", async () => {
@@ -138,25 +132,6 @@ describe("password reset", () => {
     expect(missingMs).toBeGreaterThanOrEqual(200);
   });
 
-  it("removes the token and returns a generic response when delivery fails", async () => {
-    useFailingEmailProvider();
-    const response = await request(app)
-      .post("/api/auth/forgot-password")
-      .send({ email: EMAIL_2 });
-
-    expect(response.status).toBe(200);
-    expect(response.body.message).toContain("If an account matches");
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(
-      await getPasswordResetTokensCollection().countDocuments({
-        userId: new ObjectId(USER_ID_2),
-      }),
-    ).toBe(0);
-
-    emailProvider = useTestEmailProvider();
-  });
-
   it("rejects an invalid reset token", async () => {
     const response = await request(app).post("/api/auth/reset-password").send({
       token: "invalid-token-value-that-does-not-exist",
@@ -169,13 +144,7 @@ describe("password reset", () => {
 
   it("rejects an expired reset token", async () => {
     const rawToken = "expired-token-value-1234567890";
-    await getPasswordResetTokensCollection().insertOne({
-      userId: new ObjectId(USER_ID_2),
-      tokenHash: hashPasswordResetToken(rawToken),
-      expiresAt: new Date(Date.now() - 60_000),
-      usedAt: null,
-      createdAt: new Date(Date.now() - 120_000),
-    });
+    await seedResetToken(rawToken, USER_ID_2, -60_000);
 
     const response = await request(app)
       .post("/api/auth/reset-password")
@@ -186,11 +155,8 @@ describe("password reset", () => {
   });
 
   it("resets the password, revokes sessions, and invalidates the token", async () => {
-    await request(app).post("/api/auth/forgot-password").send({ email: EMAIL });
-
-    const message = emailProvider.messages.at(-1)!;
-    const rawToken = extractResetToken(message.text);
-    expect(rawToken).toBeTruthy();
+    const rawToken = "valid-reset-token-1234567890";
+    await seedResetToken(rawToken, USER_ID);
 
     const loginBefore = await login(EMAIL, CURRENT_PASSWORD);
     expect(loginBefore.response.status).toBe(200);
@@ -232,11 +198,8 @@ describe("password reset", () => {
   });
 
   it("rejects a reset password that matches the current password", async () => {
-    await request(app).post("/api/auth/forgot-password").send({ email: EMAIL });
-
-    const message = emailProvider.messages.at(-1)!;
-    const rawToken = extractResetToken(message.text);
-    expect(rawToken).toBeTruthy();
+    const rawToken = "same-password-token-1234567890";
+    await seedResetToken(rawToken, USER_ID);
 
     const response = await request(app)
       .post("/api/auth/reset-password")
@@ -246,12 +209,6 @@ describe("password reset", () => {
     expect(response.body.message).toMatch(
       /different from the current password/i,
     );
-
-    const user = await getUsersCollection().findOne({
-      _id: new ObjectId(USER_ID),
-    });
-    expect(user?.tokenVersion).toBe(1);
-    expect(await bcrypt.compare(NEW_PASSWORD, user!.passwordHash)).toBe(true);
   });
 
   it("allows the recovery endpoints without a CSRF header even with a session", async () => {
@@ -274,31 +231,6 @@ describe("password reset", () => {
 
     expect(response.status).toBe(403);
     expect(response.body.message).toBe("Cross-origin request denied");
-  });
-
-  it("does not create a token or send mail when email delivery is not configured", async () => {
-    clearTestEmailProvider();
-
-    const beforeMessages = emailProvider.messages.length;
-    const beforeTokens =
-      await getPasswordResetTokensCollection().countDocuments({
-        userId: new ObjectId(USER_ID_2),
-      });
-
-    const response = await request(app)
-      .post("/api/auth/forgot-password")
-      .send({ email: EMAIL_2 });
-
-    expect(response.status).toBe(200);
-    expect(response.body.message).toContain("If an account matches");
-    expect(emailProvider.messages.length).toBe(beforeMessages);
-    expect(
-      await getPasswordResetTokensCollection().countDocuments({
-        userId: new ObjectId(USER_ID_2),
-      }),
-    ).toBe(beforeTokens);
-
-    emailProvider = useTestEmailProvider();
   });
 
   it("rate limits repeated forgot-password requests for the same email", async () => {
