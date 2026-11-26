@@ -335,10 +335,16 @@ describe("People directory – search", () => {
 });
 
 describe("People directory – cards", () => {
-  it("uses the same unboxed centered structure across portrait categories", async () => {
+  it("uses the same unboxed centered structure across every category", async () => {
     await renderDirectory();
 
-    for (const label of ["Lecturers", "Vocational Interns", "Alumni"]) {
+    for (const label of [
+      "Lecturers",
+      "Graduate Students",
+      "Undergraduate Students",
+      "Vocational Interns",
+      "Alumni",
+    ]) {
       fireEvent.click(screen.getByRole("button", { name: label }));
 
       const card = screen.getAllByRole("article")[0]!;
@@ -365,55 +371,97 @@ describe("People directory – cards", () => {
     }
   });
 
-  it("renders graduate students as name-only links", async () => {
+  it("renders 1:1 fallback frames and clickable names for students", async () => {
     await renderDirectory();
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
 
-    const phd = screen.getByRole("link", { name: "Phd Candidate" });
-    const master = screen.getByRole("link", { name: "Master Candidate" });
+    const phdLink = screen.getByRole("link", { name: "Phd Candidate" });
+    expect(phdLink).toHaveAttribute("href", "/team/phd-1");
 
-    expect(phd).toHaveAttribute("href", "/team/phd-1");
-    expect(master).toHaveAttribute("href", "/team/master-1");
-    expect(phd.textContent).toBe("Phd Candidate");
-    expect(phd.className).toContain("text-sm");
-    expect(phd.className).toContain("font-medium");
-    expect(phd.className).toContain("text-stone-900");
-    expect(phd.className).toContain("hover:text-red-700");
-    expect(phd.className).toContain("transition-colors");
-    expect(phd.className).toContain("text-left");
+    const phdPortrait = phdLink.querySelector("div")!;
+    expect(phdPortrait.className).toContain("aspect-square");
+    expect(phdPortrait.className).toContain("w-full");
+    expect(phdPortrait.className).toContain("overflow-hidden");
+    expect(phdPortrait.className).toContain("rounded-md");
+    expect(phdPortrait.className).toContain("bg-stone-100");
+    expect(phdPortrait.querySelector("img")).toBeNull();
 
-    expect(screen.queryByRole("article")).toBeNull();
-    expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.queryByText("Doctor of Engineering")).toBeNull();
-    expect(screen.queryByText("Simulation")).toBeNull();
+    const phdAvatar = screen.getByLabelText("Phd Candidate avatar");
+    expect(phdAvatar.className).toContain("bg-stone-100");
+    expect(phdAvatar.className).toContain("text-stone-500");
+    expect(screen.getByText("PC").className).toContain("font-semibold");
+    expect(
+      screen.getByRole("link", { name: "Master Candidate" }),
+    ).toHaveAttribute("href", "/team/master-1");
 
-    const list = phd.closest("ul")!;
-    expect(list.className).toContain("grid-cols-1");
-    expect(list.className).toContain("sm:grid-cols-2");
-    expect(list.className).toContain("md:grid-cols-3");
-    expect(list.className).toContain("lg:grid-cols-4");
-    expect(list.className).toContain("gap-x-6");
-    expect(list.className).toContain("gap-y-3");
-    expect(list.className).toContain("py-2");
-  });
-
-  it("renders undergraduate students as name-only links", async () => {
-    await renderDirectory();
     fireEvent.click(
       screen.getByRole("button", { name: "Undergraduate Students" }),
     );
 
-    const link = screen.getByRole("link", { name: "Undergraduate Student" });
-    expect(link).toHaveAttribute("href", "/team/ug-1");
-    expect(link.textContent).toBe("Undergraduate Student");
+    const undergradLink = screen.getByRole("link", {
+      name: "Undergraduate Student",
+    });
+    expect(undergradLink).toHaveAttribute("href", "/team/ug-1");
 
-    expect(screen.queryByRole("article")).toBeNull();
-    expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.queryByText("Bachelor of Engineering")).toBeNull();
-    expect(screen.queryByText("Marine Systems")).toBeNull();
+    const undergradPortrait = undergradLink.querySelector("div")!;
+    expect(undergradPortrait.className).toContain("aspect-square");
+    expect(undergradPortrait.className).toContain("w-full");
+    expect(undergradPortrait.className).toContain("overflow-hidden");
+    expect(undergradPortrait.className).toContain("rounded-md");
+    expect(undergradPortrait.className).toContain("bg-stone-100");
+    expect(undergradPortrait.querySelector("img")).toBeNull();
+    expect(screen.getByLabelText("Undergraduate Student avatar")).toBeVisible();
   });
 
-  it("shows the search empty state for name-only student lists", async () => {
+  it("renders top-aligned 1:1 photos for students with a photo URL", async () => {
+    const people = basePeople();
+    people.MAHASISWA = [
+      person({
+        id: "phd-photo",
+        category: "MAHASISWA",
+        fullName: "Photo Grad",
+        photo: "https://example.test/grad.jpg",
+      }),
+    ];
+    people.UNDERGRADUATE = [
+      person({
+        id: "ug-photo",
+        category: "UNDERGRADUATE",
+        fullName: "Photo Undergrad",
+        photo: "https://example.test/ug.jpg",
+      }),
+    ];
+    getPublicPeopleList.mockResolvedValue(people);
+
+    await renderDirectory();
+    fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
+
+    const gradImg = screen
+      .getByRole("link", { name: "Photo Grad" })
+      .querySelector("img")!;
+    const gradPortrait = gradImg.parentElement!;
+    expect(gradPortrait.className).toContain("aspect-square");
+    expect(gradPortrait.className).toContain("w-full");
+    expect(gradImg.className).toContain("h-full");
+    expect(gradImg.className).toContain("w-full");
+    expect(gradImg.className).toContain("object-cover");
+    expect(gradImg.className).toContain("object-top");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Undergraduate Students" }),
+    );
+
+    const undergradImg = screen
+      .getByRole("link", { name: "Photo Undergrad" })
+      .querySelector("img")!;
+    const undergradPortrait = undergradImg.parentElement!;
+    expect(undergradPortrait.className).toContain("aspect-square");
+    expect(undergradPortrait.className).toContain("w-full");
+    expect(undergradImg.className).toContain("object-cover");
+    expect(undergradImg.className).toContain("object-top");
+  });
+
+  it("shows the search empty state for student lists", async () => {
     await renderDirectory();
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
 
