@@ -72,7 +72,7 @@ export function ProfilePhoto({
 
   if (variant === "card") {
     return (
-      <div className="relative mx-auto aspect-square w-28 shrink-0 overflow-hidden rounded-md bg-stone-100 sm:w-32">
+      <div className="relative aspect-[4/5] w-full shrink-0 overflow-hidden rounded-md bg-stone-100">
         {photo && !imageFailed ? (
           <Image
             src={photo}
@@ -80,14 +80,14 @@ export function ProfilePhoto({
             fill
             sizes={sizes}
             onError={() => setImageFailed(true)}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-top transition-opacity duration-200 group-hover:opacity-90"
           />
         ) : (
           <div
             className="grid h-full w-full place-items-center bg-stone-100 text-stone-500"
             aria-label={`${name} avatar`}
           >
-            <span className="text-base font-semibold">{getInitials(name)}</span>
+            <span className="text-xl font-semibold">{getInitials(name)}</span>
           </div>
         )}
       </div>
@@ -151,7 +151,7 @@ export function MemberCard({
   ).filter(Boolean);
 
   return (
-    <article className="group flex min-w-0 flex-col items-center rounded-lg border border-stone-200/80 bg-white p-4 text-center transition-colors hover:border-stone-300">
+    <article className="group flex min-w-0 flex-col items-center text-center">
       <Link
         href={href}
         aria-label={member.fullName}
@@ -161,10 +161,10 @@ export function MemberCard({
           variant="card"
           name={member.fullName}
           photo={member.photo}
-          sizes="(max-width: 640px) 112px, 128px"
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
         />
 
-        <h3 className="mt-3.5 text-sm font-bold leading-snug text-stone-900 transition-colors group-hover:text-red-700">
+        <h3 className="mt-3 text-sm font-bold leading-snug text-stone-900 transition-colors group-hover:text-red-700">
           {member.fullName}
         </h3>
 
@@ -173,7 +173,7 @@ export function MemberCard({
         </p>
 
         {focus.length > 0 ? (
-          <p className="mt-2 text-[11px] leading-relaxed text-stone-500">
+          <p className="mt-1.5 text-[11px] leading-relaxed text-stone-500">
             {focus.join(" · ")}
           </p>
         ) : null}
@@ -191,7 +191,7 @@ function ProfileGrid({
 }) {
   return (
     <RevealOnScroll
-      className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+      className="grid grid-cols-1 gap-x-6 gap-y-8 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
       stagger={60}
     >
       {members.map((member) => (
@@ -210,16 +210,13 @@ function DirectorySkeleton({ label }: { label: string }) {
     <div role="status" aria-label={label}>
       <span className="sr-only">{label}</span>
       <div
-        className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+        className="grid grid-cols-1 gap-x-6 gap-y-8 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
         aria-hidden="true"
       >
         {Array.from({ length: 10 }).map((_, index) => (
-          <div
-            key={index}
-            className="flex flex-col items-center rounded-lg border border-stone-200/80 bg-white p-4"
-          >
-            <div className="skeleton mx-auto aspect-square w-28 rounded-md sm:w-32" />
-            <div className="mt-3.5 w-full space-y-2">
+          <div key={index} className="flex flex-col items-center">
+            <div className="skeleton aspect-[4/5] w-full rounded-md" />
+            <div className="mt-3 w-full space-y-2">
               <div className="skeleton mx-auto h-3.5 w-3/4 rounded" />
               <div className="skeleton mx-auto h-2.5 w-1/2 rounded" />
               <div className="skeleton mx-auto h-2.5 w-2/3 rounded" />

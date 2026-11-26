@@ -335,7 +335,7 @@ describe("People directory – search", () => {
 });
 
 describe("People directory – cards", () => {
-  it("uses the same centered card structure across every category", async () => {
+  it("uses the same unboxed centered structure across every category", async () => {
     await renderDirectory();
 
     for (const label of [
@@ -348,10 +348,15 @@ describe("People directory – cards", () => {
       fireEvent.click(screen.getByRole("button", { name: label }));
 
       const card = screen.getAllByRole("article")[0]!;
+      expect(card.className).toContain("group");
+      expect(card.className).toContain("flex-col");
       expect(card.className).toContain("items-center");
       expect(card.className).toContain("text-center");
-      expect(card.className).toContain("rounded-lg");
-      expect(card.className).toContain("border-stone-200/80");
+      expect(card.className).not.toContain("rounded-lg");
+      expect(card.className).not.toContain("rounded-xl");
+      expect(card.className).not.toContain("border");
+      expect(card.className).not.toContain("bg-white");
+      expect(card.className).not.toContain("shadow");
 
       const heading = card.querySelector("h3")!;
       expect(heading.className).toContain("text-sm");
@@ -383,7 +388,7 @@ describe("People directory – cards", () => {
     const card = screen.getByText("Dr. Ada Lovelace").closest("article")!;
     const topics = screen.getByText("Reliability · Safety · AIS · Extra");
 
-    expect(topics.className).toContain("mt-2");
+    expect(topics.className).toContain("mt-1.5");
     expect(topics.className).toContain("text-[11px]");
     expect(topics.className).toContain("leading-relaxed");
     expect(topics.className).toContain("text-stone-500");
@@ -396,7 +401,7 @@ describe("People directory – cards", () => {
     expect(screen.getByText("Compilers")).toBeInTheDocument();
   });
 
-  it("renders a centered square portrait above the copy", async () => {
+  it("renders an unboxed 4:5 portrait above the copy", async () => {
     const people = basePeople();
     people.DOSEN = [
       person({
@@ -420,30 +425,30 @@ describe("People directory – cards", () => {
     expect(card.className).toContain("flex-col");
     expect(card.className).toContain("items-center");
     expect(card.className).toContain("text-center");
-    expect(card.className).toContain("rounded-lg");
-    expect(card.className).toContain("border-stone-200/80");
-    expect(card.className).toContain("p-4");
-    expect(card.className).toContain("hover:border-stone-300");
-    expect(card.className).not.toContain("hover:shadow-sm");
+    expect(card.className).not.toContain("rounded-lg");
+    expect(card.className).not.toContain("border");
+    expect(card.className).not.toContain("bg-white");
+    expect(card.className).not.toContain("p-4");
+    expect(card.className).not.toContain("shadow");
     expect(card.className).toContain("group");
 
     expect(link.className).toContain("flex");
     expect(link.className).toContain("flex-1");
     expect(link.className).toContain("flex-col");
     expect(link.className).toContain("items-center");
-    expect(portrait.className).toContain("aspect-square");
-    expect(portrait.className).toContain("w-28");
-    expect(portrait.className).toContain("sm:w-32");
+    expect(portrait.className).toContain("aspect-[4/5]");
+    expect(portrait.className).toContain("w-full");
     expect(portrait.className).toContain("rounded-md");
     expect(portrait.className).toContain("bg-stone-100");
-    expect(portrait.className).toContain("mx-auto");
     expect(img.className).toContain("h-full");
     expect(img.className).toContain("w-full");
     expect(img.className).toContain("object-cover");
+    expect(img.className).toContain("object-top");
+    expect(img.className).toContain("group-hover:opacity-90");
     expect(img.className).not.toContain("group-hover:scale-[1.02]");
 
     const heading = screen.getByRole("heading", { name: "Photo Person" });
-    expect(heading.className).toContain("mt-3.5");
+    expect(heading.className).toContain("mt-3");
     expect(heading.className).toContain("text-sm");
     expect(heading.className).toContain("font-bold");
     expect(heading.className).toContain("leading-snug");
@@ -463,7 +468,7 @@ describe("People directory – cards", () => {
     expect(fallback.className).toContain("text-stone-500");
 
     const initials = screen.getByText("DA");
-    expect(initials.className).toContain("text-base");
+    expect(initials.className).toContain("text-xl");
     expect(initials.className).toContain("font-semibold");
   });
 
@@ -540,7 +545,8 @@ describe("People directory – cards", () => {
     expect(grid!.className).toContain("sm:grid-cols-2");
     expect(grid!.className).toContain("md:grid-cols-3");
     expect(grid!.className).toContain("lg:grid-cols-5");
-    expect(grid!.className).toContain("gap-6");
+    expect(grid!.className).toContain("gap-x-6");
+    expect(grid!.className).toContain("gap-y-8");
     expect(grid!.className).not.toContain("lg:gap-5");
     expect(grid!.className).toContain("pt-8");
   });
