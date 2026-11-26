@@ -393,8 +393,8 @@
       "ALUMNI": "Alumni"
     },
     "graduateGroups": {
-      "MAHASISWA": "Ph.D. Candidates",
-      "MASTER": "Master's Students"
+      "MAHASISWA": "Ph.D.",
+      "MASTER": "Master"
     },
     "searchLabel": "Search people",
     "searchPlaceholder": "Search people...",

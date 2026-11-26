@@ -16,8 +16,8 @@ const messages: Record<string, string> = {
   "categories.UNDERGRADUATE": "Undergraduate Students",
   "categories.INTERNSHIP": "Vocational Interns",
   "categories.ALUMNI": "Alumni",
-  "graduateGroups.MAHASISWA": "Ph.D. Candidates",
-  "graduateGroups.MASTER": "Master's Students",
+  "graduateGroups.MAHASISWA": "Ph.D.",
+  "graduateGroups.MASTER": "Master",
   roleFallback: "Role not listed",
   searchLabel: "Search people",
   searchPlaceholder: "Search people...",
@@ -229,10 +229,10 @@ describe("People directory – categories and switching", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
     expect(
-      screen.getByRole("heading", { name: "Ph.D. Candidates" }),
+      screen.getByRole("heading", { name: "Ph.D." }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Master's Students" }),
+      screen.getByRole("heading", { name: "Master" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Phd Candidate")).toBeInTheDocument();
     expect(screen.getByText("Master Candidate")).toBeInTheDocument();
@@ -435,10 +435,10 @@ describe("People directory – cards", () => {
     expect(masterLink.closest("article")!.querySelectorAll("p")).toHaveLength(0);
 
     expect(
-      screen.getByRole("heading", { name: "Ph.D. Candidates" }),
+      screen.getByRole("heading", { name: "Ph.D." }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Master's Students" }),
+      screen.getByRole("heading", { name: "Master" }),
     ).toBeInTheDocument();
 
     const grid = phdCard.parentElement!;
@@ -450,7 +450,7 @@ describe("People directory – cards", () => {
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
 
     const heading = screen.getByRole("heading", {
-      name: "Ph.D. Candidates",
+      name: "Ph.D.",
     });
     expect(heading.className).toContain("text-base");
     expect(heading.className).toContain("font-semibold");
@@ -474,7 +474,7 @@ describe("People directory – cards", () => {
     expect(count.className).toContain("text-stone-400");
 
     expect(
-      screen.getByRole("heading", { name: "Master's Students" }),
+      screen.getByRole("heading", { name: "Master" }),
     ).toBeInTheDocument();
   });
 
