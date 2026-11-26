@@ -9,7 +9,6 @@ import {
   deleteMeetingController,
   getMeetingController,
   getMeetingAgendaController,
-  getMeetingAuditController,
   getMeetingCalendarController,
   getMeetingListController,
   updateMeetingController,
@@ -31,7 +30,6 @@ router.get("/agenda", internalOnly, getMeetingAgendaController);
 router.get("/calendar", internalOnly, getMeetingCalendarController);
 router.get("/", internalOnly, getMeetingListController);
 router.post("/conflicts/check", internalOnly, checkConflictsController);
-router.get("/:id/audit", internalOnly, getMeetingAuditController);
 router.get("/:id", internalOnly, getMeetingController);
 router.post(
   "/",

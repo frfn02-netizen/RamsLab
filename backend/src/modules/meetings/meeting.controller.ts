@@ -18,7 +18,6 @@ import {
   createMeeting,
   deleteMeeting,
   getMeetingAgenda,
-  getMeetingAudit,
   getMeeting,
   getMeetingCalendar,
   getMeetings,
@@ -111,15 +110,6 @@ export async function getMeetingController(req: Request, res: Response) {
     return res.json({ success: true, data: meeting });
   } catch (error) {
     return fail(res, error, "Failed to fetch meeting");
-  }
-}
-
-export async function getMeetingAuditController(req: Request, res: Response) {
-  try {
-    const audit = await getMeetingAudit(req.params.id as string, req.user!);
-    return res.json({ success: true, data: audit });
-  } catch (error) {
-    return fail(res, error, "Failed to fetch meeting audit history");
   }
 }
 

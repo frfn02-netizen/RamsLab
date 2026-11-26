@@ -185,7 +185,7 @@ describe("Meetings API", () => {
     expect(response.body.success).toBe(true);
     meetingId = response.body.data.meeting._id;
     expect(response.body.data.meeting.title).toBe(`${TITLE_PREFIX} kickoff`);
-    expect(response.body.data.meeting.visibility).toBe("INTERNAL");
+    expect(response.body.data.meeting).not.toHaveProperty("visibility");
     expect(response.body.data.meeting.status).toBe("UPCOMING");
     expect(response.body.data.meeting.canEdit).toBe(true);
     expect(response.body.data.meeting.participants).toHaveLength(1);
@@ -261,34 +261,15 @@ describe("Meetings API", () => {
     expect(edited.body.data.meeting.picIds).toEqual([OTHER_DOSEN_ID]);
     expect(edited.body.data.meeting.additionalPics).toBeUndefined();
 
-    const privateMeeting = await request(app)
-      .post("/api/meetings")
-      .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({
-        ...OFFLINE_MEETING,
-        title: `${TITLE_PREFIX} PIC does not grant access`,
-        startAt: "2031-04-02T09:00:00.000Z",
-        endAt: "2031-04-02T10:00:00.000Z",
-        visibility: "PRIVATE",
-        primaryPicId: OTHER_DOSEN_ID,
-        picIds: [OTHER_DOSEN_ID],
-        participantIds: [],
-      });
-    expect(privateMeeting.status).toBe(201);
-
-    const denied = await request(app)
-      .get(`/api/meetings/${privateMeeting.body.data.meeting._id}`)
-      .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    expect(denied.status).toBe(403);
   });
 
-  it("derives status, records audit history, and cancels explicitly", async () => {
+  it("derives status and cancels explicitly", async () => {
     const response = await request(app)
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({
         ...OFFLINE_MEETING,
-        title: `${TITLE_PREFIX} status audit`,
+        title: `${TITLE_PREFIX} status transition`,
         startAt: "2032-03-01T09:00:00.000Z",
         endAt: "2032-03-01T10:00:00.000Z",
         participantIds: [OTHER_DOSEN_ID],
@@ -298,33 +279,16 @@ describe("Meetings API", () => {
     expect(response.body.data.meeting.status).toBe("UPCOMING");
     const id = response.body.data.meeting._id as string;
 
-    const participantAudit = await request(app)
-      .get(`/api/meetings/${id}/audit`)
-      .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    expect(participantAudit.status).toBe(200);
-    expect(participantAudit.body.data).toHaveLength(1);
-    expect(participantAudit.body.data[0]).toEqual(
-      expect.objectContaining({
-        action: "CREATE",
-        actorId: TEST_DOSEN_USER_ID,
-      }),
-    );
-
     const failedUpdate = await request(app)
       .patch(`/api/meetings/${id}`)
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({ endAt: "2032-03-01T08:00:00.000Z" });
     expect(failedUpdate.status).toBe(400);
 
-    const afterFailedUpdate = await request(app)
-      .get(`/api/meetings/${id}/audit`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(afterFailedUpdate.body.data).toHaveLength(1);
-
     const updated = await request(app)
       .patch(`/api/meetings/${id}`)
       .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({ title: `${TITLE_PREFIX} status audit updated` });
+      .send({ title: `${TITLE_PREFIX} status transition updated` });
     expect(updated.status).toBe(200);
 
     const unauthorizedCancel = await request(app)
@@ -340,18 +304,7 @@ describe("Meetings API", () => {
     expect(cancelled.status).toBe(200);
     expect(cancelled.body.data.status).toBe("CANCELLED");
     expect(cancelled.body.data.cancellationReason).toBe("Schedule changed");
-
-    const audit = await request(app)
-      .get(`/api/meetings/${id}/audit`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(audit.status).toBe(200);
-    expect(
-      audit.body.data.map((entry: { action: string }) => entry.action),
-    ).toEqual(["CANCEL", "UPDATE", "CREATE"]);
-    expect(audit.body.data[0].changes.status).toEqual({
-      oldValue: "UPCOMING",
-      newValue: "CANCELLED",
-    });
+    expect(cancelled.body.data).not.toHaveProperty("auditHistory");
 
     const repeatedCancel = await request(app)
       .post(`/api/meetings/${id}/cancel`)
@@ -485,38 +438,6 @@ describe("Meetings API", () => {
     expect(response.status).toBe(403);
   });
 
-  it("creates only one cancellation audit event for concurrent requests", async () => {
-    const now = Date.now();
-    const id = await createCancellationMeeting(
-      "concurrent",
-      new Date(now + 60 * 60 * 1000),
-      new Date(now + 2 * 60 * 60 * 1000),
-    );
-
-    const responses = await Promise.all(
-      [creatorToken, creatorToken].map((token) =>
-        request(app)
-          .post(`/api/meetings/${id}/cancel`)
-          .set("Cookie", `rams_access_token=${token}`)
-          .send({}),
-      ),
-    );
-
-    expect(responses.map((response) => response.status).sort()).toEqual([
-      200, 409,
-    ]);
-
-    const audit = await request(app)
-      .get(`/api/meetings/${id}/audit`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(audit.status).toBe(200);
-    expect(
-      audit.body.data.filter(
-        (entry: { action: string }) => entry.action === "CANCEL",
-      ),
-    ).toHaveLength(1);
-  });
-
   it("lists the meeting for the creator and participant", async () => {
     const creatorList = await request(app)
       .get(
@@ -628,122 +549,6 @@ describe("Meetings API", () => {
     expect(event).not.toHaveProperty("description");
   });
 
-  it("renders private meetings as Busy for non-participants and preserves participant details", async () => {
-    const privateMeeting = await request(app)
-      .post("/api/meetings")
-      .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({
-        ...ONLINE_MEETING,
-        title: `${TITLE_PREFIX} private block`,
-        description: "Private agenda must not enter the calendar response",
-        startAt: "2030-05-01T09:00:00.000Z",
-        endAt: "2030-05-01T10:00:00.000Z",
-        visibility: "PRIVATE",
-        participantIds: [],
-        meetingLink: "https://meet.google.com/private-link",
-      });
-
-    expect(privateMeeting.status).toBe(201);
-    expect(privateMeeting.body.data.meeting.visibility).toBe("PRIVATE");
-    const privateId = privateMeeting.body.data.meeting._id as string;
-
-    const calendar = await request(app)
-      .get(
-        "/api/meetings/calendar?from=2030-04-25T00:00:00.000Z&to=2030-05-05T00:00:00.000Z",
-      )
-      .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    expect(calendar.status).toBe(200);
-    const busy = calendar.body.data.find(
-      (item: { _id: string }) => item._id === privateId,
-    );
-    expect(busy).toEqual({
-      _id: privateId,
-      title: "Busy",
-      startAt: "2030-05-01T09:00:00.000Z",
-      endAt: "2030-05-01T10:00:00.000Z",
-      createdBy: null,
-      canViewDetails: false,
-    });
-    expect(JSON.stringify(busy)).not.toContain("Private agenda");
-    expect(JSON.stringify(busy)).not.toContain("private-link");
-
-    const creatorDetail = await request(app)
-      .get(`/api/meetings/${privateId}`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(creatorDetail.status).toBe(200);
-    expect(creatorDetail.body.data.description).toContain("Private agenda");
-    expect(creatorDetail.body.data.meetingLink).toContain("private-link");
-
-    const adminCalendar = await request(app)
-      .get(
-        "/api/meetings/calendar?from=2030-04-25T00:00:00.000Z&to=2030-05-05T00:00:00.000Z",
-      )
-      .set("Cookie", `rams_access_token=${adminToken}`);
-    const adminEvent = adminCalendar.body.data.find(
-      (item: { _id: string }) => item._id === privateId,
-    );
-    expect(adminEvent).toEqual(
-      expect.objectContaining({
-        title: `${TITLE_PREFIX} private block`,
-        canViewDetails: true,
-        clientName: "RAMS Test Client",
-        mode: "ONLINE",
-        location: null,
-      }),
-    );
-    expect(adminEvent).not.toHaveProperty("description");
-    expect(adminEvent).not.toHaveProperty("meetingLink");
-    expect(adminEvent).not.toHaveProperty("attachments");
-    expect(adminEvent).not.toHaveProperty("externalParticipants");
-    expect(adminEvent).not.toHaveProperty("participants");
-    expect(adminEvent).not.toHaveProperty("participantIds");
-
-    const participantMeeting = await request(app)
-      .post("/api/meetings")
-      .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({
-        ...OFFLINE_MEETING,
-        title: `${TITLE_PREFIX} private participant`,
-        description: "Participant-only agenda",
-        startAt: "2030-06-01T09:00:00.000Z",
-        endAt: "2030-06-01T10:00:00.000Z",
-        visibility: "PRIVATE",
-        participantIds: [OTHER_DOSEN_ID],
-      });
-    expect(participantMeeting.status).toBe(201);
-    const participantMeetingId = participantMeeting.body.data.meeting
-      ._id as string;
-
-    const participantCalendar = await request(app)
-      .get(
-        "/api/meetings/calendar?from=2030-05-25T00:00:00.000Z&to=2030-06-05T00:00:00.000Z",
-      )
-      .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    const participantEvent = participantCalendar.body.data.find(
-      (item: { _id: string }) => item._id === participantMeetingId,
-    );
-    expect(participantEvent).toEqual(
-      expect.objectContaining({
-        title: `${TITLE_PREFIX} private participant`,
-        canViewDetails: true,
-        clientName: "RAMS Test Client",
-        mode: "OFFLINE",
-        location: "RAMS Meeting Room",
-      }),
-    );
-    expect(participantEvent).not.toHaveProperty("meetingLink");
-    expect(participantEvent).not.toHaveProperty("participants");
-    expect(participantEvent).not.toHaveProperty("participantIds");
-
-    const participantDetail = await request(app)
-      .get(`/api/meetings/${participantMeetingId}`)
-      .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    expect(participantDetail.status).toBe(200);
-    expect(participantDetail.body.data.description).toBe(
-      "Participant-only agenda",
-    );
-  });
-
   it("keeps ownership creator-only and removes delegation endpoints", async () => {
     const created = await request(app)
       .post("/api/meetings")
@@ -754,7 +559,6 @@ describe("Meetings API", () => {
         description: "Only the creator may manage this meeting",
         startAt: "2034-08-01T09:00:00.000Z",
         endAt: "2034-08-01T10:00:00.000Z",
-        visibility: "PRIVATE",
         participantIds: [],
       });
 
@@ -793,7 +597,7 @@ describe("Meetings API", () => {
     const unrelatedDetail = await request(app)
       .get(`/api/meetings/${id}`)
       .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    expect(unrelatedDetail.status).toBe(403);
+    expect(unrelatedDetail.status).toBe(200);
 
     const unrelatedUpdate = await request(app)
       .patch(`/api/meetings/${id}`)
@@ -820,37 +624,33 @@ describe("Meetings API", () => {
     expect(updated.body.data.meeting.createdBy.id).toBe(TEST_DOSEN_USER_ID);
     expect(updated.body.data.meeting).not.toHaveProperty("organizerId");
     expect(updated.body.data.meeting).not.toHaveProperty("delegatedUserIds");
-
-    const audit = await request(app)
-      .get(`/api/meetings/${id}/audit`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(audit.status).toBe(200);
-    expect(
-      audit.body.data.map((entry: { action: string }) => entry.action),
-    ).toEqual(["UPDATE", "CREATE"]);
+    expect(updated.body.data.meeting).not.toHaveProperty("auditHistory");
   });
 
-  it("treats legacy meetings without visibility as private on the calendar", async () => {
+  it("ignores and strips legacy visibility values", async () => {
     const now = new Date();
     const legacy = await getMeetingsCollection().insertOne({
-      title: `${TITLE_PREFIX} legacy private`,
-      description: "Legacy confidential agenda",
+      title: `${TITLE_PREFIX} legacy visibility`,
+      description: "Legacy shared agenda",
       startAt: new Date("2030-07-01T09:00:00.000Z"),
       endAt: new Date("2030-07-01T10:00:00.000Z"),
       createdBy: new ObjectId(TEST_DOSEN_USER_ID),
       participantIds: [],
+      visibility: "PRIVATE",
+      auditHistory: [],
       externalParticipants: [
         {
           id: "legacy-external",
-          fullName: "Legacy private contact",
+          fullName: "Legacy contact",
           email: "legacy-contact@example.com",
         },
       ],
-      meetingLink: "https://meet.google.com/legacy-private",
+      meetingLink: "https://meet.google.com/legacy-shared",
       attachments: [],
       createdAt: now,
       updatedAt: now,
     });
+    const id = legacy.insertedId.toHexString();
 
     const calendar = await request(app)
       .get(
@@ -858,51 +658,40 @@ describe("Meetings API", () => {
       )
       .set("Cookie", `rams_access_token=${otherDosenToken}`);
     expect(calendar.status).toBe(200);
-    const busy = calendar.body.data.find(
-      (item: { _id: string }) => item._id === legacy.insertedId.toHexString(),
+    const event = calendar.body.data.find(
+      (item: { _id: string }) => item._id === id,
     );
-    expect(busy).toEqual(
+    expect(event).toEqual(
       expect.objectContaining({
-        title: "Busy",
-        createdBy: null,
-        canViewDetails: false,
-      }),
-    );
-    expect(JSON.stringify(busy)).not.toContain("Legacy confidential agenda");
-    expect(JSON.stringify(busy)).not.toContain("legacy-private");
-    expect(JSON.stringify(busy)).not.toContain("legacy-contact@example.com");
-    expect(busy).not.toHaveProperty("status");
-
-    const detail = await request(app)
-      .get(`/api/meetings/${legacy.insertedId.toHexString()}`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(detail.status).toBe(200);
-    expect(detail.body.data.visibility).toBe("PRIVATE");
-    expect(detail.body.data.description).toBe("Legacy confidential agenda");
-    expect(detail.body.data.createdBy.id).toBe(TEST_DOSEN_USER_ID);
-    expect(detail.body.data).not.toHaveProperty("organizerId");
-    expect(detail.body.data).not.toHaveProperty("organizer");
-    expect(detail.body.data).not.toHaveProperty("delegatedUserIds");
-
-    const creatorCalendar = await request(app)
-      .get(
-        "/api/meetings/calendar?from=2030-06-25T00:00:00.000Z&to=2030-07-05T00:00:00.000Z",
-      )
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    const legacyEvent = creatorCalendar.body.data.find(
-      (item: { _id: string }) => item._id === legacy.insertedId.toHexString(),
-    );
-    expect(legacyEvent).toEqual(
-      expect.objectContaining({
+        title: `${TITLE_PREFIX} legacy visibility`,
         canViewDetails: true,
         clientName: null,
         mode: null,
         location: null,
       }),
     );
-    expect(legacyEvent).not.toHaveProperty("meetingLink");
-    expect(legacyEvent).not.toHaveProperty("participants");
-    expect(legacyEvent).not.toHaveProperty("participantIds");
+    expect(event).not.toHaveProperty("visibility");
+    expect(event).not.toHaveProperty("auditHistory");
+
+    const detail = await request(app)
+      .get(`/api/meetings/${id}`)
+      .set("Cookie", `rams_access_token=${creatorToken}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.data).not.toHaveProperty("visibility");
+    expect(detail.body.data).not.toHaveProperty("auditHistory");
+    expect(detail.body.data.description).toBe("Legacy shared agenda");
+
+    const updated = await request(app)
+      .patch(`/api/meetings/${id}`)
+      .set("Cookie", `rams_access_token=${creatorToken}`)
+      .send({ title: `${TITLE_PREFIX} legacy visibility updated` });
+    expect(updated.status).toBe(200);
+
+    const stored = await getMeetingsCollection().findOne({
+      _id: legacy.insertedId,
+    });
+    expect(stored).not.toHaveProperty("visibility");
+    expect(stored).not.toHaveProperty("auditHistory");
   });
 
   it("does not treat a mismatched legacy organizerId as active ownership", async () => {
@@ -934,7 +723,7 @@ describe("Meetings API", () => {
     const detail = await request(app)
       .get(`/api/meetings/${id}`)
       .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(detail.status).toBe(403);
+    expect(detail.status).toBe(200);
 
     const update = await request(app)
       .patch(`/api/meetings/${id}`)
@@ -1023,21 +812,18 @@ describe("Meetings API", () => {
     expect(response.body.data[0]._id).not.toBe(meetingId);
   });
 
-  it("returns Busy when participantIds are manipulated to probe an inaccessible meeting", async () => {
-    const privateMeeting = await request(app)
+  it("returns shared conflict details for overlapping internal meetings", async () => {
+    const otherMeeting = await request(app)
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${otherDosenToken}`)
       .send({
         ...OFFLINE_MEETING,
-        title: `${TITLE_PREFIX} conflict privacy target`,
-        description: "This must not be returned by conflict checking",
+        title: `${TITLE_PREFIX} conflict target`,
         startAt: "2035-05-01T09:00:00.000Z",
         endAt: "2035-05-01T10:00:00.000Z",
-        visibility: "PRIVATE",
         participantIds: [TEST_ADMIN_USER_ID],
       });
-
-    expect(privateMeeting.status).toBe(201);
+    expect(otherMeeting.status).toBe(201);
 
     const checked = await request(app)
       .post("/api/meetings/conflicts/check")
@@ -1045,59 +831,33 @@ describe("Meetings API", () => {
       .send({
         startAt: "2035-05-01T09:15:00.000Z",
         endAt: "2035-05-01T09:45:00.000Z",
-        // This id is used to detect a scheduling overlap. It must not grant
-        // the requester access to the target meeting's details.
         participantIds: [TEST_ADMIN_USER_ID],
       });
 
     expect(checked.status).toBe(200);
-    expect(checked.body.data).toEqual([{ busy: true }]);
-    expect(JSON.stringify(checked.body.data)).not.toContain(
-      "conflict privacy target",
-    );
+    expect(checked.body.data).toEqual([
+      expect.objectContaining({
+        busy: false,
+        title: `${TITLE_PREFIX} conflict target`,
+      }),
+    ]);
 
     const created = await request(app)
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({
         ...OFFLINE_MEETING,
-        title: `${TITLE_PREFIX} conflict privacy create`,
+        title: `${TITLE_PREFIX} conflict create`,
         startAt: "2035-05-01T09:15:00.000Z",
         endAt: "2035-05-01T09:45:00.000Z",
         participantIds: [TEST_ADMIN_USER_ID],
       });
 
     expect(created.status).toBe(201);
-    expect(created.body.data.conflicts).toEqual([{ busy: true }]);
-
-    const internalMeeting = await request(app)
-      .post("/api/meetings")
-      .set("Cookie", `rams_access_token=${otherDosenToken}`)
-      .send({
-        ...OFFLINE_MEETING,
-        title: `${TITLE_PREFIX} internal conflict privacy target`,
-        startAt: "2035-06-01T09:00:00.000Z",
-        endAt: "2035-06-01T10:00:00.000Z",
-        visibility: "INTERNAL",
-        participantIds: [TEST_ADMIN_USER_ID],
-      });
-
-    expect(internalMeeting.status).toBe(201);
-
-    const internalChecked = await request(app)
-      .post("/api/meetings/conflicts/check")
-      .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({
-        startAt: "2035-06-01T09:15:00.000Z",
-        endAt: "2035-06-01T09:45:00.000Z",
-        participantIds: [TEST_ADMIN_USER_ID],
-      });
-
-    expect(internalChecked.status).toBe(200);
-    expect(internalChecked.body.data).toEqual([
+    expect(created.body.data.conflicts).toEqual([
       expect.objectContaining({
         busy: false,
-        title: `${TITLE_PREFIX} internal conflict privacy target`,
+        title: `${TITLE_PREFIX} conflict target`,
       }),
     ]);
   });
@@ -1476,111 +1236,6 @@ describe("Meetings API", () => {
         mode: null,
         location: null,
         meetingLink: "https://meet.google.com/legacy-no-mode",
-      }),
-    );
-  });
-
-  it("keeps mode details private for unauthorized Busy responses", async () => {
-    const privateMeeting = await request(app)
-      .post("/api/meetings")
-      .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({
-        ...PIC_FIELDS,
-        title: `${TITLE_PREFIX} private mode details`,
-        clientName: "Confidential Client",
-        mode: "ONLINE",
-        meetingLink: "https://meet.google.com/private-mode-link",
-        startAt: "2040-05-01T09:00:00.000Z",
-        endAt: "2040-05-01T10:00:00.000Z",
-        visibility: "PRIVATE",
-        participantIds: [],
-      });
-    expect(privateMeeting.status).toBe(201);
-    const id = privateMeeting.body.data.meeting._id as string;
-
-    const creatorDetail = await request(app)
-      .get(`/api/meetings/${id}`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(creatorDetail.status).toBe(200);
-    expect(creatorDetail.body.data).toEqual(
-      expect.objectContaining({
-        clientName: "Confidential Client",
-        mode: "ONLINE",
-        location: null,
-        meetingLink: "https://meet.google.com/private-mode-link",
-      }),
-    );
-
-    const calendar = await request(app)
-      .get(
-        "/api/meetings/calendar?from=2040-04-25T00:00:00.000Z&to=2040-05-05T00:00:00.000Z",
-      )
-      .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    const busy = calendar.body.data.find(
-      (item: { _id: string }) => item._id === id,
-    );
-    expect(busy).toEqual({
-      _id: id,
-      title: "Busy",
-      startAt: "2040-05-01T09:00:00.000Z",
-      endAt: "2040-05-01T10:00:00.000Z",
-      createdBy: null,
-      canViewDetails: false,
-    });
-    expect(JSON.stringify(busy)).not.toContain("Confidential Client");
-    expect(JSON.stringify(busy)).not.toContain("private-mode-link");
-  });
-
-  it("records client, mode, and location in audit snapshots", async () => {
-    const created = await request(app)
-      .post("/api/meetings")
-      .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({
-        ...PIC_FIELDS,
-        title: `${TITLE_PREFIX} audit mode fields`,
-        clientName: "Audit Client",
-        mode: "OFFLINE",
-        location: "Audit Room",
-        startAt: "2040-06-01T09:00:00.000Z",
-        endAt: "2040-06-01T10:00:00.000Z",
-        participantIds: [],
-      });
-    expect(created.status).toBe(201);
-    const id = created.body.data.meeting._id as string;
-
-    const createAudit = await request(app)
-      .get(`/api/meetings/${id}/audit`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(createAudit.status).toBe(200);
-    expect(createAudit.body.data[0].changes).toEqual(
-      expect.objectContaining({
-        clientName: { oldValue: null, newValue: "Audit Client" },
-        mode: { oldValue: null, newValue: "OFFLINE" },
-        location: { oldValue: null, newValue: "Audit Room" },
-      }),
-    );
-
-    const updated = await request(app)
-      .patch(`/api/meetings/${id}`)
-      .set("Cookie", `rams_access_token=${creatorToken}`)
-      .send({
-        mode: "ONLINE",
-        meetingLink: "https://meet.google.com/audit-mode",
-      });
-    expect(updated.status).toBe(200);
-
-    const updateAudit = await request(app)
-      .get(`/api/meetings/${id}/audit`)
-      .set("Cookie", `rams_access_token=${creatorToken}`);
-    expect(updateAudit.status).toBe(200);
-    expect(updateAudit.body.data[0].changes).toEqual(
-      expect.objectContaining({
-        mode: { oldValue: "OFFLINE", newValue: "ONLINE" },
-        location: { oldValue: "Audit Room", newValue: null },
-        meetingLink: {
-          oldValue: null,
-          newValue: "https://meet.google.com/audit-mode",
-        },
       }),
     );
   });

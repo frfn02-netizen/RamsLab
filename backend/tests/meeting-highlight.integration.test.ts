@@ -14,7 +14,6 @@ import {
 const OTHER_DOSEN_ID = "00000000000000000000b104";
 const TITLE_PREFIX = "Vitest Meeting Highlight";
 const HIGHLIGHTED_TITLE = `${TITLE_PREFIX} highlighted`;
-const PRIVATE_TITLE = `${TITLE_PREFIX} private busy`;
 process.env.MEETINGS_HIGHLIGHTED_USER_IDS = TEST_DOSEN_USER_ID;
 
 let app: import("express").Express;
@@ -22,7 +21,6 @@ let highlightedToken: string;
 let otherDosenToken: string;
 let adminToken: string;
 let publicMeetingId = "";
-let privateMeetingId = "";
 
 async function cleanup() {
   await getMeetingsCollection().deleteMany({
@@ -80,23 +78,6 @@ beforeAll(async () => {
   expect(publicMeeting.status).toBe(201);
   publicMeetingId = publicMeeting.body.data.meeting._id;
 
-  const privateMeeting = await request(app)
-    .post("/api/meetings")
-    .set("Cookie", `rams_access_token=${adminToken}`)
-    .send({
-      title: PRIVATE_TITLE,
-      clientName: "Private Highlight Client",
-      mode: "ONLINE",
-      meetingLink: "https://meet.google.com/highlight-private",
-      primaryPicId: TEST_DOSEN_USER_ID,
-      picIds: [TEST_DOSEN_USER_ID],
-      startAt: "2033-01-02T09:00:00.000Z",
-      endAt: "2033-01-02T10:00:00.000Z",
-      participantIds: [TEST_DOSEN_USER_ID],
-      visibility: "PRIVATE",
-    });
-  expect(privateMeeting.status).toBe(201);
-  privateMeetingId = privateMeeting.body.data.meeting._id;
 });
 
 afterAll(async () => {
@@ -132,29 +113,16 @@ describe("meeting highlight involvement", () => {
     expect(publicEvent.canViewDetails).toBe(true);
     expect(publicEvent.involvesHighlightedUser).toBe(true);
 
-    const privateEvent = calendar.body.data.find(
-      (meeting: { _id: string }) => meeting._id === privateMeetingId,
-    );
-    expect(privateEvent.canViewDetails).toBe(true);
-    expect(privateEvent.involvesHighlightedUser).toBe(true);
-  });
-
-  it("keeps PRIVATE Busy involvement hidden and preserves the six-field contract", async () => {
-    const calendar = await request(app)
+    const sharedCalendar = await request(app)
       .get("/api/meetings/calendar")
       .set("Cookie", `rams_access_token=${otherDosenToken}`);
-    expect(calendar.status).toBe(200);
-    const busy = calendar.body.data.find(
-      (meeting: { _id: string }) => meeting._id === privateMeetingId,
+    expect(sharedCalendar.status).toBe(200);
+    const sharedEvent = sharedCalendar.body.data.find(
+      (meeting: { _id: string }) => meeting._id === publicMeetingId,
     );
-    expect(busy).toEqual({
-      _id: privateMeetingId,
-      title: "Busy",
-      startAt: "2033-01-02T09:00:00.000Z",
-      endAt: "2033-01-02T10:00:00.000Z",
-      createdBy: null,
-      canViewDetails: false,
-    });
-    expect(busy).not.toHaveProperty("involvesHighlightedUser");
+    expect(sharedEvent.canViewDetails).toBe(true);
+    expect(sharedEvent.involvesHighlightedUser).toBe(true);
+    expect(sharedEvent).not.toHaveProperty("visibility");
+    expect(sharedEvent).not.toHaveProperty("auditHistory");
   });
 });

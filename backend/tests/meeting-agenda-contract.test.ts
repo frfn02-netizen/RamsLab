@@ -9,7 +9,6 @@ const meetingService = vi.hoisted(() => ({
   createMeeting: vi.fn(),
   deleteMeeting: vi.fn(),
   getMeetingAgenda: vi.fn(),
-  getMeetingAudit: vi.fn(),
   getMeeting: vi.fn(),
   getMeetingCalendar: vi.fn(),
   getMeetings: vi.fn(),

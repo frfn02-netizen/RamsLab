@@ -5,11 +5,7 @@ import type {
   CreateMeetingInput,
   UpdateMeetingInput,
 } from "./meeting.schema.js";
-import type {
-  Meeting,
-  MeetingAuditEntry,
-  MeetingAttachment,
-} from "./meeting.types.js";
+import type { Meeting, MeetingAttachment } from "./meeting.types.js";
 
 const MEETINGS_COLLECTION = "meetings";
 
@@ -128,7 +124,6 @@ export async function createMeeting(
   input: CreateMeetingInput,
   creatorId: ObjectId,
   participantIds: ObjectId[],
-  audit: MeetingAuditEntry,
 ): Promise<Meeting> {
   const now = new Date();
   const primaryPicId = input.primaryPicId
@@ -146,14 +141,12 @@ export async function createMeeting(
     location: input.location ?? null,
     startAt: input.startAt,
     endAt: input.endAt,
-    visibility: input.visibility,
     createdBy: creatorId,
     primaryPicId: primaryPicId ?? undefined,
     picIds: picIds.length > 0 ? picIds : undefined,
     participantIds,
     meetingLink: input.meetingLink ?? null,
     additionalReminderEmails: input.additionalReminderEmails ?? [],
-    auditHistory: [audit],
     attachments: [],
     createdAt: now,
     updatedAt: now,
@@ -166,7 +159,6 @@ export async function updateMeeting(
   id: string,
   input: UpdateMeetingInput,
   participantIds: ObjectId[] | undefined,
-  audit: MeetingAuditEntry | undefined,
   expectedUpdatedAt?: Date,
 ): Promise<Meeting | null> {
   const objectId = toObjectId(id);
@@ -180,7 +172,6 @@ export async function updateMeeting(
   if (input.location !== undefined) set.location = input.location;
   if (input.startAt !== undefined) set.startAt = input.startAt;
   if (input.endAt !== undefined) set.endAt = input.endAt;
-  if (input.visibility !== undefined) set.visibility = input.visibility;
   if (input.meetingLink !== undefined)
     set.meetingLink = input.meetingLink || null;
   if (input.additionalReminderEmails !== undefined)
@@ -195,17 +186,12 @@ export async function updateMeeting(
       .filter((id): id is ObjectId => id !== null);
   }
 
+  // Legacy documents may still contain removed fields. Strip them on write so
+  // old visibility/audit data does not survive a legitimate update.
   const update: Parameters<Collection<Meeting>["findOneAndUpdate"]>[1] = {
     $set: set,
+    $unset: { visibility: "", auditHistory: "" },
   };
-  if (audit) {
-    update.$push = {
-      auditHistory: {
-        $each: [audit],
-        $slice: -SECURITY_LIMITS.maxHistoryEntries,
-      },
-    };
-  }
 
   return getMeetingsCollection().findOneAndUpdate(
     {
@@ -222,7 +208,6 @@ export async function cancelMeeting(
   cancelledAt: Date,
   cancelledBy: ObjectId,
   reason: string | undefined,
-  audit: MeetingAuditEntry,
 ): Promise<Meeting | null> {
   const objectId = toObjectId(id);
   if (!objectId) return null;
@@ -240,15 +225,7 @@ export async function cancelMeeting(
       cancelledAt: { $exists: false },
       endAt: { $gt: cancelledAt },
     },
-    {
-      $set: set,
-      $push: {
-        auditHistory: {
-          $each: [audit],
-          $slice: -SECURITY_LIMITS.maxHistoryEntries,
-        },
-      },
-    },
+    { $set: set, $unset: { visibility: "", auditHistory: "" } },
     { returnDocument: "after" },
   );
 }
@@ -264,7 +241,6 @@ export async function addMeetingAttachment(
   id: string,
   attachment: MeetingAttachment,
   maxAttachments: number,
-  audit?: MeetingAuditEntry,
 ): Promise<AddMeetingAttachmentResult> {
   const objectId = toObjectId(id);
   if (!objectId) return { status: "not_found" };
@@ -272,16 +248,8 @@ export async function addMeetingAttachment(
   const update: Parameters<Collection<Meeting>["findOneAndUpdate"]>[1] = {
     $push: { attachments: attachment },
     $set: { updatedAt: new Date() },
+    $unset: { visibility: "", auditHistory: "" },
   };
-  if (audit) {
-    update.$push = {
-      attachments: attachment,
-      auditHistory: {
-        $each: [audit],
-        $slice: -SECURITY_LIMITS.maxHistoryEntries,
-      },
-    };
-  }
 
   const meeting = await getMeetingsCollection().findOneAndUpdate(
     {
@@ -306,7 +274,6 @@ export async function addMeetingAttachment(
 export async function removeMeetingAttachment(
   id: string,
   attachmentId: string,
-  audit: MeetingAuditEntry,
 ): Promise<{ meeting: Meeting | null; removed: MeetingAttachment | null }> {
   const objectId = toObjectId(id);
   if (!objectId) return { meeting: null, removed: null };
@@ -320,13 +287,8 @@ export async function removeMeetingAttachment(
     { _id: objectId, "attachments.id": attachmentId },
     {
       $pull: { attachments: { id: attachmentId } },
-      $push: {
-        auditHistory: {
-          $each: [audit],
-          $slice: -SECURITY_LIMITS.maxHistoryEntries,
-        },
-      },
       $set: { updatedAt: new Date() },
+      $unset: { visibility: "", auditHistory: "" },
     },
     { returnDocument: "after" },
   );

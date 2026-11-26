@@ -1,9 +1,6 @@
 import { ObjectId } from "mongodb";
 import type { UserRole } from "../users/user.types.js";
 
-export const MEETING_VISIBILITIES = ["INTERNAL", "PRIVATE"] as const;
-export type MeetingVisibility = (typeof MEETING_VISIBILITIES)[number];
-
 export const MEETING_MODES = ["OFFLINE", "ONLINE"] as const;
 export type MeetingMode = (typeof MEETING_MODES)[number];
 
@@ -14,49 +11,6 @@ export const MEETING_STATUSES = [
   "CANCELLED",
 ] as const;
 export type MeetingStatus = (typeof MEETING_STATUSES)[number];
-
-export const MEETING_AUDIT_ACTIONS = [
-  "CREATE",
-  "UPDATE",
-  "CANCEL",
-  "ATTACHMENT_ADDED",
-  "ATTACHMENT_REMOVED",
-] as const;
-export type MeetingActiveAuditAction = (typeof MEETING_AUDIT_ACTIONS)[number];
-
-export const MEETING_LEGACY_AUDIT_ACTIONS = [
-  "DELEGATE_ASSIGNED",
-  "DELEGATE_REVOKED",
-  "GUEST_INVITATION_CREATED",
-  "GUEST_INVITATION_REVOKED",
-  "GUEST_INVITATION_REGENERATED",
-] as const;
-export type MeetingLegacyAuditAction =
-  (typeof MEETING_LEGACY_AUDIT_ACTIONS)[number];
-
-export type MeetingAuditAction =
-  MeetingActiveAuditAction | MeetingLegacyAuditAction;
-
-export type MeetingAuditValue =
-  | null
-  | string
-  | number
-  | boolean
-  | MeetingAuditValue[]
-  | { [key: string]: MeetingAuditValue };
-
-export interface MeetingAuditChange {
-  oldValue: MeetingAuditValue | null;
-  newValue: MeetingAuditValue | null;
-}
-
-export interface MeetingAuditEntry {
-  id: string;
-  actorUserId: ObjectId;
-  action: MeetingAuditAction;
-  changes: Record<string, MeetingAuditChange>;
-  timestamp: Date;
-}
 
 export interface MeetingAttachment {
   id: string;
@@ -93,7 +47,6 @@ export interface Meeting {
   guestDescription?: string;
   startAt: Date;
   endAt: Date;
-  visibility?: MeetingVisibility;
   createdBy: ObjectId;
   primaryPicId?: ObjectId;
   picIds?: ObjectId[];
@@ -107,7 +60,6 @@ export interface Meeting {
   cancelledAt?: Date;
   cancelledBy?: ObjectId;
   cancellationReason?: string;
-  auditHistory?: MeetingAuditEntry[];
   guestInvitations?: MeetingGuestInvitation[];
   attachments: MeetingAttachment[];
   createdAt: Date;
@@ -139,7 +91,6 @@ export interface MeetingResponse {
   location: string | null;
   startAt: string;
   endAt: string;
-  visibility: MeetingVisibility;
   createdBy: MeetingUserSummary | null;
   primaryPicId?: string;
   picIds?: string[];
@@ -162,15 +113,6 @@ export interface MeetingResponse {
   canDelete: boolean;
   isOrganizer: boolean;
   involvesHighlightedUser: boolean;
-}
-
-export interface MeetingAuditResponse {
-  id: string;
-  actorId: string;
-  actor: MeetingUserSummary | null;
-  action: MeetingAuditAction;
-  changes: Record<string, MeetingAuditChange>;
-  timestamp: string;
 }
 
 export interface MeetingCalendarCreator {

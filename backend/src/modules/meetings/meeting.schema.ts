@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isSafeHttpUrl } from "../../lib/url-security.js";
-import { MEETING_MODES, MEETING_VISIBILITIES } from "./meeting.types.js";
+import { MEETING_MODES } from "./meeting.types.js";
 
 export const MAX_MEETING_ATTACHMENTS = 10;
 export const MAX_MEETING_ATTACHMENT_BYTES = 20 * 1024 * 1024;
@@ -27,7 +27,6 @@ const meetingLink = z
   .nullable()
   .optional();
 
-const meetingVisibility = z.enum(MEETING_VISIBILITIES);
 const meetingMode = z.enum(MEETING_MODES);
 const clientName = z
   .string()
@@ -61,7 +60,6 @@ const meetingFields = {
   location,
   startAt: z.coerce.date(),
   endAt: z.coerce.date(),
-  visibility: meetingVisibility.default("INTERNAL"),
   primaryPicId: objectId,
   picIds: z.array(objectId).min(1).max(10),
   participantIds: z.array(objectId).max(100).default([]),
@@ -113,7 +111,6 @@ export const updateMeetingSchema = z
     location,
     startAt: z.coerce.date().optional(),
     endAt: z.coerce.date().optional(),
-    visibility: meetingVisibility.optional(),
     primaryPicId: objectId.optional(),
     picIds: z.array(objectId).min(1).max(10).optional(),
     participantIds: z.array(objectId).max(100).optional(),

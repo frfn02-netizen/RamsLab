@@ -39,17 +39,17 @@ describe("meeting schema", () => {
     expect(parsed.startAt).toBeInstanceOf(Date);
     expect(parsed.endAt).toBeInstanceOf(Date);
     expect(parsed.meetingLink).toBe("https://meet.google.com/abc-defg-hij");
-    expect(parsed.visibility).toBe("INTERNAL");
+    expect(parsed).not.toHaveProperty("visibility");
   });
 
-  it("accepts the private visibility option", () => {
+  it("ignores the removed legacy visibility option", () => {
     const parsed = createMeetingSchema.parse({
       ...BASE_CREATE,
-      title: "Private review",
+      title: "Legacy review",
       visibility: "PRIVATE",
     });
 
-    expect(parsed.visibility).toBe("PRIVATE");
+    expect(parsed).not.toHaveProperty("visibility");
   });
 
   it("does not accept ownership fields through meeting create input", () => {

@@ -37,10 +37,6 @@ import type {
 } from "./meeting.schema.js";
 import type {
   Meeting,
-  MeetingAuditChange,
-  MeetingAuditEntry,
-  MeetingAuditResponse,
-  MeetingAuditValue,
   MeetingCalendarCreator,
   MeetingCalendarResponse,
   MeetingConflict,
@@ -48,7 +44,6 @@ import type {
   MeetingResponse,
   MeetingStatus,
   MeetingUserSummary,
-  MeetingVisibility,
 } from "./meeting.types.js";
 
 const MEETING_ALREADY_ENDED_MESSAGE =
@@ -200,12 +195,6 @@ function summary(entry: UserDirectoryEntry): MeetingUserSummary {
   };
 }
 
-function effectiveVisibility(
-  meeting: Pick<Meeting, "visibility">,
-): MeetingVisibility {
-  return meeting.visibility === "INTERNAL" ? "INTERNAL" : "PRIVATE";
-}
-
 function isInternalRole(actor: JwtPayload) {
   return actor.role === "ADMIN" || actor.role === "DOSEN";
 }
@@ -244,84 +233,6 @@ export function assertMeetingNotEnded(
       MEETING_ALREADY_ENDED_CODE,
     );
   }
-}
-
-type MeetingAuditSnapshot = Record<string, MeetingAuditValue>;
-
-function auditSnapshot(meeting: {
-  title: string;
-  description?: string;
-  clientName?: string | null;
-  mode?: MeetingMode | null;
-  location?: string | null;
-  startAt: Date;
-  endAt: Date;
-  visibility?: MeetingVisibility;
-  primaryPicId?: ObjectId;
-  picIds?: ObjectId[];
-  participantIds?: ObjectId[];
-  meetingLink?: string | null;
-}): MeetingAuditSnapshot {
-  return {
-    title: meeting.title,
-    description: meeting.description ?? "",
-    clientName: meeting.clientName ?? null,
-    mode: meeting.mode ?? null,
-    location: meeting.location ?? null,
-    startAt: meeting.startAt.toISOString(),
-    endAt: meeting.endAt.toISOString(),
-    visibility: meeting.visibility === "INTERNAL" ? "INTERNAL" : "PRIVATE",
-    primaryPicId: meeting.primaryPicId?.toString() ?? null,
-    picIds: (meeting.picIds ?? []).map((id) => id.toString()),
-    participantIds: (meeting.participantIds ?? []).map((id) => id.toString()),
-    meetingLink: meeting.meetingLink ?? null,
-  };
-}
-
-function auditChange(
-  oldValue: MeetingAuditValue | null,
-  newValue: MeetingAuditValue | null,
-): MeetingAuditChange {
-  return { oldValue, newValue };
-}
-
-function auditChangesForCreate(
-  snapshot: MeetingAuditSnapshot,
-  status: MeetingStatus,
-) {
-  return Object.fromEntries(
-    Object.entries({ ...snapshot, status }).map(([key, value]) => [
-      key,
-      auditChange(null, value),
-    ]),
-  ) as Record<string, MeetingAuditChange>;
-}
-
-function auditChangesForUpdate(
-  before: MeetingAuditSnapshot,
-  after: MeetingAuditSnapshot,
-): Record<string, MeetingAuditChange> {
-  const changes: Record<string, MeetingAuditChange> = {};
-  for (const key of Object.keys(after)) {
-    if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue;
-    changes[key] = auditChange(before[key] ?? null, after[key] ?? null);
-  }
-  return changes;
-}
-
-function createAuditEntry(
-  actorUserId: ObjectId,
-  action: MeetingAuditEntry["action"],
-  changes: Record<string, MeetingAuditChange>,
-  timestamp = new Date(),
-): MeetingAuditEntry {
-  return {
-    id: randomUUID(),
-    actorUserId,
-    action,
-    changes,
-    timestamp,
-  };
 }
 
 async function userMapFor(meetings: Meeting[]) {
@@ -371,7 +282,6 @@ function serialize(
     location: meeting.location?.trim() || null,
     startAt: meeting.startAt.toISOString(),
     endAt: meeting.endAt.toISOString(),
-    visibility: effectiveVisibility(meeting),
     createdBy: users.get(creatorId) ?? null,
     primaryPicId: meeting.primaryPicId?.toString(),
     picIds: (meeting.picIds ?? []).map((id) => id.toString()),
@@ -409,14 +319,14 @@ function serialize(
 }
 
 function hasDetailAccess(meeting: Meeting, actor: JwtPayload) {
-  if (
+  // Meetings are shared across RAMS staff accounts. These fallbacks keep legacy
+  // callers and fixtures understandable even though all routes are internal.
+  return (
+    isInternalRole(actor) ||
     actor.role === "ADMIN" ||
     meeting.createdBy?.toString() === actor.userId ||
     (meeting.participantIds ?? []).some((id) => id.toString() === actor.userId)
-  ) {
-    return true;
-  }
-  return isInternalRole(actor) && effectiveVisibility(meeting) === "INTERNAL";
+  );
 }
 
 function calendarCreator(
@@ -437,8 +347,6 @@ function serializeCalendar(
 ): MeetingCalendarResponse {
   const creatorId = meeting.createdBy?.toString() ?? "";
   const canViewDetails = hasDetailAccess(meeting, actor);
-  const isPrivateBusyBlock =
-    effectiveVisibility(meeting) === "PRIVATE" && !canViewDetails;
   const primaryPic = meeting.primaryPicId
     ? users.get(meeting.primaryPicId.toString())
     : undefined;
@@ -449,60 +357,26 @@ function serializeCalendar(
 
   return {
     _id: meeting._id?.toString() ?? "",
-    title: isPrivateBusyBlock ? "Busy" : meeting.title,
+    title: meeting.title,
     startAt: meeting.startAt.toISOString(),
     endAt: meeting.endAt.toISOString(),
-    createdBy: isPrivateBusyBlock
-      ? null
-      : calendarCreator(users.get(creatorId)),
+    createdBy: calendarCreator(users.get(creatorId)),
     canViewDetails,
-    ...(isPrivateBusyBlock
-      ? {}
-      : {
-          status: getMeetingStatus(meeting),
-          ...(canViewDetails
-            ? {
-                clientName: meeting.clientName?.trim() || null,
-                mode: meeting.mode ?? null,
-                location: meeting.location?.trim() || null,
-                involvesHighlightedUser:
-                  meetingInvolvesHighlightedUser(meeting),
-                ...(primaryPic?.displayName
-                  ? { primaryPicName: primaryPic.displayName }
-                  : {}),
-                ...(additionalPicNames.length > 0
-                  ? { additionalPicNames }
-                  : {}),
-              }
-            : {}),
-        }),
+    status: getMeetingStatus(meeting),
+    clientName: meeting.clientName?.trim() || null,
+    mode: meeting.mode ?? null,
+    location: meeting.location?.trim() || null,
+    involvesHighlightedUser: meetingInvolvesHighlightedUser(meeting),
+    ...(primaryPic?.displayName
+      ? { primaryPicName: primaryPic.displayName }
+      : {}),
+    ...(additionalPicNames.length > 0 ? { additionalPicNames } : {}),
   };
 }
 
 async function hydrate(meetings: Meeting[], actor: JwtPayload) {
   const users = await userMapFor(meetings);
   return meetings.map((meeting) => serialize(meeting, actor, users));
-}
-
-async function serializeAuditHistory(
-  entries: MeetingAuditEntry[],
-): Promise<MeetingAuditResponse[]> {
-  const actorIds = uniqueObjectIds(entries.map((entry) => entry.actorUserId));
-  const users = await findUsersByIds(actorIds);
-  const userById = new Map(
-    users.map((entry) => [entry._id?.toString() ?? "", summary(entry)]),
-  );
-
-  return [...entries]
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    .map((entry) => ({
-      id: entry.id,
-      actorId: entry.actorUserId.toString(),
-      actor: userById.get(entry.actorUserId.toString()) ?? null,
-      action: entry.action,
-      changes: entry.changes,
-      timestamp: entry.timestamp.toISOString(),
-    }));
 }
 
 function assertCanView(meeting: Meeting, actor: JwtPayload) {
@@ -768,13 +642,6 @@ export async function getMeeting(id: string, actor: JwtPayload) {
   return response;
 }
 
-export async function getMeetingAudit(id: string, actor: JwtPayload) {
-  const meeting = await findMeetingById(id);
-  if (!meeting) throw new HttpError(404, "Meeting not found");
-  assertCanView(meeting, actor);
-  return serializeAuditHistory(meeting.auditHistory ?? []);
-}
-
 export async function createMeeting(
   input: CreateMeetingInput,
   actor: JwtPayload,
@@ -806,33 +673,10 @@ export async function createMeeting(
     actor,
   });
 
-  const auditTimestamp = new Date();
-  const audit = createAuditEntry(
-    creatorId,
-    "CREATE",
-    auditChangesForCreate(
-      auditSnapshot({
-        ...normalizedInput,
-        picIds,
-        primaryPicId: primaryPicId ?? undefined,
-        participantIds,
-      }),
-      getMeetingStatus(
-        {
-          startAt: normalizedInput.startAt,
-          endAt: normalizedInput.endAt,
-        },
-        auditTimestamp,
-      ),
-    ),
-    auditTimestamp,
-  );
-
   const meeting = await createMeetingRecord(
     normalizedInput,
     creatorId,
     participantIds,
-    audit,
   );
   const [response] = await hydrate([meeting], actor);
   return { meeting: response, conflicts };
@@ -914,7 +758,6 @@ export async function updateMeeting(
     location: input.location === undefined ? existing.location : input.location,
     startAt,
     endAt,
-    visibility: input.visibility ?? existing.visibility,
     primaryPicId,
     picIds,
     participantIds,
@@ -950,44 +793,10 @@ export async function updateMeeting(
       ? { meetingLink: candidate.meetingLink ?? null }
       : {}),
   };
-  if (
-    effectiveVisibility(candidate) === "PRIVATE" &&
-    actor.role !== "ADMIN" &&
-    !(
-      existing.createdBy?.toString() === actor.userId &&
-      canManageOwnMeeting(actor)
-    )
-  ) {
-    throw new HttpError(
-      403,
-      "Agenda coordinators can edit shared non-private meetings only",
-    );
-  }
-  const auditTimestamp = new Date();
-  const changes = auditChangesForUpdate(
-    auditSnapshot(existing),
-    auditSnapshot(candidate),
-  );
-  const previousStatus = getMeetingStatus(existing, auditTimestamp);
-  const nextStatus = getMeetingStatus(candidate, auditTimestamp);
-  if (previousStatus !== nextStatus) {
-    changes.status = auditChange(previousStatus, nextStatus);
-  }
-  const audit =
-    Object.keys(changes).length > 0
-      ? createAuditEntry(
-          actorObjectId(actor),
-          "UPDATE",
-          changes,
-          auditTimestamp,
-        )
-      : undefined;
-
   const updated = await updateMeetingRecord(
     id,
     normalizedInput,
     input.participantIds === undefined ? undefined : participantIds,
-    audit,
     input.expectedUpdatedAt,
   );
   if (!updated) {
@@ -1022,18 +831,13 @@ export async function cancelMeeting(
   const cancelledAt = new Date();
   assertMeetingNotEnded(existing, cancelledAt);
 
-  const changes: Record<string, MeetingAuditChange> = {
-    status: auditChange(getMeetingStatus(existing, cancelledAt), "CANCELLED"),
-  };
   const reason = input.reason?.trim() || undefined;
-  if (reason) changes.cancellationReason = auditChange(null, reason);
 
   const updated = await cancelMeetingRecord(
     id,
     cancelledAt,
     actorObjectId(actor),
     reason,
-    createAuditEntry(actorObjectId(actor), "CANCEL", changes, cancelledAt),
   );
   if (!updated) {
     const current = await findMeetingById(id);
@@ -1104,14 +908,6 @@ export async function addAttachment(
       uploadedAt,
     },
     MAX_MEETING_ATTACHMENTS,
-    createAuditEntry(actorObjectId(actor), "ATTACHMENT_ADDED", {
-      attachment: auditChange(null, {
-        id: attachmentId,
-        filename: uploaded.filename,
-        mimeType: file.mimeType,
-        size: file.size,
-      }),
-    }),
   );
 
   if (result.status !== "ok") {
@@ -1148,17 +944,6 @@ export async function removeAttachment(
   const { meeting: updated, removed } = await removeMeetingAttachmentRecord(
     id,
     attachmentId,
-    createAuditEntry(actorObjectId(actor), "ATTACHMENT_REMOVED", {
-      attachment: auditChange(
-        {
-          id: expectedRemoved.id,
-          filename: expectedRemoved.filename,
-          mimeType: expectedRemoved.mimeType,
-          size: expectedRemoved.size,
-        },
-        null,
-      ),
-    }),
   );
   if (!removed) throw new HttpError(404, "Attachment not found");
   if (removed.publicId) {
