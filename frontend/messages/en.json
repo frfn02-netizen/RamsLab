@@ -34,13 +34,6 @@
     "mobileNav": "Mobile navigation",
     "contactUs": "Contact Us"
   },
-  "language": {
-    "label": "Language",
-    "english": "English",
-    "indonesian": "Bahasa Indonesia",
-    "shortEnglish": "EN",
-    "shortIndonesian": "ID"
-  },
   "common": {
     "readMore": "Read more",
     "explore": "Explore",
@@ -168,11 +161,13 @@
     "ctaEyebrow": "COLLABORATE WITH US",
     "ctaTitle": "Have a reliability, safety, or marine systems challenge?",
     "ctaDescription": "Talk with the laboratory about a research, reliability, safety, or marine systems challenge.",
+    "ctaButton": "Discuss a collaboration",
     "video": {
-      "eyebrow": "VIDEO / ABOUT RAMS",
       "title": "Get to Know RAMS Laboratory",
       "description": "Watch our introduction to learn about the laboratory's research, methods, and the systems we study.",
       "watchOnYouTube": "Watch on YouTube",
+      "watchVideo": "Watch Video",
+      "titleFallback": "RAMS Laboratory Research Overview",
       "watchIntroduction": "Watch Introduction",
       "allVideos": "All Videos",
       "featured": "Featured",
@@ -232,33 +227,6 @@
     "exploreWork": "Explore Our Work",
     "exploreResearch": "Explore Our Research",
     "getInTouch": "Get in Touch"
-  },
-  "timeline": {
-    "foundation": {
-      "year": "1997",
-      "label": "Foundation",
-      "text": "RAMS Laboratory is established as a research home for reliability, availability, Management, and safety studies."
-    },
-    "collaboration": {
-      "year": "2000s",
-      "label": "Collaboration",
-      "text": "Research expands through academic and international collaboration around marine and offshore systems."
-    },
-    "recognition": {
-      "year": "2010",
-      "label": "Recognition",
-      "text": "Research and professorship activities strengthen the laboratory’s role in applied reliability and safety work."
-    },
-    "industry": {
-      "year": "2010s",
-      "label": "Industry",
-      "text": "Industrial consulting and project-based studies connect laboratory methods with operational decisions."
-    },
-    "today": {
-      "year": "Today",
-      "label": "Multidisciplinary",
-      "text": "RAMS Laboratory continues to combine marine engineering, reliability, safety, maintenance, AIS, and simulation."
-    }
   },
   "research": {
     "heroEyebrow": "Research & methods",
@@ -626,39 +594,6 @@
     "projectsPrev": "Previous",
     "projectsNext": "Next"
   },
-  "visual": {
-    "profile": "Profile",
-    "headName": "Prof. Ketut",
-    "headRole": "Laboratory head",
-    "affiliation": "Institut Teknologi Sepuluh Nopember"
-  },
-  "adminPublications": {
-    "title": "Publications",
-    "description": "Manage publication records used by the public RAMS Publications page.",
-    "add": "Add publication",
-    "edit": "Edit publication",
-    "save": "Save publication",
-    "search": "Search publications",
-    "noPublications": "No publications yet",
-    "noResults": "No publications found",
-    "loading": "Loading publications",
-    "titleField": "Title",
-    "authors": "Authors",
-    "year": "Year",
-    "journal": "Journal / Venue",
-    "doi": "DOI",
-    "pdfUrl": "Publication URL / PDF URL",
-    "topics": "Topics",
-    "methods": "Methods",
-    "addAuthor": "Add author",
-    "addTopic": "Add topic",
-    "addMethod": "Add method",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "deleting": "Deleting…",
-    "saving": "Saving…",
-    "permission": "You do not have permission to manage publications."
-  },
   "alumniReview": {
     "statusTitle": "Profile Status",
     "statusPending": "Pending review",
@@ -667,5 +602,36 @@
     "rejectedTitle": "Profile rejected",
     "reasonLabel": "Reason from reviewer",
     "resubmitHint": "Please update your profile based on the feedback above and save your changes to resubmit it for review."
+  },
+  "meetings": {
+    "accessTitle": "Meetings access is restricted",
+    "accessRestricted": "This workspace is available to RAMS staff accounts only.",
+    "created": "Meeting scheduled.",
+    "updated": "Meeting updated.",
+    "notificationFailed": "Meeting saved, but email notifications could not be sent.",
+    "notificationSent": "Email notifications sent to active RAMS members."
+  },
+  "dashboardDosen": {
+    "createdTitle": "Dosen created",
+    "createdDescription": "The login and public profile are saved. Review the sign-in details below before leaving this page.",
+    "emailSent": "Onboarding email sent to {email}.",
+    "emailFailed": "Account and profile saved, but the onboarding email could not be sent. Share the sign-in details below directly.",
+    "temporaryPasswordTitle": "Temporary password, shown once",
+    "temporaryPasswordHint": "A copy is sent to the lecturer when email delivery is configured. If it did not arrive, share this password through a secure channel. It cannot be shown again after you leave this page.",
+    "temporaryPasswordClearedTitle": "Temporary password cleared",
+    "temporaryPasswordClearedHint": "The password is no longer shown. Generate a new temporary password only if the lecturer still needs one.",
+    "copyPassword": "Copy password",
+    "copied": "Copied",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "clearPassword": "Clear password",
+    "regeneratePassword": "Generate a new temporary password",
+    "regenerating": "Generating...",
+    "publicProfileLabel": "Show public profile",
+    "publicProfileHint": "Controls the public website listing only. It does not change sign-in access.",
+    "accountStatusTitle": "Sign-in access",
+    "accountActiveLabel": "Account active",
+    "accountActiveHint": "When off, the lecturer cannot sign in or receive meeting emails. The public profile and meeting history stay intact.",
+    "accessUpdateFailed": "Profile saved, but the sign-in access setting could not be updated."
   }
 }

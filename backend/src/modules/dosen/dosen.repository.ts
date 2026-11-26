@@ -54,6 +54,34 @@ export async function findDosenByEmployeeId(
   });
 }
 
+/**
+ * Detects a profile conflict before an auth account is provisioned. The
+ * employeeId unique index is the final guarantee; nip and nidn are checked
+ * here because they are not uniquely indexed for legacy records.
+ */
+export async function findDosenConflict(input: {
+  employeeId?: string;
+  nip?: string;
+  nidn?: string;
+}): Promise<"employeeId" | "nip" | "nidn" | null> {
+  const filters: Record<string, string>[] = [];
+  if (input.employeeId) filters.push({ employeeId: input.employeeId });
+  if (input.nip) filters.push({ nip: input.nip });
+  if (input.nidn) filters.push({ nidn: input.nidn });
+  if (filters.length === 0) return null;
+
+  const match = await getDosenCollection().findOne(
+    { $or: filters },
+    { projection: { employeeId: 1, nip: 1, nidn: 1 } },
+  );
+  if (!match) return null;
+  if (input.employeeId && match.employeeId === input.employeeId) {
+    return "employeeId";
+  }
+  if (input.nip && match.nip === input.nip) return "nip";
+  return "nidn";
+}
+
 // ========================================
 // LIST DOSEN
 // ========================================

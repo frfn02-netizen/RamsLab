@@ -2,22 +2,15 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CreateDosen from "@/components/dashboard/create-dosen";
 
-const {
-  createDosenAccount,
-  createDosen,
-  uploadDosenPhoto,
-  resetUserPassword,
-  notifyError,
-} = vi.hoisted(() => ({
-  createDosenAccount: vi.fn(),
-  createDosen: vi.fn(),
-  uploadDosenPhoto: vi.fn(),
-  resetUserPassword: vi.fn(),
-  notifyError: vi.fn(),
-}));
+const { createDosen, uploadDosenPhoto, resetUserPassword, notifyError } =
+  vi.hoisted(() => ({
+    createDosen: vi.fn(),
+    uploadDosenPhoto: vi.fn(),
+    resetUserPassword: vi.fn(),
+    notifyError: vi.fn(),
+  }));
 
 vi.mock("@/lib/api/modules", () => ({
-  createDosenAccount,
   createDosen,
   uploadDosenPhoto,
   resetUserPassword,
@@ -27,20 +20,20 @@ vi.mock("@/components/providers/toast-providers", () => ({
 }));
 
 beforeEach(() => {
-  createDosenAccount.mockReset();
   createDosen.mockReset();
   uploadDosenPhoto.mockReset();
   resetUserPassword.mockReset();
   notifyError.mockReset();
 
-  createDosenAccount.mockResolvedValue({
-    id: "user-1",
-    email: "dosen@test.local",
-    role: "DOSEN",
-    isActive: true,
+  createDosen.mockResolvedValue({
+    dosen: {
+      _id: "dosen-1",
+      userId: "user-1",
+      email: "dosen@test.local",
+    },
     temporaryPassword: "TempPass123!",
+    notification: { sent: true },
   });
-  createDosen.mockResolvedValue({ _id: "dosen-1" });
   resetUserPassword.mockResolvedValue({ temporaryPassword: "TempPass456!" });
 });
 
@@ -55,6 +48,10 @@ describe("create dosen temporary password", () => {
       expect(screen.getByText("Dosen created")).toBeInTheDocument(),
     );
     expect(screen.getByText("TempPass123!")).toBeInTheDocument();
+    expect(
+      screen.getByText("Onboarding email sent to dosen@test.local."),
+    ).toBeInTheDocument();
+    expect(createDosen).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
     expect(screen.queryByText("TempPass123!")).not.toBeInTheDocument();
@@ -65,9 +62,7 @@ describe("create dosen temporary password", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Clear password" }));
     expect(screen.queryByText("TempPass123!")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Temporary password cleared"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Temporary password cleared")).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -78,5 +73,34 @@ describe("create dosen temporary password", () => {
       expect(screen.getByText("TempPass456!")).toBeInTheDocument(),
     );
     expect(resetUserPassword).toHaveBeenCalledWith("user-1");
+  });
+
+  it("keeps the created account and warns when the onboarding email fails", async () => {
+    createDosen.mockResolvedValue({
+      dosen: {
+        _id: "dosen-2",
+        userId: "user-2",
+        email: "failed@test.local",
+      },
+      temporaryPassword: "TempPass789!",
+      notification: { sent: false, warning: "onboarding email failed" },
+    });
+
+    const { container } = render(<CreateDosen />);
+    fireEvent.submit(container.querySelector("form")!);
+
+    await waitFor(() =>
+      expect(screen.getByText("Dosen created")).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText(
+        "Account and profile saved, but the onboarding email could not be sent. Share the sign-in details below directly.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("TempPass789!")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Onboarding email sent to failed@test.local."),
+    ).not.toBeInTheDocument();
+    expect(notifyError).not.toHaveBeenCalled();
   });
 });

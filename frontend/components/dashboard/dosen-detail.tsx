@@ -348,6 +348,7 @@ export default function DosenDetail({ id }: { id: string }) {
               ["Show NIDN", dosen.showNidn],
               ["Show email", dosen.showEmail],
               ["Public profile", dosen.isPublic],
+              ["Sign-in access", dosen.accountActive ?? true],
             ].map(([label, value]) => (
               <div
                 key={String(label)}

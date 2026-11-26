@@ -20,6 +20,7 @@ const { getDosenById, getPublications, updateDosen, uploadDosenPhoto } =
 vi.mock("@/lib/api/modules", () => ({
   getDosenById,
   getPublications,
+  setDosenAccountActive: vi.fn(),
   updateDosen,
   uploadDosenPhoto,
 }));

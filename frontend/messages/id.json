@@ -34,13 +34,6 @@
     "mobileNav": "Navigasi seluler",
     "contactUs": "Hubungi Kami"
   },
-  "language": {
-    "label": "Bahasa",
-    "english": "English",
-    "indonesian": "Bahasa Indonesia",
-    "shortEnglish": "EN",
-    "shortIndonesian": "ID"
-  },
   "common": {
     "readMore": "Baca selengkapnya",
     "explore": "Jelajahi",
@@ -168,11 +161,13 @@
     "ctaEyebrow": "BERKOLABORASI BERSAMA KAMI",
     "ctaTitle": "Memiliki tantangan keandalan, keselamatan, atau sistem maritim?",
     "ctaDescription": "Diskusikan tantangan riset, keandalan, keselamatan, atau sistem maritim bersama laboratorium.",
+    "ctaButton": "Diskusikan kolaborasi",
     "video": {
-      "eyebrow": "VIDEO / TENTANG RAMS",
       "title": "Mengenal Laboratorium RAMS",
       "description": "Tonton pengenalan kami untuk mempelajari tentang riset, metode, dan sistem yang kami pelajari.",
       "watchOnYouTube": "Tonton di YouTube",
+      "watchVideo": "Tonton Video",
+      "titleFallback": "Ikhtisar Riset Laboratorium RAMS",
       "watchIntroduction": "Tonton Pengenalan",
       "allVideos": "Semua Video",
       "featured": "Unggulan",
@@ -190,8 +185,6 @@
     "ecosystemTitle": "Bagian dari Ekosistem Riset ITS",
     "ecosystemAisDescription": "Automatic Information System\nInstitut Teknologi Sepuluh Nopember",
     "partners": {
-      "sectionEyebrow": "Mitra Kami",
-      "title": "Mitra Pilihan",
       "description": "Kami berkolaborasi dengan universitas terkemuka dan mitra industri untuk memajukan riset dalam keandalan, keselamatan, dan sistem maritim.",
       "industrialTitle": "Mitra Industri",
       "universityTitle": "Mitra Universitas",
@@ -234,33 +227,6 @@
     "exploreWork": "Jelajahi Karya Kami",
     "exploreResearch": "Jelajahi Riset Kami",
     "getInTouch": "Hubungi Kami"
-  },
-  "timeline": {
-    "foundation": {
-      "year": "1997",
-      "label": "Pendirian",
-      "text": "Laboratorium RAMS berdiri sebagai rumah riset untuk kajian keandalan, ketersediaan, kemudahan pemeliharaan, dan keselamatan."
-    },
-    "collaboration": {
-      "year": "2000-an",
-      "label": "Kolaborasi",
-      "text": "Riset berkembang melalui kolaborasi akademik dan internasional seputar sistem kelautan dan lepas pantai."
-    },
-    "recognition": {
-      "year": "2010",
-      "label": "Pengakuan",
-      "text": "Kegiatan riset dan profesor memperkuat peran laboratorium dalam pekerjaan keandalan dan keselamatan terapan."
-    },
-    "industry": {
-      "year": "2010-an",
-      "label": "Industri",
-      "text": "Konsultasi industri dan kajian berbasis proyek menghubungkan metode laboratorium dengan keputusan operasional."
-    },
-    "today": {
-      "year": "Kini",
-      "label": "Multidisiplin",
-      "text": "Laboratorium RAMS terus memadukan rekayasa kelautan, keandalan, keselamatan, pemeliharaan, AIS, dan simulasi."
-    }
   },
   "research": {
     "heroEyebrow": "Riset & metode",
@@ -549,7 +515,6 @@
     "collaborationCta": "Diskusikan kolaborasi",
     "formEyebrow": "Mulai percakapan",
     "formTitle": "Ceritakan hal yang sedang Anda kerjakan.",
-    "formDescription": "Formulir ini disiapkan untuk API kontak di masa mendatang. Saat ini formulir hanya memvalidasi data secara lokal dan tidak mengirim pesan.",
     "name": "Nama",
     "institution": "Institusi / Perusahaan",
     "topic": "Topik",
@@ -598,7 +563,6 @@
   },
   "publicService": {
     "metaTitle": "Layanan Publik | Laboratorium RAMS",
-    "eyebrow": "Layanan Publik",
     "title": "Layanan Publik",
     "description": "Keahlian dan layanan publik yang dikelola oleh Laboratorium RAMS.",
     "industrialPartnersTitle": "Mitra Industri",
@@ -630,39 +594,6 @@
     "projectsPrev": "Sebelumnya",
     "projectsNext": "Selanjutnya"
   },
-  "visual": {
-    "profile": "Profil",
-    "headName": "Prof. Ketut",
-    "headRole": "Kepala laboratorium",
-    "affiliation": "Institut Teknologi Sepuluh Nopember"
-  },
-  "adminPublications": {
-    "title": "Publikasi",
-    "description": "Kelola rekaman publikasi yang digunakan halaman Publikasi RAMS.",
-    "add": "Tambah publikasi",
-    "edit": "Edit publikasi",
-    "save": "Simpan publikasi",
-    "search": "Cari publikasi",
-    "noPublications": "Belum ada publikasi",
-    "noResults": "Publikasi tidak ditemukan",
-    "loading": "Memuat publikasi",
-    "titleField": "Judul",
-    "authors": "Penulis",
-    "year": "Tahun",
-    "journal": "Jurnal / Venue",
-    "doi": "DOI",
-    "pdfUrl": "URL Publikasi / URL PDF",
-    "topics": "Topik",
-    "methods": "Metode",
-    "addAuthor": "Tambah penulis",
-    "addTopic": "Tambah topik",
-    "addMethod": "Tambah metode",
-    "cancel": "Batal",
-    "delete": "Hapus",
-    "deleting": "Menghapus…",
-    "saving": "Menyimpan…",
-    "permission": "Anda tidak memiliki izin untuk mengelola publikasi."
-  },
   "alumniReview": {
     "statusTitle": "Status Profil",
     "statusPending": "Menunggu review",
@@ -671,5 +602,36 @@
     "rejectedTitle": "Profil ditolak",
     "reasonLabel": "Alasan dari reviewer",
     "resubmitHint": "Silakan perbaiki profil sesuai catatan di atas lalu simpan perubahan untuk mengirimkannya kembali ke proses review."
+  },
+  "meetings": {
+    "accessTitle": "Akses rapat dibatasi",
+    "accessRestricted": "Ruang kerja ini hanya tersedia untuk akun staf RAMS.",
+    "created": "Rapat berhasil dijadwalkan.",
+    "updated": "Rapat berhasil diperbarui.",
+    "notificationFailed": "Rapat tersimpan, tetapi notifikasi email tidak dapat dikirim.",
+    "notificationSent": "Notifikasi email dikirim ke anggota RAMS aktif."
+  },
+  "dashboardDosen": {
+    "createdTitle": "Dosen berhasil dibuat",
+    "createdDescription": "Akun masuk dan profil publik sudah tersimpan. Periksa detail akses di bawah ini sebelum meninggalkan halaman.",
+    "emailSent": "Email orientasi telah dikirim ke {email}.",
+    "emailFailed": "Akun dan profil tersimpan, tetapi email orientasi tidak dapat dikirim. Bagikan detail akses di bawah ini secara langsung.",
+    "temporaryPasswordTitle": "Kata sandi sementara, hanya ditampilkan sekali",
+    "temporaryPasswordHint": "Salinannya dikirim ke dosen jika pengiriman email dikonfigurasi. Jika tidak diterima, bagikan kata sandi ini melalui saluran yang aman. Kata sandi tidak dapat ditampilkan lagi setelah Anda meninggalkan halaman ini.",
+    "temporaryPasswordClearedTitle": "Kata sandi sementara dihapus",
+    "temporaryPasswordClearedHint": "Kata sandi tidak lagi ditampilkan. Buat kata sandi sementara baru hanya jika dosen masih membutuhkannya.",
+    "copyPassword": "Salin kata sandi",
+    "copied": "Tersalin",
+    "showPassword": "Tampilkan kata sandi",
+    "hidePassword": "Sembunyikan kata sandi",
+    "clearPassword": "Hapus kata sandi",
+    "regeneratePassword": "Buat kata sandi sementara baru",
+    "regenerating": "Membuat...",
+    "publicProfileLabel": "Tampilkan profil publik",
+    "publicProfileHint": "Hanya mengatur tampilan di situs publik. Tidak mengubah akses masuk.",
+    "accountStatusTitle": "Akses masuk",
+    "accountActiveLabel": "Akun aktif",
+    "accountActiveHint": "Jika dimatikan, dosen tidak dapat masuk atau menerima email rapat. Profil publik dan riwayat rapat tetap tersimpan.",
+    "accessUpdateFailed": "Profil tersimpan, tetapi pengaturan akses masuk tidak dapat diperbarui."
   }
 }

@@ -18,6 +18,7 @@ import { getUserFacingError } from "@/lib/api/errors";
 import {
   getDosenById,
   getPublications,
+  setDosenAccountActive,
   updateDosen,
   uploadDosenPhoto,
 } from "@/lib/api/modules";
@@ -25,6 +26,7 @@ import {
   matchesAnyAuthor,
   normalizeAuthorName,
 } from "@/lib/publication-author-match";
+import { dosenCopy } from "@/lib/dosen-copy";
 import Select from "@/components/select";
 import type { Dosen, DosenEducation, Publication } from "@/types/modules";
 
@@ -58,6 +60,7 @@ type FormState = {
   showNidn: boolean;
   showEmail: boolean;
   isPublic: boolean;
+  accountActive: boolean;
   publicationIds: string[];
 };
 
@@ -92,6 +95,7 @@ function fromDosen(d: Dosen): FormState {
     showNidn: d.showNidn,
     showEmail: d.showEmail,
     isPublic: d.isPublic,
+    accountActive: d.accountActive ?? true,
     publicationIds: d.publicationIds ?? [],
   };
 }
@@ -118,12 +122,14 @@ function DosenPublicationsSection({
 
   useEffect(() => {
     if (!normalizedName) {
-      setAvailable([]);
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    setFetchError(null);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setFetchError(null);
+    });
     const PAGE_LIMIT = 200;
     (async () => {
       const all: Publication[] = [];
@@ -174,7 +180,7 @@ function DosenPublicationsSection({
     return () => {
       cancelled = true;
     };
-  }, [normalizedName, retryCount]);
+  }, [fullName, normalizedName, retryCount]);
 
   const addPublication = (id: string) => {
     if (!selectedIds.includes(id)) {
@@ -289,6 +295,7 @@ export default function EditDosen({ id }: { id: string }) {
       cancelled = true;
     };
   }, [id]);
+  const copy = dosenCopy();
   const set = (key: string, value: string | boolean) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
   const setEducation = (
@@ -357,6 +364,18 @@ export default function EditDosen({ id }: { id: string }) {
         publicationIds: form.publicationIds,
       });
       if (photo) await uploadDosenPhoto(id, photo);
+
+      // Public visibility is part of the profile update above. Login access is
+      // stored on the linked account, so it is a separate, explicit request.
+      if ((dosen.accountActive ?? true) !== form.accountActive) {
+        try {
+          await setDosenAccountActive(id, form.accountActive);
+        } catch {
+          notifyError(dosenCopy().accessUpdateFailed);
+          return;
+        }
+      }
+
       router.push(`/dashboard/dosen/${result._id}`);
     } catch (e) {
       notifyError(getUserFacingError(e));
@@ -570,7 +589,6 @@ export default function EditDosen({ id }: { id: string }) {
                 ["showNip", "Show NIP publicly"],
                 ["showNidn", "Show NIDN publicly"],
                 ["showEmail", "Show email publicly"],
-                ["isPublic", "Public profile"],
               ].map(([key, label]) => (
                 <label
                   key={key}
@@ -585,6 +603,38 @@ export default function EditDosen({ id }: { id: string }) {
                 </label>
               ))}
             </div>
+
+            <section className="space-y-4 border-t border-black/10 pt-5">
+              <h2 className="text-sm font-bold">{copy.accountStatusTitle}</h2>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={form.isPublic}
+                    onChange={(e) => set("isPublic", e.target.checked)}
+                  />
+                  {copy.publicProfileLabel}
+                </label>
+                <p className="ml-7 text-xs leading-5 text-[var(--rams-gray)]">
+                  {copy.publicProfileHint}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={form.accountActive}
+                    onChange={(e) => set("accountActive", e.target.checked)}
+                  />
+                  {copy.accountActiveLabel}
+                </label>
+                <p className="ml-7 text-xs leading-5 text-[var(--rams-gray)]">
+                  {copy.accountActiveHint}
+                </p>
+              </div>
+            </section>
             <DosenPublicationsSection
               fullName={form.fullName}
               selectedIds={form.publicationIds}

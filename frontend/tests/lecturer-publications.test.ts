@@ -1,4 +1,4 @@
-import { vi, describe, expect, it, beforeEach } from "vitest";
+import { vi, describe, expect, it } from "vitest";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: () => {}, replace: () => {}, back: () => {} }),
@@ -13,7 +13,13 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("@/i18n/navigation", () => ({
-  Link: ({ children, ...props }: any) => ({
+  Link: ({
+    children,
+    ...props
+  }: {
+    children?: unknown;
+    [key: string]: unknown;
+  }) => ({
     type: "a",
     props: { children, ...props },
   }),
@@ -570,7 +576,7 @@ describe("12. Pagination fetches all pages", () => {
     const limits: number[] = [];
     const mockGetPublications = vi
       .fn()
-      .mockImplementation(async (opts: any) => {
+      .mockImplementation(async (opts: { limit: number }) => {
         limits.push(opts.limit);
         return {
           data: [],

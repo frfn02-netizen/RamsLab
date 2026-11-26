@@ -22,62 +22,108 @@ const publicationIdsField = z
   .array(z.string().regex(/^[a-f\d]{24}$/i, "Invalid publication ID"))
   .max(200);
 
-export const createDosenSchema = z.object({
-  userId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid user ID"),
+export const createDosenSchema = z
+  .object({
+    userId: z
+      .string()
+      .regex(/^[a-f\d]{24}$/i, "Invalid user ID")
+      .optional(),
 
-  fullName: z.string().trim().min(2, "Full name is required"),
+    /**
+     * Initial password for a provisioned account. Optional: when omitted the
+     * backend generates a temporary password and requires a change on first
+     * sign-in.
+     */
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128, "Password is too long")
+      .optional(),
 
-  employeeId: z.string().trim().optional(),
+    fullName: z.string().trim().min(2, "Full name is required"),
 
-  nip: z.string().trim().max(50).optional(),
+    employeeId: z.string().trim().optional(),
 
-  nidn: z.string().trim().max(50).optional(),
+    nip: z.string().trim().max(50).optional(),
 
-  faculty: z.string().trim().max(150).optional(),
+    nidn: z.string().trim().max(50).optional(),
 
-  department: z.string().trim().max(150).optional(),
+    faculty: z.string().trim().max(150).optional(),
 
-  institution: z.string().trim().max(200).optional(),
+    department: z.string().trim().max(150).optional(),
 
-  program: z.string().trim().max(150).optional(),
+    institution: z.string().trim().max(200).optional(),
 
-  title: z.string().trim().optional(),
+    program: z.string().trim().max(150).optional(),
 
-  position: z.string().trim().optional(),
+    title: z.string().trim().optional(),
 
-  specialization: z.array(z.string().trim().min(1)).max(50).default([]),
+    position: z.string().trim().optional(),
 
-  email: z.string().trim().email().optional(),
+    specialization: z.array(z.string().trim().min(1)).max(50).default([]),
 
-  phone: z.string().trim().optional(),
+    email: z.string().trim().email().optional(),
 
-  photo: z.string().trim().optional(),
+    phone: z.string().trim().optional(),
 
-  bio: z.string().trim().max(2000).optional(),
+    photo: z.string().trim().optional(),
 
-  linkedin: z
-    .string()
-    .url()
-    .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
-    .optional(),
+    bio: z.string().trim().max(2000).optional(),
 
-  showNip: z.boolean().default(false),
-  showNidn: z.boolean().default(false),
-  showEmail: z.boolean().default(false),
+    linkedin: z
+      .string()
+      .url()
+      .refine(isSafeLinkedInUrl, "LinkedIn URL must use a LinkedIn domain")
+      .optional(),
 
-  education: z.array(education).max(20).default([]),
-  sintaUrl: optionalExternalUrl,
-  googleScholarUrl: optionalExternalUrl,
-  scopusUrl: optionalExternalUrl,
-  orcidUrl: optionalExternalUrl,
-  hIndex: z.number().int().min(0).max(1000).optional(),
-  publicationCount: z.number().int().min(0).max(100000).optional(),
-  projectCount: z.number().int().min(0).max(100000).optional(),
-  awardCount: z.number().int().min(0).max(100000).optional(),
+    showNip: z.boolean().default(false),
+    showNidn: z.boolean().default(false),
+    showEmail: z.boolean().default(false),
 
-  isPublic: z.boolean().default(true),
+    education: z.array(education).max(20).default([]),
+    sintaUrl: optionalExternalUrl,
+    googleScholarUrl: optionalExternalUrl,
+    scopusUrl: optionalExternalUrl,
+    orcidUrl: optionalExternalUrl,
+    hIndex: z.number().int().min(0).max(1000).optional(),
+    publicationCount: z.number().int().min(0).max(100000).optional(),
+    projectCount: z.number().int().min(0).max(100000).optional(),
+    awardCount: z.number().int().min(0).max(100000).optional(),
 
-  publicationIds: publicationIdsField.default([]),
+    /** Public profile visibility, independent from account login access. */
+    isPublic: z.boolean().default(true),
+
+    publicationIds: publicationIdsField.default([]),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.userId && !value.email) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["email"],
+        message:
+          "An email is required when no existing DOSEN account is referenced",
+      });
+    }
+    if (value.password && !value.email) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: "An initial password requires an email to create the account",
+      });
+    }
+    if (value.password && value.userId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message:
+          "An initial password cannot be set when an existing account is referenced",
+      });
+    }
+  });
+
+/** Toggles the linked auth account without touching the public profile. */
+export const dosenAccessSchema = z.object({
+  isActive: z.boolean(),
 });
 
 export const updateDosenSchema = z.object({

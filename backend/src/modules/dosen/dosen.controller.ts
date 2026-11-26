@@ -1,18 +1,30 @@
 import type { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import { createDosenSchema, updateDosenSchema } from "./dosen.schema.js";
+import {
+  createDosenSchema,
+  dosenAccessSchema,
+  updateDosenSchema,
+} from "./dosen.schema.js";
 import {
   createDosen,
   deleteDosen,
   findAllDosen,
   findDosenByEmployeeId,
   findDosenById,
+  findDosenConflict,
   updateDosen,
 } from "./dosen.repository.js";
-import { deactivateUser, findUserById } from "../users/user.repository.js";
+import {
+  deactivateUser,
+  deleteUser,
+  findUserById,
+  setUserActive,
+} from "../users/user.repository.js";
+import { createDosenUser } from "../users/user.service.js";
 import { getPublicationsCollection } from "../publications/publication.repository.js";
 import { removeDosenPhoto, saveDosenPhoto } from "./dosen-photo.js";
 import { toPublicDosenProfile } from "../public/public-profile.js";
+import { sendLecturerOnboardingEmail } from "../../lib/mailjet.js";
 
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
@@ -109,14 +121,71 @@ export async function getDosenController(req: Request, res: Response) {
       });
     }
 
+    // Account status lives on the linked user document. Expose it for the
+    // admin edit form without merging auth fields into the profile document.
+    const account = await findUserById(dosen.userId.toString());
+
     return res.json({
       success: true,
-      data: dosen,
+      data: { ...dosen, accountActive: account?.isActive === true },
     });
   } catch {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch dosen",
+    });
+  }
+}
+
+export async function setDosenAccountActiveController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const id = req.params.id as string;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid dosen ID",
+      });
+    }
+
+    const parsed = dosenAccessSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+      });
+    }
+
+    const dosen = await findDosenById(id);
+    if (!dosen) {
+      return res.status(404).json({
+        success: false,
+        message: "Dosen not found",
+      });
+    }
+
+    // Deactivation increments tokenVersion, revoking existing sessions, and
+    // removes the account from Mailjet recipient queries. The profile and
+    // historical meeting references stay intact.
+    const updated = await setUserActive(dosen.userId, parsed.data.isActive);
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Linked account not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: { isActive: parsed.data.isActive },
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update dosen account access",
     });
   }
 }
@@ -214,27 +283,105 @@ export async function getDosenByEmployeeIdController(
 // ========================================
 
 export async function createDosenController(req: Request, res: Response) {
+  // Set when this request provisioned the auth account itself. Any later
+  // failure rolls it back so no orphaned login exists.
+  let rollbackUserId: ObjectId | null = null;
+
   try {
     const input = createDosenSchema.parse(req.body);
+    let temporaryPassword: string | undefined;
+    let profileUserId = input.userId;
 
-    const user = await findUserById(input.userId);
-    if (!user || !user.isActive || user.role !== "DOSEN") {
-      return res.status(400).json({
-        success: false,
-        message: "userId must reference an active DOSEN account",
+    if (input.userId) {
+      const user = await findUserById(input.userId);
+      if (!user || !user.isActive || user.role !== "DOSEN") {
+        return res.status(400).json({
+          success: false,
+          message: "userId must reference an active DOSEN account",
+        });
+      }
+    } else {
+      const email = input.email!;
+
+      // Detect profile conflicts before creating the auth account. The
+      // employeeId unique index still guards against races.
+      const conflict = await findDosenConflict({
+        employeeId: input.employeeId,
+        nip: input.nip,
+        nidn: input.nidn,
       });
+      if (conflict) {
+        return res.status(409).json({
+          success: false,
+          message: `A dosen with this ${conflict} already exists`,
+          code: "DOSEN_DUPLICATE",
+        });
+      }
+
+      const account = await createDosenUser({
+        email,
+        password: input.password,
+      });
+      rollbackUserId = new ObjectId(account.id);
+      profileUserId = account.id;
+      temporaryPassword = account.temporaryPassword;
     }
 
+    const { password: _password, userId: _userId, ...profileInput } = input;
     const dosen = await createDosen({
-      ...input,
+      ...profileInput,
+      userId: profileUserId!,
       publicationIds: (await resolvePublicationIds(input.publicationIds)) ?? [],
     });
+
+    // The account and profile are committed. Email delivery is best effort and
+    // never rolls either record back.
+    let notification: { sent: boolean; warning?: string } | undefined;
+    if (!input.userId) {
+      const recipientEmail = dosen.email ?? input.email!;
+      try {
+        const emailResult = await sendLecturerOnboardingEmail({
+          recipient: { email: recipientEmail, name: dosen.fullName },
+          fullName: dosen.fullName,
+          email: recipientEmail,
+          ...(temporaryPassword ? { temporaryPassword } : {}),
+        });
+        notification = emailResult.success
+          ? { sent: true }
+          : {
+              sent: false,
+              warning:
+                "Account and profile saved, but the onboarding email could not be sent.",
+            };
+      } catch {
+        notification = {
+          sent: false,
+          warning:
+            "Account and profile saved, but the onboarding email could not be sent.",
+        };
+      }
+    }
 
     return res.status(201).json({
       success: true,
       data: dosen,
+      ...(notification ? { notification } : {}),
+      ...(temporaryPassword ? { temporaryPassword } : {}),
     });
   } catch (error: any) {
+    if (rollbackUserId) {
+      try {
+        await deleteUser(rollbackUserId);
+      } catch (rollbackError) {
+        console.error("Failed to roll back provisioned dosen account", {
+          error:
+            rollbackError instanceof Error
+              ? rollbackError.message
+              : "unknown error",
+        });
+      }
+    }
+
     if (error?.name === "ZodError") {
       return res.status(400).json({
         success: false,
@@ -250,10 +397,13 @@ export async function createDosenController(req: Request, res: Response) {
       });
     }
 
-    if (error?.code === 11000) {
+    if (
+      error?.code === 11000 ||
+      (error instanceof Error && error.message === "Email is already registered")
+    ) {
       return res.status(409).json({
         success: false,
-        message: "Dosen with this userId or employeeId already exists",
+        message: "Dosen with this email, userId, or employeeId already exists",
       });
     }
 
