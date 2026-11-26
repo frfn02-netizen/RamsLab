@@ -460,10 +460,10 @@ export default function TeamDirectory({
                     key={group.key}
                     aria-labelledby={`${group.key.toLowerCase()}-heading`}
                   >
-                    <div className="mb-6 flex items-baseline justify-between border-b border-stone-200 pb-2.5">
+                    <div className="mb-6 flex items-baseline justify-between border-b border-stone-200 pb-3">
                       <h3
                         id={`${group.key.toLowerCase()}-heading`}
-                        className="text-base font-semibold tracking-tight text-stone-900"
+                        className="text-2xl font-bold uppercase tracking-tight text-stone-900 sm:text-3xl"
                       >
                         {group.label}
                       </h3>

@@ -16,8 +16,8 @@ const messages: Record<string, string> = {
   "categories.UNDERGRADUATE": "Undergraduate Students",
   "categories.INTERNSHIP": "Vocational Interns",
   "categories.ALUMNI": "Alumni",
-  "graduateGroups.MAHASISWA": "Ph.D.",
-  "graduateGroups.MASTER": "Master",
+  "graduateGroups.MAHASISWA": "PHD",
+  "graduateGroups.MASTER": "MASTER",
   roleFallback: "Role not listed",
   searchLabel: "Search people",
   searchPlaceholder: "Search people...",
@@ -229,10 +229,10 @@ describe("People directory – categories and switching", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
     expect(
-      screen.getByRole("heading", { name: "Ph.D." }),
+      screen.getByRole("heading", { name: "PHD" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Master" }),
+      screen.getByRole("heading", { name: "MASTER" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Phd Candidate")).toBeInTheDocument();
     expect(screen.getByText("Master Candidate")).toBeInTheDocument();
@@ -435,10 +435,10 @@ describe("People directory – cards", () => {
     expect(masterLink.closest("article")!.querySelectorAll("p")).toHaveLength(0);
 
     expect(
-      screen.getByRole("heading", { name: "Ph.D." }),
+      screen.getByRole("heading", { name: "PHD" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Master" }),
+      screen.getByRole("heading", { name: "MASTER" }),
     ).toBeInTheDocument();
 
     const grid = phdCard.parentElement!;
@@ -450,10 +450,12 @@ describe("People directory – cards", () => {
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
 
     const heading = screen.getByRole("heading", {
-      name: "Ph.D.",
+      name: "PHD",
     });
-    expect(heading.className).toContain("text-base");
-    expect(heading.className).toContain("font-semibold");
+    expect(heading.className).toContain("text-2xl");
+    expect(heading.className).toContain("sm:text-3xl");
+    expect(heading.className).toContain("font-bold");
+    expect(heading.className).toContain("uppercase");
     expect(heading.className).toContain("tracking-tight");
     expect(heading.className).toContain("text-stone-900");
 
@@ -463,7 +465,7 @@ describe("People directory – cards", () => {
     expect(header.className).toContain("justify-between");
     expect(header.className).toContain("border-b");
     expect(header.className).toContain("border-stone-200");
-    expect(header.className).toContain("pb-2.5");
+    expect(header.className).toContain("pb-3");
     expect(header.className).toContain("mb-6");
 
     const count = header.querySelector("span")!;
@@ -474,7 +476,7 @@ describe("People directory – cards", () => {
     expect(count.className).toContain("text-stone-400");
 
     expect(
-      screen.getByRole("heading", { name: "Master" }),
+      screen.getByRole("heading", { name: "MASTER" }),
     ).toBeInTheDocument();
   });
 
