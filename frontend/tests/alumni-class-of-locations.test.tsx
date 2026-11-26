@@ -58,7 +58,7 @@ vi.mock("@/components/public/reveal-on-scroll", () => ({
 }));
 
 import AlumniProfile from "@/components/public/alumni-profile";
-import { MemberCard, RoleLine } from "@/components/public/team-directory";
+import { MemberCard } from "@/components/public/team-directory";
 
 function person(overrides: Partial<PublicPerson>): PublicPerson {
   return {
@@ -142,17 +142,17 @@ describe("Team directory MemberCard – cohort label", () => {
   });
 });
 
-describe("Team directory RoleLine – no dangling batch number", () => {
-  it("renders the role without a P suffix for a non alumni member", () => {
+describe("Team directory MemberCard – role and cohort", () => {
+  it("renders the role without a dangling batch number for a non alumni member", () => {
     render(
-      <RoleLine
+      <MemberCard
         member={person({
           category: "DOSEN",
           title: "Lecturer",
           position: undefined,
           angkatan: undefined,
         })}
-        fallback="Lecturer"
+        roleFallback="Lecturer"
       />,
     );
 
@@ -160,22 +160,23 @@ describe("Team directory RoleLine – no dangling batch number", () => {
     expect(screen.queryByText(/P\d+/)).not.toBeInTheDocument();
   });
 
-  it("uses the shared formatter instead of a bare P suffix", () => {
+  it("keeps the cohort label in its own credential line", () => {
     render(
-      <RoleLine
+      <MemberCard
         member={person({
           title: "Lecturer",
           position: undefined,
           angkatan: 55,
           tahunAngkatan: 2015,
         })}
-        fallback="Lecturer"
+        roleFallback="Lecturer"
       />,
     );
 
+    expect(screen.getByText("classOf 2015 (P55)")).toBeInTheDocument();
+    expect(screen.getByText("Lecturer")).toBeInTheDocument();
     expect(
-      screen.getByText("Lecturer · classOf 2015 (P55)"),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/· P55$/)).not.toBeInTheDocument();
+      screen.queryByText("Lecturer · classOf 2015 (P55)"),
+    ).not.toBeInTheDocument();
   });
 });

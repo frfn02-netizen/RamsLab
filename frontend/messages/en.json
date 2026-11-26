@@ -382,14 +382,10 @@
   },
   "team": {
     "breadcrumbLabel": "Breadcrumb",
-    "heroEyebrow": "People & Expertise",
+    "heroEyebrow": "RAMS LABORATORY / PEOPLE",
     "heroBreadcrumbCurrent": "People & Expertise",
     "heroTitle": "The people behind reliable research.",
     "heroDescription": "Meet the researchers, academics, and emerging talents driving RAMS Laboratory forward.",
-    "heroPrimaryCta": "Explore our team",
-    "heroSecondaryCta": "About RAMS",
-    "heroAnnotationTitle": "Maritime Systems",
-    "heroAnnotationLine": "Reliability · Safety · Management",
     "heroVisualLabel": "Technical blueprint of a maritime research vessel with radar rings, survey markers, and ocean wave lines.",
     "categoriesLabel": "People categories",
     "categories": {
@@ -399,60 +395,14 @@
       "INTERNSHIP": "Vocational Interns",
       "ALUMNI": "Alumni"
     },
-    "sections": {
-      "DOSEN": {
-        "eyebrow": "Lecturers",
-        "title": "Our Lecturers",
-        "description": "Academic leaders and researchers who drive RAMS's research, education, and innovation."
-      },
-      "STUDENTS": {
-        "eyebrow": "Graduate Students",
-        "title": "Our Graduate Students",
-        "description": "Researchers advancing the laboratory through focused master's and doctoral work."
-      },
-      "UNDERGRADUATE": {
-        "eyebrow": "Undergraduate Students",
-        "title": "Our Undergraduate Students",
-        "description": "Students building research experience through applied maritime and reliability projects."
-      },
-      "INTERNSHIP": {
-        "eyebrow": "Vocational Interns",
-        "title": "Our Vocational Interns",
-        "description": "Vocational interns contributing technical work across laboratory projects."
-      },
-      "ALUMNI": {
-        "eyebrow": "Alumni",
-        "title": "Our Alumni",
-        "description": "Former members carrying RAMS research into industry, academia, and public service."
-      }
-    },
-    "roleBadges": {
-      "DOSEN": "Lecturer",
-      "MAHASISWA": "Doctoral researcher",
-      "MASTER": "Master's researcher",
-      "UNDERGRADUATE": "Undergraduate researcher",
-      "INTERNSHIP": "Vocational intern",
-      "ALUMNI": "Alumni"
-    },
     "graduateGroups": {
       "MAHASISWA": "PhD",
       "MASTER": "Master's"
     },
     "searchLabel": "Search people",
-    "searchPlaceholder": "Search people, research interest, or keyword...",
-    "filterLabel": "Filter by research area",
-    "filterAll": "All Research Areas",
-    "filterReliability": "Reliability",
-    "filterSafety": "Safety",
-    "filterMaintenance": "Maintenance",
-    "filterMaritime": "Maritime Systems",
-    "filterAis": "AIS",
-    "filterSimulation": "Simulation",
-    "sortLabel": "Sort",
-    "sortDefault": "Default order",
-    "sortName": "Name (A-Z)",
+    "searchPlaceholder": "Search people...",
     "noResultsTitle": "No people match this search",
-    "noResultsDescription": "Adjust the search terms or choose a different research area.",
+    "noResultsDescription": "Try a different name or keyword.",
     "noProfilesTitle": "No profiles published",
     "noProfilesDescription": "Profiles in this category will appear here when available.",
     "studentGroupEmpty": "No profiles published in this category.",
@@ -463,7 +413,6 @@
     "expertise": "Research interests & expertise",
     "existingHeadNote": "Profile details are shown when provided by the platform.",
     "roleFallback": "Role not listed",
-    "profileLink": "View profile",
     "staffEyebrow": "RESEARCHERS & FACULTY",
     "staffTitle": "Researchers & Faculty",
     "staffDescription": "RAMS brings together lecturers, researchers, and technical expertise across reliability, safety, maintenance, maritime systems, AIS, and simulation.",

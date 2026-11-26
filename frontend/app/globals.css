@@ -280,31 +280,6 @@ body {
   --team-border: #dfe7f0;
   --team-text: #344256;
   --team-muted: #5b6b80;
-  --team-hero-base: #f7fafe;
-  --team-hero-light: #eaf3fc;
-}
-
-.team-hero-surface {
-  background:
-    radial-gradient(
-      900px 380px at 78% 42%,
-      rgba(105, 183, 240, 0.16),
-      transparent 62%
-    ),
-    linear-gradient(
-      108deg,
-      #ffffff 0%,
-      var(--team-hero-base) 48%,
-      var(--team-hero-light) 100%
-    );
-}
-
-.team-blueprint-grid {
-  background-image:
-    linear-gradient(rgba(20, 42, 69, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 42, 69, 0.055) 1px, transparent 1px);
-  background-position: center top;
-  background-size: 72px 72px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -16,54 +16,15 @@ const messages: Record<string, string> = {
   "categories.UNDERGRADUATE": "Undergraduate Students",
   "categories.INTERNSHIP": "Vocational Interns",
   "categories.ALUMNI": "Alumni",
-  "sections.DOSEN.eyebrow": "LECTURERS",
-  "sections.DOSEN.title": "Our Lecturers",
-  "sections.DOSEN.description":
-    "Academic leaders and researchers who drive RAMS's research, education, and innovation.",
-  "sections.STUDENTS.eyebrow": "GRADUATE STUDENTS",
-  "sections.STUDENTS.title": "Our Graduate Students",
-  "sections.STUDENTS.description":
-    "Researchers advancing the laboratory through focused master's and doctoral work.",
-  "sections.UNDERGRADUATE.eyebrow": "UNDERGRADUATE STUDENTS",
-  "sections.UNDERGRADUATE.title": "Our Undergraduate Students",
-  "sections.UNDERGRADUATE.description":
-    "Students building research experience through applied maritime and reliability projects.",
-  "sections.INTERNSHIP.eyebrow": "VOCATIONAL INTERNS",
-  "sections.INTERNSHIP.title": "Our Vocational Interns",
-  "sections.INTERNSHIP.description":
-    "Vocational interns contributing technical work across laboratory projects.",
-  "sections.ALUMNI.eyebrow": "ALUMNI",
-  "sections.ALUMNI.title": "Our Alumni",
-  "sections.ALUMNI.description":
-    "Former members carrying RAMS research into industry, academia, and public service.",
-  "roleBadges.DOSEN": "Lecturer",
-  "roleBadges.MAHASISWA": "Doctoral researcher",
-  "roleBadges.MASTER": "Master's researcher",
-  "roleBadges.UNDERGRADUATE": "Undergraduate researcher",
-  "roleBadges.INTERNSHIP": "Vocational intern",
-  "roleBadges.ALUMNI": "Alumni",
   "graduateGroups.MAHASISWA": "PhD",
   "graduateGroups.MASTER": "Master's",
-  profileLink: "View profile",
   roleFallback: "Role not listed",
   searchLabel: "Search people",
-  searchPlaceholder: "Search people, research interest, or keyword...",
-  filterLabel: "Filter by research area",
-  filterAll: "All Research Areas",
-  filterReliability: "Reliability",
-  filterSafety: "Safety",
-  filterMaintenance: "Maintenance",
-  filterMaritime: "Maritime Systems",
-  filterAis: "AIS",
-  filterSimulation: "Simulation",
-  sortLabel: "Sort",
-  sortDefault: "Default order",
-  sortName: "Name (A-Z)",
+  searchPlaceholder: "Search people...",
   loading: "Loading team profiles",
   error: "Team profiles are temporarily unavailable.",
   noResultsTitle: "No people match this search",
-  noResultsDescription:
-    "Adjust the search terms or choose a different research area.",
+  noResultsDescription: "Try a different name or keyword.",
   noProfilesTitle: "No profiles published",
   noProfilesDescription:
     "Profiles in this category will appear here when available.",
@@ -201,17 +162,9 @@ async function renderDirectory() {
   const people = await getPublicPeopleList();
   const utils = render(<TeamDirectory initialPeople={people} />);
   await waitFor(() =>
-    expect(
-      screen.queryByRole("heading", { name: "Our Lecturers" }),
-    ).toBeTruthy(),
+    expect(screen.queryAllByRole("article").length).toBeGreaterThan(0),
   );
   return utils;
-}
-
-function cardNames() {
-  return screen
-    .getAllByRole("article")
-    .map((article) => article.querySelector("h3")?.textContent ?? "");
 }
 
 beforeEach(() => {
@@ -234,39 +187,47 @@ describe("People directory – categories and switching", () => {
     }
   });
 
-  it("marks the active category with aria-pressed", async () => {
+  it("marks the active category with aria-pressed and a crimson pill", async () => {
     await renderDirectory();
 
-    expect(screen.getByRole("button", { name: "Lecturers" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "Alumni" })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
+    const active = screen.getByRole("button", { name: "Lecturers" });
+    expect(active).toHaveAttribute("aria-pressed", "true");
+    expect(active.className).toContain("bg-red-700");
+    expect(active.className).toContain("rounded-full");
+
+    const inactive = screen.getByRole("button", { name: "Alumni" });
+    expect(inactive).toHaveAttribute("aria-pressed", "false");
+    expect(inactive.className).not.toContain("bg-red-700");
   });
 
-  it("shows the section header for the active category", async () => {
+  it("renders a single unified control bar without area filters or sorting", async () => {
+    await renderDirectory();
+
+    expect(screen.getByRole("searchbox")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "All Research Areas" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Safety" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByText("Filter by research area")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sort")).not.toBeInTheDocument();
+  });
+
+  it("does not render a redundant section heading above the grid", async () => {
     await renderDirectory();
 
     expect(
-      screen.getByRole("heading", { name: "Our Lecturers" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Academic leaders and researchers who drive RAMS's research, education, and innovation.",
-      ),
-    ).toBeInTheDocument();
+      screen.queryByRole("heading", { name: "Our Lecturers" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("LECTURERS")).not.toBeInTheDocument();
   });
 
-  it("switches sections and content when a category tab is selected", async () => {
+  it("switches categories when a tab is selected", async () => {
     await renderDirectory();
 
     fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
-    expect(
-      screen.getByRole("heading", { name: "Our Graduate Students" }),
-    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "PhD" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Master's" }),
@@ -277,21 +238,12 @@ describe("People directory – categories and switching", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Undergraduate Students" }),
     );
-    expect(
-      screen.getByRole("heading", { name: "Our Undergraduate Students" }),
-    ).toBeInTheDocument();
     expect(screen.getByText("Undergraduate Student")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Vocational Interns" }));
-    expect(
-      screen.getByRole("heading", { name: "Our Vocational Interns" }),
-    ).toBeInTheDocument();
     expect(screen.getByText("Vocational Intern")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Alumni" }));
-    expect(
-      screen.getByRole("heading", { name: "Our Alumni" }),
-    ).toBeInTheDocument();
     expect(screen.getByText("Alumni Person")).toBeInTheDocument();
   });
 });
@@ -324,9 +276,7 @@ describe("People directory – search", () => {
 
     expect(screen.getByText("Dr. Grace Hopper")).toBeInTheDocument();
     expect(screen.queryByText("Dr. Ada Lovelace")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Our Lecturers" }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Graduate Students")).toBeInTheDocument();
   });
 
   it("searches research interests as well as names", async () => {
@@ -338,6 +288,23 @@ describe("People directory – search", () => {
 
     expect(screen.getByText("Dr. Grace Hopper")).toBeInTheDocument();
     expect(screen.queryByText("Dr. Ada Lovelace")).not.toBeInTheDocument();
+  });
+
+  it("searches alumni program and location", async () => {
+    await renderDirectory();
+    fireEvent.click(screen.getByRole("button", { name: "Alumni" }));
+
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "surabaya" },
+    });
+
+    expect(screen.getByText("Alumni Person")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "zzz-no-match" },
+    });
+
+    expect(screen.getByText("No people match this search")).toBeInTheDocument();
   });
 
   it("resets the search when switching categories", async () => {
@@ -362,71 +329,8 @@ describe("People directory – search", () => {
 
     expect(screen.getByText("No people match this search")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Adjust the search terms or choose a different research area.",
-      ),
+      screen.getByText("Try a different name or keyword."),
     ).toBeInTheDocument();
-  });
-});
-
-describe("People directory – research area filters", () => {
-  it("filters by research area tokens", async () => {
-    await renderDirectory();
-
-    fireEvent.click(screen.getByRole("button", { name: "Safety" }));
-
-    expect(screen.getByText("Dr. Ada Lovelace")).toBeInTheDocument();
-    expect(screen.queryByText("Dr. Grace Hopper")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "All Research Areas" }));
-
-    expect(screen.getByText("Dr. Grace Hopper")).toBeInTheDocument();
-  });
-
-  it("matches maritime vocabulary used by profile tags", async () => {
-    await renderDirectory();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Undergraduate Students" }),
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Maritime Systems" }));
-
-    expect(screen.getByText("Undergraduate Student")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Simulation" }));
-
-    expect(screen.getByText("No people match this search")).toBeInTheDocument();
-  });
-
-  it("resets the research area when switching categories", async () => {
-    await renderDirectory();
-    fireEvent.click(screen.getByRole("button", { name: "Safety" }));
-    expect(screen.queryByText("Dr. Grace Hopper")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Alumni" }));
-    fireEvent.click(screen.getByRole("button", { name: "Lecturers" }));
-
-    expect(screen.getByText("Dr. Grace Hopper")).toBeInTheDocument();
-  });
-});
-
-describe("People directory – sorting", () => {
-  it("sorts by name while keeping the active filters", async () => {
-    getPublicPeopleList.mockResolvedValue({
-      ...basePeople(),
-      DOSEN: [
-        person({ id: "zara", fullName: "Zara Rahman" }),
-        person({ id: "amir", fullName: "Amir Kusuma" }),
-      ],
-    });
-
-    await renderDirectory();
-    expect(cardNames()).toEqual(["Zara Rahman", "Amir Kusuma"]);
-
-    fireEvent.click(screen.getByRole("combobox", { name: "Sort" }));
-    fireEvent.click(screen.getByRole("option", { name: "Name (A-Z)" }));
-
-    expect(cardNames()).toEqual(["Amir Kusuma", "Zara Rahman"]);
   });
 });
 
@@ -452,7 +356,7 @@ describe("People directory – cards", () => {
     expect(tags).toEqual(["Reliability", "Safety", "AIS"]);
   });
 
-  it("renders a horizontal card with the portrait on the left", async () => {
+  it("renders a vertical portrait card with the photo above the copy", async () => {
     const people = basePeople();
     people.DOSEN = [
       person({
@@ -471,16 +375,20 @@ describe("People directory – cards", () => {
     const link = card.querySelector("a")!;
     const img = card.querySelector("img")!;
     const portrait = img.parentElement!;
-    const portraitColumn = portrait.parentElement!;
 
-    expect(link.className).toContain("flex");
-    expect(portraitColumn.className).toContain("w-[104px]");
-    expect(portraitColumn.className).toContain("sm:w-[124px]");
-    expect(portraitColumn.className).toContain("lg:w-[132px]");
-    expect(portrait.className).toContain("h-full");
+    expect(card.className).toContain("rounded-xl");
+    expect(card.className).toContain("border-stone-200");
+    expect(card.className).toContain("hover:shadow-sm");
+    expect(card.className).toContain("group");
+
+    expect(link.className).toContain("block");
+    expect(portrait.className).toContain("aspect-[4/3]");
+    expect(portrait.className).toContain("bg-stone-100");
     expect(portrait.className).toContain("overflow-hidden");
+    expect(img.className).toContain("h-full");
+    expect(img.className).toContain("w-full");
     expect(img.className).toContain("object-cover");
-    expect(card.className).toContain("border-[var(--team-border)]");
+    expect(img.className).toContain("group-hover:scale-[1.02]");
 
     const heading = screen.getByRole("heading", { name: "Photo Person" });
     expect(
@@ -489,18 +397,20 @@ describe("People directory – cards", () => {
     ).toBeTruthy();
   });
 
-  it("uses natural card height without fixed or min-height styling", async () => {
+  it("renders a stone monogram fallback when the profile has no photo", async () => {
     await renderDirectory();
-    const card = screen.getByText("Dr. Ada Lovelace").closest("article")!;
-    expect(card.className).not.toMatch(/\bh-\[|\bmin-h-\[/);
-    expect(card.className).toContain("h-full");
+
+    const fallback = screen.getByLabelText("Dr. Ada Lovelace avatar");
+    expect(fallback.className).toContain("bg-stone-100");
+    expect(fallback.className).toContain("text-stone-500");
   });
 
-  it("renders the role/position in uppercase blue below the name", async () => {
+  it("renders the role line below the name in muted text", async () => {
     await renderDirectory();
     const role = screen.getByText("Lecturer · Head of Laboratory");
-    expect(role.className).toContain("uppercase");
-    expect(role.className).toContain("text-[var(--team-blue)]");
+    expect(role.className).toContain("text-xs");
+    expect(role.className).toContain("text-stone-500");
+    expect(role.className).toContain("line-clamp-1");
 
     const heading = screen.getByRole("heading", {
       name: "Dr. Ada Lovelace",
@@ -510,21 +420,17 @@ describe("People directory – cards", () => {
     ).toBeTruthy();
   });
 
-  it("keeps the whole card clickable with one link and a view affordance", async () => {
+  it("keeps the whole card clickable without a separate view affordance", async () => {
     await renderDirectory();
     const card = screen.getByText("Dr. Ada Lovelace").closest("article")!;
     const nameNode = screen.getByText("Dr. Ada Lovelace");
 
-    expect(card.querySelectorAll(".absolute")).toHaveLength(0);
-    expect(card.textContent).toContain("View profile");
+    expect(card.textContent).not.toContain("View profile");
 
     const links = card.querySelectorAll("a");
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveAttribute("href", "/team/dosen-1");
     expect(links[0]).toHaveAttribute("aria-label", "Dr. Ada Lovelace");
-    expect(
-      screen.queryByRole("link", { name: /view profile/i }),
-    ).not.toBeInTheDocument();
     expect(links[0].contains(nameNode)).toBe(true);
   });
 
@@ -541,28 +447,28 @@ describe("People directory – cards", () => {
     expect(heading).toBeInTheDocument();
     expect(heading.className).not.toContain("truncate");
     expect(heading.className).not.toContain("line-clamp");
+    expect(heading.className).toContain("leading-snug");
   });
 
   it("renders alumni cohort, position, company, program and location", async () => {
     await renderDirectory();
     fireEvent.click(screen.getByRole("button", { name: "Alumni" }));
 
-    expect(screen.getByText("classOf 2015 (P55)")).toBeInTheDocument();
+    expect(screen.getByText(/classOf 2015 \(P55\)/)).toBeInTheDocument();
     expect(screen.getByText("Engineer")).toBeInTheDocument();
     expect(screen.getByText("Acme Corp")).toBeInTheDocument();
-    expect(screen.getByText("Marine Engineering")).toBeInTheDocument();
-    expect(screen.getByText("Surabaya")).toBeInTheDocument();
+    expect(screen.getByText(/Marine Engineering/)).toBeInTheDocument();
+    expect(screen.getByText(/Surabaya/)).toBeInTheDocument();
   });
 
-  it("uses a three column profile grid on desktop", async () => {
+  it("uses a four column portrait grid", async () => {
     const { container } = await renderDirectory();
     const grid = container.querySelector(".grid");
     expect(grid).not.toBeNull();
     expect(grid!.className).toContain("grid-cols-1");
     expect(grid!.className).toContain("sm:grid-cols-2");
-    expect(grid!.className).toContain("lg:grid-cols-3");
-    expect(grid!.className).toContain("auto-rows-fr");
-    expect(grid!.className).not.toContain("lg:grid-cols-5");
+    expect(grid!.className).toContain("lg:grid-cols-4");
+    expect(grid!.className).toContain("gap-6");
   });
 });
 
@@ -570,9 +476,7 @@ describe("People directory – server data", () => {
   it("renders the server-provided directory without an initial loading state", () => {
     render(<TeamDirectory initialPeople={basePeople()} />);
 
-    expect(
-      screen.getByRole("heading", { name: "Our Lecturers" }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Dr. Ada Lovelace")).toBeInTheDocument();
     expect(
       screen.queryByRole("status", { name: "Loading team profiles" }),
     ).not.toBeInTheDocument();

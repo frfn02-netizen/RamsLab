@@ -280,74 +280,42 @@ export default function TeamHero() {
     <section
       id="hero"
       data-hero-tone="light"
-      className="team-page team-hero-surface relative overflow-hidden border-b border-[var(--team-border)]"
+      className="team-page relative overflow-hidden bg-stone-50"
     >
-      <div
-        className="team-blueprint-grid pointer-events-none absolute inset-0 opacity-40"
-        aria-hidden="true"
-      />
       <PublicContainer className="relative">
-        <div className="grid items-center gap-8 py-10 sm:py-12 md:min-h-[400px] md:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] md:gap-8 md:py-8 lg:gap-10">
-          <div className="hero-entrance min-w-0">
+        <div className="grid grid-cols-1 items-center gap-8 py-8 lg:grid-cols-12 lg:py-10">
+          <div className="hero-entrance min-w-0 lg:col-span-6">
             <nav aria-label={t("breadcrumbLabel")} className="text-xs">
-              <ol className="flex flex-wrap items-center gap-2 text-[var(--team-muted)]">
+              <ol className="flex flex-wrap items-center gap-2 text-stone-500">
                 <li>
                   <Link
                     href="/"
-                    className="transition-colors hover:text-[var(--team-blue)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--team-blue)]"
+                    className="transition-colors hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
                   >
                     {brand("laboratory")}
                   </Link>
                 </li>
                 <li aria-hidden="true">/</li>
-                <li
-                  aria-current="page"
-                  className="font-medium text-[var(--team-navy)]"
-                >
+                <li aria-current="page" className="font-medium text-stone-900">
                   {t("heroBreadcrumbCurrent")}
                 </li>
               </ol>
             </nav>
 
-            <p className="mt-6 text-xs font-bold uppercase tracking-[0.24em] text-[var(--team-blue)]">
+            <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-700">
               {t("heroEyebrow")}
             </p>
 
-            <h1 className="public-page-title mt-3 text-[var(--team-navy)]">
+            <h1 className="public-page-title mt-3 text-stone-900">
               {t("heroTitle")}
             </h1>
 
-            <p className="public-lead mt-5 max-w-lg text-[var(--team-text)]">
+            <p className="mt-4 max-w-md text-sm leading-6 text-stone-600">
               {t("heroDescription")}
             </p>
-
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a
-                href="#people-directory"
-                className="inline-flex min-h-11 items-center justify-center rounded-[6px] bg-[var(--team-navy)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--team-blue)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--team-blue)] active:bg-[var(--team-navy)]"
-              >
-                {t("heroPrimaryCta")}
-              </a>
-              <Link
-                href="/about"
-                className="inline-flex min-h-11 items-center justify-center rounded-[6px] border border-[var(--team-border)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--team-navy)] transition-colors hover:border-[var(--team-blue)] hover:text-[var(--team-blue)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--team-blue)] active:bg-[var(--team-bg-soft)]"
-              >
-                {t("heroSecondaryCta")}
-              </Link>
-            </div>
           </div>
 
-          <div className="relative min-w-0">
-            <div className="mb-2 flex justify-end md:absolute md:right-1 md:top-0 md:z-10 md:mb-0">
-              <div className="text-right">
-                <p className="text-[0.6rem] font-bold uppercase tracking-[0.24em] text-[var(--team-navy)]">
-                  {t("heroAnnotationTitle")}
-                </p>
-                <p className="mt-1 text-[0.64rem] leading-4 tracking-[0.04em] text-[var(--team-muted)]">
-                  {t("heroAnnotationLine")}
-                </p>
-              </div>
-            </div>
+          <div className="min-w-0 lg:col-span-6">
             <MaritimeBlueprint label={t("heroVisualLabel")} />
           </div>
         </div>
