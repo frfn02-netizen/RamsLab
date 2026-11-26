@@ -65,8 +65,8 @@ describe("public events page", () => {
     expect(playMock).toHaveBeenCalled();
 
     const frame = video.parentElement!;
-    expect(frame.className).toContain("aspect-[16/9]");
-    expect(frame.className).toContain("lg:aspect-[21/9]");
+    expect(frame.className).toContain("aspect-video");
+    expect(frame.className).not.toContain("lg:aspect-[21/9]");
     expect(frame.className).toContain("rounded-2xl");
     expect(frame.className).toContain("border-stone-200");
     expect(frame.className).toContain("bg-stone-950");
@@ -103,16 +103,17 @@ describe("public events page", () => {
     ).toBeInTheDocument();
   });
 
-  it("shares one max-w-7xl container across masthead, video, and grid", () => {
+  it("shares one 1400px container across masthead, video, and grid", () => {
     const { container } = render(<PublicEventsPage initialEvents={[event]} />);
 
-    const shell = container.querySelector(".max-w-7xl")!;
+    const header = container.querySelector("header")!;
+    const shell = header.parentElement!;
+    expect(shell.className).toContain("max-w-[1400px]");
     expect(shell.className).toContain("mx-auto");
     expect(shell.className).toContain("px-4");
     expect(shell.className).toContain("sm:px-6");
-    expect(shell.className).toContain("lg:px-8");
+    expect(shell.className).toContain("lg:px-10");
 
-    const header = container.querySelector("header")!;
     const video = container.querySelector("video")!;
     const card = screen.getByRole("article");
     expect(shell).toContainElement(header);

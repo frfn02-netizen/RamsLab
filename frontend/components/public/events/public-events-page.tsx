@@ -51,7 +51,7 @@ export default function PublicEventsPage({
 
   return (
     <div className="bg-stone-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
         <header className="grid grid-cols-1 gap-6 border-b border-stone-200 py-8 lg:grid-cols-12 lg:items-end lg:py-10">
           <div className="lg:col-span-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-red-700">
@@ -68,7 +68,7 @@ export default function PublicEventsPage({
           </div>
         </header>
 
-        <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-stone-200 bg-stone-950 lg:aspect-[21/9]">
+        <div className="relative mt-8 aspect-video w-full overflow-hidden rounded-2xl border border-stone-200 bg-stone-950">
           <video
             ref={videoRef}
             className="h-full w-full object-cover"
