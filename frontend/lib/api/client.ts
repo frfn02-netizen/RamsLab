@@ -1,44 +1,38 @@
 import { ApiError, type ApiErrorDetails } from "./errors";
-import { getSiteUrl } from "@/lib/site-url";
+import { isProductionBuild } from "@/lib/runtime-env";
 
 const LOCAL_API_URL = "http://localhost:5000/api";
+const MISSING_API_URL_MESSAGE =
+  "NEXT_PUBLIC_API_URL is required in production. Set it to the deployed public URL, not localhost.";
 
-function requiredPublicUrl(value: string | undefined, name: string) {
-  const configured = value?.trim();
-  if (!configured && process.env.NODE_ENV === "production") {
-    throw new Error(
-      `${name} is required in production. Set it to the deployed public URL, not localhost.`,
-    );
+// Resolve on use instead of at import so `next build` can collect page data
+// without deployment env vars. A production server still fails on the first
+// request when the origin is missing.
+function publicApiUrl() {
+  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  if (configured) {
+    return configured.replace(/\/+$/, "");
   }
-  return configured;
+
+  if (process.env.NODE_ENV === "production" && !isProductionBuild()) {
+    throw new Error(MISSING_API_URL_MESSAGE);
+  }
+
+  return LOCAL_API_URL;
 }
 
-const publicApiUrl = requiredPublicUrl(
-  process.env.NEXT_PUBLIC_API_URL,
-  "NEXT_PUBLIC_API_URL",
-);
-
-// Validate the public site origin in the same shared boundary as the API.
-// This makes a missing production value fail loudly instead of producing
-// localhost canonical URLs.
-if (process.env.NODE_ENV === "production") {
-  getSiteUrl();
+function internalApiUrl() {
+  if (typeof window !== "undefined") return undefined;
+  return process.env.INTERNAL_API_URL?.trim().replace(/\/+$/, "") || undefined;
 }
-
-const PUBLIC_API_URL = (publicApiUrl ?? LOCAL_API_URL).replace(/\/+$/, "");
-const INTERNAL_API_URL =
-  typeof window === "undefined"
-    ? process.env.INTERNAL_API_URL?.trim().replace(/\/+$/, "") || undefined
-    : undefined;
-
-const REQUEST_API_URL = INTERNAL_API_URL ?? PUBLIC_API_URL;
 
 export function apiUrl(path: string) {
-  return `${PUBLIC_API_URL}${path}`;
+  return `${publicApiUrl()}${path}`;
 }
 
 function requestUrl(path: string) {
-  return `${REQUEST_API_URL}${path}`;
+  return `${internalApiUrl() ?? publicApiUrl()}${path}`;
 }
 const CSRF_COOKIE = "rams_csrf_token";
 const CSRF_STORAGE_KEY = "rams_csrf_token";
@@ -155,7 +149,7 @@ async function refreshCsrfTokenForRetry(timeoutMs: number) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${REQUEST_API_URL}/auth/csrf`, {
+    const response = await fetch(requestUrl("/auth/csrf"), {
       method: "GET",
       credentials: "include",
       headers: { Accept: "application/json" },
@@ -199,9 +193,11 @@ async function requestEnvelope<T>(
     if (csrf) headers.set("X-CSRF-Token", csrf);
   }
 
+  const url = requestUrl(path);
+
   let response: Response;
   try {
-    response = await fetch(requestUrl(path), {
+    response = await fetch(url, {
       ...fetchOptions,
       ...(next ? { next } : {}),
       credentials: "include",
