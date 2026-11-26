@@ -22,6 +22,39 @@ const researchImages = [
   assetPath("/assets/upscalemedia-transformed.jpeg"),
 ] as const;
 
+const principleSlugs = {
+  R: "reliability",
+  A: "availability",
+  M: "management",
+  S: "safety",
+} as const;
+
+type PrincipleSlug = (typeof principleSlugs)[keyof typeof principleSlugs];
+
+// Older CMS records still carry the original English-only pillar copy. Prefer
+// localized message copy for those values while preserving admin edits.
+const legacyPrincipleCopy: Record<
+  PrincipleSlug,
+  { title: string; description: string }
+> = {
+  reliability: {
+    title: "Reliability",
+    description: "modeling and predicting system behavior",
+  },
+  availability: {
+    title: "Availability",
+    description: "ensuring systems are ready when needed",
+  },
+  management: {
+    title: "Management",
+    description: "optimizing management strategies",
+  },
+  safety: {
+    title: "Safety",
+    description: "reducing risks in complex environments",
+  },
+};
+
 export default async function PublicHome({
   content,
   researchAreas,
@@ -36,6 +69,10 @@ export default async function PublicHome({
   const research = await getTranslations({
     locale,
     namespace: "home.research",
+  });
+  const framework = await getTranslations({
+    locale,
+    namespace: "home.principles",
   });
   const localized = (value: { en: string; id: string }) => value[locale];
   const principles = content?.principles ?? [];
@@ -59,41 +96,83 @@ export default async function PublicHome({
         />
       ) : null}
 
-      <section className="bg-white py-14 sm:py-16 lg:py-20 min-[2000px]:py-28">
+      <section className="bg-white pt-14 pb-10 sm:pt-16 sm:pb-12 lg:pt-20 lg:pb-14 min-[2000px]:pt-28 min-[2000px]:pb-20">
         <PublicContainer>
-          <RevealOnScroll className="mb-6 max-w-2xl">
-            <h2 className="public-section-title text-[var(--navy)]">
-              {common("principlesTitle")}
-            </h2>
+          <RevealOnScroll className="grid gap-6 lg:grid-cols-12 lg:items-end">
+            <div className="lg:col-span-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-red-700">
+                {framework("eyebrow")}
+              </p>
+              <h2 className="public-section-title mt-3 text-[var(--navy)]">
+                {common("principlesTitle")}
+              </h2>
+            </div>
+            <p className="max-w-md text-sm leading-6 text-stone-600 lg:col-span-5 lg:justify-self-end lg:text-right">
+              {framework("subtitle")}
+            </p>
           </RevealOnScroll>
           {principles.length > 0 ? (
-            <RevealOnScroll
-              className="rams-principles grid grid-cols-1 border-t border-b border-[var(--border)] sm:grid-cols-2 lg:grid-cols-4"
-              stagger={120}
-            >
-              {principles.map((item) => (
-                <article
-                  key={item.key}
-                  className="rams-item relative overflow-hidden p-8 lg:p-10"
-                >
-                  <span aria-hidden="true" className="rams-watermark">
-                    {item.key}
-                  </span>
-                  <span aria-hidden="true" className="rams-accent" />
-                  <div className="relative">
-                    <span aria-hidden="true" className="rams-rule" />
-                    <h3 className="rams-title mt-4 font-display text-xl font-bold tracking-tight text-[var(--navy)]">
-                      {localized(item.title)}
-                    </h3>
-                    <p className="mt-3 text-sm leading-relaxed text-[var(--gray)]">
-                      {localized(item.description)}
-                    </p>
-                  </div>
-                </article>
-              ))}
+            <RevealOnScroll className="mt-8 grid grid-cols-1 divide-y divide-stone-200 border-y border-stone-200 md:grid-cols-4 md:divide-x md:divide-y-0">
+              {principles.map((item, index) => {
+                const slug = principleSlugs[item.key];
+                const legacy = legacyPrincipleCopy[slug];
+                const title = localized(item.title);
+                const description = localized(item.description);
+                const titleText =
+                  title === legacy.title
+                    ? framework(`items.${slug}.title`)
+                    : title;
+                const descriptionText =
+                  description.trim().toLowerCase() === legacy.description
+                    ? framework(`items.${slug}.description`)
+                    : description;
+
+                return (
+                  <Link
+                    key={item.key}
+                    href="/research"
+                    className="group relative block overflow-hidden p-6 pb-20 transition-colors hover:bg-stone-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-700 lg:p-7 lg:pb-24"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -bottom-2 right-3 select-none font-bold text-7xl leading-none text-stone-200/70 transition-colors group-hover:text-red-700/15"
+                    >
+                      {item.key}
+                    </span>
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between gap-4">
+                        <span
+                          aria-hidden="true"
+                          className="font-mono text-xs font-semibold tracking-[0.18em] text-red-700"
+                        >
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <svg
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4 shrink-0 text-stone-500 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-red-700"
+                          aria-hidden="true"
+                        >
+                          <path d="M6.5 13.5 13.5 6.5M8 6.5h5.5V12" />
+                        </svg>
+                      </div>
+                      <h3 className="mt-8 font-display text-xl font-semibold tracking-tight text-stone-900 transition-colors group-hover:text-red-700">
+                        {titleText}
+                      </h3>
+                      <p className="mt-3 max-w-[30ch] text-sm leading-6 text-stone-600">
+                        {descriptionText}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </RevealOnScroll>
           ) : (
-            <RevealOnScroll className="border border-dashed border-[var(--border)] bg-white p-8">
+            <RevealOnScroll className="mt-8 border border-dashed border-[var(--border)] bg-white p-8">
               <p className="text-sm leading-6 text-[var(--gray)]">
                 {common("requestUnavailable")}
               </p>
@@ -160,7 +239,7 @@ export default async function PublicHome({
         </section>
       ) : null}
 
-      <section className="bg-white py-14 sm:py-16 lg:py-20 min-[2000px]:py-28">
+      <section className="bg-white pt-10 pb-14 sm:pt-12 sm:pb-16 lg:pt-14 lg:pb-20 min-[2000px]:pt-20 min-[2000px]:pb-28">
         <PublicContainer>
           <RevealOnScroll className="flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-2xl">

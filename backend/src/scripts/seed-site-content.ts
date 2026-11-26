@@ -78,7 +78,7 @@ export const contentByKey = {
     principles: [
       principle("R", "Reliability", "Modeling and predicting system behavior"),
       principle("A", "Availability", "Ensuring systems are ready when needed"),
-      principle("M", "Management", "Optimizing Management strategies"),
+      principle("M", "Management", "Optimizing management strategies"),
       principle("S", "Safety", "Reducing risks in complex environments"),
     ],
     ecosystem: {

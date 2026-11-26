@@ -67,7 +67,7 @@
     "recordUpper": "REKAMAN",
     "recordsUpper": "REKAMAN",
     "principles": "Prinsip RAMS",
-    "principlesTitle": "Kerangka di balik sistem yang andal."
+    "principlesTitle": "Kerangka di balik sistem yang andal"
   },
   "home": {
     "welcome": {
@@ -88,6 +88,28 @@
       "title": "Bidang Riset",
       "description": "Jelajahi bidang riset utama kami dalam keandalan, ketersediaan, manajemen, dan keselamatan sistem maritim.",
       "linkLabel": "Jelajahi riset kami"
+    },
+    "principles": {
+      "eyebrow": "KERANGKA UTAMA",
+      "subtitle": "Empat disiplin, satu sudut pandang rekayasa. Kami menghubungkan keandalan, ketersediaan, manajemen, dan keselamatan dengan keputusan yang menjaga sistem kompleks tetap bekerja.",
+      "items": {
+        "reliability": {
+          "title": "Keandalan",
+          "description": "Prediksi mode kegagalan dan ukur perilaku sistem sebelum diterapkan."
+        },
+        "availability": {
+          "title": "Ketersediaan",
+          "description": "Rancang sistem yang tetap siap, pulih cepat, dan menjaga operasi kritis tetap berjalan."
+        },
+        "management": {
+          "title": "Manajemen",
+          "description": "Ubah data pemeliharaan menjadi keputusan yang memperpanjang usia layanan dan menekan waktu henti."
+        },
+        "safety": {
+          "title": "Keselamatan",
+          "description": "Nilai risiko dan bangun pengaman untuk lingkungan maritim dan industri yang kompleks."
+        }
+      }
     },
     "eyebrow": "Laboratorium RAMS",
     "headline": "Riset keandalan, keselamatan & sistem maritim.",

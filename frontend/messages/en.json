@@ -89,6 +89,28 @@
       "description": "Explore our core research areas in maritime systems reliability, availability, management, and safety.",
       "linkLabel": "Explore our research"
     },
+    "principles": {
+      "eyebrow": "CORE FRAMEWORK",
+      "subtitle": "Four disciplines, one engineering lens. We connect reliability, availability, management, and safety to the decisions that keep complex systems working.",
+      "items": {
+        "reliability": {
+          "title": "Reliability",
+          "description": "Predict failure modes and quantify system behavior before deployment."
+        },
+        "availability": {
+          "title": "Availability",
+          "description": "Design systems that stay ready, recover quickly, and keep critical operations running."
+        },
+        "management": {
+          "title": "Management",
+          "description": "Turn maintenance data into decisions that extend service life and reduce downtime."
+        },
+        "safety": {
+          "title": "Safety",
+          "description": "Assess risk and build safeguards for complex maritime and industrial environments."
+        }
+      }
+    },
     "eyebrow": "RAMS Laboratory",
     "headline": "Reliability, safety & marine systems research.",
     "description": "We study the systems behind safe, dependable maritime and industrial operations—from risk assessment and AIS monitoring to maintenance, reliability, and simulation.",
