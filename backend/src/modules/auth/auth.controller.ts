@@ -192,8 +192,7 @@ export async function changePasswordController(req: Request, res: Response) {
       ) {
         return res.status(422).json({
           success: false,
-          message:
-            "New password must be different from the current password.",
+          message: "New password must be different from the current password.",
         });
       }
       if (

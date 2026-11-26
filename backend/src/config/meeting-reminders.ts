@@ -7,8 +7,11 @@ import {
   MEETING_REMINDER_TIMEZONE,
 } from "../modules/meeting-reminders/meeting-reminder.constants.js";
 
+export type MeetingReminderChannelConfig = "EMAIL" | "WHATSAPP";
+
 export interface MeetingReminderRuntimeConfig {
-  enabled: boolean;
+  channel: MeetingReminderChannelConfig;
+  contractLegacyIndexes: boolean;
   pollMs: number;
   timezone: string;
   maxAttempts: number;
@@ -17,12 +20,19 @@ export interface MeetingReminderRuntimeConfig {
   retryCapMs: number;
 }
 
-function readBoolean(value: string | undefined): boolean {
+function readChannel(value: string | undefined): MeetingReminderChannelConfig {
+  const normalized = (value ?? "").trim().toLowerCase();
+  if (normalized === "" || normalized === "email") return "EMAIL";
+  if (normalized === "whatsapp") return "WHATSAPP";
+  throw new Error("MEETING_REMINDER_CHANNEL must be email or whatsapp");
+}
+
+function readBoolean(value: string | undefined, name: string): boolean {
   if (value === undefined || value.trim() === "") return false;
   const normalized = value.trim().toLowerCase();
   if (normalized === "true") return true;
   if (normalized === "false") return false;
-  throw new Error("MEETING_REMINDERS_ENABLED must be true or false");
+  throw new Error(`${name} must be true or false`);
 }
 
 function readInteger(
@@ -72,7 +82,11 @@ export function readMeetingReminderConfig(
   );
 
   return {
-    enabled: readBoolean(env.MEETING_REMINDERS_ENABLED),
+    channel: readChannel(env.MEETING_REMINDER_CHANNEL),
+    contractLegacyIndexes: readBoolean(
+      env.MEETING_REMINDER_CONTRACT_LEGACY_INDEXES,
+      "MEETING_REMINDER_CONTRACT_LEGACY_INDEXES",
+    ),
     pollMs: readInteger(
       env.MEETING_REMINDER_POLL_MS,
       MEETING_REMINDER_DEFAULT_POLL_MS,

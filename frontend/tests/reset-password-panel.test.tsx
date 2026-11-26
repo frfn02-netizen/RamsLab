@@ -54,9 +54,7 @@ describe("admin reset password panel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Clear password" }));
     expect(screen.queryByText("TempPass123!")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Temporary password cleared"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Temporary password cleared")).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: "Generate another password" }),

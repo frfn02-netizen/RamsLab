@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb";
 
 export const USER_ROLES = {
   ALUMNI: "ALUMNI",
-  STUDENT: "STUDENT",
   DOSEN: "DOSEN",
   ADMIN: "ADMIN",
 } as const;
@@ -35,6 +34,14 @@ export interface User {
 
   mustChangePassword?: boolean;
 
+  whatsappNumber?: string | null;
+
+  whatsappOptIn?: boolean;
+
+  whatsappOptInAt?: Date | null;
+
+  whatsappConsentNumber?: string | null;
+
   /** Incremented to revoke all previously issued access tokens. */
   tokenVersion?: number;
 
@@ -43,4 +50,22 @@ export interface User {
   createdAt: Date;
 
   updatedAt: Date;
+}
+
+export interface UserReminderContact {
+  _id?: ObjectId;
+  displayName?: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  whatsappNumber?: string | null;
+  whatsappOptIn?: boolean;
+  whatsappConsentNumber?: string | null;
+}
+
+export interface UserNotificationPreferences {
+  whatsappNumber: string | null;
+  whatsappOptIn: boolean;
+  whatsappOptInAt: Date | null;
+  whatsappConsentNumber: string | null;
 }

@@ -1,53 +1,100 @@
-import {
-  setEmailProviderForTesting,
-  type EmailMessage,
-  type EmailProvider,
-  type EmailSendResult,
-} from "../src/lib/email.js";
+import { setMailjetTransportForTesting } from "../src/lib/mailjet.js";
 
-export class TestEmailProvider implements EmailProvider {
-  readonly name = "test";
-  readonly isConfigured = true;
-  readonly messages: EmailMessage[] = [];
-
-  async send(message: EmailMessage): Promise<EmailSendResult> {
-    this.messages.push(message);
-    return {
-      sent: true,
-      status: "accepted",
-      provider: this.name,
-      providerMessageId: "test-message-id",
-    };
-  }
+export interface CapturedEmail {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
 }
 
-export class FailingEmailProvider implements EmailProvider {
-  readonly name = "failing";
-  readonly isConfigured = true;
+const MAILJET_ENV = {
+  MAILJET_API_KEY: "test-mailjet-key",
+  MAILJET_SECRET_KEY: "test-mailjet-secret",
+  MAILJET_SENDER_EMAIL: "no-reply@rams.test",
+  MAILJET_SENDER_NAME: "RAMS Platform",
+} as const;
 
-  async send(): Promise<EmailSendResult> {
-    return {
-      sent: false,
-      status: "failed",
-      provider: this.name,
-      httpStatus: 500,
-      reason: "provider_error",
-    };
+let savedEnv: Record<string, string | undefined> | null = null;
+
+function configureMailjet() {
+  if (savedEnv) return;
+  savedEnv = {};
+  for (const [key, value] of Object.entries(MAILJET_ENV)) {
+    savedEnv[key] = process.env[key];
+    process.env[key] = value;
   }
+  delete process.env.MAILJET_API_SECRET;
+}
+
+function restoreMailjetEnv() {
+  if (!savedEnv) return;
+  for (const [key, value] of Object.entries(savedEnv)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+  savedEnv = null;
+}
+
+function capture(init: RequestInit | undefined): CapturedEmail {
+  const payload = JSON.parse(String(init?.body ?? "{}")) as {
+    Messages?: Array<{
+      To?: Array<{ Email?: string }>;
+      Subject?: string;
+      TextPart?: string;
+      HTMLPart?: string;
+    }>;
+  };
+  const message = payload.Messages?.[0];
+  return {
+    to: message?.To?.[0]?.Email ?? "",
+    subject: message?.Subject ?? "",
+    text: message?.TextPart ?? "",
+    ...(message?.HTMLPart ? { html: message.HTMLPart } : {}),
+  };
+}
+
+export class TestEmailProvider {
+  readonly name = "mailjet";
+  readonly isConfigured = true;
+  readonly messages: CapturedEmail[] = [];
+}
+
+export class FailingEmailProvider {
+  readonly name = "mailjet";
+  readonly isConfigured = true;
+  readonly messages: CapturedEmail[] = [];
 }
 
 export function useTestEmailProvider() {
+  configureMailjet();
   const provider = new TestEmailProvider();
-  setEmailProviderForTesting(provider);
+  setMailjetTransportForTesting(async (_url, init) => {
+    provider.messages.push(capture(init));
+    return new Response(
+      JSON.stringify({
+        Messages: [
+          {
+            Status: "success",
+            To: [{ MessageID: "test-message-id" }],
+          },
+        ],
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  });
   return provider;
 }
 
 export function useFailingEmailProvider() {
-  setEmailProviderForTesting(new FailingEmailProvider());
+  configureMailjet();
+  setMailjetTransportForTesting(
+    async () => new Response("provider error", { status: 500 }),
+  );
 }
 
 export function clearTestEmailProvider() {
-  setEmailProviderForTesting(null);
+  setMailjetTransportForTesting(null);
+  restoreMailjetEnv();
 }
 
 export function extractResetToken(text: string): string | null {

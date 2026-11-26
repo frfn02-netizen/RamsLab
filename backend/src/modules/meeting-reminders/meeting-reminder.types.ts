@@ -1,5 +1,5 @@
 import type { ObjectId } from "mongodb";
-import type { EmailFailureReason } from "../../lib/email.js";
+import type { EmailFailureReason } from "../../lib/mailjet.js";
 import type { UserRole } from "../users/user.types.js";
 
 export const MEETING_REMINDER_DELIVERY_STATUSES = [
@@ -15,9 +15,14 @@ export const MEETING_REMINDER_DELIVERY_STATUSES = [
 export type MeetingReminderDeliveryStatus =
   (typeof MEETING_REMINDER_DELIVERY_STATUSES)[number];
 
+export const MEETING_REMINDER_CHANNELS = ["EMAIL", "WHATSAPP"] as const;
+export type MeetingReminderChannel = (typeof MEETING_REMINDER_CHANNELS)[number];
+
 export type MeetingReminderFailureReason =
   | EmailFailureReason
-  | "lease_expired";
+  | "lease_expired"
+  | "invalid_recipient_address"
+  | "recipient_ineligible";
 
 export interface MeetingReminderDelivery {
   _id?: ObjectId;
@@ -27,6 +32,7 @@ export interface MeetingReminderDelivery {
   recipientKind: "USER";
   recipientId: string;
   scheduledFor: Date;
+  channel?: MeetingReminderChannel;
   status: MeetingReminderDeliveryStatus;
   attempts: number;
   nextAttemptAt: Date | null;
@@ -48,6 +54,7 @@ export interface MeetingReminderDeliveryKey {
   recipientKind: "USER";
   recipientId: string;
   scheduledFor: Date;
+  channel: MeetingReminderChannel;
 }
 
 export interface MeetingReminderRecipient {
@@ -55,15 +62,12 @@ export interface MeetingReminderRecipient {
   email: string;
   displayName: string;
   role: Extract<UserRole, "ADMIN" | "DOSEN">;
+  whatsappNumber: string | null;
 }
 
-export type ReminderFailureDisposition =
-  | "retryable"
-  | "rejected"
-  | "ambiguous";
+export type ReminderFailureDisposition = "retryable" | "rejected" | "ambiguous";
 
 export interface MeetingReminderCycleSummary {
-  enabled: boolean;
   scannedMeetings: number;
   createdDeliveries: number;
   revivedDeliveries: number;

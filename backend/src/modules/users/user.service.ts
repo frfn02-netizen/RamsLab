@@ -1,8 +1,54 @@
 import bcrypt from "bcrypt";
-import { PERMISSIONS } from "../../middlewares/permission.middlewares.js";
+import { ObjectId } from "mongodb";
+
+import { HttpError } from "../../middlewares/error.middleware.js";
 import { generateTemporaryPassword } from "../auth/auth.utils.js";
-import { getUsersCollection } from "./user.repository.js";
-import { USER_ROLES } from "./user.types.js";
+import {
+  findUserNotificationPreferences,
+  getUsersCollection,
+  updateUserNotificationPreferences,
+} from "./user.repository.js";
+import type {
+  NotificationPreferenceError,
+  NotificationPreferenceUpdate,
+} from "./notification-preferences.js";
+import { USER_ROLES, type UserNotificationPreferences } from "./user.types.js";
+
+function notificationPreferenceMessage(
+  reason: NotificationPreferenceError,
+): string {
+  switch (reason) {
+    case "number_required":
+      return "A WhatsApp number is required when consent is active";
+    case "missing_country_code":
+      return "Include the country code, for example +62";
+    case "empty_number":
+      return "The WhatsApp number is empty";
+    case "invalid_number":
+    default:
+      return "Enter a valid international WhatsApp number";
+  }
+}
+
+export async function getNotificationPreferences(
+  userId: ObjectId,
+): Promise<UserNotificationPreferences> {
+  const preferences = await findUserNotificationPreferences(userId);
+  if (!preferences) throw new HttpError(404, "User not found");
+  return preferences;
+}
+
+export async function updateNotificationPreferences(
+  userId: ObjectId,
+  update: NotificationPreferenceUpdate,
+): Promise<UserNotificationPreferences> {
+  const result = await updateUserNotificationPreferences(userId, update);
+  if (!result) throw new HttpError(404, "User not found");
+  if (!result.ok) {
+    throw new HttpError(400, notificationPreferenceMessage(result.reason));
+  }
+  return result.value;
+}
 
 export interface CreateAlumniUserInput {
   email: string;
@@ -62,7 +108,9 @@ export async function createDosenUser(input: CreateDosenUserInput) {
     throw new Error("Email is already registered");
   }
 
-  const generatedPassword = input.password ? undefined : generateTemporaryPassword();
+  const generatedPassword = input.password
+    ? undefined
+    : generateTemporaryPassword();
   const password = input.password ?? generatedPassword!;
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -86,53 +134,5 @@ export async function createDosenUser(input: CreateDosenUserInput) {
     role: USER_ROLES.DOSEN,
     isActive: true,
     ...(generatedPassword ? { temporaryPassword: generatedPassword } : {}),
-  };
-}
-
-export interface CreateStudentUserInput {
-  email: string;
-  displayName?: string;
-  schedulePortalAccess: boolean;
-}
-
-export async function createStudentUser(input: CreateStudentUserInput) {
-  const users = getUsersCollection();
-  const email = input.email.trim().toLowerCase();
-
-  const existingUser = await users.findOne({ email });
-  if (existingUser) {
-    throw new Error("Email is already registered");
-  }
-
-  const temporaryPassword = generateTemporaryPassword();
-  const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-  const permissions = input.schedulePortalAccess
-    ? [PERMISSIONS.SCHEDULE_PORTAL_ACCESS]
-    : [];
-  const now = new Date();
-
-  const result = await users.insertOne({
-    email,
-    displayName: input.displayName?.trim() || undefined,
-    passwordHash,
-    role: USER_ROLES.STUDENT,
-    isActive: true,
-    permissions,
-    mustChangePassword: true,
-    tokenVersion: 0,
-    lastLoginAt: null,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  return {
-    id: result.insertedId.toString(),
-    email,
-    displayName: input.displayName?.trim() || undefined,
-    role: USER_ROLES.STUDENT,
-    isActive: true,
-    permissions,
-    mustChangePassword: true,
-    temporaryPassword,
   };
 }

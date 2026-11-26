@@ -33,10 +33,7 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-export function formatReminderDateTime(
-  value: Date,
-  timezone: string,
-): string {
+export function formatReminderDateTime(value: Date, timezone: string): string {
   const formatted = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
     weekday: "long",

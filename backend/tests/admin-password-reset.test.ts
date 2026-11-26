@@ -201,9 +201,9 @@ describe("admin password reset", () => {
     expect(user?.role).toBe("DOSEN");
     expect(user?.mustChangePassword).toBe(true);
     expect(user?.tokenVersion).toBe(1);
-    expect(
-      await bcrypt.compare(temporaryPassword, user!.passwordHash),
-    ).toBe(true);
+    expect(await bcrypt.compare(temporaryPassword, user!.passwordHash)).toBe(
+      true,
+    );
 
     const oldSession = await request(app)
       .get("/api/dosen")

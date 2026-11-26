@@ -3,13 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import PasswordInput from "@/components/password-input";
-import {
-  Button,
-  Card,
-  Field,
-  LinkButton,
-  PageHeader,
-} from "@/components/ui";
+import { Button, Card, Field, LinkButton, PageHeader } from "@/components/ui";
 import { resetPassword } from "@/lib/api/auth";
 import { getUserFacingError } from "@/lib/api/errors";
 
@@ -78,16 +72,16 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         <div className="mx-auto max-w-xl space-y-7">
           <Card className="p-6">
             <div role="status">
-            <h1 className="text-2xl font-bold text-[var(--charcoal)]">
-              Password reset
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-[var(--gray)]">
-              Your password was reset and all previous sessions were signed
-              out. Sign in with your new password.
-            </p>
-            <div className="mt-6">
-              <LinkButton href="/login">Sign in</LinkButton>
-            </div>
+              <h1 className="text-2xl font-bold text-[var(--charcoal)]">
+                Password reset
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-[var(--gray)]">
+                Your password was reset and all previous sessions were signed
+                out. Sign in with your new password.
+              </p>
+              <div className="mt-6">
+                <LinkButton href="/login">Sign in</LinkButton>
+              </div>
             </div>
           </Card>
         </div>

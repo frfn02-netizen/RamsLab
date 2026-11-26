@@ -6,20 +6,26 @@ import {
   readMeetingReminderConfig,
   type MeetingReminderRuntimeConfig,
 } from "../../config/meeting-reminders.js";
-import {
-  sendEmail,
-  type EmailMessage,
-  type EmailSendResult,
-} from "../../lib/email.js";
 import { findMeetingById } from "../meetings/meeting.repository.js";
 import type { Meeting } from "../meetings/meeting.types.js";
+import {
+  acquireMeetingReminderChannelLease,
+  meetingReminderChannelLeaseMs,
+} from "./meeting-reminder.channel-lease.js";
+import { createMeetingReminderChannelAdapter } from "./meeting-reminder.channel-factory.js";
+import type {
+  MeetingReminderChannelAdapter,
+  MeetingReminderSendResult,
+} from "./meeting-reminder.channel.js";
 import {
   MEETING_REMINDER_GRACE_MINUTES,
   MEETING_REMINDER_INTERVALS_MINUTES,
   MINUTE_MS,
 } from "./meeting-reminder.constants.js";
 import {
+  cancelPendingRemindersForIneligibleRecipients,
   cancelPendingRemindersForIntervalsNotIn,
+  cancelPendingRemindersForOtherChannels,
   cancelStalePendingReminders,
   claimReminderDelivery,
   expireSendingReminderLeases,
@@ -41,14 +47,13 @@ import {
   resolveMeetingOrganizerName,
   resolveMeetingReminderRecipients,
 } from "./meeting-reminder.recipients.js";
-import { renderMeetingReminderEmail } from "./meeting-reminder.template.js";
 import type {
+  MeetingReminderChannel,
   MeetingReminderCycleSummary,
   MeetingReminderDelivery,
   MeetingReminderDeliveryKey,
   MeetingReminderFailureReason,
   MeetingReminderRecipient,
-  ReminderFailureDisposition,
 } from "./meeting-reminder.types.js";
 
 const MAX_MEETINGS_PER_CYCLE = 200;
@@ -62,25 +67,26 @@ export interface RunMeetingReminderCycleOptions {
   now?: Date;
   config?: MeetingReminderRuntimeConfig;
   instanceId?: string;
-  send?: (message: EmailMessage) => Promise<EmailSendResult>;
+  channel?: MeetingReminderChannel;
+  adapter?: MeetingReminderChannelAdapter;
   logger?: MeetingReminderLogger;
 }
 
 interface ReconcileContext {
   now: Date;
   config: MeetingReminderRuntimeConfig;
+  channel: MeetingReminderChannel;
   logger: MeetingReminderLogger;
   summary: MeetingReminderCycleSummary;
 }
 
 interface DispatchContext extends ReconcileContext {
   instanceId: string;
-  send: (message: EmailMessage) => Promise<EmailSendResult>;
+  adapter: MeetingReminderChannelAdapter;
 }
 
-function emptySummary(enabled: boolean): MeetingReminderCycleSummary {
+function emptySummary(): MeetingReminderCycleSummary {
   return {
-    enabled,
     scannedMeetings: 0,
     createdDeliveries: 0,
     revivedDeliveries: 0,
@@ -130,38 +136,12 @@ export function nextRetryDelayMs(
   config: MeetingReminderRuntimeConfig,
 ): number {
   const exponent = Math.max(0, attempts - 1);
-  return Math.min(
-    config.retryBaseMs * 2 ** exponent,
-    config.retryCapMs,
-  );
+  return Math.min(config.retryBaseMs * 2 ** exponent, config.retryCapMs);
 }
 
-export function classifyReminderFailure(
-  result: EmailSendResult,
-): ReminderFailureDisposition {
-  if (result.reason === "provider_error") {
-    if (result.httpStatus === 429) return "retryable";
-    if (
-      result.httpStatus !== undefined &&
-      [400, 401, 403, 404, 409, 413, 422].includes(result.httpStatus)
-    ) {
-      return "rejected";
-    }
-    return "ambiguous";
-  }
-
-  if (
-    result.reason === "not_configured" ||
-    result.reason === "authentication_failed" ||
-    result.reason === "envelope_rejected"
-  ) {
-    return "rejected";
-  }
-
-  return "ambiguous";
-}
-
-function failureReason(result: EmailSendResult): MeetingReminderFailureReason {
+function failureReason(
+  result: MeetingReminderSendResult,
+): MeetingReminderFailureReason {
   return result.reason ?? "provider_error";
 }
 
@@ -187,6 +167,7 @@ function buildDeliveryKey(
   intervalMinutes: number,
   recipient: MeetingReminderRecipient,
   scheduledFor: Date,
+  channel: MeetingReminderChannel,
 ): MeetingReminderDeliveryKey | null {
   if (!meeting._id) return null;
   return {
@@ -196,6 +177,7 @@ function buildDeliveryKey(
     recipientKind: "USER",
     recipientId: recipient.userId,
     scheduledFor,
+    channel,
   };
 }
 
@@ -203,23 +185,33 @@ async function reconcileMeetingDeliveries(
   meeting: Meeting,
   context: ReconcileContext,
 ): Promise<void> {
-  const { now, logger, summary } = context;
-  const recipients = await resolveMeetingReminderRecipients(meeting);
-  if (recipients.length === 0) return;
-
-  const createdBefore = summary.createdDeliveries;
-  const revivedBefore = summary.revivedDeliveries;
+  const { now, channel, logger, summary } = context;
+  const recipients = await resolveMeetingReminderRecipients(meeting, channel);
 
   summary.cancelledDeliveries += await cancelStalePendingReminders({
     meetingId: meeting._id,
     currentStartAt: meeting.startAt,
     now,
+    channel,
   });
   summary.cancelledDeliveries += await cancelPendingRemindersForIntervalsNotIn({
     meetingId: meeting._id,
     intervals: MEETING_REMINDER_INTERVALS_MINUTES,
     now,
+    channel,
   });
+  summary.cancelledDeliveries +=
+    await cancelPendingRemindersForIneligibleRecipients({
+      meetingId: meeting._id,
+      channel,
+      eligibleRecipientIds: recipients.map((recipient) => recipient.userId),
+      now,
+    });
+
+  if (recipients.length === 0) return;
+
+  const createdBefore = summary.createdDeliveries;
+  const revivedBefore = summary.revivedDeliveries;
 
   for (const intervalMinutes of MEETING_REMINDER_INTERVALS_MINUTES) {
     const scheduledFor = computeScheduledFor(meeting.startAt, intervalMinutes);
@@ -240,6 +232,7 @@ async function reconcileMeetingDeliveries(
         intervalMinutes,
         recipient,
         scheduledFor,
+        channel,
       );
       if (!key) continue;
 
@@ -270,6 +263,7 @@ async function reconcileMeetingDeliveries(
       intervalMinutes,
       cutoff: new Date(now.getTime() - graceMs),
       now,
+      channel,
     });
   }
 
@@ -281,6 +275,7 @@ async function reconcileMeetingDeliveries(
       meetingId: meeting._id?.toString() ?? null,
       recipientCount: recipients.length,
       intervals: MEETING_REMINDER_INTERVALS_MINUTES,
+      channel,
     });
   }
 }
@@ -320,7 +315,9 @@ async function dispatchDelivery(
   delivery: MeetingReminderDelivery,
   context: DispatchContext,
 ): Promise<void> {
-  const { now, config, logger, summary } = context;
+  const { now, config, channel, logger, summary } = context;
+
+  if ((delivery.channel ?? "EMAIL") !== channel) return;
 
   const meeting = await findMeetingById(delivery.meetingId.toString());
   if (!meeting || meeting.cancelledAt) {
@@ -356,6 +353,7 @@ async function dispatchDelivery(
   const recipient = await resolveEligibleReminderRecipient(
     meeting,
     delivery.recipientId,
+    channel,
   );
   if (!recipient) {
     await markPendingReminderStatus({
@@ -366,6 +364,8 @@ async function dispatchDelivery(
     summary.cancelledDeliveries += 1;
     return;
   }
+
+  const organizerName = await resolveMeetingOrganizerName(meeting);
 
   const claimed = await claimReminderDelivery({
     id: delivery._id,
@@ -394,25 +394,21 @@ async function dispatchDelivery(
   const freshRecipient = await resolveEligibleReminderRecipient(
     freshMeeting,
     claimed.recipientId,
+    channel,
   );
   if (!freshRecipient) {
     await cancelClaimedDelivery(claimed, context, "cancelled");
     return;
   }
 
-  const organizerName = await resolveMeetingOrganizerName(freshMeeting);
-  const message = renderMeetingReminderEmail({
-    meeting: freshMeeting,
-    recipient: freshRecipient,
-    organizerName,
-    timezone: config.timezone,
-  });
-
-  let result: EmailSendResult;
+  let result: MeetingReminderSendResult;
   try {
-    result = await context.send({
-      to: freshRecipient.email,
-      ...message,
+    result = await context.adapter.send({
+      meeting: freshMeeting,
+      recipient: freshRecipient,
+      organizerName,
+      timezone: config.timezone,
+      intervalMinutes: claimed.intervalMinutes,
     });
   } catch {
     if (claimed._id) {
@@ -432,7 +428,7 @@ async function dispatchDelivery(
     return;
   }
 
-  if (result.sent) {
+  if (result.disposition === "accepted") {
     if (!claimed._id) return;
     const persisted = await markReminderSent({
       id: claimed._id,
@@ -459,11 +455,10 @@ async function dispatchDelivery(
     return;
   }
 
-  const disposition = classifyReminderFailure(result);
   const reason = failureReason(result);
 
   if (
-    disposition === "retryable" &&
+    result.disposition === "retryable" &&
     claimed.attempts < config.maxAttempts &&
     claimed._id
   ) {
@@ -494,7 +489,8 @@ async function dispatchDelivery(
     }
   }
 
-  const terminalStatus = disposition === "ambiguous" ? "unknown" : "failed";
+  const terminalStatus =
+    result.disposition === "ambiguous" ? "unknown" : "failed";
   if (claimed._id) {
     const marked = await markReminderTerminal({
       id: claimed._id,
@@ -517,7 +513,7 @@ async function dispatchDelivery(
       provider: result.provider,
       httpStatus: result.httpStatus ?? null,
       reason,
-      disposition,
+      disposition: result.disposition,
     }),
   );
 }
@@ -526,20 +522,30 @@ export async function cleanupObsoleteDeliveries(options: {
   now: Date;
   config: MeetingReminderRuntimeConfig;
   logger?: MeetingReminderLogger;
+  channel?: MeetingReminderChannel;
+  cancelOtherChannels?: boolean;
 }): Promise<{
   cancelled: number;
   missed: number;
   unknown: number;
 }> {
   const logger = activeLogger(options.logger);
+  const channel = options.channel ?? options.config.channel;
   const unknown = await expireSendingReminderLeases(options.now);
   if (unknown > 0) {
     logger.warn("Meeting reminder leases expired without a final state", {
       count: unknown,
+      channel,
     });
   }
 
-  let cancelled = 0;
+  let cancelled =
+    options.cancelOtherChannels === false
+      ? 0
+      : await cancelPendingRemindersForOtherChannels({
+          channel,
+          now: options.now,
+        });
   let missed = 0;
   let afterId: MeetingReminderDelivery["_id"] | undefined;
 
@@ -547,6 +553,7 @@ export async function cleanupObsoleteDeliveries(options: {
     const pending = await findPendingReminderDeliveries({
       limit: CLEANUP_BATCH_SIZE,
       afterId,
+      channel,
     });
     if (pending.length === 0) break;
 
@@ -556,10 +563,7 @@ export async function cleanupObsoleteDeliveries(options: {
     ].map((id) => new ObjectId(id));
     const meetings = await findMeetingsForRemindersByIds(meetingIds);
     const meetingById = new Map(
-      meetings.map((meeting) => [
-        meeting._id?.toString() ?? "",
-        meeting,
-      ]),
+      meetings.map((meeting) => [meeting._id?.toString() ?? "", meeting]),
     );
     const configuredIntervals = new Set<number>(
       MEETING_REMINDER_INTERVALS_MINUTES,
@@ -617,12 +621,53 @@ export async function runMeetingReminderCycle(
   const now = options.now ?? new Date();
   const config = options.config ?? readMeetingReminderConfig();
   const logger = activeLogger(options.logger);
-  const summary = emptySummary(config.enabled);
+  const summary = emptySummary();
 
-  if (!config.enabled) return summary;
+  const channel = options.channel ?? config.channel;
+  const adapter =
+    options.adapter ?? createMeetingReminderChannelAdapter(channel);
+  if (adapter.channel !== channel) {
+    logger.error("Meeting reminder channel adapter mismatch", {
+      channel,
+      adapterChannel: adapter.channel,
+    });
+    return summary;
+  }
 
   const instanceId = options.instanceId ?? createMeetingReminderInstanceId();
-  const send = options.send ?? sendEmail;
+
+  if (!adapter.isConfigured) {
+    logger.warn("Meeting reminder channel is not configured; cleanup only", {
+      channel,
+      provider: adapter.name,
+    });
+    const cleanup = await cleanupObsoleteDeliveries({
+      now,
+      config,
+      logger,
+      channel,
+      cancelOtherChannels: false,
+    });
+    summary.cancelledDeliveries += cleanup.cancelled;
+    summary.missed += cleanup.missed;
+    summary.unknown += cleanup.unknown;
+    return summary;
+  }
+
+  const lease = await acquireMeetingReminderChannelLease({
+    channel,
+    owner: instanceId,
+    now,
+    leaseMs: meetingReminderChannelLeaseMs(config.pollMs),
+  });
+  if (!lease.acquired) {
+    logger.warn("Meeting reminder channel is owned by another channel", {
+      channel,
+      activeChannel: lease.channel ?? null,
+    });
+    return summary;
+  }
+
   const meetings = await findUpcomingReminderMeetings({
     now,
     horizonEnd: meetingReminderHorizonEnd(now, config),
@@ -630,24 +675,39 @@ export async function runMeetingReminderCycle(
   });
 
   summary.scannedMeetings = meetings.length;
-  const reconcileContext: ReconcileContext = { now, config, logger, summary };
+  const reconcileContext: ReconcileContext = {
+    now,
+    config,
+    channel,
+    logger,
+    summary,
+  };
 
   for (const meeting of meetings) {
     await reconcileMeetingDeliveries(meeting, reconcileContext);
   }
 
-  const due = await findDueReminderDeliveries(now, MAX_DELIVERIES_PER_CYCLE);
+  const due = await findDueReminderDeliveries(
+    now,
+    MAX_DELIVERIES_PER_CYCLE,
+    channel,
+  );
   const dispatchContext: DispatchContext = {
     ...reconcileContext,
     instanceId,
-    send,
+    adapter,
   };
 
   for (const delivery of due) {
     await dispatchDelivery(delivery, dispatchContext);
   }
 
-  const cleanup = await cleanupObsoleteDeliveries({ now, config, logger });
+  const cleanup = await cleanupObsoleteDeliveries({
+    now,
+    config,
+    logger,
+    channel,
+  });
   summary.cancelledDeliveries += cleanup.cancelled;
   summary.missed += cleanup.missed;
   summary.unknown += cleanup.unknown;
@@ -661,7 +721,7 @@ export async function runMeetingReminderCycle(
     summary.cancelledDeliveries > 0 ||
     summary.missed > 0
   ) {
-    logger.info("Meeting reminder cycle completed", { ...summary });
+    logger.info("Meeting reminder cycle completed", { ...summary, channel });
   }
 
   return summary;
@@ -670,3 +730,5 @@ export async function runMeetingReminderCycle(
 export function reminderRecipientUserIds(meeting: Meeting): string[] {
   return meetingReminderUserIds(meeting).map((id) => id.toString());
 }
+
+export { classifyProviderFailure as classifyReminderFailure } from "./meeting-reminder.channel.js";

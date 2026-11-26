@@ -1,6 +1,6 @@
 export const MEETING_REMINDER_COLLECTION = "meeting_reminder_deliveries";
 
-export const MEETING_REMINDER_INTERVALS_MINUTES = [1440, 60, 15] as const;
+export const MEETING_REMINDER_INTERVALS_MINUTES = [1440, 60] as const;
 export type MeetingReminderIntervalMinutes =
   (typeof MEETING_REMINDER_INTERVALS_MINUTES)[number];
 
@@ -10,7 +10,6 @@ export const MEETING_REMINDER_GRACE_MINUTES: Record<
 > = {
   1440: 60,
   60: 10,
-  15: 5,
 };
 
 export const MEETING_REMINDER_TIMEZONE = "Asia/Jakarta";

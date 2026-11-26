@@ -2,9 +2,7 @@ import { Collection, ObjectId } from "mongodb";
 import { getDatabase } from "../../config/database.js";
 
 export type AuthAuditAction =
-  | "PASSWORD_CHANGED"
-  | "PASSWORD_RESET_COMPLETED"
-  | "ADMIN_PASSWORD_RESET";
+  "PASSWORD_CHANGED" | "PASSWORD_RESET_COMPLETED" | "ADMIN_PASSWORD_RESET";
 
 export interface AuthAuditLog {
   _id?: ObjectId;

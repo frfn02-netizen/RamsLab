@@ -4,6 +4,7 @@ import { getMeetingsCollection } from "../meetings/meeting.repository.js";
 import type { Meeting } from "../meetings/meeting.types.js";
 import { getMeetingReminderDeliveriesCollection } from "./meeting-reminder.index.js";
 import type {
+  MeetingReminderChannel,
   MeetingReminderDelivery,
   MeetingReminderDeliveryKey,
   MeetingReminderDeliveryStatus,
@@ -13,13 +14,35 @@ import type {
 function deliveryKeyFilter(
   key: MeetingReminderDeliveryKey,
 ): Filter<MeetingReminderDelivery> {
-  return {
+  const base = {
     meetingId: key.meetingId,
     intervalMinutes: key.intervalMinutes,
     recipientKind: key.recipientKind,
     recipientId: key.recipientId,
     scheduledFor: key.scheduledFor,
   };
+
+  return key.channel === "EMAIL"
+    ? {
+        ...base,
+        $or: [{ channel: "EMAIL" }, { channel: { $exists: false } }],
+      }
+    : { ...base, channel: "WHATSAPP" };
+}
+
+function channelCondition(
+  channel: MeetingReminderChannel,
+): Filter<MeetingReminderDelivery> {
+  return channel === "EMAIL"
+    ? { $or: [{ channel: "EMAIL" }, { channel: { $exists: false } }] }
+    : { channel: "WHATSAPP" };
+}
+
+function withChannel(
+  filter: Filter<MeetingReminderDelivery>,
+  channel: MeetingReminderChannel,
+): Filter<MeetingReminderDelivery> {
+  return { $and: [filter, channelCondition(channel)] };
 }
 
 function isDuplicateKeyError(error: unknown): boolean {
@@ -32,10 +55,11 @@ export async function insertReminderDeliveryIfAbsent(
   now: Date,
 ): Promise<{ delivery: MeetingReminderDelivery; created: boolean }> {
   const collection = getMeetingReminderDeliveriesCollection();
+  const filter = deliveryKeyFilter(key);
 
   try {
-    const result = await collection.findOneAndUpdate(
-      deliveryKeyFilter(key),
+    const result = await collection.updateOne(
+      filter,
       {
         $setOnInsert: {
           ...key,
@@ -53,11 +77,19 @@ export async function insertReminderDeliveryIfAbsent(
           updatedAt: now,
         },
       },
-      { upsert: true, returnDocument: "after" },
+      { upsert: true },
     );
 
-    if (result) return { delivery: result, created: true };
-    throw new Error("Reminder delivery upsert returned no document");
+    const created = result.upsertedCount === 1;
+    const delivery = await collection.findOne(
+      created && result.upsertedId
+        ? { _id: result.upsertedId }
+        : deliveryKeyFilter(key),
+    );
+    if (!delivery) {
+      throw new Error("Reminder delivery upsert returned no document");
+    }
+    return { delivery, created };
   } catch (error) {
     if (!isDuplicateKeyError(error)) throw error;
     const existing = await collection.findOne(deliveryKeyFilter(key));
@@ -96,23 +128,29 @@ export async function reviveCancelledReminderDelivery(
 export async function findDueReminderDeliveries(
   now: Date,
   limit: number,
+  channel: MeetingReminderChannel,
 ): Promise<MeetingReminderDelivery[]> {
   return getMeetingReminderDeliveriesCollection()
-    .find({
-      status: "pending",
-      scheduledFor: { $lte: now },
-      $and: [
+    .find(
+      withChannel(
         {
-          $or: [{ nextAttemptAt: null }, { nextAttemptAt: { $lte: now } }],
-        },
-        {
-          $or: [
-            { leaseExpiresAt: null },
-            { leaseExpiresAt: { $lte: now } },
+          status: "pending",
+          scheduledFor: { $lte: now },
+          $and: [
+            {
+              $or: [{ nextAttemptAt: null }, { nextAttemptAt: { $lte: now } }],
+            },
+            {
+              $or: [
+                { leaseExpiresAt: null },
+                { leaseExpiresAt: { $lte: now } },
+              ],
+            },
           ],
         },
-      ],
-    })
+        channel,
+      ),
+    )
     .sort({ scheduledFor: 1 })
     .limit(limit)
     .toArray();
@@ -151,9 +189,7 @@ export async function claimReminderDelivery(options: {
       $set: {
         status: "sending",
         leaseOwner: options.leaseOwner,
-        leaseExpiresAt: new Date(
-          options.now.getTime() + options.leaseMs,
-        ),
+        leaseExpiresAt: new Date(options.now.getTime() + options.leaseMs),
         lastAttemptAt: options.now,
         updatedAt: options.now,
       },
@@ -284,16 +320,26 @@ export async function cancelStalePendingReminders(options: {
   meetingId: Meeting["_id"];
   currentStartAt: Date;
   now: Date;
+  channel: MeetingReminderChannel;
 }): Promise<number> {
   if (!options.meetingId) return 0;
 
   const result = await getMeetingReminderDeliveriesCollection().updateMany(
+    withChannel(
+      {
+        meetingId: options.meetingId,
+        status: "pending",
+        meetingStartAt: { $ne: options.currentStartAt },
+      },
+      options.channel,
+    ),
     {
-      meetingId: options.meetingId,
-      status: "pending",
-      meetingStartAt: { $ne: options.currentStartAt },
+      $set: {
+        status: "cancelled",
+        nextAttemptAt: null,
+        updatedAt: options.now,
+      },
     },
-    { $set: { status: "cancelled", nextAttemptAt: null, updatedAt: options.now } },
   );
 
   return result.modifiedCount;
@@ -303,16 +349,79 @@ export async function cancelPendingRemindersForIntervalsNotIn(options: {
   meetingId: Meeting["_id"];
   intervals: readonly number[];
   now: Date;
+  channel: MeetingReminderChannel;
 }): Promise<number> {
   if (!options.meetingId) return 0;
 
   const result = await getMeetingReminderDeliveriesCollection().updateMany(
+    withChannel(
+      {
+        meetingId: options.meetingId,
+        status: "pending",
+        intervalMinutes: { $nin: options.intervals },
+      },
+      options.channel,
+    ),
     {
-      meetingId: options.meetingId,
-      status: "pending",
-      intervalMinutes: { $nin: options.intervals },
+      $set: {
+        status: "cancelled",
+        nextAttemptAt: null,
+        updatedAt: options.now,
+      },
     },
-    { $set: { status: "cancelled", nextAttemptAt: null, updatedAt: options.now } },
+  );
+
+  return result.modifiedCount;
+}
+
+export async function cancelPendingRemindersForIneligibleRecipients(options: {
+  meetingId: Meeting["_id"];
+  channel: MeetingReminderChannel;
+  eligibleRecipientIds: string[];
+  now: Date;
+}): Promise<number> {
+  if (!options.meetingId) return 0;
+
+  const result = await getMeetingReminderDeliveriesCollection().updateMany(
+    withChannel(
+      {
+        meetingId: options.meetingId,
+        status: "pending",
+        recipientId: { $nin: options.eligibleRecipientIds },
+      },
+      options.channel,
+    ),
+    {
+      $set: {
+        status: "cancelled",
+        nextAttemptAt: null,
+        lastFailureReason: "recipient_ineligible",
+        updatedAt: options.now,
+      },
+    },
+  );
+
+  return result.modifiedCount;
+}
+
+export async function cancelPendingRemindersForOtherChannels(options: {
+  channel: MeetingReminderChannel;
+  now: Date;
+}): Promise<number> {
+  const filter: Filter<MeetingReminderDelivery> =
+    options.channel === "EMAIL"
+      ? { status: "pending", channel: "WHATSAPP" }
+      : { status: "pending", channel: { $ne: "WHATSAPP" } };
+
+  const result = await getMeetingReminderDeliveriesCollection().updateMany(
+    filter,
+    {
+      $set: {
+        status: "cancelled",
+        nextAttemptAt: null,
+        updatedAt: options.now,
+      },
+    },
   );
 
   return result.modifiedCount;
@@ -323,26 +432,28 @@ export async function markPendingFirstAttemptsMissed(options: {
   intervalMinutes: number;
   cutoff: Date;
   now: Date;
+  channel: MeetingReminderChannel;
 }): Promise<number> {
   if (!options.meetingId) return 0;
 
   const result = await getMeetingReminderDeliveriesCollection().updateMany(
-    {
-      meetingId: options.meetingId,
-      intervalMinutes: options.intervalMinutes,
-      status: "pending",
-      attempts: 0,
-      scheduledFor: { $lt: options.cutoff },
-    },
+    withChannel(
+      {
+        meetingId: options.meetingId,
+        intervalMinutes: options.intervalMinutes,
+        status: "pending",
+        attempts: 0,
+        scheduledFor: { $lt: options.cutoff },
+      },
+      options.channel,
+    ),
     { $set: { status: "missed", updatedAt: options.now } },
   );
 
   return result.modifiedCount;
 }
 
-export async function expireSendingReminderLeases(
-  now: Date,
-): Promise<number> {
+export async function expireSendingReminderLeases(now: Date): Promise<number> {
   const result = await getMeetingReminderDeliveriesCollection().updateMany(
     { status: "sending", leaseExpiresAt: { $lte: now } },
     {
@@ -363,11 +474,15 @@ export async function expireSendingReminderLeases(
 export async function findPendingReminderDeliveries(options: {
   limit: number;
   afterId?: MeetingReminderDelivery["_id"];
+  channel: MeetingReminderChannel;
 }): Promise<MeetingReminderDelivery[]> {
-  const filter: Filter<MeetingReminderDelivery> = { status: "pending" };
-  if (options.afterId) {
-    filter._id = { $gt: options.afterId };
-  }
+  const filter = withChannel(
+    {
+      status: "pending",
+      ...(options.afterId ? { _id: { $gt: options.afterId } } : {}),
+    },
+    options.channel,
+  );
 
   return getMeetingReminderDeliveriesCollection()
     .find(filter)

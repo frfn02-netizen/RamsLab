@@ -17,10 +17,10 @@ import {
 } from "../../config/security.js";
 import { HttpError } from "../../middlewares/error.middleware.js";
 import {
-  getEmailConfigurationDiagnostics,
-  isEmailConfigured,
-  sendEmail,
-} from "../../lib/email.js";
+  getMailjetConfigurationDiagnostics,
+  isMailjetConfigured,
+  sendPasswordResetEmail,
+} from "../../lib/mailjet.js";
 
 import {
   generateAccessToken,
@@ -184,11 +184,7 @@ async function deliverPasswordResetEmail(input: {
   tokenHash: string;
 }) {
   try {
-    const result = await sendEmail({
-      to: input.to,
-      subject: "Reset your RAMS password",
-      text: `Use this link to reset your RAMS password:\n\n${input.resetUrl}\n\nThis link expires soon and can be used only once. If you did not request a password reset, you can ignore this email.`,
-    });
+    const result = await sendPasswordResetEmail(input.to, input.resetUrl);
 
     if (result.sent) {
       // "accepted" is not "delivered". Delivery, bounce, and failure are
@@ -228,13 +224,13 @@ export async function requestPasswordReset(email: string): Promise<void> {
     return;
   }
 
-  if (!isEmailConfigured()) {
+  if (!isMailjetConfigured()) {
     // Keep the response generic. The operator sees this warning; the client
     // does not learn whether the address exists or why no email arrived.
     console.warn(
       "Password reset requested but email delivery is not configured",
       {
-        ...getEmailConfigurationDiagnostics(),
+        ...getMailjetConfigurationDiagnostics(),
         userId: user._id?.toString(),
       },
     );
@@ -284,18 +280,12 @@ export async function resetPassword(
   const tokenHash = hashPasswordResetToken(token);
   const record = await consumePasswordResetToken(tokenHash);
   if (!record) {
-    throw new HttpError(
-      400,
-      "This reset link is invalid or has expired.",
-    );
+    throw new HttpError(400, "This reset link is invalid or has expired.");
   }
 
   const user = await findUserById(record.userId.toString());
   if (!user || !user.isActive) {
-    throw new HttpError(
-      400,
-      "This reset link is invalid or has expired.",
-    );
+    throw new HttpError(400, "This reset link is invalid or has expired.");
   }
 
   if (await bcrypt.compare(newPassword, user.passwordHash)) {

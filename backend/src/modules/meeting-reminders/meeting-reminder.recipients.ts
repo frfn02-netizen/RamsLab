@@ -1,34 +1,60 @@
 import { ObjectId } from "mongodb";
 
-import { findUsersByIds } from "../users/user.repository.js";
-import type { UserDirectoryEntry } from "../users/user.types.js";
+import { normalizeE164 } from "../../lib/phone.js";
+import {
+  findReminderContactsByIds,
+  findUsersByIds,
+} from "../users/user.repository.js";
+import type {
+  UserDirectoryEntry,
+  UserReminderContact,
+} from "../users/user.types.js";
 import type { Meeting } from "../meetings/meeting.types.js";
-import type { MeetingReminderRecipient } from "./meeting-reminder.types.js";
+import type {
+  MeetingReminderChannel,
+  MeetingReminderRecipient,
+} from "./meeting-reminder.types.js";
 
-type ReminderMeeting = Pick<
-  Meeting,
-  "_id" | "createdBy" | "participantIds"
->;
+type ReminderMeeting = Pick<Meeting, "_id" | "createdBy" | "participantIds">;
+type EligibleRole = "ADMIN" | "DOSEN";
 
 function isEligibleRole(
-  role: UserDirectoryEntry["role"],
-): role is "ADMIN" | "DOSEN" {
+  role: UserReminderContact["role"],
+): role is EligibleRole {
   return role === "ADMIN" || role === "DOSEN";
 }
 
-function displayNameFor(entry: UserDirectoryEntry): string {
+function displayNameFor(entry: UserReminderContact): string {
   const fallback = entry.email.split("@", 1)[0] || entry.email;
   return entry.displayName?.trim() || fallback;
 }
 
+function eligibleWhatsAppNumber(entry: UserReminderContact): string | null {
+  if (entry.whatsappOptIn !== true) return null;
+
+  const number = normalizeE164(entry.whatsappNumber ?? "");
+  const consentNumber = normalizeE164(entry.whatsappConsentNumber ?? "");
+  if (!number.ok || !consentNumber.ok) return null;
+  if (number.value !== consentNumber.value) return null;
+
+  return number.value;
+}
+
 export function filterEligibleReminderRecipients(
-  entries: UserDirectoryEntry[],
+  entries: UserReminderContact[],
+  channel: MeetingReminderChannel = "EMAIL",
 ): MeetingReminderRecipient[] {
   const seen = new Set<string>();
   const recipients: MeetingReminderRecipient[] = [];
 
   for (const entry of entries) {
     if (!entry._id || !entry.isActive || !isEligibleRole(entry.role)) {
+      continue;
+    }
+
+    const whatsappNumber =
+      channel === "WHATSAPP" ? eligibleWhatsAppNumber(entry) : null;
+    if (channel === "WHATSAPP" && !whatsappNumber) {
       continue;
     }
 
@@ -41,6 +67,7 @@ export function filterEligibleReminderRecipients(
       email: entry.email,
       displayName: displayNameFor(entry),
       role: entry.role,
+      whatsappNumber,
     });
   }
 
@@ -66,14 +93,18 @@ export function meetingReminderUserIds(meeting: ReminderMeeting): ObjectId[] {
 
 export async function resolveMeetingReminderRecipients(
   meeting: ReminderMeeting,
+  channel: MeetingReminderChannel = "EMAIL",
 ): Promise<MeetingReminderRecipient[]> {
-  const entries = await findUsersByIds(meetingReminderUserIds(meeting));
-  return filterEligibleReminderRecipients(entries);
+  const entries = await findReminderContactsByIds(
+    meetingReminderUserIds(meeting),
+  );
+  return filterEligibleReminderRecipients(entries, channel);
 }
 
 export async function resolveEligibleReminderRecipient(
   meeting: ReminderMeeting,
   userId: string,
+  channel: MeetingReminderChannel = "EMAIL",
 ): Promise<MeetingReminderRecipient | null> {
   if (!ObjectId.isValid(userId)) return null;
 
@@ -84,10 +115,10 @@ export async function resolveEligibleReminderRecipient(
 
   if (!isCreator && !isParticipant) return null;
 
-  const [entry] = await findUsersByIds([new ObjectId(userId)]);
+  const [entry] = await findReminderContactsByIds([new ObjectId(userId)]);
   if (!entry) return null;
 
-  return filterEligibleReminderRecipients([entry])[0] ?? null;
+  return filterEligibleReminderRecipients([entry], channel)[0] ?? null;
 }
 
 export async function resolveMeetingOrganizerName(

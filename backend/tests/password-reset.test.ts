@@ -123,7 +123,9 @@ describe("password reset", () => {
 
   it("applies a minimum response floor to existing and missing emails", async () => {
     const existingStart = Date.now();
-    await request(app).post("/api/auth/forgot-password").send({ email: EMAIL_2 });
+    await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: EMAIL_2 });
     const existingMs = Date.now() - existingStart;
 
     const missingStart = Date.now();
@@ -156,12 +158,10 @@ describe("password reset", () => {
   });
 
   it("rejects an invalid reset token", async () => {
-    const response = await request(app)
-      .post("/api/auth/reset-password")
-      .send({
-        token: "invalid-token-value-that-does-not-exist",
-        newPassword: "another-password-123",
-      });
+    const response = await request(app).post("/api/auth/reset-password").send({
+      token: "invalid-token-value-that-does-not-exist",
+      newPassword: "another-password-123",
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.success).toBe(false);
@@ -186,9 +186,7 @@ describe("password reset", () => {
   });
 
   it("resets the password, revokes sessions, and invalidates the token", async () => {
-    await request(app)
-      .post("/api/auth/forgot-password")
-      .send({ email: EMAIL });
+    await request(app).post("/api/auth/forgot-password").send({ email: EMAIL });
 
     const message = emailProvider.messages.at(-1)!;
     const rawToken = extractResetToken(message.text);
@@ -234,9 +232,7 @@ describe("password reset", () => {
   });
 
   it("rejects a reset password that matches the current password", async () => {
-    await request(app)
-      .post("/api/auth/forgot-password")
-      .send({ email: EMAIL });
+    await request(app).post("/api/auth/forgot-password").send({ email: EMAIL });
 
     const message = emailProvider.messages.at(-1)!;
     const rawToken = extractResetToken(message.text);
@@ -247,7 +243,9 @@ describe("password reset", () => {
       .send({ token: rawToken, newPassword: NEW_PASSWORD });
 
     expect(response.status).toBe(422);
-    expect(response.body.message).toMatch(/different from the current password/i);
+    expect(response.body.message).toMatch(
+      /different from the current password/i,
+    );
 
     const user = await getUsersCollection().findOne({
       _id: new ObjectId(USER_ID),
@@ -280,15 +278,12 @@ describe("password reset", () => {
 
   it("does not create a token or send mail when email delivery is not configured", async () => {
     clearTestEmailProvider();
-    const previousProvider = process.env.EMAIL_PROVIDER;
-    const previousKey = process.env.RESEND_API_KEY;
-    delete process.env.EMAIL_PROVIDER;
-    delete process.env.RESEND_API_KEY;
 
     const beforeMessages = emailProvider.messages.length;
-    const beforeTokens = await getPasswordResetTokensCollection().countDocuments(
-      { userId: new ObjectId(USER_ID_2) },
-    );
+    const beforeTokens =
+      await getPasswordResetTokensCollection().countDocuments({
+        userId: new ObjectId(USER_ID_2),
+      });
 
     const response = await request(app)
       .post("/api/auth/forgot-password")
@@ -304,12 +299,6 @@ describe("password reset", () => {
     ).toBe(beforeTokens);
 
     emailProvider = useTestEmailProvider();
-    if (previousProvider !== undefined) {
-      process.env.EMAIL_PROVIDER = previousProvider;
-    }
-    if (previousKey !== undefined) {
-      process.env.RESEND_API_KEY = previousKey;
-    }
   });
 
   it("rate limits repeated forgot-password requests for the same email", async () => {

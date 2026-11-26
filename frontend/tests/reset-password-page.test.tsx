@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import ResetPasswordPage from "@/app/reset-password/page";
+import ResetPasswordPage from "@/app/(internal)/reset-password/page";
 
 describe("reset password page", () => {
   beforeEach(() => {

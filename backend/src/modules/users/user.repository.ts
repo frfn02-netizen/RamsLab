@@ -1,9 +1,18 @@
 import { Collection, Filter, ObjectId } from "mongodb";
 import { getDatabase } from "../../config/database.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
-import { PERMISSIONS } from "../../middlewares/permission.middlewares.js";
 import { getDosenCollection } from "../dosen/dosen.repository.js";
-import type { User, UserDirectoryEntry } from "./user.types.js";
+import {
+  resolveNotificationPreferences,
+  type NotificationPreferenceError,
+  type NotificationPreferenceUpdate,
+} from "./notification-preferences.js";
+import type {
+  User,
+  UserDirectoryEntry,
+  UserNotificationPreferences,
+  UserReminderContact,
+} from "./user.types.js";
 
 const USERS_COLLECTION = "users";
 
@@ -60,7 +69,7 @@ export async function findActiveUsersDirectory(): Promise<
     .find(
       {
         isActive: true,
-        role: { $in: ["ADMIN", "DOSEN", "STUDENT"] },
+        role: { $in: ["ADMIN", "DOSEN"] },
       },
       {
         projection: {
@@ -79,43 +88,137 @@ export async function findActiveUsersDirectory(): Promise<
   return withDosenNames(users);
 }
 
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-export async function findStudentAccounts(options: {
-  query?: string;
-  limit: number;
-  offset: number;
-}): Promise<UserDirectoryEntry[]> {
-  const filter: Filter<User> = { role: "STUDENT" };
-  const query = options.query?.trim();
-  if (query) {
-    const pattern = new RegExp(escapeRegex(query), "i");
-    filter.$or = [{ email: pattern }, { displayName: pattern }];
-  }
+export async function findReminderContactsByIds(
+  ids: ObjectId[],
+): Promise<UserReminderContact[]> {
+  if (ids.length === 0) return [];
 
   const users = await getUsersCollection()
-    .find(filter, {
-      projection: {
-        displayName: 1,
-        email: 1,
-        role: 1,
-        isActive: 1,
-        permissions: 1,
+    .find(
+      { _id: { $in: ids } },
+      {
+        projection: {
+          displayName: 1,
+          email: 1,
+          role: 1,
+          isActive: 1,
+          whatsappNumber: 1,
+          whatsappOptIn: 1,
+          whatsappConsentNumber: 1,
+        },
       },
-    })
-    .sort({ email: 1 })
-    .skip(options.offset)
-    .limit(options.limit + 1)
+    )
     .toArray();
 
   return withDosenNames(users);
 }
 
-async function withDosenNames(
-  users: UserDirectoryEntry[],
-): Promise<UserDirectoryEntry[]> {
+export async function findActiveInternalEmailContacts(): Promise<
+  UserReminderContact[]
+> {
+  const users = await getUsersCollection()
+    .find(
+      {
+        isActive: true,
+        role: { $in: ["ADMIN", "DOSEN"] },
+      },
+      {
+        projection: {
+          displayName: 1,
+          email: 1,
+          role: 1,
+          isActive: 1,
+        },
+      },
+    )
+    .sort({ email: 1 })
+    .toArray();
+
+  const seen = new Set<string>();
+  const unique = users.filter((user) => {
+    const key = user.email.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return withDosenNames(unique);
+}
+
+export async function findUserNotificationPreferences(
+  id: ObjectId,
+): Promise<UserNotificationPreferences | null> {
+  const user = await getUsersCollection().findOne(
+    { _id: id },
+    {
+      projection: {
+        whatsappNumber: 1,
+        whatsappOptIn: 1,
+        whatsappOptInAt: 1,
+        whatsappConsentNumber: 1,
+      },
+    },
+  );
+  if (!user) return null;
+
+  return {
+    whatsappNumber: user.whatsappNumber ?? null,
+    whatsappOptIn: user.whatsappOptIn === true,
+    whatsappOptInAt: user.whatsappOptInAt ?? null,
+    whatsappConsentNumber: user.whatsappConsentNumber ?? null,
+  };
+}
+
+export type UpdateUserNotificationPreferencesResult =
+  | { ok: true; value: UserNotificationPreferences }
+  | { ok: false; reason: NotificationPreferenceError }
+  | null;
+
+export async function updateUserNotificationPreferences(
+  id: ObjectId,
+  update: NotificationPreferenceUpdate,
+  now: Date = new Date(),
+): Promise<UpdateUserNotificationPreferencesResult> {
+  const existing = await findUserNotificationPreferences(id);
+  if (!existing) return null;
+
+  const resolved = resolveNotificationPreferences(existing, update, now);
+  if (!resolved.ok) return resolved;
+
+  const user = await getUsersCollection().findOneAndUpdate(
+    { _id: id },
+    {
+      $set: {
+        ...resolved.value,
+        updatedAt: now,
+      },
+    },
+    {
+      returnDocument: "after",
+      projection: {
+        whatsappNumber: 1,
+        whatsappOptIn: 1,
+        whatsappOptInAt: 1,
+        whatsappConsentNumber: 1,
+      },
+    },
+  );
+  if (!user) return null;
+
+  return {
+    ok: true,
+    value: {
+      whatsappNumber: user.whatsappNumber ?? null,
+      whatsappOptIn: user.whatsappOptIn === true,
+      whatsappOptInAt: user.whatsappOptInAt ?? null,
+      whatsappConsentNumber: user.whatsappConsentNumber ?? null,
+    },
+  };
+}
+
+async function withDosenNames<
+  T extends { _id?: ObjectId; displayName?: string },
+>(users: T[]): Promise<T[]> {
   const userIds = users
     .map((user) => user._id)
     .filter((value): value is ObjectId => Boolean(value));
@@ -186,34 +289,6 @@ export async function setUserPassword(
   });
 
   return result?.tokenVersion ?? null;
-}
-
-export async function setUserSchedulePortalAccess(
-  id: ObjectId,
-  enabled: boolean,
-): Promise<User | null> {
-  const update = enabled
-    ? { $addToSet: { permissions: PERMISSIONS.SCHEDULE_PORTAL_ACCESS } }
-    : { $pull: { permissions: PERMISSIONS.SCHEDULE_PORTAL_ACCESS } };
-  return getUsersCollection().findOneAndUpdate(
-    { _id: id },
-    { ...update, $set: { updatedAt: new Date() } },
-    { returnDocument: "after" },
-  );
-}
-
-export async function setUserAgendaManageAccess(
-  id: ObjectId,
-  enabled: boolean,
-): Promise<User | null> {
-  const update = enabled
-    ? { $addToSet: { permissions: PERMISSIONS.AGENDA_MANAGE } }
-    : { $pull: { permissions: PERMISSIONS.AGENDA_MANAGE } };
-  return getUsersCollection().findOneAndUpdate(
-    { _id: id, role: "STUDENT" },
-    { ...update, $set: { updatedAt: new Date() } },
-    { returnDocument: "after" },
-  );
 }
 
 export async function deactivateUser(id: ObjectId): Promise<boolean> {

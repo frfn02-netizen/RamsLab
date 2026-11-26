@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import request from "supertest";
 import { ObjectId } from "mongodb";
 
@@ -63,7 +71,7 @@ describe("password reset email delivery logging", () => {
     );
     expect(acceptedCall).toBeDefined();
     expect(acceptedCall?.[1]).toMatchObject({
-      provider: "test",
+      provider: "mailjet",
       status: "accepted",
       providerMessageId: "test-message-id",
       userId: USER_ID,
@@ -97,7 +105,7 @@ describe("password reset email delivery logging", () => {
     );
     expect(failureCall).toBeDefined();
     expect(failureCall?.[1]).toMatchObject({
-      provider: "failing",
+      provider: "mailjet",
       status: "failed",
       httpStatus: 500,
       reason: "provider_error",

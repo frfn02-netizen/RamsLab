@@ -38,8 +38,8 @@ describe("concurrent password change", () => {
       .send({ email: EMAIL, password: CURRENT_PASSWORD });
     expect(login.status).toBe(200);
 
-    const cookies = (login.headers["set-cookie"] ?? []).map((cookie) =>
-      cookie.split(";")[0],
+    const cookies = (login.headers["set-cookie"] ?? []).map(
+      (cookie) => cookie.split(";")[0],
     );
     const csrfCookie = cookies.find((cookie) =>
       cookie.startsWith("rams_csrf_token="),
@@ -74,9 +74,8 @@ describe("concurrent password change", () => {
     expect(await bcrypt.compare(loserPassword, user!.passwordHash)).toBe(false);
 
     const winnerResponse = a.status === 200 ? a : b;
-    const winnerCookies = (
-      winnerResponse.headers["set-cookie"] ?? []
-    ) as string[];
+    const winnerCookies = (winnerResponse.headers["set-cookie"] ??
+      []) as string[];
     const newAccess =
       winnerCookies
         .find((cookie) => cookie.startsWith("rams_access_token="))

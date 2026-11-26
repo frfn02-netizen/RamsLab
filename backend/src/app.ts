@@ -21,9 +21,9 @@ import researchHighlightRoutes from "./modules/research-highlights/research-high
 import studentRoutes from "./modules/students/student.routes.js";
 import eventRoutes from "./modules/events/event.routes.js";
 import meetingRoutes from "./modules/meetings/meeting.routes.js";
-import labMembershipRoutes from "./modules/lab-memberships/lab-membership.routes.js";
 import publicServiceRoutes from "./modules/public-service/public-service.routes.js";
 import expertRoutes from "./modules/experts/expert.routes.js";
+import { meetingReminderCronController } from "./modules/meeting-reminders/meeting-reminder.cron.js";
 import videoRoutes from "./modules/videos/video.routes.js";
 import { authenticate } from "./middlewares/auth.middlewares.js";
 import { requireRole } from "./middlewares/role.middlewares.js";
@@ -40,11 +40,7 @@ import { createRateLimiter } from "./middlewares/rate-limit.middleware.js";
 import { verifyStateChangingOrigin } from "./middlewares/request-security.middleware.js";
 import { findUserById } from "./modules/users/user.repository.js";
 import { findDosenByUserId } from "./modules/dosen/dosen.repository.js";
-import { getLabMembershipForUser } from "./modules/lab-memberships/lab-membership.service.js";
-import {
-  getEmailConfigurationDiagnostics,
-  isEmailConfigured,
-} from "./lib/email.js";
+import { getMailjetConfigurationDiagnostics } from "./lib/mailjet.js";
 import {
   errorHandler,
   notFoundHandler,
@@ -89,10 +85,6 @@ const corsOptions: CorsOptions = {
   maxAge: 600,
 };
 app.use(cors(corsOptions));
-
-// The cors middleware ends approved preflights with CORS headers. For a
-// disallowed origin it calls next without headers, which would otherwise fall
-// through to Express's automatic OPTIONS response and return "200 Allow: POST".
 app.use((req, res, next) => {
   if (req.method !== "OPTIONS" || !req.get("origin")) return next();
   if (res.getHeader("Access-Control-Allow-Origin")) return next();
@@ -129,8 +121,6 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use(
   "/api/public",
   (_req, res, next) => {
-    // Public reads are safe to reuse briefly at the browser/CDN edge. This
-    // keeps repeat visits from waking the API and MongoDB for every section.
     res.setHeader(
       "Cache-Control",
       "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
@@ -144,23 +134,28 @@ app.use("/api/admin/research-highlights", researchHighlightRoutes);
 app.use("/api/admin/site-content", siteContentRoutes);
 app.use("/api/admin/events", eventRoutes);
 app.use("/api/meetings", meetingRoutes);
-app.use("/api/lab-memberships", labMembershipRoutes);
+app.get("/api/cron/meeting-reminders", meetingReminderCronController);
+app.post("/api/cron/meeting-reminders", meetingReminderCronController);
 app.use("/api/admin/public-service", publicServiceRoutes);
 app.use("/api/admin/videos", videoRoutes);
 app.use("/api/experts", expertRoutes);
 
-app.get("/api/admin/health", authenticate, requireRole("ADMIN"), (_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  return res.json({
-    success: true,
-    data: {
-      emailDeliveryConfigured: isEmailConfigured(),
-      ...getEmailConfigurationDiagnostics(),
-      trustProxyConfigured: isTrustProxyConfigured(),
-      trustProxyMode: getTrustProxyMode(),
-    },
-  });
-});
+app.get(
+  "/api/admin/health",
+  authenticate,
+  requireRole("ADMIN"),
+  (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    return res.json({
+      success: true,
+      data: {
+        ...getMailjetConfigurationDiagnostics(),
+        trustProxyConfigured: isTrustProxyConfigured(),
+        trustProxyMode: getTrustProxyMode(),
+      },
+    });
+  },
+);
 
 app.get("/api/admin/test", authenticate, requireRole("ADMIN"), (_req, res) => {
   return res.json({
@@ -175,9 +170,6 @@ app.get("/api/auth/me", authenticate, async (req, res) => {
     req.user?.role === "DOSEN" && ObjectId.isValid(req.user.userId)
       ? await findDosenByUserId(new ObjectId(req.user.userId))
       : null;
-  const labMembership = req.user
-    ? await getLabMembershipForUser(req.user.userId)
-    : null;
   return res.json({
     success: true,
     user: req.user
@@ -192,12 +184,6 @@ app.get("/api/auth/me", authenticate, async (req, res) => {
           permissions: Array.isArray(account?.permissions)
             ? account.permissions
             : [],
-          labMembership: labMembership
-            ? {
-                labId: labMembership.labId,
-                status: labMembership.status,
-              }
-            : null,
         }
       : undefined,
   });

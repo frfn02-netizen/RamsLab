@@ -17,7 +17,6 @@ type LoginUser = {
   isActive?: boolean;
   permissions?: string[];
   mustChangePassword?: boolean;
-  labMembership?: AuthUser["labMembership"];
 };
 type MeUser = {
   userId: string;
@@ -25,7 +24,6 @@ type MeUser = {
   role: AuthUser["role"];
   permissions?: string[];
   mustChangePassword?: boolean;
-  labMembership?: AuthUser["labMembership"];
 };
 type CsrfResponse = { csrfToken: string };
 
@@ -43,21 +41,16 @@ function normalizeUser(
       permissions: user.permissions ?? fallback?.permissions ?? [],
       mustChangePassword:
         user.mustChangePassword ?? fallback?.mustChangePassword ?? false,
-      labMembership: user.labMembership ?? fallback?.labMembership ?? null,
     };
   }
   return {
     id: user.id,
     email: user.email,
-    fullName:
-      user.fullName ??
-      user.displayName ??
-      fallback?.fullName,
+    fullName: user.fullName ?? user.displayName ?? fallback?.fullName,
     role: user.role,
     isActive: user.isActive ?? true,
     permissions: user.permissions ?? fallback?.permissions ?? [],
     mustChangePassword: user.mustChangePassword ?? false,
-    labMembership: user.labMembership ?? null,
   };
 }
 

@@ -32,7 +32,7 @@ function LoginContent() {
     setSubmitting(true);
     try {
       const authenticatedUser = await login({ email, password });
-      const next = searchParams.get("next");
+      const next = searchParams.get("callbackUrl") ?? searchParams.get("next");
       router.replace(authorizedLoginDestination(authenticatedUser, next));
     } catch (reason) {
       notifyError(getUserFacingError(reason));

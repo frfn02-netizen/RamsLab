@@ -16,8 +16,7 @@ import {
   logout as logoutRequest,
   register as registerRequest,
 } from "@/lib/api/auth";
-import { onLabMembershipRequired, onUnauthorized } from "@/lib/api/client";
-import { ApiError } from "@/lib/api/errors";
+import { onUnauthorized } from "@/lib/api/client";
 import type { AuthUser, LoginInput, RegisterInput } from "@/types/auth";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -31,20 +30,16 @@ interface AuthContextValue {
   refresh(): Promise<void>;
 }
 const AuthContext = createContext<AuthContextValue | null>(null);
-const MEMBERSHIP_REVALIDATION_MIN_INTERVAL_MS = 30_000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
   const refreshPromise = useRef<Promise<void> | null>(null);
-  const membershipRevalidationPromise = useRef<Promise<void> | null>(null);
-  const lastSuccessfulMembershipRevalidationAt = useRef(0);
   const authGeneration = useRef(0);
   const userRef = useRef<AuthUser | null>(null);
 
   const invalidateAuthState = useCallback(() => {
     authGeneration.current += 1;
-    membershipRevalidationPromise.current = null;
   }, []);
 
   const refresh = useCallback(async () => {
@@ -71,74 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return promise;
   }, []);
 
-  const revalidateMembership = useCallback((force = false) => {
-    if (refreshPromise.current) return refreshPromise.current;
-    if (membershipRevalidationPromise.current) {
-      return membershipRevalidationPromise.current;
-    }
-
-    if (
-      !force &&
-      Date.now() - lastSuccessfulMembershipRevalidationAt.current <
-        MEMBERSHIP_REVALIDATION_MIN_INTERVAL_MS
-    ) {
-      return Promise.resolve();
-    }
-
-    const generation = authGeneration.current;
-    let promise: Promise<void> | null = null;
-    promise = (async () => {
-      try {
-        const currentUser = await getCurrentUser(userRef.current ?? undefined);
-        if (generation !== authGeneration.current) return;
-        userRef.current = currentUser;
-        setUser(currentUser);
-        setStatus("authenticated");
-        lastSuccessfulMembershipRevalidationAt.current = Date.now();
-      } catch (error) {
-        if (generation !== authGeneration.current) return;
-        if (error instanceof ApiError && error.status === 401) {
-          invalidateAuthState();
-          userRef.current = null;
-          setUser(null);
-          setStatus("unauthenticated");
-        }
-      } finally {
-        if (membershipRevalidationPromise.current === promise) {
-          membershipRevalidationPromise.current = null;
-        }
-      }
-    })();
-
-    membershipRevalidationPromise.current = promise;
-    return promise;
-  }, [invalidateAuthState]);
-
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  useEffect(
-    () =>
-      onLabMembershipRequired(() => {
-        void revalidateMembership(true);
-      }),
-    [revalidateMembership],
-  );
-
-  useEffect(() => {
-    const revalidateOnFocus = () => {
-      if (document.visibilityState === "visible") {
-        void revalidateMembership();
-      }
-    };
-    window.addEventListener("focus", revalidateOnFocus);
-    document.addEventListener("visibilitychange", revalidateOnFocus);
-    return () => {
-      window.removeEventListener("focus", revalidateOnFocus);
-      document.removeEventListener("visibilitychange", revalidateOnFocus);
-    };
-  }, [revalidateMembership]);
   useEffect(
     () =>
       onUnauthorized(() => {

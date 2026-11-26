@@ -8,61 +8,31 @@ import { requireRole } from "../../middlewares/role.middlewares.js";
 import { createRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
 import {
-  createDosenUserController,
-  createStudentUserController,
+  getNotificationPreferencesController,
   getUserDirectoryController,
-  listAgendaCoordinatorStudentsController,
   resetUserPasswordController,
-  updateAgendaManageAccessController,
-  updateSchedulePortalAccessController,
+  updateNotificationPreferencesController,
 } from "./user.controller.js";
 
 const router = Router();
 
 router.get(
-  "/directory",
+  "/me/notification-preferences",
   authenticate,
-  requirePermission(
-    PERMISSIONS.MEETINGS_DIRECTORY_READ,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-    PERMISSIONS.AGENDA_MANAGE,
-  ),
-  getUserDirectoryController,
+  getNotificationPreferencesController,
+);
+
+router.patch(
+  "/me/notification-preferences",
+  authenticate,
+  updateNotificationPreferencesController,
 );
 
 router.get(
-  "/agenda-coordinators",
+  "/directory",
   authenticate,
-  requireRole("ADMIN"),
-  listAgendaCoordinatorStudentsController,
-);
-
-router.patch(
-  "/:id/agenda-access",
-  authenticate,
-  requireRole("ADMIN"),
-  updateAgendaManageAccessController,
-);
-
-router.post(
-  "/dosen",
-  authenticate,
-  requireRole("ADMIN"),
-  createDosenUserController,
-);
-
-router.post(
-  "/student",
-  authenticate,
-  requireRole("ADMIN"),
-  createStudentUserController,
-);
-
-router.patch(
-  "/:id/schedule-access",
-  authenticate,
-  requireRole("ADMIN"),
-  updateSchedulePortalAccessController,
+  requirePermission(PERMISSIONS.MEETINGS_DIRECTORY_READ),
+  getUserDirectoryController,
 );
 
 router.post(

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import ChangePasswordPage from "@/app/change-password/page";
+import ChangePasswordPage from "@/app/(internal)/change-password/page";
 
 const { changePassword, refresh, notifyError } = vi.hoisted(() => ({
   changePassword: vi.fn(),

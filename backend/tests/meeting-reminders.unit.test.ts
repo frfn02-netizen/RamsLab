@@ -6,12 +6,12 @@ import {
   MEETING_REMINDER_TIMEZONE,
 } from "../src/modules/meeting-reminders/meeting-reminder.constants.js";
 import {
-  classifyReminderFailure,
   computeScheduledFor,
   getReminderGraceMinutes,
   isInitialReminderWindowOpen,
   nextRetryDelayMs,
 } from "../src/modules/meeting-reminders/meeting-reminder.service.js";
+import { classifyProviderFailure } from "../src/modules/meeting-reminders/meeting-reminder.channel.js";
 import {
   filterEligibleReminderRecipients,
   meetingReminderUserIds,
@@ -21,9 +21,8 @@ import {
   formatReminderDateTime,
   renderMeetingReminderEmail,
 } from "../src/modules/meeting-reminders/meeting-reminder.template.js";
-import { startMeetingReminderScheduler } from "../src/modules/meeting-reminders/meeting-reminder.scheduler.js";
 import type { Meeting } from "../src/modules/meetings/meeting.types.js";
-import type { UserDirectoryEntry } from "../src/modules/users/user.types.js";
+import type { UserReminderContact } from "../src/modules/users/user.types.js";
 import { ObjectId } from "mongodb";
 
 const silentLogger = {
@@ -32,9 +31,10 @@ const silentLogger = {
   error: () => {},
 };
 
-function enabledConfig(overrides: Record<string, unknown> = {}) {
+function runtimeConfig(overrides: Record<string, unknown> = {}) {
   return {
-    enabled: true,
+    channel: "EMAIL" as const,
+    contractLegacyIndexes: false,
     pollMs: 60_000,
     timezone: MEETING_REMINDER_TIMEZONE,
     maxAttempts: 4,
@@ -47,16 +47,22 @@ function enabledConfig(overrides: Record<string, unknown> = {}) {
 
 function user(
   id: string,
-  role: UserDirectoryEntry["role"],
+  role: UserReminderContact["role"],
   isActive = true,
   email = `${id}@example.com`,
-): UserDirectoryEntry {
+  whatsappNumber: string | null = null,
+  whatsappOptIn = false,
+  whatsappConsentNumber: string | null = whatsappOptIn ? whatsappNumber : null,
+): UserReminderContact {
   return {
     _id: new ObjectId(id),
     email,
     role,
     isActive,
     displayName: `User ${id.slice(-4)}`,
+    whatsappNumber,
+    whatsappOptIn,
+    whatsappConsentNumber,
   };
 }
 
@@ -65,7 +71,8 @@ describe("meeting reminder configuration", () => {
     const config = readMeetingReminderConfig({});
 
     expect(config).toMatchObject({
-      enabled: false,
+      channel: "EMAIL",
+      contractLegacyIndexes: false,
       timezone: "Asia/Jakarta",
       pollMs: 60_000,
       maxAttempts: 4,
@@ -75,9 +82,10 @@ describe("meeting reminder configuration", () => {
     });
   });
 
-  it("accepts explicit enabled values and integer settings", () => {
+  it("accepts explicit channel and integer settings", () => {
     const config = readMeetingReminderConfig({
-      MEETING_REMINDERS_ENABLED: "true",
+      MEETING_REMINDER_CHANNEL: "whatsapp",
+      MEETING_REMINDER_CONTRACT_LEGACY_INDEXES: "true",
       MEETING_REMINDER_POLL_MS: "5000",
       MEETING_REMINDER_TIMEZONE: "Asia/Jakarta",
       MEETING_REMINDER_MAX_ATTEMPTS: "3",
@@ -87,7 +95,8 @@ describe("meeting reminder configuration", () => {
     });
 
     expect(config).toMatchObject({
-      enabled: true,
+      channel: "WHATSAPP",
+      contractLegacyIndexes: true,
       pollMs: 5000,
       maxAttempts: 3,
       leaseMs: 30000,
@@ -97,10 +106,6 @@ describe("meeting reminder configuration", () => {
   });
 
   it("rejects invalid flags, numbers, timezones, and retry ranges", () => {
-    expect(() =>
-      readMeetingReminderConfig({ MEETING_REMINDERS_ENABLED: "maybe" }),
-    ).toThrow("MEETING_REMINDERS_ENABLED");
-
     expect(() =>
       readMeetingReminderConfig({ MEETING_REMINDER_POLL_MS: "0" }),
     ).toThrow("MEETING_REMINDER_POLL_MS");
@@ -119,29 +124,36 @@ describe("meeting reminder configuration", () => {
         MEETING_REMINDER_RETRY_CAP_MS: "1000",
       }),
     ).toThrow("MEETING_REMINDER_RETRY_CAP_MS");
+
+    expect(() =>
+      readMeetingReminderConfig({ MEETING_REMINDER_CHANNEL: "sms" }),
+    ).toThrow("MEETING_REMINDER_CHANNEL");
+
+    expect(() =>
+      readMeetingReminderConfig({
+        MEETING_REMINDER_CONTRACT_LEGACY_INDEXES: "maybe",
+      }),
+    ).toThrow("MEETING_REMINDER_CONTRACT_LEGACY_INDEXES");
   });
 });
 
 describe("reminder interval and grace calculations", () => {
   const startAt = new Date("2030-06-01T12:00:00.000Z");
 
-  it("computes all approved intervals", () => {
-    expect(MEETING_REMINDER_INTERVALS_MINUTES).toEqual([1440, 60, 15]);
+  it("computes the two approved intervals", () => {
+    expect(MEETING_REMINDER_INTERVALS_MINUTES).toEqual([1440, 60]);
     expect(computeScheduledFor(startAt, 1440).toISOString()).toBe(
       "2030-05-31T12:00:00.000Z",
     );
     expect(computeScheduledFor(startAt, 60).toISOString()).toBe(
       "2030-06-01T11:00:00.000Z",
     );
-    expect(computeScheduledFor(startAt, 15).toISOString()).toBe(
-      "2030-06-01T11:45:00.000Z",
-    );
   });
 
   it("uses the approved grace windows", () => {
     expect(getReminderGraceMinutes(1440)).toBe(60);
     expect(getReminderGraceMinutes(60)).toBe(10);
-    expect(getReminderGraceMinutes(15)).toBe(5);
+    expect(getReminderGraceMinutes(15)).toBe(0);
   });
 
   it("closes the grace window exactly at its boundary and at startAt", () => {
@@ -177,16 +189,9 @@ describe("reminder interval and grace calculations", () => {
 });
 
 describe("retry classification and backoff", () => {
-  const base = {
-    sent: false,
-    status: "failed" as const,
-    provider: "test",
-  };
-
   it("retries only explicit 429 rejections", () => {
     expect(
-      classifyReminderFailure({
-        ...base,
+      classifyProviderFailure({
         reason: "provider_error",
         httpStatus: 429,
       }),
@@ -195,38 +200,40 @@ describe("retry classification and backoff", () => {
 
   it("treats definitive provider rejections as rejected", () => {
     expect(
-      classifyReminderFailure({
-        ...base,
+      classifyProviderFailure({
         reason: "provider_error",
         httpStatus: 400,
       }),
     ).toBe("rejected");
+    expect(classifyProviderFailure({ reason: "authentication_failed" })).toBe(
+      "rejected",
+    );
+    expect(classifyProviderFailure({ reason: "envelope_rejected" })).toBe(
+      "rejected",
+    );
+    expect(classifyProviderFailure({ reason: "not_configured" })).toBe(
+      "rejected",
+    );
     expect(
-      classifyReminderFailure({ ...base, reason: "authentication_failed" }),
-    ).toBe("rejected");
-    expect(
-      classifyReminderFailure({ ...base, reason: "envelope_rejected" }),
-    ).toBe("rejected");
-    expect(
-      classifyReminderFailure({ ...base, reason: "not_configured" }),
+      classifyProviderFailure({ reason: "invalid_recipient_address" }),
     ).toBe("rejected");
   });
 
   it("treats post-transmission uncertainty as ambiguous", () => {
     for (const result of [
-      { ...base, reason: "timeout" as const },
-      { ...base, reason: "connection_failed" as const },
-      { ...base, reason: "invalid_response" as const },
-      { ...base, reason: "provider_error" as const, httpStatus: 500 },
-      { ...base, reason: "provider_error" as const, httpStatus: 503 },
-      { ...base, reason: "provider_error" as const },
+      { reason: "timeout" as const },
+      { reason: "connection_failed" as const },
+      { reason: "invalid_response" as const },
+      { reason: "provider_error" as const, httpStatus: 500 },
+      { reason: "provider_error" as const, httpStatus: 503 },
+      { reason: "provider_error" as const },
     ]) {
-      expect(classifyReminderFailure(result)).toBe("ambiguous");
+      expect(classifyProviderFailure(result)).toBe("ambiguous");
     }
   });
 
   it("applies exponential backoff and the configured cap", () => {
-    const config = enabledConfig();
+    const config = runtimeConfig();
 
     expect(nextRetryDelayMs(1, config)).toBe(60_000);
     expect(nextRetryDelayMs(2, config)).toBe(120_000);
@@ -239,18 +246,53 @@ describe("recipient resolution rules", () => {
   const organizerId = "000000000000000000000001";
   const participantId = "000000000000000000000002";
 
-  it("deduplicates, filters roles and active status, and keeps the organizer", () => {
-    const recipients = filterEligibleReminderRecipients([
-      user(organizerId, "DOSEN"),
-      user(participantId, "ADMIN"),
-      user(participantId, "ADMIN"),
-      user("000000000000000000000003", "ALUMNI"),
-      user("000000000000000000000004", "DOSEN", false),
-    ]);
+  it("keeps EMAIL recipients to ADMIN and DOSEN", () => {
+    const recipients = filterEligibleReminderRecipients(
+      [
+        user(organizerId, "DOSEN"),
+        user(participantId, "ADMIN"),
+        user(participantId, "ADMIN"),
+        user("000000000000000000000003", "ALUMNI"),
+        user("000000000000000000000004", "DOSEN", false),
+        user("000000000000000000000005", "STUDENT"),
+      ],
+      "EMAIL",
+    );
 
     expect(recipients.map((recipient) => recipient.userId)).toEqual([
       organizerId,
       participantId,
+    ]);
+  });
+
+  it("excludes STUDENT accounts from WHATSAPP recipients", () => {
+    const recipients = filterEligibleReminderRecipients(
+      [
+        user(
+          organizerId,
+          "DOSEN",
+          true,
+          "a@example.com",
+          "+628111111111",
+          true,
+        ),
+        user(
+          participantId,
+          "STUDENT",
+          true,
+          "b@example.com",
+          "+6281222222222",
+          true,
+        ),
+      ],
+      "WHATSAPP",
+    );
+
+    expect(recipients.map((recipient) => recipient.userId)).toEqual([
+      organizerId,
+    ]);
+    expect(recipients.map((recipient) => recipient.whatsappNumber)).toEqual([
+      "+628111111111",
     ]);
   });
 
@@ -288,13 +330,11 @@ describe("email template", () => {
     email: "recipient@example.com",
     displayName: "Recipient",
     role: "DOSEN" as const,
+    whatsappNumber: null,
   };
 
   it("formats Asia/Jakarta time across the UTC day boundary", () => {
-    const formatted = formatReminderDateTime(
-      meeting.startAt,
-      "Asia/Jakarta",
-    );
+    const formatted = formatReminderDateTime(meeting.startAt, "Asia/Jakarta");
 
     expect(formatted).toContain("02 January 2026");
     expect(formatted).toContain("00:30");
@@ -338,68 +378,5 @@ describe("email template", () => {
 
     expect(rendered.text).not.toContain("javascript:");
     expect(rendered.html).not.toContain("javascript:");
-  });
-});
-
-describe("scheduler lifecycle", () => {
-  it("does nothing when the feature flag is disabled", async () => {
-    const runCycle = vi.fn().mockResolvedValue({});
-    const handle = startMeetingReminderScheduler({
-      config: enabledConfig({ enabled: false }),
-      logger: silentLogger,
-      runCycle,
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(runCycle).not.toHaveBeenCalled();
-    expect(handle.isRunning()).toBe(false);
-    await handle.stop(100);
-  });
-
-  it("runs immediately, prevents overlap, and drains on stop", async () => {
-    let resolveCycle!: () => void;
-    const cycle = new Promise<{
-      enabled: boolean;
-      scannedMeetings: number;
-      createdDeliveries: number;
-      revivedDeliveries: number;
-      cancelledDeliveries: number;
-      sent: number;
-      retried: number;
-      failed: number;
-      unknown: number;
-      missed: number;
-    }>((resolve) => {
-      resolveCycle = () =>
-        resolve({
-          enabled: true,
-          scannedMeetings: 0,
-          createdDeliveries: 0,
-          revivedDeliveries: 0,
-          cancelledDeliveries: 0,
-          sent: 0,
-          retried: 0,
-          failed: 0,
-          unknown: 0,
-          missed: 0,
-        });
-    });
-    const runCycle = vi.fn().mockImplementation(() => cycle);
-    const handle = startMeetingReminderScheduler({
-      config: enabledConfig({ pollMs: 1000 }),
-      logger: silentLogger,
-      runCycle,
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(runCycle).toHaveBeenCalledTimes(1);
-    expect(handle.isRunning()).toBe(true);
-
-    const stopPromise = handle.stop(1000);
-    resolveCycle();
-    await stopPromise;
-
-    expect(handle.isRunning()).toBe(false);
-    expect(runCycle).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,39 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  MailjetEmailProvider,
+  getMailjetConfigurationDiagnostics,
   sendEmail,
-  setEmailProviderForTesting,
-} from "../src/lib/email.js";
+  sendPasswordResetEmail,
+  setMailjetTransportForTesting,
+} from "../src/lib/mailjet.js";
 
-const MAILJET_API_KEY = "mailjet-test-key";
-const MAILJET_API_SECRET = "mailjet-test-secret";
-const MAILJET_SENDER_EMAIL = "no-reply@rams.test";
-const MAILJET_SENDER_NAME = "RAMS Platform";
+const API_KEY = "mailjet-test-key";
+const SECRET_KEY = "mailjet-test-secret";
+const SENDER_EMAIL = "no-reply@rams.test";
 const RECIPIENT = "recipient@example.com";
 const ENV_KEYS = [
-  "EMAIL_PROVIDER",
-  "EMAIL_FROM",
   "MAILJET_API_KEY",
+  "MAILJET_SECRET_KEY",
   "MAILJET_API_SECRET",
   "MAILJET_SENDER_EMAIL",
   "MAILJET_SENDER_NAME",
+  "MAILJET_DRY_RUN",
+  "NODE_ENV",
 ] as const;
-
 const originalEnv = Object.fromEntries(
   ENV_KEYS.map((key) => [key, process.env[key]]),
 ) as Record<(typeof ENV_KEYS)[number], string | undefined>;
-
-function setMailjetEnv(overrides: Partial<Record<string, string>> = {}) {
-  process.env.EMAIL_PROVIDER = "mailjet";
-  process.env.MAILJET_API_KEY = overrides.MAILJET_API_KEY ?? MAILJET_API_KEY;
-  process.env.MAILJET_API_SECRET =
-    overrides.MAILJET_API_SECRET ?? MAILJET_API_SECRET;
-  process.env.MAILJET_SENDER_EMAIL =
-    overrides.MAILJET_SENDER_EMAIL ?? MAILJET_SENDER_EMAIL;
-  process.env.MAILJET_SENDER_NAME =
-    overrides.MAILJET_SENDER_NAME ?? MAILJET_SENDER_NAME;
-}
 
 function restoreEnv() {
   for (const key of ENV_KEYS) {
@@ -58,25 +47,28 @@ function successResponse(messageId = "mailjet-message-id") {
 }
 
 beforeEach(() => {
-  setMailjetEnv();
-  setEmailProviderForTesting(null);
+  process.env.MAILJET_API_KEY = API_KEY;
+  process.env.MAILJET_SECRET_KEY = SECRET_KEY;
+  delete process.env.MAILJET_API_SECRET;
+  process.env.MAILJET_SENDER_EMAIL = SENDER_EMAIL;
+  process.env.MAILJET_SENDER_NAME = "RAMS Platform";
+  delete process.env.MAILJET_DRY_RUN;
+  setMailjetTransportForTesting(null);
 });
 
 afterEach(() => {
   restoreEnv();
-  setEmailProviderForTesting(null);
+  setMailjetTransportForTesting(null);
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
-describe("Mailjet provider", () => {
+describe("Mailjet client", () => {
   it("sends a message with Basic auth and the v3.1 payload", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(successResponse());
-    const provider = new MailjetEmailProvider(fetchMock);
+    const transport = vi.fn().mockResolvedValue(successResponse());
+    setMailjetTransportForTesting(transport);
 
-    expect(provider.isConfigured).toBe(true);
-
-    const result = await provider.send({
+    const result = await sendEmail({
       to: RECIPIENT,
       subject: "RAMS test",
       text: "Hello",
@@ -90,15 +82,14 @@ describe("Mailjet provider", () => {
       providerMessageId: "mailjet-message-id",
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
+    expect(transport).toHaveBeenCalledTimes(1);
+    const [url, init] = transport.mock.calls[0];
     expect(url).toBe("https://api.mailjet.com/v3.1/send");
     expect(init).toMatchObject({
       method: "POST",
+      signal: expect.any(AbortSignal),
       headers: {
-        Authorization: `Basic ${Buffer.from(
-          `${MAILJET_API_KEY}:${MAILJET_API_SECRET}`,
-        ).toString("base64")}`,
+        Authorization: `Basic ${Buffer.from(`${API_KEY}:${SECRET_KEY}`).toString("base64")}`,
         "Content-Type": "application/json",
       },
     });
@@ -107,7 +98,7 @@ describe("Mailjet provider", () => {
     expect(body).toEqual({
       Messages: [
         {
-          From: { Email: MAILJET_SENDER_EMAIL, Name: MAILJET_SENDER_NAME },
+          From: { Email: SENDER_EMAIL, Name: "RAMS Platform" },
           To: [{ Email: RECIPIENT }],
           Subject: "RAMS test",
           TextPart: "Hello",
@@ -117,242 +108,137 @@ describe("Mailjet provider", () => {
     });
   });
 
-  it("omits HTMLPart when no HTML body is provided", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(successResponse());
-    const provider = new MailjetEmailProvider(fetchMock);
+  it("dry-runs in the test environment without calling the network", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
 
-    await provider.send({
+    const result = await sendEmail({
       to: RECIPIENT,
-      subject: "RAMS test",
+      subject: "Dry run",
       text: "Hello",
     });
 
-    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
-    expect(body.Messages[0]).not.toHaveProperty("HTMLPart");
+    expect(result).toEqual({
+      sent: true,
+      status: "accepted",
+      provider: "mailjet",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(infoSpy).toHaveBeenCalledWith(
+      "Mailjet dry run: message not sent",
+      { recipients: [RECIPIENT], subject: "Dry run" },
+    );
   });
 
-  it("returns not_configured without calling fetch when credentials are missing", async () => {
-    delete process.env.MAILJET_API_SECRET;
+  it("honors MAILJET_DRY_RUN outside the test environment", async () => {
+    process.env.NODE_ENV = "production";
+    process.env.MAILJET_DRY_RUN = "true";
     const fetchMock = vi.fn();
-    const provider = new MailjetEmailProvider(fetchMock);
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(console, "info").mockImplementation(() => {});
 
-    expect(provider.isConfigured).toBe(false);
-
-    const result = await provider.send({
+    const result = await sendEmail({
       to: RECIPIENT,
-      subject: "RAMS test",
+      subject: "Dry run",
+      text: "Hello",
+    });
+
+    expect(result.sent).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("maps provider HTTP failures to sanitized reasons", async () => {
+    setMailjetTransportForTesting(async () =>
+      new Response("upstream error", { status: 503 }),
+    );
+    await expect(
+      sendEmail({ to: RECIPIENT, subject: "Test", text: "Hello" }),
+    ).resolves.toMatchObject({
+      sent: false,
+      status: "failed",
+      reason: "provider_error",
+      httpStatus: 503,
+    });
+
+    setMailjetTransportForTesting(async () =>
+      new Response("unauthorized", { status: 401 }),
+    );
+    await expect(
+      sendEmail({ to: RECIPIENT, subject: "Test", text: "Hello" }),
+    ).resolves.toMatchObject({
+      sent: false,
+      reason: "authentication_failed",
+      httpStatus: 401,
+    });
+  });
+
+  it("returns not_configured without credentials", async () => {
+    delete process.env.MAILJET_API_KEY;
+    const transport = vi.fn();
+    setMailjetTransportForTesting(transport);
+
+    const result = await sendEmail({
+      to: RECIPIENT,
+      subject: "Test",
       text: "Hello",
     });
 
     expect(result).toMatchObject({
       sent: false,
       status: "not_configured",
-      provider: "mailjet",
       reason: "not_configured",
     });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(transport).not.toHaveBeenCalled();
   });
 
-  it("returns not_configured when the sender email is invalid", () => {
-    setMailjetEnv({ MAILJET_SENDER_EMAIL: "not-an-email" });
-    const provider = new MailjetEmailProvider(vi.fn());
-
-    expect(provider.isConfigured).toBe(false);
-  });
-
-  it("maps HTTP 401 to authentication_failed without logging secrets", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          ErrorMessage: `invalid credentials ${MAILJET_API_SECRET}`,
-          ErrorCode: "mj-0002",
-        }),
-        { status: 401, headers: { "Content-Type": "application/json" } },
-      ),
-    );
-    const provider = new MailjetEmailProvider(fetchMock);
-
-    const result = await provider.send({
-      to: RECIPIENT,
-      subject: "RAMS test",
-      text: "Hello",
-    });
-
-    expect(result).toMatchObject({
-      sent: false,
-      status: "failed",
-      provider: "mailjet",
-      httpStatus: 401,
-      reason: "authentication_failed",
-    });
-
-    const serialized = JSON.stringify(errorSpy.mock.calls);
-    expect(serialized).not.toContain(MAILJET_API_KEY);
-    expect(serialized).not.toContain(MAILJET_API_SECRET);
-    expect(serialized).not.toContain(RECIPIENT);
-  });
-
-  it("maps an HTTP 500 to provider_error", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response("upstream failure", { status: 500 }));
-    const provider = new MailjetEmailProvider(fetchMock);
-
-    const result = await provider.send({
-      to: RECIPIENT,
-      subject: "RAMS test",
-      text: "Hello",
-    });
-
-    expect(result).toMatchObject({
-      sent: false,
-      status: "failed",
-      provider: "mailjet",
-      httpStatus: 500,
-      reason: "provider_error",
-    });
-  });
-
-  it("maps an aborted request to timeout", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetchMock = vi.fn().mockRejectedValue(
-      Object.assign(new Error("The operation was aborted"), {
-        name: "TimeoutError",
-      }),
-    );
-    const provider = new MailjetEmailProvider(fetchMock);
-
-    const result = await provider.send({
-      to: RECIPIENT,
-      subject: "RAMS test",
-      text: "Hello",
-    });
-
-    expect(result).toMatchObject({
-      sent: false,
-      status: "failed",
-      provider: "mailjet",
-      reason: "timeout",
-    });
-  });
-
-  it("maps a network failure to connection_failed", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetchMock = vi
-      .fn()
-      .mockRejectedValue(new Error("getaddrinfo ENOTFOUND"));
-    const provider = new MailjetEmailProvider(fetchMock);
-
-    const result = await provider.send({
-      to: RECIPIENT,
-      subject: "RAMS test",
-      text: "Hello",
-    });
-
-    expect(result).toMatchObject({
-      sent: false,
-      status: "failed",
-      provider: "mailjet",
-      reason: "connection_failed",
-    });
-  });
-
-  it("maps malformed JSON to invalid_response", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response("not json", { status: 200 }));
-    const provider = new MailjetEmailProvider(fetchMock);
-
-    const result = await provider.send({
-      to: RECIPIENT,
-      subject: "RAMS test",
-      text: "Hello",
-    });
-
-    expect(result).toMatchObject({
-      sent: false,
-      status: "failed",
-      provider: "mailjet",
-      httpStatus: 200,
-      reason: "invalid_response",
-    });
-  });
-
-  it("maps a response without Messages to invalid_response", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ Messages: "unexpected" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
-    );
-    const provider = new MailjetEmailProvider(fetchMock);
-
-    const result = await provider.send({
-      to: RECIPIENT,
-      subject: "RAMS test",
-      text: "Hello",
-    });
-
-    expect(result).toMatchObject({
-      sent: false,
-      status: "failed",
-      provider: "mailjet",
-      reason: "invalid_response",
-    });
-  });
-
-  it("maps a per-message error status to provider_error", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          Messages: [
-            {
-              Status: "error",
-              Errors: [{ ErrorCode: "mj-0004", ErrorMessage: "rejected" }],
-            },
-          ],
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
-    );
-    const provider = new MailjetEmailProvider(fetchMock);
-
-    const result = await provider.send({
-      to: RECIPIENT,
-      subject: "RAMS test",
-      text: "Hello",
-    });
-
-    expect(result).toMatchObject({
-      sent: false,
-      status: "failed",
-      provider: "mailjet",
-      reason: "provider_error",
-    });
-  });
-});
-
-describe("Mailjet provider selection", () => {
-  it("is selected by EMAIL_PROVIDER=mailjet via sendEmail", async () => {
-    setMailjetEnv();
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(successResponse()));
+  it("rejects malformed recipients before sending", async () => {
+    const transport = vi.fn();
+    setMailjetTransportForTesting(transport);
 
     const result = await sendEmail({
-      to: RECIPIENT,
-      subject: "RAMS test",
+      to: "not-an-email",
+      subject: "Test",
       text: "Hello",
     });
 
     expect(result).toMatchObject({
-      sent: true,
-      status: "accepted",
-      provider: "mailjet",
-      providerMessageId: "mailjet-message-id",
+      sent: false,
+      reason: "envelope_rejected",
     });
+    expect(transport).not.toHaveBeenCalled();
+  });
+
+  it("reports sanitized configuration diagnostics", () => {
+    const diagnostics = getMailjetConfigurationDiagnostics();
+
+    expect(diagnostics.provider).toBe("mailjet");
+    expect(diagnostics.mailjetConfigured).toBe(true);
+    expect(diagnostics.mailjetApiKeyConfigured).toBe(true);
+    expect(diagnostics.mailjetSecretKeyConfigured).toBe(true);
+    expect(diagnostics.mailjetSenderEmailConfigured).toBe(true);
+    expect(diagnostics.mailjetSenderDomain).toBe("rams.test");
+    expect(JSON.stringify(diagnostics)).not.toContain(API_KEY);
+    expect(JSON.stringify(diagnostics)).not.toContain(SECRET_KEY);
+  });
+
+  it("renders password reset links with the token fragment", async () => {
+    const transport = vi.fn().mockResolvedValue(successResponse());
+    setMailjetTransportForTesting(transport);
+
+    const result = await sendPasswordResetEmail(
+      RECIPIENT,
+      "https://rams.example/reset-password#token=abc123",
+    );
+
+    expect(result.sent).toBe(true);
+    const body = JSON.parse(String(transport.mock.calls[0][1].body));
+    expect(body.Messages[0].Subject).toBe("Reset your RAMS password");
+    expect(body.Messages[0].TextPart).toContain(
+      "https://rams.example/reset-password#token=abc123",
+    );
+    expect(body.Messages[0].HTMLPart).toContain(
+      "https://rams.example/reset-password#token=abc123",
+    );
   });
 });

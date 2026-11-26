@@ -5,13 +5,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
 import { useToast } from "@/components/providers/toast-providers";
 import PasswordInput from "@/components/password-input";
-import {
-  Button,
-  Card,
-  Field,
-  LinkButton,
-  PageHeader,
-} from "@/components/ui";
+import { Button, Card, Field, LinkButton, PageHeader } from "@/components/ui";
 import { changePassword } from "@/lib/api/auth";
 import { getUserFacingError } from "@/lib/api/errors";
 import { defaultAuthenticatedDestination } from "@/lib/authz";
@@ -23,9 +17,7 @@ export default function ChangePasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [newPasswordError, setNewPasswordError] = useState<string | null>(
-    null,
-  );
+  const [newPasswordError, setNewPasswordError] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
   const [reauthRequired, setReauthRequired] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -85,30 +77,28 @@ export default function ChangePasswordPage() {
         <div className="mx-auto max-w-xl space-y-7">
           <Card className="p-6">
             <div role="status">
-            <h1 className="text-2xl font-bold text-[var(--charcoal)]">
-              Password updated
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-[var(--gray)]">
-              {reauthRequired
-                ? "Your password was changed and all sessions were signed out. Sign in again with your new password."
-                : "Your password was changed and your other sessions were signed out."}
-            </p>
-            <div className="mt-6">
-              {reauthRequired ? (
-                <LinkButton href="/login">Sign in again</LinkButton>
-              ) : (
-                <LinkButton
-                  href={
-                    user
-                      ? defaultAuthenticatedDestination(user)
-                      : "/login"
-                  }
-                >
-                  Continue to your workspace
-                </LinkButton>
-              )}
+              <h1 className="text-2xl font-bold text-[var(--charcoal)]">
+                Password updated
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-[var(--gray)]">
+                {reauthRequired
+                  ? "Your password was changed and all sessions were signed out. Sign in again with your new password."
+                  : "Your password was changed and your other sessions were signed out."}
+              </p>
+              <div className="mt-6">
+                {reauthRequired ? (
+                  <LinkButton href="/login">Sign in again</LinkButton>
+                ) : (
+                  <LinkButton
+                    href={
+                      user ? defaultAuthenticatedDestination(user) : "/login"
+                    }
+                  >
+                    Continue to your workspace
+                  </LinkButton>
+                )}
+              </div>
             </div>
-          </div>
           </Card>
         </div>
       </main>
@@ -183,11 +173,7 @@ export default function ChangePasswordPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/8 pt-5">
               <Link
-                href={
-                  user
-                    ? defaultAuthenticatedDestination(user)
-                    : "/login"
-                }
+                href={user ? defaultAuthenticatedDestination(user) : "/login"}
                 className="text-sm font-semibold text-[var(--gray)]"
               >
                 Cancel

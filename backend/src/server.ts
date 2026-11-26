@@ -16,13 +16,13 @@ import { createVideoIndexes } from "./modules/videos/video.index.js";
 import { createMeetingIndexes } from "./modules/meetings/meeting.index.js";
 import { createAuthIndexes } from "./modules/auth/auth.index.js";
 import { createMeetingReminderIndexes } from "./modules/meeting-reminders/meeting-reminder.index.js";
-import { createLabMembershipIndexes } from "./modules/lab-memberships/lab-membership.index.js";
-import { startMeetingReminderScheduler } from "./modules/meeting-reminders/meeting-reminder.scheduler.js";
+import { createMeetingReminderChannelAdapter } from "./modules/meeting-reminders/meeting-reminder.channel-factory.js";
 import { readMeetingReminderConfig } from "./config/meeting-reminders.js";
+import { getMetaWhatsAppConfigurationDiagnostics } from "./config/meta-whatsapp.js";
 import {
-  getEmailConfigurationDiagnostics,
-  isEmailConfigured,
-} from "./lib/email.js";
+  getMailjetConfigurationDiagnostics,
+  isMailjetConfigured,
+} from "./lib/mailjet.js";
 import { getPrimaryFrontendOrigin, isProduction } from "./config/security.js";
 
 dotenv.config();
@@ -46,25 +46,39 @@ async function startServer() {
     await createVideoIndexes();
     await createMeetingIndexes();
     await createAuthIndexes();
-    await createLabMembershipIndexes();
 
     const meetingReminderConfig = readMeetingReminderConfig();
-    if (meetingReminderConfig.enabled) {
-      await createMeetingReminderIndexes();
-    }
+    await createMeetingReminderIndexes(undefined, {
+      dropLegacyIndexes: meetingReminderConfig.contractLegacyIndexes,
+      requireChannelCoexistence: meetingReminderConfig.channel === "WHATSAPP",
+    });
 
-    if (!isEmailConfigured()) {
+    if (!isMailjetConfigured()) {
       console.warn(
-        "Password reset email delivery is not configured. Self-service reset links will not be sent.",
-        getEmailConfigurationDiagnostics(),
+        "Mailjet email delivery is not configured. Transactional and reminder emails will not be sent.",
+        getMailjetConfigurationDiagnostics(),
       );
     }
 
-    if (meetingReminderConfig.enabled && !isEmailConfigured()) {
-      console.warn(
-        "Meetings email reminders are enabled but email delivery is not configured.",
-        getEmailConfigurationDiagnostics(),
-      );
+    const reminderChannel = createMeetingReminderChannelAdapter(
+      meetingReminderConfig.channel,
+    );
+    if (meetingReminderConfig.channel === "WHATSAPP") {
+      const diagnostics = getMetaWhatsAppConfigurationDiagnostics();
+      console.info("Meeting reminder WhatsApp transport", {
+        provider: reminderChannel.name,
+        configured: reminderChannel.isConfigured,
+        wabaIdConfigured: diagnostics.wabaIdConfigured,
+        graphApiVersion: diagnostics.graphApiVersion,
+      });
+    }
+    if (!reminderChannel.isConfigured) {
+      console.warn("Meeting reminder channel is not configured", {
+        channel: meetingReminderConfig.channel,
+        ...(meetingReminderConfig.channel === "EMAIL"
+          ? getMailjetConfigurationDiagnostics()
+          : {}),
+      });
     }
 
     if (isProduction() && getPrimaryFrontendOrigin().startsWith("http://")) {
@@ -78,9 +92,6 @@ async function startServer() {
       console.log(`🚀 RAMS API running on http://0.0.0.0:${PORT}`);
     });
 
-    const reminderScheduler = startMeetingReminderScheduler({
-      config: meetingReminderConfig,
-    });
     let shuttingDown = false;
 
     const shutdown = async (signal: NodeJS.Signals) => {
@@ -88,15 +99,7 @@ async function startServer() {
       shuttingDown = true;
       console.log(`Received ${signal}. Shutting down.`);
 
-      const forceExit = setTimeout(() => {
-        console.error("Forced shutdown after reminder scheduler drain timeout");
-        process.exit(1);
-      }, 35_000);
-      forceExit.unref();
-
-      await reminderScheduler.stop(30_000);
       httpServer.close((error) => {
-        clearTimeout(forceExit);
         if (error) {
           console.error("HTTP server shutdown failed", {
             error: error.message,

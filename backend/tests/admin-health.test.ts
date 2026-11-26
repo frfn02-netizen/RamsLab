@@ -1,8 +1,8 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 
 import app from "../src/app.js";
-import { setEmailProviderForTesting } from "../src/lib/email.js";
+import { setMailjetTransportForTesting } from "../src/lib/mailjet.js";
 import { connectDatabase } from "../src/config/database.js";
 import {
   ensureTestUsers,
@@ -11,15 +11,40 @@ import {
   TEST_DOSEN_USER_ID,
 } from "./auth-fixture.js";
 
+const ENV_KEYS = [
+  "MAILJET_API_KEY",
+  "MAILJET_SECRET_KEY",
+  "MAILJET_API_SECRET",
+  "MAILJET_SENDER_EMAIL",
+  "MAILJET_SENDER_NAME",
+  "MAILJET_DRY_RUN",
+] as const;
+const originalEnv = Object.fromEntries(
+  ENV_KEYS.map((key) => [key, process.env[key]]),
+) as Record<(typeof ENV_KEYS)[number], string | undefined>;
+
+function restoreEnv() {
+  for (const key of ENV_KEYS) {
+    const value = originalEnv[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+}
+
 beforeAll(async () => {
   delete process.env.TRUST_PROXY;
-  setEmailProviderForTesting(null);
+  setMailjetTransportForTesting(null);
   await connectDatabase();
   await ensureTestUsers();
 });
 
+afterEach(() => {
+  restoreEnv();
+  setMailjetTransportForTesting(null);
+});
+
 describe("admin health visibility", () => {
-  it("exposes operational authentication flags only to admins", async () => {
+  it("exposes mailer diagnostics only to admins", async () => {
     const adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
     const response = await request(app)
       .get("/api/admin/health")
@@ -29,81 +54,58 @@ describe("admin health visibility", () => {
     expect(response.headers["cache-control"]).toBe("no-store");
     expect(response.body.success).toBe(true);
     expect(typeof response.body.data.emailDeliveryConfigured).toBe("boolean");
-    expect(typeof response.body.data.provider).toBe("string");
-    expect(typeof response.body.data.resendApiKeyConfigured).toBe("boolean");
-    expect(typeof response.body.data.emailFromConfigured).toBe("boolean");
-    expect(
-      response.body.data.emailFromDomain === null ||
-        typeof response.body.data.emailFromDomain === "string",
-    ).toBe(true);
-    expect(typeof response.body.data.gmailSmtpConfigured).toBe("boolean");
-    expect(typeof response.body.data.gmailSmtpHost).toBe("string");
-    expect(typeof response.body.data.gmailSmtpPort).toBe("number");
-    expect(typeof response.body.data.gmailSmtpUserConfigured).toBe("boolean");
-    expect(typeof response.body.data.gmailAppPasswordConfigured).toBe(
+    expect(response.body.data.provider).toBe("mailjet");
+    expect(typeof response.body.data.mailjetConfigured).toBe("boolean");
+    expect(typeof response.body.data.mailjetApiKeyConfigured).toBe("boolean");
+    expect(typeof response.body.data.mailjetSecretKeyConfigured).toBe(
       "boolean",
     );
-    expect(typeof response.body.data.gmailFromCompatible).toBe("boolean");
+    expect(typeof response.body.data.mailjetSenderEmailConfigured).toBe(
+      "boolean",
+    );
+    expect(
+      response.body.data.mailjetSenderDomain === null ||
+        typeof response.body.data.mailjetSenderDomain === "string",
+    ).toBe(true);
+    expect(typeof response.body.data.mailjetSenderNameConfigured).toBe(
+      "boolean",
+    );
+    expect(typeof response.body.data.dryRun).toBe("boolean");
     expect(typeof response.body.data.trustProxyConfigured).toBe("boolean");
     expect(["disabled", "hop-count", "trusted-list"]).toContain(
       response.body.data.trustProxyMode,
     );
+    expect(response.body.data).not.toHaveProperty("resendApiKeyConfigured");
+    expect(response.body.data).not.toHaveProperty("gmailSmtpConfigured");
   });
 
-  it("shows Gmail configuration status without exposing credentials", async () => {
-    const previous = {
-      provider: process.env.EMAIL_PROVIDER,
-      from: process.env.EMAIL_FROM,
-      host: process.env.GMAIL_SMTP_HOST,
-      port: process.env.GMAIL_SMTP_PORT,
-      user: process.env.GMAIL_SMTP_USER,
-      appPassword: process.env.GMAIL_SMTP_APP_PASSWORD,
-    };
-    const user = "fake-rams-sender@gmail.com";
-    const appPassword = "abcdefghijklmnop";
+  it("shows Mailjet configuration status without exposing credentials", async () => {
+    const apiKey = "mailjet-health-key";
+    const secretKey = "mailjet-health-secret";
+    process.env.MAILJET_API_KEY = apiKey;
+    process.env.MAILJET_SECRET_KEY = secretKey;
+    process.env.MAILJET_SENDER_EMAIL = "no-reply@rams.test";
+    process.env.MAILJET_SENDER_NAME = "RAMS Platform";
+    delete process.env.MAILJET_DRY_RUN;
 
-    process.env.EMAIL_PROVIDER = "gmail";
-    process.env.EMAIL_FROM = `RAMS Platform <${user}>`;
-    process.env.GMAIL_SMTP_HOST = "smtp.gmail.com";
-    process.env.GMAIL_SMTP_PORT = "587";
-    process.env.GMAIL_SMTP_USER = user;
-    process.env.GMAIL_SMTP_APP_PASSWORD = appPassword;
-    setEmailProviderForTesting(null);
+    const adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
+    const response = await request(app)
+      .get("/api/admin/health")
+      .set("Cookie", `rams_access_token=${adminToken}`);
 
-    try {
-      const adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
-      const response = await request(app)
-        .get("/api/admin/health")
-        .set("Cookie", `rams_access_token=${adminToken}`);
+    expect(response.status).toBe(200);
+    expect(response.body.data.mailjetConfigured).toBe(true);
+    expect(response.body.data.emailDeliveryConfigured).toBe(true);
+    expect(response.body.data.mailjetApiKeyConfigured).toBe(true);
+    expect(response.body.data.mailjetSecretKeyConfigured).toBe(true);
+    expect(response.body.data.mailjetSenderEmailConfigured).toBe(true);
+    expect(response.body.data.mailjetSenderDomain).toBe("rams.test");
+    expect(response.body.data.mailjetSenderNameConfigured).toBe(true);
+    expect(response.body.data.dryRun).toBe(true);
 
-      expect(response.status).toBe(200);
-      expect(response.body.data.provider).toBe("gmail");
-      expect(response.body.data.emailDeliveryConfigured).toBe(true);
-      expect(response.body.data.gmailSmtpConfigured).toBe(true);
-      expect(response.body.data.gmailSmtpHost).toBe("smtp.gmail.com");
-      expect(response.body.data.gmailSmtpPort).toBe(587);
-      expect(response.body.data.gmailSmtpUserConfigured).toBe(true);
-      expect(response.body.data.gmailAppPasswordConfigured).toBe(true);
-      expect(response.body.data.gmailFromCompatible).toBe(true);
-
-      const serialized = JSON.stringify(response.body);
-      expect(serialized).not.toContain(user);
-      expect(serialized).not.toContain(appPassword);
-    } finally {
-      if (previous.provider === undefined) delete process.env.EMAIL_PROVIDER;
-      else process.env.EMAIL_PROVIDER = previous.provider;
-      if (previous.from === undefined) delete process.env.EMAIL_FROM;
-      else process.env.EMAIL_FROM = previous.from;
-      if (previous.host === undefined) delete process.env.GMAIL_SMTP_HOST;
-      else process.env.GMAIL_SMTP_HOST = previous.host;
-      if (previous.port === undefined) delete process.env.GMAIL_SMTP_PORT;
-      else process.env.GMAIL_SMTP_PORT = previous.port;
-      if (previous.user === undefined) delete process.env.GMAIL_SMTP_USER;
-      else process.env.GMAIL_SMTP_USER = previous.user;
-      if (previous.appPassword === undefined)
-        delete process.env.GMAIL_SMTP_APP_PASSWORD;
-      else process.env.GMAIL_SMTP_APP_PASSWORD = previous.appPassword;
-    }
+    const serialized = JSON.stringify(response.body);
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(secretKey);
   });
 
   it("rejects non-admin and unauthenticated access", async () => {

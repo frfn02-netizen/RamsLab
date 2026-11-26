@@ -7,6 +7,7 @@ import { connectDatabase } from "../src/config/database.js";
 import { getUsersCollection } from "../src/modules/users/user.repository.js";
 import {
   ensurePasswordUser,
+  ensureTestUsers,
   signTestToken,
   TEST_ADMIN_USER_ID,
 } from "./auth-fixture.js";
@@ -18,6 +19,7 @@ const NEW_PASSWORD = "new-password-456";
 
 beforeAll(async () => {
   await connectDatabase();
+  await ensureTestUsers();
   await ensurePasswordUser({
     id: USER_ID,
     email: EMAIL,
@@ -53,9 +55,7 @@ describe("forced password change", () => {
     const csrfToken = csrf.split("=")[1] ?? "";
     expect(access).not.toBe("");
 
-    const me = await request(app)
-      .get("/api/auth/me")
-      .set("Cookie", access);
+    const me = await request(app).get("/api/auth/me").set("Cookie", access);
     expect(me.status).toBe(200);
     expect(me.body.user.mustChangePassword).toBe(true);
 
@@ -84,9 +84,7 @@ describe("forced password change", () => {
       .set("Cookie", access);
     expect(csrfResponse.status).toBe(200);
 
-    const blocked = await request(app)
-      .get("/api/dosen")
-      .set("Cookie", access);
+    const blocked = await request(app).get("/api/dosen").set("Cookie", access);
     expect(blocked.status).toBe(403);
     expect(blocked.body.code).toBe("PASSWORD_CHANGE_REQUIRED");
 

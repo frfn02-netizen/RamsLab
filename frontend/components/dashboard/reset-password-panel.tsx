@@ -110,8 +110,8 @@ export default function ResetPasswordPanel({
             </Button>
           </div>
           <p className="text-xs leading-5 text-amber-900">
-            Give this password to the account owner through a secure channel.
-            It cannot be displayed again after you leave this page.
+            Give this password to the account owner through a secure channel. It
+            cannot be displayed again after you leave this page.
           </p>
         </div>
       ) : confirming ? (
