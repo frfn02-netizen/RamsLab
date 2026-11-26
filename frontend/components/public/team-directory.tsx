@@ -130,7 +130,10 @@ export function MemberCard({
 }) {
   const alumniT = useTranslations("alumni");
   const isAlumni = member.category === "ALUMNI";
-  const isUndergraduate = member.category === "UNDERGRADUATE";
+  const isNameOnlyStudent =
+    member.category === "UNDERGRADUATE" ||
+    member.category === "MAHASISWA" ||
+    member.category === "MASTER";
   const classOfLabel = isAlumni
     ? formatAlumniClassLabel(member, alumniT("classOf"))
     : null;
@@ -169,7 +172,7 @@ export function MemberCard({
           {member.fullName}
         </h3>
 
-        {isUndergraduate ? null : (
+        {isNameOnlyStudent ? null : (
           <>
             <p className="mt-1 text-[10px] font-semibold uppercase leading-snug tracking-wider text-red-700">
               {role}

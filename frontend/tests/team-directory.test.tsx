@@ -364,7 +364,10 @@ describe("People directory – cards", () => {
       expect(heading.className).toContain("text-sm");
       expect(heading.className).toContain("font-bold");
 
-      if (label === "Undergraduate Students") {
+      if (
+        label === "Undergraduate Students" ||
+        label === "Graduate Students"
+      ) {
         expect(card.querySelector("p")).toBeNull();
       } else {
         const role = card.querySelector("p")!;
@@ -405,6 +408,40 @@ describe("People directory – cards", () => {
     ).toBeInTheDocument();
 
     const grid = card.parentElement!;
+    expect(grid.className).toContain("lg:grid-cols-5");
+  });
+
+  it("shows only the 1:1 photo and name for graduate students", async () => {
+    await renderDirectory();
+    fireEvent.click(screen.getByRole("button", { name: "Graduate Students" }));
+
+    const phdLink = screen.getByRole("link", { name: "Phd Candidate" });
+    expect(phdLink).toHaveAttribute("href", "/team/phd-1");
+    const phdCard = phdLink.closest("article")!;
+    expect(phdCard.querySelectorAll("p")).toHaveLength(0);
+    expect(screen.queryByText("Doctor of Engineering")).toBeNull();
+    expect(screen.queryByText("Simulation")).toBeNull();
+
+    const phdPortrait = phdLink.querySelector("div")!;
+    expect(phdPortrait.className).toContain("aspect-square");
+    expect(phdPortrait.className).toContain("w-full");
+    expect(phdPortrait.className).toContain("overflow-hidden");
+    expect(phdPortrait.className).toContain("rounded-md");
+    expect(phdPortrait.className).toContain("bg-stone-100");
+    expect(screen.getByLabelText("Phd Candidate avatar")).toBeInTheDocument();
+
+    const masterLink = screen.getByRole("link", { name: "Master Candidate" });
+    expect(masterLink).toHaveAttribute("href", "/team/master-1");
+    expect(masterLink.closest("article")!.querySelectorAll("p")).toHaveLength(0);
+
+    expect(
+      screen.getByRole("heading", { name: "Ph.D. Candidates" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Master's Students" }),
+    ).toBeInTheDocument();
+
+    const grid = phdCard.parentElement!;
     expect(grid.className).toContain("lg:grid-cols-5");
   });
 
