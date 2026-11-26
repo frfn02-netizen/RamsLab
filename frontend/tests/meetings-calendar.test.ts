@@ -43,14 +43,9 @@ describe("meeting calendar helpers", () => {
 
   it("detects the same calendar day", () => {
     expect(
-      isSameDay(
-        new Date(2026, 0, 15, 8, 0),
-        new Date(2026, 0, 15, 20, 30),
-      ),
+      isSameDay(new Date(2026, 0, 15, 8, 0), new Date(2026, 0, 15, 20, 30)),
     ).toBe(true);
-    expect(
-      isSameDay(new Date(2026, 0, 15), new Date(2026, 0, 16)),
-    ).toBe(false);
+    expect(isSameDay(new Date(2026, 0, 15), new Date(2026, 0, 16))).toBe(false);
   });
 
   it("groups meetings by day and sorts each day by start time", () => {

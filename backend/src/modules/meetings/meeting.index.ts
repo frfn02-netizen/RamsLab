@@ -10,12 +10,11 @@ export type MeetingIndexSpec = {
 
 export const MEETING_INDEX_SPECS: readonly MeetingIndexSpec[] = [
   { name: "meetings_time_index", key: { startAt: 1, endAt: 1 } },
-  { name: "meetings_participant_index", key: { participantIds: 1, startAt: 1 } },
-  { name: "meetings_creator_index", key: { createdBy: 1, startAt: 1 } },
   {
-    name: "meetings_public_schedule_index",
-    key: { visibility: 1, cancelledAt: 1, startAt: 1 },
+    name: "meetings_participant_index",
+    key: { participantIds: 1, startAt: 1 },
   },
+  { name: "meetings_creator_index", key: { createdBy: 1, startAt: 1 } },
 ];
 
 export type MeetingIndexCollection = Pick<
@@ -23,7 +22,10 @@ export type MeetingIndexCollection = Pick<
   "listIndexes" | "createIndex"
 >;
 
-function sameIndexKey(actual: Document | undefined, expected: Document): boolean {
+function sameIndexKey(
+  actual: Document | undefined,
+  expected: Document,
+): boolean {
   if (!actual) return false;
   const actualEntries = Object.entries(actual);
   const expectedEntries = Object.entries(expected);
@@ -41,7 +43,9 @@ function matchesIndexSpec(
   index: IndexDescription | undefined,
   spec: MeetingIndexSpec,
 ): boolean {
-  return Boolean(index && index.name === spec.name && sameIndexKey(index.key, spec.key));
+  return Boolean(
+    index && index.name === spec.name && sameIndexKey(index.key, spec.key),
+  );
 }
 
 export async function createMeetingIndexes(
@@ -66,7 +70,9 @@ export async function createMeetingIndexes(
   const verified = await collection.listIndexes().toArray();
   for (const spec of MEETING_INDEX_SPECS) {
     if (!verified.some((index) => matchesIndexSpec(index, spec))) {
-      throw new Error(`Meeting index ${spec.name} was not found after creation.`);
+      throw new Error(
+        `Meeting index ${spec.name} was not found after creation.`,
+      );
     }
   }
 

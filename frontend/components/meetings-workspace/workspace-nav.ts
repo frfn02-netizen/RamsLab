@@ -1,8 +1,4 @@
-import {
-  canAccessMeetingsWorkspace,
-  canAccessSchedulePortal,
-  canViewMeetingsAgenda,
-} from "@/lib/authz";
+import { canAccessMeetingsWorkspace, canViewMeetingsAgenda } from "@/lib/authz";
 import type { UserRole } from "@/types/auth";
 
 export { canAccessMeetingsWorkspace, canViewMeetingsAgenda };
@@ -29,16 +25,10 @@ export const meetingsNavItems: readonly MeetingsNavItem[] = [
     href: "/meetings/mine",
     description: "Meetings you created",
   },
-  {
-    label: "Schedule Portal",
-    href: "/schedule",
-    description: "Separate schedule workspace",
-  },
 ];
 
 export function visibleMeetingsNavItems(
   role: UserRole | undefined,
-  grantedPermissions: readonly string[] = [],
 ): readonly MeetingsNavItem[] {
   if (!canAccessMeetingsWorkspace(role)) {
     return [];
@@ -46,11 +36,9 @@ export function visibleMeetingsNavItems(
 
   const canViewAgenda = canViewMeetingsAgenda(role);
   const canViewMine = role === "ADMIN" || role === "DOSEN";
-  const canViewSchedule = canAccessSchedulePortal(role, grantedPermissions);
 
   return meetingsNavItems.filter((item) => {
     if (item.href === "/meetings/mine") return canViewMine;
-    if (item.href === "/schedule") return canViewSchedule;
     if (item.href === "/meetings" || item.href === "/meetings/calendar") {
       return canViewAgenda;
     }

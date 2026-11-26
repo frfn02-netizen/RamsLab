@@ -10,7 +10,6 @@ import { Button, ErrorState, LinkButton } from "@/components/ui";
 import { Skeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import { getMeetingAgenda, getMeetings } from "@/lib/api/meetings";
-import { getPublicSchedule } from "@/lib/api/public-schedule";
 import {
   buildMonthGrid,
   dayKey,
@@ -23,20 +22,15 @@ import {
   monthVisibleRange,
   startOfDay,
 } from "@/lib/meetings/calendar";
-import { meetingModeAriaLabel, safeHttpUrl } from "@/lib/meetings/mode";
+import { meetingModeAriaLabel } from "@/lib/meetings/mode";
 import { meetingToCalendarEvent } from "@/lib/meetings/calendar-event";
-import { publicMeetingToCalendarEvent } from "@/lib/meetings/public-calendar-event";
 import { canCreateMeetings } from "@/lib/authz";
 import { meetingStatusLabel } from "@/lib/meetings/status";
 import type { MeetingCalendarEvent } from "@/types/meetings";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-function CalendarModeMarker({
-  mode,
-}: {
-  mode: MeetingCalendarEvent["mode"];
-}) {
+function CalendarModeMarker({ mode }: { mode: MeetingCalendarEvent["mode"] }) {
   const shape =
     mode === undefined
       ? "rounded-full border border-dashed border-[#8A867D] bg-transparent"
@@ -47,10 +41,7 @@ function CalendarModeMarker({
           : "rounded-[1px] bg-[#B8B1A8]";
 
   return (
-    <span
-      className={`h-1.5 w-1.5 shrink-0 ${shape}`}
-      aria-hidden="true"
-    />
+    <span className={`h-1.5 w-1.5 shrink-0 ${shape}`} aria-hidden="true" />
   );
 }
 
@@ -80,14 +71,12 @@ export default function MeetingsPage({
   basePath?: string;
   title?: string;
   description?: string;
-  source?: "agenda" | "accessibles" | "public";
+  source?: "agenda" | "accessibles";
   canCreateOverride?: boolean;
 }) {
   const { user } = useAuth();
   const canCreate =
-    canCreateOverride ??
-    canCreateMeetings(user?.role, user?.permissions ?? []);
-  const showPublicMeetingLinks = source === "public";
+    canCreateOverride ?? canCreateMeetings(user?.role);
   const [cursor, setCursor] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
@@ -116,18 +105,10 @@ export default function MeetingsPage({
               from: from.toISOString(),
               to: to.toISOString(),
             }).then((data) => data.items)
-          : source === "accessibles"
-            ? getMeetings({
-                from: from.toISOString(),
-                to: to.toISOString(),
-              }).then((items) => items.map(meetingToCalendarEvent))
-            : getPublicSchedule({
-                from: from.toISOString(),
-                to: to.toISOString(),
-                limit: 100,
-              }).then((page) =>
-                page.items.map(publicMeetingToCalendarEvent),
-              );
+          : getMeetings({
+              from: from.toISOString(),
+              to: to.toISOString(),
+            }).then((items) => items.map(meetingToCalendarEvent));
 
       loadMeetings
         .then((items) => {
@@ -181,9 +162,7 @@ export default function MeetingsPage({
           </div>
           {canCreate && (
             <div className="shrink-0 sm:pb-1">
-              <LinkButton
-                href={`${basePath}/new?date=${dayKey(selectedDate)}`}
-              >
+              <LinkButton href={`${basePath}/new?date=${dayKey(selectedDate)}`}>
                 Schedule meeting
               </LinkButton>
             </div>
@@ -421,128 +400,119 @@ export default function MeetingsPage({
                 ) : (
                   <ul className="divide-y divide-[#F0ECE4]">
                     {selectedMeetings.map((meeting) => {
-                      const publicMeetingLink = showPublicMeetingLinks
-                        ? safeHttpUrl(meeting.meetingLink)
-                        : null;
                       return (
-                      <li key={meeting._id}>
-                        {meeting.canViewDetails ? (
-                          <div className="px-5 py-4 transition hover:bg-[#FBFAF7]">
-                            <Link
-                              href={`${basePath}/${meeting._id}`}
-                              className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
-                            >
-                            <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
-                              {formatTimeRange(meeting.startAt, meeting.endAt)}
-                            </p>
-                            <p
-                              className={`mt-1 text-sm font-semibold ${
-                                meeting.involvesHighlightedUser
-                                  ? "text-[var(--rams-red)]"
-                                  : "text-[var(--rams-charcoal)]"
-                              }`}
-                            >
-                              {meeting.title}
-                            </p>
-                            <div className="mt-1.5">
-                              <MeetingHighlightBadge
-                                involvesHighlightedUser={
-                                  meeting.involvesHighlightedUser
-                                }
-                              />
-                            </div>
-                            <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                              <MeetingModeBadge mode={meeting.mode} />
-                              {meeting.clientName !== undefined && (
-                                <span
-                                  className={`text-xs ${
-                                    meeting.clientName?.trim()
-                                      ? "font-medium text-[#4F4B46]"
-                                      : "text-[#8A867D]"
+                        <li key={meeting._id}>
+                          {meeting.canViewDetails ? (
+                            <div className="px-5 py-4 transition hover:bg-[#FBFAF7]">
+                              <Link
+                                href={`${basePath}/${meeting._id}`}
+                                className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
+                              >
+                                <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
+                                  {formatTimeRange(
+                                    meeting.startAt,
+                                    meeting.endAt,
+                                  )}
+                                </p>
+                                <p
+                                  className={`mt-1 text-sm font-semibold ${
+                                    meeting.involvesHighlightedUser
+                                      ? "text-[var(--rams-red)]"
+                                      : "text-[var(--rams-charcoal)]"
                                   }`}
                                 >
-                                  {meeting.clientName?.trim() ||
-                                    "Client not specified"}
-                                </span>
-                              )}
-                              {meeting.mode === "OFFLINE" && (
-                                <span className="text-xs text-[#6B6A64]">
-                                  {meeting.location?.trim() ||
-                                    "Location not specified"}
-                                </span>
-                              )}
+                                  {meeting.title}
+                                </p>
+                                <div className="mt-1.5">
+                                  <MeetingHighlightBadge
+                                    involvesHighlightedUser={
+                                      meeting.involvesHighlightedUser
+                                    }
+                                  />
+                                </div>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                                  <MeetingModeBadge mode={meeting.mode} />
+                                  {meeting.clientName !== undefined && (
+                                    <span
+                                      className={`text-xs ${
+                                        meeting.clientName?.trim()
+                                          ? "font-medium text-[#4F4B46]"
+                                          : "text-[#8A867D]"
+                                      }`}
+                                    >
+                                      {meeting.clientName?.trim() ||
+                                        "Client not specified"}
+                                    </span>
+                                  )}
+                                  {meeting.mode === "OFFLINE" && (
+                                    <span className="text-xs text-[#6B6A64]">
+                                      {meeting.location?.trim() ||
+                                        "Location not specified"}
+                                    </span>
+                                  )}
+                                </div>
+                                {meeting.createdBy?.displayName && (
+                                  <p className="mt-1 text-xs text-[#6B6A64]">
+                                    {meeting.createdBy.displayName}
+                                  </p>
+                                )}
+                                {meeting.primaryPicName && (
+                                  <p className="mt-1 text-xs text-[#6B6A64]">
+                                    Primary PIC: {meeting.primaryPicName}
+                                    {meeting.additionalPicNames &&
+                                      meeting.additionalPicNames.length > 0 &&
+                                      ` +${meeting.additionalPicNames.length} additional`}
+                                  </p>
+                                )}
+                                {meeting.status && (
+                                  <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
+                                    {meetingStatusLabel(meeting.status)}
+                                  </p>
+                                )}
+                              </Link>
                             </div>
-                            {meeting.createdBy?.displayName && (
-                              <p className="mt-1 text-xs text-[#6B6A64]">
-                                {meeting.createdBy.displayName}
+                          ) : (
+                            <div className="px-5 py-4">
+                              <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
+                                {formatTimeRange(
+                                  meeting.startAt,
+                                  meeting.endAt,
+                                )}
                               </p>
-                            )}
-                            {meeting.primaryPicName && (
-                              <p className="mt-1 text-xs text-[#6B6A64]">
-                                Primary PIC: {meeting.primaryPicName}
-                                {meeting.additionalPicNames &&
-                                  meeting.additionalPicNames.length > 0 &&
-                                  ` +${meeting.additionalPicNames.length} additional`}
-                              </p>
-                            )}
-                            {meeting.status && (
-                              <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
-                                {meetingStatusLabel(meeting.status)}
-                              </p>
-                            )}
-                            </Link>
-                            {publicMeetingLink && (
-                              <a
-                                href={publicMeetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-3 inline-flex min-h-11 items-center justify-center rounded-md bg-[var(--rams-red)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--rams-red-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2"
-                              >
-                                {meeting.mode === "ONLINE"
-                                  ? "Join Google Meet"
-                                  : "Open Meeting Link"}
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="px-5 py-4">
-                            <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--rams-red)]">
-                              {formatTimeRange(meeting.startAt, meeting.endAt)}
-                            </p>
-                            <p
-                              className={`mt-1 text-sm font-semibold ${
-                                meeting.involvesHighlightedUser
-                                  ? "text-[var(--rams-red)]"
-                                  : "text-[var(--rams-charcoal)]"
-                              }`}
-                            >
-                              {meeting.title}
-                            </p>
-                            <div className="mt-1.5">
-                              <MeetingHighlightBadge
-                                involvesHighlightedUser={
+                              <p
+                                className={`mt-1 text-sm font-semibold ${
                                   meeting.involvesHighlightedUser
-                                }
-                              />
+                                    ? "text-[var(--rams-red)]"
+                                    : "text-[var(--rams-charcoal)]"
+                                }`}
+                              >
+                                {meeting.title}
+                              </p>
+                              <div className="mt-1.5">
+                                <MeetingHighlightBadge
+                                  involvesHighlightedUser={
+                                    meeting.involvesHighlightedUser
+                                  }
+                                />
+                              </div>
+                              {meeting.createdBy?.displayName && (
+                                <p className="mt-1 text-xs text-[#6B6A64]">
+                                  {meeting.createdBy.displayName}
+                                </p>
+                              )}
+                              {meeting.primaryPicName && (
+                                <p className="mt-1 text-xs text-[#6B6A64]">
+                                  Primary PIC: {meeting.primaryPicName}
+                                </p>
+                              )}
+                              {meeting.status && (
+                                <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
+                                  {meetingStatusLabel(meeting.status)}
+                                </p>
+                              )}
                             </div>
-                            {meeting.createdBy?.displayName && (
-                              <p className="mt-1 text-xs text-[#6B6A64]">
-                                {meeting.createdBy.displayName}
-                              </p>
-                            )}
-                            {meeting.primaryPicName && (
-                              <p className="mt-1 text-xs text-[#6B6A64]">
-                                Primary PIC: {meeting.primaryPicName}
-                              </p>
-                            )}
-                            {meeting.status && (
-                              <p className="mt-1 text-xs font-semibold text-[var(--rams-red)]">
-                                {meetingStatusLabel(meeting.status)}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </li>
+                          )}
+                        </li>
                       );
                     })}
                   </ul>

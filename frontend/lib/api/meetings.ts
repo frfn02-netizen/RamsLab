@@ -48,9 +48,7 @@ export const getMeeting = (id: string) =>
   apiRequest<Meeting>(`/meetings/${encodeURIComponent(id)}`);
 
 export const getMeetingAudit = (id: string) =>
-  apiRequest<MeetingAuditEntry[]>(
-    `/meetings/${encodeURIComponent(id)}/audit`,
-  );
+  apiRequest<MeetingAuditEntry[]>(`/meetings/${encodeURIComponent(id)}/audit`);
 
 export const createMeeting = (input: MeetingInput) =>
   apiRequest<MeetingSaveResult>("/meetings", {

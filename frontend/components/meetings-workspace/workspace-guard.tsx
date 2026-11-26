@@ -11,6 +11,7 @@ import {
   canViewMeetingsAgenda,
   defaultAuthenticatedDestination,
 } from "@/lib/authz";
+import { meetingCopy } from "@/lib/meeting-copy";
 
 export default function MeetingsWorkspaceGuard({
   children,
@@ -18,6 +19,7 @@ export default function MeetingsWorkspaceGuard({
   children: ReactNode;
 }) {
   const { user, status } = useAuth();
+  const copy = meetingCopy();
   const router = useRouter();
   const pathname = usePathname();
   const canAccessWorkspace = canAccessMeetingsWorkspace(user?.role);
@@ -27,10 +29,7 @@ export default function MeetingsWorkspaceGuard({
   const isMinePath = pathname.startsWith("/meetings/mine");
   const isCreatePath = pathname === "/meetings/new";
   const isEditPath = /^\/meetings\/[^/]+\/edit$/.test(pathname);
-  const canCreate = canCreateMeetings(
-    user?.role,
-    user?.permissions ?? [],
-  );
+  const canCreate = canCreateMeetings(user?.role);
   const canViewMine = user?.role === "ADMIN" || user?.role === "DOSEN";
   const allowed =
     canAccessWorkspace &&
@@ -44,7 +43,7 @@ export default function MeetingsWorkspaceGuard({
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     } else if (status === "authenticated" && user?.mustChangePassword) {
       router.replace("/change-password");
-    } else if (status === "authenticated" && user && !canAccessWorkspace) {
+    } else if (status === "authenticated" && user?.role === "ALUMNI") {
       router.replace(defaultAuthenticatedDestination(user));
     } else if (
       status === "authenticated" &&
@@ -84,12 +83,27 @@ export default function MeetingsWorkspaceGuard({
     user,
   ]);
 
-  if (status === "loading" || !user || user.mustChangePassword || !allowed) {
+  if (status === "loading" || !user || user.mustChangePassword) {
     return (
       <AuthLoadingSkeleton
         label="Checking your session"
         className="bg-[var(--rams-gray-light)]"
       />
+    );
+  }
+
+  if (!allowed) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[var(--rams-gray-light)] px-6 py-16">
+        <section className="max-w-md border border-[#E7E2D8] bg-white p-8 text-center shadow-sm">
+          <h1 className="text-xl font-semibold text-[var(--rams-charcoal)]">
+            {copy.accessTitle}
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-[#6B6A64]">
+            {copy.accessRestricted}
+          </p>
+        </section>
+      </main>
     );
   }
 

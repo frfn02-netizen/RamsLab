@@ -14,10 +14,7 @@ import { assetPath } from "@/lib/asset-path";
 import { canCreateMeetings } from "@/lib/authz";
 import { formatTimeRange } from "@/lib/meetings/calendar";
 import { meetingModeLabel, safeHttpUrl } from "@/lib/meetings/mode";
-import {
-  getMeetingStatus,
-  meetingStatusLabel,
-} from "@/lib/meetings/status";
+import { getMeetingStatus, meetingStatusLabel } from "@/lib/meetings/status";
 import type { Meeting, MeetingStatus } from "@/types/meetings";
 
 const PAST_LIMIT = 10;
@@ -127,7 +124,13 @@ function matchesTimeFilter(meeting: Meeting, filter: TimeFilter) {
   return start >= now.getTime() && start <= end;
 }
 
-function DateChip({ value, muted = false }: { value: string; muted?: boolean }) {
+function DateChip({
+  value,
+  muted = false,
+}: {
+  value: string;
+  muted?: boolean;
+}) {
   const date = formatDateParts(value);
 
   return (
@@ -183,8 +186,7 @@ function MeetingRow({
   const mode = meeting.mode ?? null;
   const clientName = meeting.clientName?.trim() || null;
   const location = meeting.location?.trim() || null;
-  const onlineUrl =
-    mode === "ONLINE" ? safeHttpUrl(meeting.meetingLink) : null;
+  const onlineUrl = mode === "ONLINE" ? safeHttpUrl(meeting.meetingLink) : null;
   const status = getMeetingStatus(meeting);
 
   return (
@@ -220,9 +222,7 @@ function MeetingRow({
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.76rem] text-[#55534F]">
           <span
             className={
-              clientName
-                ? "font-medium text-[#24262B]"
-                : "text-[#77736D]"
+              clientName ? "font-medium text-[#24262B]" : "text-[#77736D]"
             }
           >
             {clientName ?? "Client not specified"}
@@ -320,9 +320,7 @@ function PastMeetingRow({
         <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.76rem] text-[#55534F]">
           <span
             className={
-              clientName
-                ? "font-medium text-[#24262B]"
-                : "text-[#77736D]"
+              clientName ? "font-medium text-[#24262B]" : "text-[#77736D]"
             }
           >
             {clientName ?? "Client not specified"}
@@ -352,7 +350,10 @@ function PastMeetingRow({
         </span>
       </div>
       <ScheduleStatusPill status={status} />
-      <Icon path={ICONS.chevron} className="hidden h-5 w-5 shrink-0 text-[#77736D] sm:block" />
+      <Icon
+        path={ICONS.chevron}
+        className="hidden h-5 w-5 shrink-0 text-[#77736D] sm:block"
+      />
     </Link>
   );
 }
@@ -422,7 +423,10 @@ function MeetingsSkeleton() {
       <div className="h-28 rounded-xl border border-[#E5DED5] bg-white" />
       <div className="grid gap-4 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div key={index} className="h-36 rounded-xl border border-[#E5DED5] bg-white" />
+          <div
+            key={index}
+            className="h-36 rounded-xl border border-[#E5DED5] bg-white"
+          />
         ))}
       </div>
       <div className="overflow-hidden rounded-xl border border-[#E5DED5] bg-white px-6 py-5">
@@ -451,8 +455,7 @@ export default function MyMeetings({
 }) {
   const { user } = useAuth();
   const canCreate =
-    canCreateOverride ??
-    canCreateMeetings(user?.role, user?.permissions ?? []);
+    canCreateOverride ?? canCreateMeetings(user?.role);
   const [groups, setGroups] = useState<MeetingGroup>({
     all: [],
     upcoming: [],
@@ -535,7 +538,8 @@ export default function MyMeetings({
     const filterMeetings = (meetings: Meeting[]) =>
       meetings.filter(
         (meeting) =>
-          matchesSearch(meeting, query) && matchesTimeFilter(meeting, timeFilter),
+          matchesSearch(meeting, query) &&
+          matchesTimeFilter(meeting, timeFilter),
       );
 
     return {
@@ -577,7 +581,10 @@ export default function MyMeetings({
             }}
             aria-hidden="true"
           />
-          <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] bg-[#F7F5F1]/70 lg:block" aria-hidden="true" />
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] bg-[#F7F5F1]/70 lg:block"
+            aria-hidden="true"
+          />
           <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-[720px] border-l-[5px] border-[var(--rams-red)] pl-5 sm:pl-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--rams-red)]">
@@ -626,7 +633,10 @@ export default function MyMeetings({
           </div>
         ) : (
           <>
-            <section className="mt-6 grid gap-4 md:grid-cols-2" aria-label="Meeting summary">
+            <section
+              className="mt-6 grid gap-4 md:grid-cols-2"
+              aria-label="Meeting summary"
+            >
               <MetricCard
                 icon={ICONS.calendar}
                 label="Upcoming"
@@ -643,7 +653,11 @@ export default function MyMeetings({
 
             <section className="mt-7" aria-label="Meeting filters">
               <div className="flex flex-col gap-4 border-b border-[#E5DED5] pb-1 lg:flex-row lg:items-end lg:justify-between">
-                <div role="tablist" aria-label="Meeting status" className="flex gap-7">
+                <div
+                  role="tablist"
+                  aria-label="Meeting status"
+                  className="flex gap-7"
+                >
                   <button
                     type="button"
                     role="tab"
@@ -672,7 +686,8 @@ export default function MyMeetings({
                         : "text-[#77736D] hover:text-[#24262B]"
                     }`}
                   >
-                    <span>Ongoing</span> <span>({filteredGroups.ongoing.length})</span>
+                    <span>Ongoing</span>{" "}
+                    <span>({filteredGroups.ongoing.length})</span>
                     {activeTab === "ongoing" && (
                       <span className="absolute inset-x-0 bottom-[-1px] h-[3px] rounded-full bg-[var(--rams-red)]" />
                     )}
@@ -705,7 +720,8 @@ export default function MyMeetings({
                         : "text-[#77736D] hover:text-[#24262B]"
                     }`}
                   >
-                    <span>Cancelled</span> <span>({filteredGroups.cancelled.length})</span>
+                    <span>Cancelled</span>{" "}
+                    <span>({filteredGroups.cancelled.length})</span>
                     {activeTab === "cancelled" && (
                       <span className="absolute inset-x-0 bottom-[-1px] h-[3px] rounded-full bg-[var(--rams-red)]" />
                     )}
@@ -755,19 +771,30 @@ export default function MyMeetings({
             </section>
 
             <div className="mt-6 space-y-8">
-              <section id="upcoming-meetings" aria-labelledby="upcoming-meetings-heading">
+              <section
+                id="upcoming-meetings"
+                aria-labelledby="upcoming-meetings-heading"
+              >
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2 id="upcoming-meetings-heading" className="text-[1.05rem] font-semibold text-[#15171C]">
+                  <h2
+                    id="upcoming-meetings-heading"
+                    className="text-[1.05rem] font-semibold text-[#15171C]"
+                  >
                     Upcoming
                   </h2>
                   <span className="text-xs text-[#8A867D]">
-                    {filteredGroups.upcoming.length} meeting{filteredGroups.upcoming.length === 1 ? "" : "s"} ahead
+                    {filteredGroups.upcoming.length} meeting
+                    {filteredGroups.upcoming.length === 1 ? "" : "s"} ahead
                   </span>
                 </div>
                 {filteredGroups.upcoming.length === 0 ? (
                   <EmptyMeetings
                     title="No upcoming meetings"
-                    description={query || timeFilter !== "all" ? "Try changing the search or time filter." : "Schedule one to fill the agenda."}
+                    description={
+                      query || timeFilter !== "all"
+                        ? "Try changing the search or time filter."
+                        : "Schedule one to fill the agenda."
+                    }
                   />
                 ) : (
                   <div className="overflow-hidden rounded-xl border border-[#E5DED5] bg-white shadow-[0_8px_24px_rgba(46,38,31,0.02)]">
@@ -783,18 +810,33 @@ export default function MyMeetings({
                 )}
               </section>
 
-              <section id="ongoing-meetings" aria-labelledby="ongoing-meetings-heading">
+              <section
+                id="ongoing-meetings"
+                aria-labelledby="ongoing-meetings-heading"
+              >
                 <div className="mb-3 flex items-center gap-3">
-                  <Icon path={ICONS.clock} className="h-6 w-6 text-[var(--rams-red)]" />
-                  <h2 id="ongoing-meetings-heading" className="text-[1.05rem] font-semibold text-[#15171C]">
+                  <Icon
+                    path={ICONS.clock}
+                    className="h-6 w-6 text-[var(--rams-red)]"
+                  />
+                  <h2
+                    id="ongoing-meetings-heading"
+                    className="text-[1.05rem] font-semibold text-[#15171C]"
+                  >
                     Ongoing
                   </h2>
-                  <span className="text-xs text-[#8A867D]">({filteredGroups.ongoing.length})</span>
+                  <span className="text-xs text-[#8A867D]">
+                    ({filteredGroups.ongoing.length})
+                  </span>
                 </div>
                 {filteredGroups.ongoing.length === 0 ? (
                   <EmptyMeetings
                     title="No ongoing meetings"
-                    description={query || timeFilter !== "all" ? "Try changing the search or time filter." : "Meetings currently in progress will appear here."}
+                    description={
+                      query || timeFilter !== "all"
+                        ? "Try changing the search or time filter."
+                        : "Meetings currently in progress will appear here."
+                    }
                   />
                 ) : (
                   <div className="overflow-hidden rounded-xl border border-[#E5DED5] bg-white shadow-[0_8px_24px_rgba(46,38,31,0.02)]">
@@ -809,10 +851,19 @@ export default function MyMeetings({
                 )}
               </section>
 
-              <section id="past-meetings" aria-labelledby="past-meetings-heading">
+              <section
+                id="past-meetings"
+                aria-labelledby="past-meetings-heading"
+              >
                 <div className="mb-3 flex items-center gap-3">
-                  <Icon path={ICONS.history} className="h-6 w-6 text-[var(--rams-red)]" />
-                  <h2 id="past-meetings-heading" className="text-[1.05rem] font-semibold text-[#15171C]">
+                  <Icon
+                    path={ICONS.history}
+                    className="h-6 w-6 text-[var(--rams-red)]"
+                  />
+                  <h2
+                    id="past-meetings-heading"
+                    className="text-[1.05rem] font-semibold text-[#15171C]"
+                  >
                     Past
                   </h2>
                   <span className="text-xs text-[#8A867D]">
@@ -822,7 +873,11 @@ export default function MyMeetings({
                 {filteredGroups.past.length === 0 ? (
                   <EmptyMeetings
                     title="No past meetings"
-                    description={query || timeFilter !== "all" ? "Try changing the search or time filter." : "Meetings whose scheduled time has ended will appear here."}
+                    description={
+                      query || timeFilter !== "all"
+                        ? "Try changing the search or time filter."
+                        : "Meetings whose scheduled time has ended will appear here."
+                    }
                   />
                 ) : (
                   <div className="overflow-hidden rounded-xl border border-[#E5DED5] bg-white shadow-[0_8px_24px_rgba(46,38,31,0.02)]">
@@ -837,18 +892,33 @@ export default function MyMeetings({
                 )}
               </section>
 
-              <section id="cancelled-meetings" aria-labelledby="cancelled-meetings-heading">
+              <section
+                id="cancelled-meetings"
+                aria-labelledby="cancelled-meetings-heading"
+              >
                 <div className="mb-3 flex items-center gap-3">
-                  <Icon path={ICONS.history} className="h-6 w-6 text-[var(--rams-red)]" />
-                  <h2 id="cancelled-meetings-heading" className="text-[1.05rem] font-semibold text-[#15171C]">
+                  <Icon
+                    path={ICONS.history}
+                    className="h-6 w-6 text-[var(--rams-red)]"
+                  />
+                  <h2
+                    id="cancelled-meetings-heading"
+                    className="text-[1.05rem] font-semibold text-[#15171C]"
+                  >
                     Cancelled
                   </h2>
-                  <span className="text-xs text-[#8A867D]">({filteredGroups.cancelled.length})</span>
+                  <span className="text-xs text-[#8A867D]">
+                    ({filteredGroups.cancelled.length})
+                  </span>
                 </div>
                 {filteredGroups.cancelled.length === 0 ? (
                   <EmptyMeetings
                     title="No cancelled meetings"
-                    description={query || timeFilter !== "all" ? "Try changing the search or time filter." : "Explicitly cancelled meetings will appear here."}
+                    description={
+                      query || timeFilter !== "all"
+                        ? "Try changing the search or time filter."
+                        : "Explicitly cancelled meetings will appear here."
+                    }
                   />
                 ) : (
                   <div className="overflow-hidden rounded-xl border border-[#E5DED5] bg-white shadow-[0_8px_24px_rgba(46,38,31,0.02)]">

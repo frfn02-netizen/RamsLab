@@ -9,15 +9,15 @@ describe("meeting status helpers", () => {
   };
 
   it("derives the three time-based statuses without calling Past Completed", () => {
-    expect(getMeetingStatus(meeting, Date.parse("2030-01-01T09:59:59.000Z"))).toBe(
-      "UPCOMING",
-    );
-    expect(getMeetingStatus(meeting, Date.parse("2030-01-01T10:00:00.000Z"))).toBe(
-      "ONGOING",
-    );
-    expect(getMeetingStatus(meeting, Date.parse("2030-01-01T11:00:00.000Z"))).toBe(
-      "PAST",
-    );
+    expect(
+      getMeetingStatus(meeting, Date.parse("2030-01-01T09:59:59.000Z")),
+    ).toBe("UPCOMING");
+    expect(
+      getMeetingStatus(meeting, Date.parse("2030-01-01T10:00:00.000Z")),
+    ).toBe("ONGOING");
+    expect(
+      getMeetingStatus(meeting, Date.parse("2030-01-01T11:00:00.000Z")),
+    ).toBe("PAST");
     expect(meetingStatusLabel("PAST")).toBe("Past");
   });
 

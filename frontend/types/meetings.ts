@@ -155,6 +155,10 @@ export type MeetingUpdateInput = Partial<MeetingInput> & {
 export interface MeetingSaveResult {
   meeting: Meeting;
   conflicts: MeetingConflict[];
+  notification?: {
+    sent: boolean;
+    warning?: string;
+  };
 }
 
 export interface UserDirectoryEntry {

@@ -39,6 +39,8 @@ async function createMeeting(title: string) {
       clientName: "Concurrency Test Client",
       mode: "OFFLINE",
       location: "Concurrency Room",
+      primaryPicId: TEST_DOSEN_USER_ID,
+      picIds: [TEST_DOSEN_USER_ID],
       startAt: "2035-04-01T09:00:00.000Z",
       endAt: "2035-04-01T10:00:00.000Z",
       participantIds: [TEST_ADMIN_USER_ID],

@@ -83,10 +83,7 @@ export async function getMeetingCalendarController(
   }
 }
 
-export async function getMeetingAgendaController(
-  req: Request,
-  res: Response,
-) {
+export async function getMeetingAgendaController(req: Request, res: Response) {
   try {
     const limit =
       typeof req.query.limit === "string" && /^\d+$/.test(req.query.limit)

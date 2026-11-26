@@ -1,7 +1,10 @@
 import { Collection, ObjectId, type Filter } from "mongodb";
 import { getDatabase } from "../../config/database.js";
 import { SECURITY_LIMITS } from "../../config/security.js";
-import type { CreateMeetingInput, UpdateMeetingInput } from "./meeting.schema.js";
+import type {
+  CreateMeetingInput,
+  UpdateMeetingInput,
+} from "./meeting.schema.js";
 import type {
   Meeting,
   MeetingAuditEntry,
@@ -34,10 +37,7 @@ export async function findMeetingsForUser(options: {
   if (!options.isAdmin) {
     const userId = toObjectId(options.userId);
     if (!userId) return [];
-    filter.$or = [
-      { createdBy: userId },
-      { participantIds: userId },
-    ];
+    filter.$or = [{ createdBy: userId }, { participantIds: userId }];
   }
 
   if (options.to) filter.startAt = { $lt: options.to };
@@ -131,7 +131,9 @@ export async function createMeeting(
   audit: MeetingAuditEntry,
 ): Promise<Meeting> {
   const now = new Date();
-  const primaryPicId = input.primaryPicId ? toObjectId(input.primaryPicId) : null;
+  const primaryPicId = input.primaryPicId
+    ? toObjectId(input.primaryPicId)
+    : null;
   const picIds = (input.picIds ?? [])
     .map(toObjectId)
     .filter((id): id is ObjectId => id !== null);
@@ -152,6 +154,7 @@ export async function createMeeting(
     meetingLink: input.meetingLink ?? null,
     auditHistory: [audit],
     attachments: [],
+    createdNotificationSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -181,7 +184,6 @@ export async function updateMeeting(
   if (input.meetingLink !== undefined)
     set.meetingLink = input.meetingLink || null;
   if (participantIds !== undefined) set.participantIds = participantIds;
-
   if (input.primaryPicId !== undefined) {
     set.primaryPicId = toObjectId(input.primaryPicId) ?? undefined;
   }
@@ -191,9 +193,9 @@ export async function updateMeeting(
       .filter((id): id is ObjectId => id !== null);
   }
 
-  const update: Parameters<
-    Collection<Meeting>["findOneAndUpdate"]
-  >[1] = { $set: set };
+  const update: Parameters<Collection<Meeting>["findOneAndUpdate"]>[1] = {
+    $set: set,
+  };
   if (audit) {
     update.$push = {
       auditHistory: {
@@ -256,6 +258,26 @@ export async function deleteMeeting(id: string): Promise<boolean> {
   return result.deletedCount === 1;
 }
 
+export async function markCreatedNotificationSent(
+  id: string,
+  sentAt: Date,
+): Promise<boolean> {
+  const objectId = toObjectId(id);
+  if (!objectId) return false;
+
+  const result = await getMeetingsCollection().updateOne(
+    {
+      _id: objectId,
+      $or: [
+        { createdNotificationSentAt: null },
+        { createdNotificationSentAt: { $exists: false } },
+      ],
+    },
+    { $set: { createdNotificationSentAt: sentAt } },
+  );
+  return result.modifiedCount === 1;
+}
+
 export async function addMeetingAttachment(
   id: string,
   attachment: MeetingAttachment,
@@ -265,9 +287,7 @@ export async function addMeetingAttachment(
   const objectId = toObjectId(id);
   if (!objectId) return { status: "not_found" };
 
-  const update: Parameters<
-    Collection<Meeting>["findOneAndUpdate"]
-  >[1] = {
+  const update: Parameters<Collection<Meeting>["findOneAndUpdate"]>[1] = {
     $push: { attachments: attachment },
     $set: { updatedAt: new Date() },
   };

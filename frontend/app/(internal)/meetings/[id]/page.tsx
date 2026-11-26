@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import MeetingDetail from "@/components/dashboard/meetings/meeting-detail";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Meeting details",
   robots: { index: false, follow: false },

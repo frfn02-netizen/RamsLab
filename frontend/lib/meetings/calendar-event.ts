@@ -1,9 +1,7 @@
 import { getMeetingStatus } from "./status";
 import type { Meeting, MeetingCalendarEvent } from "@/types/meetings";
 
-export function meetingToCalendarEvent(
-  meeting: Meeting,
-): MeetingCalendarEvent {
+export function meetingToCalendarEvent(meeting: Meeting): MeetingCalendarEvent {
   const primaryPic =
     meeting.primaryPic ??
     meeting.pics?.find((pic) => pic.id === meeting.primaryPicId);

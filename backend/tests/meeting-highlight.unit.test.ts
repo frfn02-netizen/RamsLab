@@ -14,10 +14,7 @@ describe("meeting highlight configuration", () => {
     const parsed = parseMeetingHighlightedUserIds(
       `${FIRST.toHexString()}, ${SECOND.toHexString()}, ${FIRST.toHexString()},`,
     );
-    expect([...parsed]).toEqual([
-      FIRST.toHexString(),
-      SECOND.toHexString(),
-    ]);
+    expect([...parsed]).toEqual([FIRST.toHexString(), SECOND.toHexString()]);
   });
 
   it("rejects invalid configured user IDs", () => {

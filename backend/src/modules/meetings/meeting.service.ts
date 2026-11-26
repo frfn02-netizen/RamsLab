@@ -9,10 +9,13 @@ import {
 import { isSafeHttpUrl } from "../../lib/url-security.js";
 import { meetingInvolvesHighlightedUser } from "../../config/meeting-highlight.js";
 import {
-  hasPermission,
-  PERMISSIONS,
-} from "../../middlewares/permission.middlewares.js";
-import { findUsersByIds } from "../users/user.repository.js";
+  findActiveInternalEmailContacts,
+  findUsersByIds,
+} from "../users/user.repository.js";
+import {
+  sendMeetingEmail,
+  type MeetingEmailRecipient,
+} from "../../lib/mailjet.js";
 import type { JwtPayload } from "../auth/auth.types.js";
 import type { UserDirectoryEntry } from "../users/user.types.js";
 import {
@@ -25,6 +28,7 @@ import {
   findMeetingsForCalendar,
   findMeetingsForUser,
   findOverlappingMeetings,
+  markCreatedNotificationSent,
   removeMeetingAttachment as removeMeetingAttachmentRecord,
   toObjectId,
   updateMeeting as updateMeetingRecord,
@@ -77,9 +81,7 @@ type MeetingDetailFields = {
   meetingLink?: string | null;
 };
 
-function normalizeMeetingDetails<T extends MeetingDetailFields>(
-  meeting: T,
-): T {
+function normalizeMeetingDetails<T extends MeetingDetailFields>(meeting: T): T {
   const normalized = { ...meeting };
   if (typeof normalized.clientName === "string") {
     normalized.clientName = normalized.clientName.trim();
@@ -156,14 +158,15 @@ async function assertValidParticipants(ids: ObjectId[]) {
       .filter(
         (entry) =>
           entry.isActive &&
-          (entry.role === "ADMIN" ||
-            entry.role === "DOSEN" ||
-            entry.role === "STUDENT"),
+          (entry.role === "ADMIN" || entry.role === "DOSEN"),
       )
       .map((entry) => entry._id?.toString()),
   );
   if (ids.some((id) => !valid.has(id.toString()))) {
-    throw new HttpError(400, "Participants must be active accounts with meeting access");
+    throw new HttpError(
+      400,
+      "Participants must be active accounts with meeting access",
+    );
   }
 }
 
@@ -177,46 +180,18 @@ function summary(entry: UserDirectoryEntry): MeetingUserSummary {
   };
 }
 
-function effectiveVisibility(meeting: Pick<Meeting, "visibility">): MeetingVisibility {
+function effectiveVisibility(
+  meeting: Pick<Meeting, "visibility">,
+): MeetingVisibility {
   return meeting.visibility === "INTERNAL" ? "INTERNAL" : "PRIVATE";
 }
 
 function isInternalRole(actor: JwtPayload) {
-  return (
-    actor.role === "ADMIN" ||
-    actor.role === "DOSEN" ||
-    actor.role === "STUDENT"
-  );
-}
-
-function canCoordinateAgenda(actor: JwtPayload) {
-  return (
-    actor.role === "ADMIN" ||
-    (isInternalRole(actor) &&
-      hasPermission(
-        actor.role,
-        PERMISSIONS.AGENDA_MANAGE,
-        actor.permissions ?? [],
-      ))
-  );
+  return actor.role === "ADMIN" || actor.role === "DOSEN";
 }
 
 function canManageOwnMeeting(actor: JwtPayload) {
-  return (
-    actor.role === "ADMIN" ||
-    actor.role === "DOSEN" ||
-    hasPermission(
-      actor.role,
-      PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-      actor.permissions ?? [],
-    )
-  );
-}
-
-function canCoordinateMeeting(meeting: Meeting, actor: JwtPayload) {
-  return (
-    canCoordinateAgenda(actor) && effectiveVisibility(meeting) === "INTERNAL"
-  );
+  return actor.role === "ADMIN" || actor.role === "DOSEN";
 }
 
 function assertSharedAgendaAccess(actor: JwtPayload) {
@@ -290,7 +265,10 @@ function auditChange(
   return { oldValue, newValue };
 }
 
-function auditChangesForCreate(snapshot: MeetingAuditSnapshot, status: MeetingStatus) {
+function auditChangesForCreate(
+  snapshot: MeetingAuditSnapshot,
+  status: MeetingStatus,
+) {
   return Object.fromEntries(
     Object.entries({ ...snapshot, status }).map(([key, value]) => [
       key,
@@ -329,8 +307,10 @@ function createAuditEntry(
 async function userMapFor(meetings: Meeting[]) {
   const ids = new Map<string, ObjectId>();
   for (const meeting of meetings) {
-    if (meeting.createdBy) ids.set(meeting.createdBy.toString(), meeting.createdBy);
-    if (meeting.primaryPicId) ids.set(meeting.primaryPicId.toString(), meeting.primaryPicId);
+    if (meeting.createdBy)
+      ids.set(meeting.createdBy.toString(), meeting.createdBy);
+    if (meeting.primaryPicId)
+      ids.set(meeting.primaryPicId.toString(), meeting.primaryPicId);
     for (const picId of meeting.picIds ?? []) {
       ids.set(picId.toString(), picId);
     }
@@ -352,18 +332,9 @@ function serialize(
   const creatorId = meeting.createdBy?.toString() ?? "";
   const isOrganizer = creatorId === actor.userId;
   const canManageOwn =
-    actor.role === "ADMIN" ||
-    (isOrganizer && canManageOwnMeeting(actor));
-  const canCoordinateThisMeeting = canCoordinateMeeting(meeting, actor);
-  const canEdit = canManageOwn || canCoordinateThisMeeting;
-  const canDelete =
-    actor.role === "ADMIN" ||
-    (isOrganizer &&
-      hasPermission(
-        actor.role,
-        PERMISSIONS.MEETINGS_MANAGE_OWN,
-        actor.permissions ?? [],
-      ));
+    actor.role === "ADMIN" || (isOrganizer && canManageOwnMeeting(actor));
+  const canEdit = canManageOwn;
+  const canDelete = canManageOwn && (actor.role === "ADMIN" || isOrganizer);
   const primaryPic = meeting.primaryPicId
     ? users.get(meeting.primaryPicId.toString())
     : undefined;
@@ -420,9 +391,7 @@ function hasDetailAccess(meeting: Meeting, actor: JwtPayload) {
   if (
     actor.role === "ADMIN" ||
     meeting.createdBy?.toString() === actor.userId ||
-    (meeting.participantIds ?? []).some(
-      (id) => id.toString() === actor.userId,
-    )
+    (meeting.participantIds ?? []).some((id) => id.toString() === actor.userId)
   ) {
     return true;
   }
@@ -521,10 +490,10 @@ function assertCanView(meeting: Meeting, actor: JwtPayload) {
 }
 
 function canEditMeeting(meeting: Meeting, actor: JwtPayload) {
-  if (actor.role === "ADMIN") return true;
-  const isOrganizer = meeting.createdBy?.toString() === actor.userId;
-  if (isOrganizer && canManageOwnMeeting(actor)) return true;
-  return canCoordinateMeeting(meeting, actor);
+  return (
+    canManageOwnMeeting(actor) &&
+    (actor.role === "ADMIN" || meeting.createdBy?.toString() === actor.userId)
+  );
 }
 
 function canCancelMeeting(meeting: Meeting, actor: JwtPayload) {
@@ -533,18 +502,16 @@ function canCancelMeeting(meeting: Meeting, actor: JwtPayload) {
 
 function canDeleteMeeting(meeting: Meeting, actor: JwtPayload) {
   return (
-    actor.role === "ADMIN" ||
-    (meeting.createdBy?.toString() === actor.userId &&
-      hasPermission(
-        actor.role,
-        PERMISSIONS.MEETINGS_MANAGE_OWN,
-        actor.permissions ?? [],
-      ))
+    canManageOwnMeeting(actor) &&
+    (actor.role === "ADMIN" || meeting.createdBy?.toString() === actor.userId)
   );
 }
 
 function assertCanModify(meeting: Meeting, actor: JwtPayload) {
-  if (actor.role === "ADMIN" || meeting.createdBy?.toString() === actor.userId) {
+  if (
+    (actor.role === "ADMIN" || actor.role === "DOSEN") &&
+    (actor.role === "ADMIN" || meeting.createdBy?.toString() === actor.userId)
+  ) {
     return;
   }
   throw new HttpError(403, "You cannot change this meeting");
@@ -574,17 +541,9 @@ function assertCanDelete(meeting: Meeting, actor: JwtPayload) {
   }
 }
 
-function assertCanCreateMeeting(actor: JwtPayload, visibility: MeetingVisibility) {
-  const canManageOwn = canManageOwnMeeting(actor);
-  const canCoordinate = canCoordinateAgenda(actor);
-  if (!canManageOwn && !canCoordinate) {
+function assertCanCreateMeeting(actor: JwtPayload) {
+  if (!canManageOwnMeeting(actor)) {
     throw new HttpError(403, "You cannot create meetings");
-  }
-  if (!canManageOwn && visibility === "PRIVATE") {
-    throw new HttpError(
-      403,
-      "Agenda coordinators can create shared non-private meetings only",
-    );
   }
 }
 
@@ -649,7 +608,10 @@ function normalizePicIds(ids: string[]): ObjectId[] {
   return values;
 }
 
-function requirePrimaryPic(primaryPicId: ObjectId | undefined, picIds: ObjectId[]) {
+function requirePrimaryPic(
+  primaryPicId: ObjectId | undefined,
+  picIds: ObjectId[],
+) {
   if (!primaryPicId) {
     throw new HttpError(400, "A primary PIC is required");
   }
@@ -667,9 +629,7 @@ async function assertValidPics(ids: ObjectId[]) {
       .filter(
         (entry) =>
           entry.isActive &&
-          (entry.role === "ADMIN" ||
-            entry.role === "DOSEN" ||
-            entry.role === "STUDENT"),
+          (entry.role === "ADMIN" || entry.role === "DOSEN"),
       )
       .map((entry) => entry._id?.toString()),
   );
@@ -682,6 +642,34 @@ async function creatorIdFor(actor: JwtPayload): Promise<ObjectId> {
   const creatorId = toObjectId(actor.userId);
   if (!creatorId) throw new HttpError(401, "Authentication required");
   return creatorId;
+}
+
+export async function sendMeetingEmailsToActiveInternalUsers(
+  meeting: Meeting,
+  organizerName: string,
+  kind: "created" | "reminder",
+) {
+  const contacts = await findActiveInternalEmailContacts();
+  if (contacts.length === 0) {
+    return { success: false, error: "no_active_internal_recipients" };
+  }
+
+  const results = await Promise.all(
+    contacts.map((contact) =>
+      sendMeetingEmail({
+        recipient: {
+          email: contact.email,
+          ...(contact.displayName ? { name: contact.displayName } : {}),
+        } satisfies MeetingEmailRecipient,
+        meeting,
+        organizerName,
+        kind,
+        locale: "id",
+      }),
+    ),
+  );
+  const failed = results.find((result) => !result.success);
+  return failed ? { success: false, error: failed.error } : { success: true };
 }
 
 export async function getMeetings(
@@ -794,10 +782,13 @@ export async function getMeetingAudit(id: string, actor: JwtPayload) {
   return serializeAuditHistory(meeting.auditHistory ?? []);
 }
 
-export async function createMeeting(input: CreateMeetingInput, actor: JwtPayload) {
+export async function createMeeting(
+  input: CreateMeetingInput,
+  actor: JwtPayload,
+) {
   const normalizedInput = normalizeMeetingDetails(input);
   assertMeetingWindow(normalizedInput.startAt, normalizedInput.endAt);
-  assertCanCreateMeeting(actor, effectiveVisibility(normalizedInput));
+  assertCanCreateMeeting(actor);
   const creatorId = await creatorIdFor(actor);
   const primaryPicId = toObjectId(normalizedInput.primaryPicId);
   const picIds = normalizePicIds(normalizedInput.picIds);
@@ -824,15 +815,18 @@ export async function createMeeting(input: CreateMeetingInput, actor: JwtPayload
     "CREATE",
     auditChangesForCreate(
       auditSnapshot({
-      ...normalizedInput,
-      picIds,
+        ...normalizedInput,
+        picIds,
         primaryPicId: primaryPicId ?? undefined,
         participantIds,
       }),
-      getMeetingStatus({
-        startAt: normalizedInput.startAt,
-        endAt: normalizedInput.endAt,
-      }, auditTimestamp),
+      getMeetingStatus(
+        {
+          startAt: normalizedInput.startAt,
+          endAt: normalizedInput.endAt,
+        },
+        auditTimestamp,
+      ),
     ),
     auditTimestamp,
   );
@@ -844,7 +838,44 @@ export async function createMeeting(input: CreateMeetingInput, actor: JwtPayload
     audit,
   );
   const [response] = await hydrate([meeting], actor);
-  return { meeting: response, conflicts };
+  const organizerName = response.createdBy?.displayName || "RAMS Platform";
+  let notification: { success: boolean; error?: string };
+  try {
+    notification = await sendMeetingEmailsToActiveInternalUsers(
+      meeting,
+      organizerName,
+      "created",
+    );
+  } catch {
+    notification = { success: false, error: "notification_failed" };
+  }
+  if (notification.success) {
+    const sentAt = new Date();
+    const marked = await markCreatedNotificationSent(
+      meeting._id?.toString() ?? "",
+      sentAt,
+    );
+    if (!marked) {
+      return {
+        meeting: response,
+        conflicts,
+        notification: {
+          sent: false,
+          warning: "Meeting saved, but notification state could not be recorded.",
+        },
+      };
+    }
+  }
+  return {
+    meeting: response,
+    conflicts,
+    notification: notification.success
+      ? { sent: true }
+      : {
+          sent: false,
+          warning: "Meeting saved, but the email notification could not be sent.",
+        },
+  };
 }
 
 export async function updateMeeting(
@@ -876,10 +907,10 @@ export async function updateMeeting(
   let primaryPicId =
     input.primaryPicId === undefined
       ? existing.primaryPicId
-      : toObjectId(input.primaryPicId) ?? undefined;
+      : (toObjectId(input.primaryPicId) ?? undefined);
   let picIds =
     input.picIds === undefined
-      ? existing.picIds ?? []
+      ? (existing.picIds ?? [])
       : normalizePicIds(input.picIds);
   if (picAssignmentUpdated && input.picIds === undefined && primaryPicId) {
     picIds = existing.picIds?.length ? existing.picIds : [primaryPicId];
@@ -924,7 +955,7 @@ export async function updateMeeting(
     meetingLink:
       input.meetingLink === undefined
         ? existing.meetingLink
-        : input.meetingLink ?? null,
+        : (input.meetingLink ?? null),
   });
   const normalizedInput: UpdateMeetingInput = {
     ...input,
@@ -937,9 +968,7 @@ export async function updateMeeting(
     ...(input.clientName !== undefined
       ? { clientName: candidate.clientName ?? undefined }
       : {}),
-    ...(input.mode !== undefined
-      ? { mode: candidate.mode ?? undefined }
-      : {}),
+    ...(input.mode !== undefined ? { mode: candidate.mode ?? undefined } : {}),
     ...(input.location !== undefined ||
     input.mode !== undefined ||
     input.meetingLink !== undefined
@@ -976,7 +1005,12 @@ export async function updateMeeting(
   }
   const audit =
     Object.keys(changes).length > 0
-      ? createAuditEntry(actorObjectId(actor), "UPDATE", changes, auditTimestamp)
+      ? createAuditEntry(
+          actorObjectId(actor),
+          "UPDATE",
+          changes,
+          auditTimestamp,
+        )
       : undefined;
 
   const updated = await updateMeetingRecord(
@@ -1019,10 +1053,7 @@ export async function cancelMeeting(
   assertMeetingNotEnded(existing, cancelledAt);
 
   const changes: Record<string, MeetingAuditChange> = {
-    status: auditChange(
-      getMeetingStatus(existing, cancelledAt),
-      "CANCELLED",
-    ),
+    status: auditChange(getMeetingStatus(existing, cancelledAt), "CANCELLED"),
   };
   const reason = input.reason?.trim() || undefined;
   if (reason) changes.cancellationReason = auditChange(null, reason);

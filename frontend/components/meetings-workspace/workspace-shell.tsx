@@ -13,13 +13,12 @@ import {
 } from "./workspace-nav";
 
 const NAV_ICONS: Record<string, string> = {
-  "/meetings": "M3 3h5.5v5.5H3zM11.5 3H17v5.5h-5.5zM3 11.5h5.5V17H3zM11.5 11.5H17V17h-5.5z",
+  "/meetings":
+    "M3 3h5.5v5.5H3zM11.5 3H17v5.5h-5.5zM3 11.5h5.5V17H3zM11.5 11.5H17V17h-5.5z",
   "/meetings/calendar":
     "M4 4.5h12a1 1 0 011 1V16a1 1 0 01-1 1H4a1 1 0 01-1-1V5.5a1 1 0 011-1zM6 2.5v3M14 2.5v3M3 8.5h14M7 12h.01M10 12h.01M13 12h.01",
   "/meetings/mine":
     "M7.5 9.5a2.75 2.75 0 100-5.5 2.75 2.75 0 000 5.5zM2.5 17c0-2.4 2.24-4.25 5-4.25s5 1.85 5 4.25M13.5 5.5h4M13.5 9h4M13.5 12.5h2.5",
-  "/schedule":
-    "M4 4.5h12a1 1 0 011 1V16a1 1 0 01-1 1H4a1 1 0 01-1-1V5.5a1 1 0 011-1zM6 2.5v3M14 2.5v3M3 8.5h14M7 12h.01M10 12h.01M13 12h.01",
 };
 
 function NavIcon({ href }: { href: string }) {
@@ -81,10 +80,7 @@ function WorkspaceIdentity({ compact = false }: { compact?: boolean }) {
 function WorkspaceNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const items = visibleMeetingsNavItems(
-    user?.role,
-    user?.permissions ?? [],
-  );
+  const items = visibleMeetingsNavItems(user?.role);
 
   return (
     <div className="space-y-0.5">
@@ -109,9 +105,7 @@ function WorkspaceNavLinks({ onNavigate }: { onNavigate?: () => void }) {
               />
             )}
             <span
-              className={
-                active ? "text-[var(--rams-red)]" : "text-[#A8A399]"
-              }
+              className={active ? "text-[var(--rams-red)]" : "text-[#A8A399]"}
             >
               <NavIcon href={item.href} />
             </span>

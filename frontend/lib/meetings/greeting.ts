@@ -4,11 +4,7 @@ export function meetingGreeting(
 ) {
   const hour = date.getHours();
   const salutation =
-    hour < 12
-      ? "Good morning"
-      : hour < 18
-        ? "Good afternoon"
-        : "Good evening";
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const name = fullName?.trim();
 
   return name ? `${salutation}, ${name}.` : `${salutation}.`;

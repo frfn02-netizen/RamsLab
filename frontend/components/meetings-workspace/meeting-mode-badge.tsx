@@ -1,7 +1,4 @@
-import {
-  meetingModeAriaLabel,
-  meetingModeLabel,
-} from "@/lib/meetings/mode";
+import { meetingModeAriaLabel, meetingModeLabel } from "@/lib/meetings/mode";
 import type { MeetingMode } from "@/types/meetings";
 
 function ModeIcon({ mode }: { mode: MeetingMode | null | undefined }) {

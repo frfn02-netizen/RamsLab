@@ -17,6 +17,8 @@ const BASE_CREATE = {
   clientName: "PT Test Client",
   mode: "OFFLINE" as const,
   location: "Meeting Room 1",
+  primaryPicId: USER_ID,
+  picIds: [USER_ID],
   startAt: "2030-01-01T09:00:00.000Z",
   endAt: "2030-01-01T10:00:00.000Z",
 };
@@ -77,6 +79,27 @@ describe("meeting schema", () => {
         ...BASE_CREATE,
         title: "Review",
         participantIds: ["not-an-object-id"],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects duplicate PIC ids", () => {
+    expect(
+      createMeetingSchema.safeParse({
+        ...BASE_CREATE,
+        title: "Duplicate PICs",
+        picIds: [USER_ID, USER_ID],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("requires the primary PIC to be included in the PIC list", () => {
+    expect(
+      createMeetingSchema.safeParse({
+        ...BASE_CREATE,
+        title: "Missing primary PIC",
+        primaryPicId: USER_ID,
+        picIds: [OTHER_ID],
       }).success,
     ).toBe(false);
   });
@@ -243,10 +266,7 @@ describe("meeting cancellation eligibility", () => {
 
   it("allows cancellation strictly before the persisted end time", () => {
     expect(() =>
-      assertMeetingNotEnded(
-        { endAt },
-        new Date("2030-01-01T10:59:59.999Z"),
-      ),
+      assertMeetingNotEnded({ endAt }, new Date("2030-01-01T10:59:59.999Z")),
     ).not.toThrow();
   });
 

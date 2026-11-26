@@ -22,8 +22,7 @@ export const MEETING_AUDIT_ACTIONS = [
   "ATTACHMENT_ADDED",
   "ATTACHMENT_REMOVED",
 ] as const;
-export type MeetingActiveAuditAction =
-  (typeof MEETING_AUDIT_ACTIONS)[number];
+export type MeetingActiveAuditAction = (typeof MEETING_AUDIT_ACTIONS)[number];
 
 export const MEETING_LEGACY_AUDIT_ACTIONS = [
   "DELEGATE_ASSIGNED",
@@ -36,8 +35,7 @@ export type MeetingLegacyAuditAction =
   (typeof MEETING_LEGACY_AUDIT_ACTIONS)[number];
 
 export type MeetingAuditAction =
-  | MeetingActiveAuditAction
-  | MeetingLegacyAuditAction;
+  MeetingActiveAuditAction | MeetingLegacyAuditAction;
 
 export type MeetingAuditValue =
   | null
@@ -110,6 +108,8 @@ export interface Meeting {
   auditHistory?: MeetingAuditEntry[];
   guestInvitations?: MeetingGuestInvitation[];
   attachments: MeetingAttachment[];
+  /** Set after the creation notification has been accepted by Mailjet. */
+  createdNotificationSentAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

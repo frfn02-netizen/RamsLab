@@ -17,8 +17,9 @@ export function parseMeetingHighlightedUserIds(
   return ids;
 }
 
-export const MEETINGS_HIGHLIGHTED_USER_IDS =
-  parseMeetingHighlightedUserIds(process.env.MEETINGS_HIGHLIGHTED_USER_IDS);
+export const MEETINGS_HIGHLIGHTED_USER_IDS = parseMeetingHighlightedUserIds(
+  process.env.MEETINGS_HIGHLIGHTED_USER_IDS,
+);
 
 export function isMeetingHighlightedUser(
   userId: ObjectId | string | null | undefined,

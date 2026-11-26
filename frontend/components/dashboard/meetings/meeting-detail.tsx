@@ -18,15 +18,9 @@ import {
   getMeeting,
   getMeetingAudit,
 } from "@/lib/api/meetings";
-import {
-  formatBytes,
-  formatTimeRange,
-} from "@/lib/meetings/calendar";
+import { formatBytes, formatTimeRange } from "@/lib/meetings/calendar";
 import { meetingModeLabel, safeHttpUrl } from "@/lib/meetings/mode";
-import {
-  getMeetingStatus,
-  meetingStatusLabel,
-} from "@/lib/meetings/status";
+import { getMeetingStatus, meetingStatusLabel } from "@/lib/meetings/status";
 import type {
   Meeting,
   MeetingAuditEntry,
@@ -57,10 +51,7 @@ const ICON_PATHS: Record<IconName, string[]> = {
     "M4.5 5.5h15a1.5 1.5 0 011.5 1.5v12a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 19V7a1.5 1.5 0 011.5-1.5Z",
     "M7.5 3.5v4M16.5 3.5v4M3 10h18",
   ],
-  clock: [
-    "M12 3.5a8.5 8.5 0 100 17 8.5 8.5 0 000-17Z",
-    "M12 7.5v4.8l3.1 1.8",
-  ],
+  clock: ["M12 3.5a8.5 8.5 0 100 17 8.5 8.5 0 000-17Z", "M12 7.5v4.8l3.1 1.8"],
   video: [
     "M4 5.5h9a1.5 1.5 0 011.5 1.5v10a1.5 1.5 0 01-1.5 1.5H4A1.5 1.5 0 012.5 17V7A1.5 1.5 0 014 5.5Z",
     "m14.5 9 5-2.5v11l-5-2.5",
@@ -95,9 +86,7 @@ const ICON_PATHS: Record<IconName, string[]> = {
     "M2.5 12s3.4-5 9.5-5 9.5 5 9.5 5-3.4 5-9.5 5-9.5-5-9.5-5Z",
     "M12 14.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5Z",
   ],
-  download: [
-    "M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4 19.5h16",
-  ],
+  download: ["M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4 19.5h16"],
 };
 
 function Icon({
@@ -129,7 +118,9 @@ function FileIcon({ pdf = false }: { pdf?: boolean }) {
   return (
     <span
       className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${
-        pdf ? "bg-[#FBE9E7] text-[var(--rams-red)]" : "bg-[#F4F1EA] text-[#6B6A64]"
+        pdf
+          ? "bg-[#FBE9E7] text-[var(--rams-red)]"
+          : "bg-[#F4F1EA] text-[#6B6A64]"
       }`}
     >
       <svg
@@ -198,7 +189,8 @@ function auditActionLabel(action: MeetingAuditEntry["action"]) {
   if (action === "ATTACHMENT_REMOVED") return "Attachment removed";
   if (action === "GUEST_INVITATION_CREATED") return "Guest invitation created";
   if (action === "GUEST_INVITATION_REVOKED") return "Guest invitation revoked";
-  if (action === "GUEST_INVITATION_REGENERATED") return "Guest invitation regenerated";
+  if (action === "GUEST_INVITATION_REGENERATED")
+    return "Guest invitation regenerated";
   return "Meeting updated";
 }
 
@@ -453,7 +445,10 @@ export default function MeetingDetail({
                 <span
                   className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}
                 >
-                  <span className="h-2 w-2 rounded-full bg-current" aria-hidden="true" />
+                  <span
+                    className="h-2 w-2 rounded-full bg-current"
+                    aria-hidden="true"
+                  />
                   {statusLabel}
                 </span>
                 <MeetingHighlightBadge
@@ -545,34 +540,42 @@ export default function MeetingDetail({
                         </div>
                       </div>
                     )}
-                    {meeting.additionalPics && meeting.additionalPics.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
-                          Additional PICs
-                        </p>
-                        <ul className="mt-2 divide-y divide-[#EEEAE4]">
-                          {meeting.additionalPics.map((pic) => (
-                            <li key={pic.id} className="flex items-center gap-3 py-3">
-                              <Initials
-                                value={picDisplayName(pic)}
-                                className="h-9 w-9 shrink-0"
-                              />
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
-                                  {picDisplayName(pic)}
+                    {meeting.additionalPics &&
+                      meeting.additionalPics.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
+                            Additional PICs
+                          </p>
+                          <ul className="mt-2 divide-y divide-[#EEEAE4]">
+                            {meeting.additionalPics.map((pic) => (
+                              <li
+                                key={pic.id}
+                                className="flex items-center gap-3 py-3"
+                              >
+                                <Initials
+                                  value={picDisplayName(pic)}
+                                  className="h-9 w-9 shrink-0"
+                                />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
+                                    {picDisplayName(pic)}
+                                  </span>
+                                  <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
+                                    {pic.email}
+                                  </span>
                                 </span>
-                                <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
-                                  {pic.email}
-                                </span>
-                              </span>
-                              <Badge tone={pic.role === "ADMIN" ? "red" : "neutral"}>
-                                {pic.role}
-                              </Badge>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                                <Badge
+                                  tone={
+                                    pic.role === "ADMIN" ? "red" : "neutral"
+                                  }
+                                >
+                                  {pic.role}
+                                </Badge>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 ) : (
                   <p className="mt-4 text-sm text-[#6B6A64]">
@@ -622,7 +625,9 @@ export default function MeetingDetail({
                         key={attachment.id}
                         className="flex items-center gap-3 rounded-lg px-1 py-2"
                       >
-                        <FileIcon pdf={attachment.mimeType === "application/pdf"} />
+                        <FileIcon
+                          pdf={attachment.mimeType === "application/pdf"}
+                        />
                         <a
                           href={attachment.url}
                           target="_blank"
@@ -634,7 +639,9 @@ export default function MeetingDetail({
                             {attachment.filename}
                           </span>
                           <span className="mt-1 block text-xs text-[#6B6A64]">
-                            {formatBytes(attachment.size)} · {attachment.mimeType.split("/")[1]?.toUpperCase() ?? "FILE"}
+                            {formatBytes(attachment.size)} ·{" "}
+                            {attachment.mimeType.split("/")[1]?.toUpperCase() ??
+                              "FILE"}
                           </span>
                         </a>
                         <div className="flex shrink-0 items-center gap-2">
@@ -700,7 +707,9 @@ export default function MeetingDetail({
                           </span>
                         </span>
                         <Badge
-                          tone={participant.role === "ADMIN" ? "red" : "neutral"}
+                          tone={
+                            participant.role === "ADMIN" ? "red" : "neutral"
+                          }
                         >
                           {participant.role}
                         </Badge>
@@ -708,7 +717,6 @@ export default function MeetingDetail({
                     ))}
                   </ul>
                 )}
-
               </section>
             </div>
           </div>
@@ -746,8 +754,12 @@ export default function MeetingDetail({
                 <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
                   <dt className="text-sm text-[#5F5A54]">Date &amp; time</dt>
                   <dd className="text-sm font-medium leading-6 text-[var(--rams-charcoal)]">
-                    <span className="block">{compactDate(meeting.startAt)}</span>
-                    <span className="block">{formatTimeRange(meeting.startAt, meeting.endAt)}</span>
+                    <span className="block">
+                      {compactDate(meeting.startAt)}
+                    </span>
+                    <span className="block">
+                      {formatTimeRange(meeting.startAt, meeting.endAt)}
+                    </span>
                   </dd>
                 </div>
                 <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
@@ -778,7 +790,8 @@ export default function MeetingDetail({
                     </dd>
                   </div>
                 )}
-                {(meeting.mode !== "OFFLINE" || Boolean(meeting.meetingLink)) && (
+                {(meeting.mode !== "OFFLINE" ||
+                  Boolean(meeting.meetingLink)) && (
                   <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 py-4">
                     <dt className="text-sm text-[#5F5A54]">Meeting link</dt>
                     <dd className="min-w-0">
@@ -790,7 +803,9 @@ export default function MeetingDetail({
                           className="inline-flex max-w-full items-center gap-2 break-all text-sm font-medium text-[var(--rams-red)] hover:underline"
                         >
                           <Icon name="link" className="h-5 w-5 shrink-0" />
-                          <span className="truncate">{meeting.meetingLink}</span>
+                          <span className="truncate">
+                            {meeting.meetingLink}
+                          </span>
                           <Icon name="external" className="h-4 w-4 shrink-0" />
                         </a>
                       ) : meeting.meetingLink?.trim() ? (
@@ -809,7 +824,10 @@ export default function MeetingDetail({
                   <dt className="text-sm text-[#5F5A54]">Created by</dt>
                   <dd className="flex min-w-0 items-center gap-2 text-sm font-medium text-[var(--rams-charcoal)]">
                     <Initials
-                      value={meeting.createdBy?.displayName ?? meeting.createdBy?.email}
+                      value={
+                        meeting.createdBy?.displayName ??
+                        meeting.createdBy?.email
+                      }
                       className="h-9 w-9 shrink-0"
                     />
                     <span className="min-w-0">
@@ -846,7 +864,10 @@ export default function MeetingDetail({
                 </h2>
               </div>
               {auditError ? (
-                <p role="alert" className="mt-4 text-sm leading-6 text-[#8B3732]">
+                <p
+                  role="alert"
+                  className="mt-4 text-sm leading-6 text-[#8B3732]"
+                >
                   {auditError}
                 </p>
               ) : audit.length === 0 ? (
@@ -871,7 +892,8 @@ export default function MeetingDetail({
                       <p className="mt-1 text-xs text-[#7D7972]">
                         {entry.actor?.displayName ??
                           entry.actor?.email ??
-                          "Unknown actor"} · {timelineDate(entry.timestamp)}
+                          "Unknown actor"}{" "}
+                        · {timelineDate(entry.timestamp)}
                       </p>
                       <ul className="mt-3 space-y-2 text-xs text-[#5F5A54]">
                         {Object.entries(entry.changes).map(

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import MeetingsOverview from "@/components/meetings-workspace/overview";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Meetings overview",
   robots: { index: false, follow: false },

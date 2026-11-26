@@ -7,7 +7,9 @@ import {
   type MeetingIndexCollection,
 } from "../src/modules/meetings/meeting.index.js";
 
-function indexFromSpec(spec: (typeof MEETING_INDEX_SPECS)[number]): IndexDescription {
+function indexFromSpec(
+  spec: (typeof MEETING_INDEX_SPECS)[number],
+): IndexDescription {
   return { key: spec.key, name: spec.name };
 }
 
@@ -25,10 +27,7 @@ function createFakeCollection(initialIndexes: IndexDescription[]) {
           indexes.map((index) => ({ ...index, key: { ...index.key } })),
       };
     },
-    async createIndex(
-      key: Record<string, number>,
-      options: { name: string },
-    ) {
+    async createIndex(key: Record<string, number>, options: { name: string }) {
       indexes.push({ key, ...options });
       created.push(options.name);
       return options.name;
@@ -94,7 +93,10 @@ describe("meeting indexes", () => {
   it("does not manage or drop legacy delegate and guest indexes", async () => {
     const fake = createFakeCollection([
       { key: { _id: 1 }, name: "_id_" },
-      { key: { delegatedUserIds: 1, startAt: 1 }, name: "meetings_delegate_index" },
+      {
+        key: { delegatedUserIds: 1, startAt: 1 },
+        name: "meetings_delegate_index",
+      },
       {
         key: { "guestInvitations.tokenHash": 1 },
         name: "meetings_guest_invitation_token_index",

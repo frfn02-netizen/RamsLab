@@ -4,7 +4,6 @@ import { ObjectId } from "mongodb";
 
 import app from "../src/app.js";
 import { connectDatabase } from "../src/config/database.js";
-import { CURRENT_LAB_ID } from "../src/config/lab.js";
 import {
   addMeetingAttachment,
   getMeetingsCollection,
@@ -12,7 +11,6 @@ import {
 import { MAX_MEETING_ATTACHMENTS } from "../src/modules/meetings/meeting.schema.js";
 import type { MeetingAttachment } from "../src/modules/meetings/meeting.types.js";
 import { getUsersCollection } from "../src/modules/users/user.repository.js";
-import { getLabMembershipsCollection } from "../src/modules/lab-memberships/lab-membership.repository.js";
 import {
   ensureTestUsers,
   restoreUserFixtures,
@@ -29,10 +27,18 @@ const OFFLINE_MEETING = {
   clientName: "RAMS Test Client",
   mode: "OFFLINE" as const,
   location: "RAMS Meeting Room",
+  primaryPicId: TEST_DOSEN_USER_ID,
+  picIds: [TEST_DOSEN_USER_ID],
 };
 const ONLINE_MEETING = {
   clientName: "RAMS Test Client",
   mode: "ONLINE" as const,
+  primaryPicId: TEST_DOSEN_USER_ID,
+  picIds: [TEST_DOSEN_USER_ID],
+};
+const PIC_FIELDS = {
+  primaryPicId: TEST_DOSEN_USER_ID,
+  picIds: [TEST_DOSEN_USER_ID],
 };
 
 let creatorToken: string;
@@ -142,31 +148,6 @@ beforeAll(async () => {
   );
 
   await cleanupMeetings();
-  await getLabMembershipsCollection().deleteMany({
-    labId: CURRENT_LAB_ID,
-    userId: { $in: [new ObjectId(TEST_DOSEN_USER_ID), new ObjectId(OTHER_DOSEN_ID)] },
-  });
-  await getLabMembershipsCollection().insertMany([
-    {
-      labId: CURRENT_LAB_ID,
-      userId: new ObjectId(TEST_DOSEN_USER_ID),
-      status: "ACTIVE",
-      joinedAt: now,
-      updatedAt: now,
-      createdBy: new ObjectId(TEST_ADMIN_USER_ID),
-      updatedBy: new ObjectId(TEST_ADMIN_USER_ID),
-    },
-    {
-      labId: CURRENT_LAB_ID,
-      userId: new ObjectId(OTHER_DOSEN_ID),
-      status: "ACTIVE",
-      joinedAt: now,
-      updatedAt: now,
-      createdBy: new ObjectId(TEST_ADMIN_USER_ID),
-      updatedBy: new ObjectId(TEST_ADMIN_USER_ID),
-    },
-  ]);
-
   creatorToken = signTestToken(TEST_DOSEN_USER_ID, "DOSEN");
   otherDosenToken = signTestToken(OTHER_DOSEN_ID, "DOSEN");
   adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
@@ -178,12 +159,6 @@ afterAll(async () => {
 
   try {
     await cleanupMeetings();
-    await getLabMembershipsCollection().deleteMany({
-      labId: CURRENT_LAB_ID,
-      userId: {
-        $in: [new ObjectId(TEST_DOSEN_USER_ID), new ObjectId(OTHER_DOSEN_ID)],
-      },
-    });
   } finally {
     if (userFixtureSnapshotReady) {
       await restoreUserFixtures(userFixtureSnapshots);
@@ -218,6 +193,63 @@ describe("Meetings API", () => {
       "externalParticipants",
     );
     expect(response.body.data.conflicts).toEqual([]);
+  });
+
+  it("keeps multiple PICs separate from ownership, participants, and access", async () => {
+    const created = await request(app)
+      .post("/api/meetings")
+      .set("Cookie", `rams_access_token=${creatorToken}`)
+      .send({
+        ...OFFLINE_MEETING,
+        title: `${TITLE_PREFIX} multiple PIC separation`,
+        startAt: "2031-04-01T09:00:00.000Z",
+        endAt: "2031-04-01T10:00:00.000Z",
+        primaryPicId: OTHER_DOSEN_ID,
+        picIds: [OTHER_DOSEN_ID, TEST_ADMIN_USER_ID],
+        participantIds: [],
+      });
+
+    expect(created.status).toBe(201);
+    const createdMeeting = created.body.data.meeting;
+    expect(createdMeeting.createdBy.id).toBe(TEST_DOSEN_USER_ID);
+    expect(createdMeeting.participantIds).toEqual([]);
+    expect(createdMeeting.primaryPicId).toBe(OTHER_DOSEN_ID);
+    expect(createdMeeting.picIds).toEqual([OTHER_DOSEN_ID, TEST_ADMIN_USER_ID]);
+    expect(createdMeeting.primaryPic.id).toBe(OTHER_DOSEN_ID);
+    expect(
+      createdMeeting.additionalPics.map((pic: { id: string }) => pic.id),
+    ).toEqual([TEST_ADMIN_USER_ID]);
+
+    const edited = await request(app)
+      .patch(`/api/meetings/${createdMeeting._id}`)
+      .set("Cookie", `rams_access_token=${creatorToken}`)
+      .send({
+        primaryPicId: OTHER_DOSEN_ID,
+        picIds: [OTHER_DOSEN_ID],
+      });
+    expect(edited.status).toBe(200);
+    expect(edited.body.data.meeting.picIds).toEqual([OTHER_DOSEN_ID]);
+    expect(edited.body.data.meeting.additionalPics).toBeUndefined();
+
+    const privateMeeting = await request(app)
+      .post("/api/meetings")
+      .set("Cookie", `rams_access_token=${creatorToken}`)
+      .send({
+        ...OFFLINE_MEETING,
+        title: `${TITLE_PREFIX} PIC does not grant access`,
+        startAt: "2031-04-02T09:00:00.000Z",
+        endAt: "2031-04-02T10:00:00.000Z",
+        visibility: "PRIVATE",
+        primaryPicId: OTHER_DOSEN_ID,
+        picIds: [OTHER_DOSEN_ID],
+        participantIds: [],
+      });
+    expect(privateMeeting.status).toBe(201);
+
+    const denied = await request(app)
+      .get(`/api/meetings/${privateMeeting.body.data.meeting._id}`)
+      .set("Cookie", `rams_access_token=${otherDosenToken}`);
+    expect(denied.status).toBe(403);
   });
 
   it("derives status, records audit history, and cancels explicitly", async () => {
@@ -283,11 +315,9 @@ describe("Meetings API", () => {
       .get(`/api/meetings/${id}/audit`)
       .set("Cookie", `rams_access_token=${creatorToken}`);
     expect(audit.status).toBe(200);
-    expect(audit.body.data.map((entry: { action: string }) => entry.action)).toEqual([
-      "CANCEL",
-      "UPDATE",
-      "CREATE",
-    ]);
+    expect(
+      audit.body.data.map((entry: { action: string }) => entry.action),
+    ).toEqual(["CANCEL", "UPDATE", "CREATE"]);
     expect(audit.body.data[0].changes.status).toEqual({
       oldValue: "UPCOMING",
       newValue: "CANCELLED",
@@ -443,8 +473,7 @@ describe("Meetings API", () => {
     );
 
     expect(responses.map((response) => response.status).sort()).toEqual([
-      200,
-      409,
+      200, 409,
     ]);
 
     const audit = await request(app)
@@ -452,26 +481,30 @@ describe("Meetings API", () => {
       .set("Cookie", `rams_access_token=${creatorToken}`);
     expect(audit.status).toBe(200);
     expect(
-      audit.body.data.filter((entry: { action: string }) => entry.action === "CANCEL"),
+      audit.body.data.filter(
+        (entry: { action: string }) => entry.action === "CANCEL",
+      ),
     ).toHaveLength(1);
   });
 
   it("lists the meeting for the creator and participant", async () => {
     const creatorList = await request(app)
-      .get("/api/meetings?from=2030-02-25T00:00:00.000Z&to=2030-03-05T00:00:00.000Z")
+      .get(
+        "/api/meetings?from=2030-02-25T00:00:00.000Z&to=2030-03-05T00:00:00.000Z",
+      )
       .set("Cookie", `rams_access_token=${creatorToken}`);
     expect(creatorList.status).toBe(200);
-    expect(creatorList.body.data.map((item: { _id: string }) => item._id)).toContain(
-      meetingId,
-    );
+    expect(
+      creatorList.body.data.map((item: { _id: string }) => item._id),
+    ).toContain(meetingId);
 
     const adminList = await request(app)
       .get("/api/meetings")
       .set("Cookie", `rams_access_token=${adminToken}`);
     expect(adminList.status).toBe(200);
-    expect(adminList.body.data.map((item: { _id: string }) => item._id)).toContain(
-      meetingId,
-    );
+    expect(
+      adminList.body.data.map((item: { _id: string }) => item._id),
+    ).toContain(meetingId);
   });
 
   it("exposes shared internal calendar fields to an unrelated dosen", async () => {
@@ -762,10 +795,9 @@ describe("Meetings API", () => {
       .get(`/api/meetings/${id}/audit`)
       .set("Cookie", `rams_access_token=${creatorToken}`);
     expect(audit.status).toBe(200);
-    expect(audit.body.data.map((entry: { action: string }) => entry.action)).toEqual([
-      "UPDATE",
-      "CREATE",
-    ]);
+    expect(
+      audit.body.data.map((entry: { action: string }) => entry.action),
+    ).toEqual(["UPDATE", "CREATE"]);
   });
 
   it("treats legacy meetings without visibility as private on the calendar", async () => {
@@ -828,8 +860,7 @@ describe("Meetings API", () => {
       )
       .set("Cookie", `rams_access_token=${creatorToken}`);
     const legacyEvent = creatorCalendar.body.data.find(
-      (item: { _id: string }) =>
-        item._id === legacy.insertedId.toHexString(),
+      (item: { _id: string }) => item._id === legacy.insertedId.toHexString(),
     );
     expect(legacyEvent).toEqual(
       expect.objectContaining({
@@ -866,9 +897,9 @@ describe("Meetings API", () => {
       .get("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`);
     expect(list.status).toBe(200);
-    expect(list.body.data.map((item: { _id: string }) => item._id)).not.toContain(
-      id,
-    );
+    expect(
+      list.body.data.map((item: { _id: string }) => item._id),
+    ).not.toContain(id);
 
     const detail = await request(app)
       .get(`/api/meetings/${id}`)
@@ -904,9 +935,9 @@ describe("Meetings API", () => {
       .get("/api/meetings")
       .set("Cookie", `rams_access_token=${otherDosenToken}`);
     expect(list.status).toBe(200);
-    expect(list.body.data.map((item: { _id: string }) => item._id)).not.toContain(
-      meetingId,
-    );
+    expect(
+      list.body.data.map((item: { _id: string }) => item._id),
+    ).not.toContain(meetingId);
 
     const detail = await request(app)
       .get(`/api/meetings/${meetingId}`)
@@ -1169,6 +1200,11 @@ describe("Meetings API", () => {
           entry.email === "vitest.dosen.account@test.local",
       ),
     ).toBe(true);
+    expect(
+      staff.body.data.some(
+        (entry: { role: string }) => entry.role === "ALUMNI",
+      ),
+    ).toBe(false);
 
     const alumni = await request(app)
       .get("/api/users/directory")
@@ -1194,6 +1230,7 @@ describe("Meetings API", () => {
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({
+        ...PIC_FIELDS,
         title: `${TITLE_PREFIX} offline contract`,
         clientName: "  PT Offshore Client  ",
         mode: "OFFLINE",
@@ -1222,6 +1259,7 @@ describe("Meetings API", () => {
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({
+        ...PIC_FIELDS,
         title: `${TITLE_PREFIX} online contract`,
         clientName: "PT Online Client",
         mode: "ONLINE",
@@ -1297,6 +1335,7 @@ describe("Meetings API", () => {
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({
+        ...PIC_FIELDS,
         title: `${TITLE_PREFIX} mode transition`,
         clientName: "Transition Client",
         mode: "OFFLINE",
@@ -1416,6 +1455,7 @@ describe("Meetings API", () => {
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({
+        ...PIC_FIELDS,
         title: `${TITLE_PREFIX} private mode details`,
         clientName: "Confidential Client",
         mode: "ONLINE",
@@ -1466,6 +1506,7 @@ describe("Meetings API", () => {
       .post("/api/meetings")
       .set("Cookie", `rams_access_token=${creatorToken}`)
       .send({
+        ...PIC_FIELDS,
         title: `${TITLE_PREFIX} audit mode fields`,
         clientName: "Audit Client",
         mode: "OFFLINE",

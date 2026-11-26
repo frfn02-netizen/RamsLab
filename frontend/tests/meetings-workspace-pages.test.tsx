@@ -1,11 +1,17 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import MeetingsNewPage from "@/app/meetings/new/page";
-import MeetingsDetailPage from "@/app/meetings/[id]/page";
-import MeetingsEditPage from "@/app/meetings/[id]/edit/page";
-import DashboardMeetingDetailPage from "@/app/dashboard/meetings/[id]/page";
-import DashboardNewMeetingPage from "@/app/dashboard/meetings/new/page";
+import MeetingsNewPage from "@/app/(internal)/meetings/new/page";
+import MeetingsDetailPage from "@/app/(internal)/meetings/[id]/page";
+import MeetingsEditPage from "@/app/(internal)/meetings/[id]/edit/page";
+import DashboardMeetingDetailPage from "@/app/(internal)/dashboard/meetings/[id]/page";
+import DashboardNewMeetingPage from "@/app/(internal)/dashboard/meetings/new/page";
 import { ApiError } from "@/lib/api/errors";
 import type { Meeting } from "@/types/meetings";
 
@@ -107,13 +113,41 @@ const attachment = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  state.getUserDirectory.mockResolvedValue([]);
+  state.getUserDirectory.mockResolvedValue([
+    { id: "user-2", email: "other@example.com", role: "DOSEN" },
+    { id: "user-3", email: "third@example.com", role: "DOSEN" },
+    { id: "user-4", email: "fourth@example.com", role: "ADMIN" },
+    { id: "user-5", email: "alumni@example.com", role: "ALUMNI" },
+  ]);
   state.checkMeetingConflicts.mockResolvedValue([]);
   state.getMeeting.mockResolvedValue(makeMeeting());
   state.getMeetingAudit.mockResolvedValue([]);
 });
 
 describe("workspace create meeting page", () => {
+  it("excludes alumni from PIC and participant selectors", async () => {
+    render(
+      await MeetingsNewPage({
+        searchParams: Promise.resolve({ date: "2031-03-04" }),
+      }),
+    );
+
+    await screen.findByRole("heading", { name: "Schedule meeting" });
+    expect(
+      screen.queryByRole("option", { name: /alumni@example\.com/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Additional PIC: alumni@example.com",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Participant: alumni@example.com",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the calendar date query parameter when opening the workspace form", async () => {
     render(
       await MeetingsNewPage({
@@ -151,6 +185,19 @@ describe("workspace create meeting page", () => {
     );
     await screen.findByRole("heading", { name: "Schedule meeting" });
     expect(screen.getByLabelText("Visibility")).toHaveValue("INTERNAL");
+    fireEvent.change(screen.getByLabelText("Primary PIC"), {
+      target: { value: "user-2" },
+    });
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Additional PIC: third@example.com",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Additional PIC: fourth@example.com",
+      }),
+    );
 
     fireEvent.change(screen.getByLabelText("Title"), {
       target: { value: "Planning sync" },
@@ -185,13 +232,9 @@ describe("workspace create meeting page", () => {
     });
     expect(screen.getByText("agenda.pdf")).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Schedule meeting" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Schedule meeting" }));
 
-    await waitFor(() =>
-      expect(state.createMeeting).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(state.createMeeting).toHaveBeenCalledTimes(1));
     expect(state.createMeeting).toHaveBeenCalledWith(
       expect.objectContaining({
         visibility: "PRIVATE",
@@ -199,13 +242,12 @@ describe("workspace create meeting page", () => {
         mode: "OFFLINE",
         location: "Planning Room",
         meetingLink: "https://meet.google.com/planning-room",
+        primaryPicId: "user-2",
+        picIds: ["user-2", "user-3", "user-4"],
       }),
     );
     await waitFor(() =>
-      expect(state.uploadMeetingAttachment).toHaveBeenCalledWith(
-        "new-1",
-        file,
-      ),
+      expect(state.uploadMeetingAttachment).toHaveBeenCalledWith("new-1", file),
     );
     expect(state.push).toHaveBeenCalledWith("/meetings/new-1");
   });
@@ -222,6 +264,9 @@ describe("workspace create meeting page", () => {
       }),
     );
     await screen.findByRole("heading", { name: "Schedule meeting" });
+    fireEvent.change(screen.getByLabelText("Primary PIC"), {
+      target: { value: "user-2" },
+    });
 
     fireEvent.change(screen.getByLabelText("Title"), {
       target: { value: "Online sync" },
@@ -408,7 +453,9 @@ describe("workspace create meeting page", () => {
     fireEvent.change(screen.getByLabelText("Mode"), {
       target: { value: "ONLINE" },
     });
-    expect(screen.queryByLabelText("Physical location")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Physical location"),
+    ).not.toBeInTheDocument();
     expect(screen.getByLabelText("Meeting Link")).toBeInTheDocument();
   });
 
@@ -480,9 +527,7 @@ describe("workspace edit meeting page", () => {
       }),
     );
 
-    render(
-      await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
 
     expect(
       await screen.findByRole("heading", { name: "Edit meeting" }),
@@ -496,7 +541,9 @@ describe("workspace edit meeting page", () => {
       "RAMS Meeting Room",
     );
     expect(
-      screen.getByRole("checkbox", { name: /other@example.com/ }),
+      screen.getByRole("checkbox", {
+        name: "Participant: other@example.com",
+      }),
     ).toBeChecked();
     expect(screen.getByText("agenda.pdf")).toBeInTheDocument();
     expect(screen.queryByText("Delegation")).not.toBeInTheDocument();
@@ -529,13 +576,13 @@ describe("workspace edit meeting page", () => {
       conflicts: [],
     });
 
-    render(
-      await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
     fireEvent.click(
-      screen.getByRole("checkbox", { name: /other@example.com/ }),
+      screen.getByRole("checkbox", {
+        name: "Participant: other@example.com",
+      }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
@@ -567,9 +614,7 @@ describe("workspace edit meeting page", () => {
       conflicts: [],
     });
 
-    render(
-      await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
     fireEvent.change(screen.getByLabelText("Title"), {
@@ -607,12 +652,12 @@ describe("workspace edit meeting page", () => {
       conflicts: [],
     });
 
-    render(
-      await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
-    expect(screen.queryByLabelText("Physical location")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Physical location"),
+    ).not.toBeInTheDocument();
     expect(screen.getByLabelText("Meeting Link")).toHaveValue(
       "https://meet.google.com/existing-online",
     );
@@ -650,9 +695,7 @@ describe("workspace edit meeting page", () => {
       conflicts: [],
     });
 
-    render(
-      await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
     expect(screen.getByLabelText("Mode")).toHaveValue("");
@@ -660,9 +703,9 @@ describe("workspace edit meeting page", () => {
     expect(
       screen.queryByLabelText("Physical location"),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByLabelText("Meeting Link (optional)"),
-    ).toHaveValue("https://meet.google.com/legacy-form");
+    expect(screen.getByLabelText("Meeting Link (optional)")).toHaveValue(
+      "https://meet.google.com/legacy-form",
+    );
 
     fireEvent.change(screen.getByLabelText("Title"), {
       target: { value: "Legacy meeting updated" },
@@ -700,9 +743,7 @@ describe("workspace edit meeting page", () => {
       }),
     );
 
-    render(
-      await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
     fireEvent.change(screen.getByLabelText("Mode"), {
@@ -724,18 +765,13 @@ describe("workspace edit meeting page", () => {
       makeMeeting({ attachments: [] }),
     );
 
-    render(
-      await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsEditPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Edit meeting" });
 
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
 
     await waitFor(() =>
-      expect(state.removeMeetingAttachment).toHaveBeenCalledWith(
-        "m1",
-        "att-1",
-      ),
+      expect(state.removeMeetingAttachment).toHaveBeenCalledWith("m1", "att-1"),
     );
     await waitFor(() =>
       expect(screen.queryByText("agenda.pdf")).not.toBeInTheDocument(),
@@ -760,9 +796,7 @@ describe("workspace meeting detail page", () => {
       }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
 
     expect(
       await screen.findByRole("heading", { name: "Weekly sync" }),
@@ -771,12 +805,14 @@ describe("workspace meeting detail page", () => {
       "href",
       "/meetings",
     );
-    expect(
-      screen.getByRole("link", { name: "Edit meeting" }),
-    ).toHaveAttribute("href", "/meetings/m1/edit");
-    expect(
-      screen.getByRole("link", { name: "agenda.pdf" }),
-    ).toHaveAttribute("href", attachment.url);
+    expect(screen.getByRole("link", { name: "Edit meeting" })).toHaveAttribute(
+      "href",
+      "/meetings/m1/edit",
+    );
+    expect(screen.getByRole("link", { name: "agenda.pdf" })).toHaveAttribute(
+      "href",
+      attachment.url,
+    );
     expect(screen.getByText("Internal colleague")).toBeInTheDocument();
     expect(screen.queryByText("External participants")).not.toBeInTheDocument();
   });
@@ -786,9 +822,7 @@ describe("workspace meeting detail page", () => {
       makeMeeting({ involvesHighlightedUser: true }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
 
     const heading = await screen.findByRole("heading", { name: "Weekly sync" });
     expect(heading).toHaveClass("text-[var(--rams-red)]");
@@ -806,9 +840,7 @@ describe("workspace meeting detail page", () => {
       }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
 
     expect(
       await screen.findByRole("heading", { name: "Weekly sync" }),
@@ -837,9 +869,7 @@ describe("workspace meeting detail page", () => {
       }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
 
     await screen.findByRole("heading", { name: "Weekly sync" });
     expect(screen.getByLabelText("Online meeting")).toBeInTheDocument();
@@ -872,9 +902,7 @@ describe("workspace meeting detail page", () => {
       }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
 
     await screen.findByRole("heading", { name: "Weekly sync" });
     expect(
@@ -917,9 +945,7 @@ describe("workspace meeting detail page", () => {
       },
     ]);
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
     const auditSection = screen
@@ -976,9 +1002,7 @@ describe("workspace meeting detail page", () => {
       },
     ]);
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
     const auditSection = screen
@@ -987,7 +1011,7 @@ describe("workspace meeting detail page", () => {
     const audit = within(auditSection);
     expect(await audit.findByText("Title")).toBeInTheDocument();
     expect(
-      (audit.getByText("Title").closest("li") as HTMLElement),
+      audit.getByText("Title").closest("li") as HTMLElement,
     ).toHaveTextContent("Weekly sync");
     expect(audit.queryByText("Client / organization")).not.toBeInTheDocument();
     expect(audit.queryByText("Meeting mode")).not.toBeInTheDocument();
@@ -1017,9 +1041,7 @@ describe("workspace meeting detail page", () => {
       }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel meeting" }));
@@ -1062,12 +1084,13 @@ describe("workspace meeting detail page", () => {
       },
     ]);
     state.cancelMeeting.mockResolvedValue(
-      makeMeeting({ status: "CANCELLED", cancelledAt: "2031-02-02T00:00:00.000Z" }),
+      makeMeeting({
+        status: "CANCELLED",
+        cancelledAt: "2031-02-02T00:00:00.000Z",
+      }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
     expect(screen.getByText("Audit history")).toBeInTheDocument();
@@ -1075,7 +1098,9 @@ describe("workspace meeting detail page", () => {
     expect(screen.getByText(/Meeting organizer/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel meeting" }));
-    expect(screen.getByRole("dialog", { name: "Cancel this meeting?" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Cancel this meeting?" }),
+    ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Confirm cancellation" }),
     );
@@ -1123,9 +1148,7 @@ describe("workspace meeting detail page", () => {
       }),
     );
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
     const cancelButton = screen.queryByRole("button", {
@@ -1141,9 +1164,7 @@ describe("workspace meeting detail page", () => {
   it("does not render removed delegation or guest management controls", async () => {
     state.getMeeting.mockResolvedValue(makeMeeting({ isOrganizer: true }));
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
     expect(screen.queryByText("Delegation")).not.toBeInTheDocument();
@@ -1159,29 +1180,21 @@ describe("workspace meeting detail page", () => {
   it("deletes the meeting and returns to the workspace root", async () => {
     state.deleteMeeting.mockResolvedValue(undefined);
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Delete meeting" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete meeting" }));
     const dialog = screen.getByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
 
-    await waitFor(() =>
-      expect(state.deleteMeeting).toHaveBeenCalledWith("m1"),
-    );
+    await waitFor(() => expect(state.deleteMeeting).toHaveBeenCalledWith("m1"));
     expect(state.push).toHaveBeenCalledWith("/meetings");
   });
 
   it("hides edit and delete actions when the viewer cannot modify the meeting", async () => {
     state.getMeeting.mockResolvedValue(makeMeeting({ canEdit: false }));
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
     await screen.findByRole("heading", { name: "Weekly sync" });
 
     expect(
@@ -1195,9 +1208,7 @@ describe("workspace meeting detail page", () => {
   it("surfaces read errors from the API", async () => {
     state.getMeeting.mockRejectedValue(new Error("network"));
 
-    render(
-      await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }),
-    );
+    render(await MeetingsDetailPage({ params: Promise.resolve({ id: "m1" }) }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Something went wrong",
@@ -1237,8 +1248,9 @@ describe("legacy dashboard meeting routes", () => {
       "href",
       "/dashboard/meetings",
     );
-    expect(
-      screen.getByRole("link", { name: "Edit meeting" }),
-    ).toHaveAttribute("href", "/dashboard/meetings/m1/edit");
+    expect(screen.getByRole("link", { name: "Edit meeting" })).toHaveAttribute(
+      "href",
+      "/dashboard/meetings/m1/edit",
+    );
   });
 });

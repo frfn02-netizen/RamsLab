@@ -1,9 +1,15 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import MeetingsCalendarPage from "@/app/meetings/calendar/page";
-import MeetingsMinePage from "@/app/meetings/mine/page";
-import DashboardMeetingsPage from "@/app/dashboard/meetings/page";
+import MeetingsCalendarPage from "@/app/(internal)/meetings/calendar/page";
+import MeetingsMinePage from "@/app/(internal)/meetings/mine/page";
+import DashboardMeetingsPage from "@/app/(internal)/dashboard/meetings/page";
 import MeetingsOverview from "@/components/meetings-workspace/overview";
 import MyMeetings from "@/components/meetings-workspace/my-meetings";
 import MeetingsWorkspaceGuard from "@/components/meetings-workspace/workspace-guard";
@@ -19,18 +25,15 @@ const state = vi.hoisted(() => ({
     email: "dosen@example.com",
     role: "DOSEN",
     isActive: true,
-  } as
-    | {
-        id: string;
-        email: string;
-        role: string;
-        isActive: boolean;
-        fullName?: string;
-        mustChangePassword?: boolean;
-        permissions?: string[];
-        labMembership?: { labId: string; status: "ACTIVE" | "INACTIVE" } | null;
-      }
-    | null,
+  } as {
+    id: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    fullName?: string;
+    mustChangePassword?: boolean;
+    permissions?: string[];
+  } | null,
   replace: vi.fn(),
   getMeetings: vi.fn(),
   getMeetingAgenda: vi.fn(),
@@ -119,7 +122,6 @@ beforeEach(() => {
     role: "DOSEN",
     isActive: true,
     fullName: "Budi Santoso",
-    labMembership: { labId: "rams", status: "ACTIVE" },
   };
   state.getMeetings.mockResolvedValue([]);
   state.getMeetingAgenda.mockResolvedValue({
@@ -158,9 +160,7 @@ describe("meetings workspace shell", () => {
     expect(screen.getByText("RAMS")).toBeInTheDocument();
     expect(screen.getByText("Meetings")).toBeInTheDocument();
     expect(screen.getByText("Workspace content")).toBeInTheDocument();
-    expect(
-      screen.getAllByText("dosen@example.com").length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("dosen@example.com").length).toBeGreaterThan(0);
     expect(screen.getAllByText("DOSEN").length).toBeGreaterThan(0);
 
     const hrefs = navLinks().map((anchor) => anchor.getAttribute("href"));
@@ -175,34 +175,13 @@ describe("meetings workspace shell", () => {
     expect(hrefs).not.toContain("/dashboard/meetings");
   });
 
-  it("shows shared agenda links to students without My Meetings", () => {
-    state.user = {
-      id: "student-1",
-      email: "student@example.com",
-      role: "STUDENT",
-      isActive: true,
-    };
-
-    render(
-      <MeetingsWorkspaceShell>
-        <div>Workspace content</div>
-      </MeetingsWorkspaceShell>,
-    );
-
-    const hrefs = navLinks().map((anchor) => anchor.getAttribute("href"));
-    expect(hrefs).toEqual(
-      expect.arrayContaining(["/meetings", "/meetings/calendar"]),
-    );
-    expect(hrefs).not.toContain("/meetings/mine");
-  });
-
   it("shows the shared agenda and My Meetings to lecturers", () => {
     state.user = {
       id: "user-1",
       email: "dosen@example.com",
       role: "DOSEN",
       isActive: true,
-    };
+      };
 
     render(
       <MeetingsWorkspaceShell>
@@ -248,9 +227,10 @@ describe("meetings workspace shell", () => {
       </MeetingsWorkspaceShell>,
     );
 
-    expect(
-      screen.getByRole("link", { name: /^Calendar/ }),
-    ).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /^Calendar/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     expect(screen.getByRole("link", { name: /^Overview/ })).not.toHaveAttribute(
       "aria-current",
     );
@@ -288,9 +268,10 @@ describe("meetings workspace shell", () => {
         </MeetingsWorkspaceShell>,
       );
 
-      expect(
-        screen.getByRole("link", { name: /^Overview/ }),
-      ).toHaveAttribute("aria-current", "page");
+      expect(screen.getByRole("link", { name: /^Overview/ })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
       view.unmount();
     }
   });
@@ -405,14 +386,13 @@ describe("meetings workspace guard", () => {
     expect(screen.queryByText("Protected")).not.toBeInTheDocument();
   });
 
-  it("denies alumni even when a lab membership record is active", async () => {
+  it("denies alumni access to the meetings workspace", async () => {
     state.user = {
       id: "alumni-1",
       email: "alumni@example.com",
       role: "ALUMNI",
       isActive: true,
-      labMembership: { labId: "rams", status: "ACTIVE" },
-    };
+      };
     state.pathname = "/meetings/calendar";
 
     render(
@@ -427,55 +407,15 @@ describe("meetings workspace guard", () => {
     expect(screen.queryByText("Agenda")).not.toBeInTheDocument();
   });
 
-  it("admits students to the shared agenda without schedule permission", async () => {
-    state.user = {
-      id: "student-1",
-      email: "student@example.com",
-      role: "STUDENT",
-      isActive: true,
-    };
-    state.pathname = "/meetings/calendar";
-
-    render(
-      <MeetingsWorkspaceGuard>
-        <div>Agenda</div>
-      </MeetingsWorkspaceGuard>,
-    );
-
-    expect(await screen.findByText("Agenda")).toBeInTheDocument();
-    expect(state.replace).not.toHaveBeenCalled();
-  });
-
-  it("admits DOSEN to the shared agenda regardless of lab membership", async () => {
+  it("sends accounts that must change their password to the password screen", async () => {
     state.user = {
       id: "user-1",
       email: "dosen@example.com",
       role: "DOSEN",
       isActive: true,
-      labMembership: { labId: "rams", status: "INACTIVE" },
-    };
-    state.pathname = "/meetings/calendar";
-
-    render(
-      <MeetingsWorkspaceGuard>
-        <div>Agenda</div>
-      </MeetingsWorkspaceGuard>,
-    );
-
-    expect(await screen.findByText("Agenda")).toBeInTheDocument();
-    expect(state.replace).not.toHaveBeenCalled();
-  });
-
-  it("sends accounts that must change their password to the password screen", async () => {
-    state.user = {
-      id: "user-1",
-      email: "dosen@example.com",
-    role: "DOSEN",
-    isActive: true,
-    fullName: "Budi Santoso",
+      fullName: "Budi Santoso",
       mustChangePassword: true,
-      labMembership: { labId: "rams", status: "ACTIVE" },
-    };
+      };
 
     render(
       <MeetingsWorkspaceGuard>
@@ -531,21 +471,24 @@ describe("meetings workspace overview", () => {
   });
 
   it("highlights the next upcoming meeting and lists later ones", async () => {
-    state.getMeetingAgenda.mockResolvedValue({ items: [
-      makeMeeting({
-        _id: "past",
-        title: "Kickoff",
-        startAt: "2020-01-10T09:00:00.000Z",
-        endAt: "2020-01-10T10:00:00.000Z",
-      }),
-      makeMeeting({
-        _id: "later",
-        title: "Design review",
-        startAt: "2031-03-05T09:00:00.000Z",
-        endAt: "2031-03-05T10:00:00.000Z",
-      }),
-      makeMeeting({ _id: "next", title: "Weekly sync" }),
-    ], pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null } });
+    state.getMeetingAgenda.mockResolvedValue({
+      items: [
+        makeMeeting({
+          _id: "past",
+          title: "Kickoff",
+          startAt: "2020-01-10T09:00:00.000Z",
+          endAt: "2020-01-10T10:00:00.000Z",
+        }),
+        makeMeeting({
+          _id: "later",
+          title: "Design review",
+          startAt: "2031-03-05T09:00:00.000Z",
+          endAt: "2031-03-05T10:00:00.000Z",
+        }),
+        makeMeeting({ _id: "next", title: "Weekly sync" }),
+      ],
+      pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null },
+    });
 
     render(<MeetingsOverview />);
 
@@ -567,9 +510,10 @@ describe("meetings workspace overview", () => {
 
     expect(screen.getByText("Design review")).toBeInTheDocument();
     expect(screen.queryByText("Kickoff")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Open meeting" }),
-    ).toHaveAttribute("href", "/meetings/next");
+    expect(screen.getByRole("link", { name: "Open meeting" })).toHaveAttribute(
+      "href",
+      "/meetings/next",
+    );
   });
 
   it("renders a clear empty state when nothing is scheduled", async () => {
@@ -578,12 +522,14 @@ describe("meetings workspace overview", () => {
     await waitFor(() =>
       expect(screen.getByText("No upcoming meetings")).toBeInTheDocument(),
     );
-    expect(
-      screen.getByRole("link", { name: "Open calendar" }),
-    ).toHaveAttribute("href", "/meetings/calendar");
-    expect(
-      screen.getByRole("link", { name: "My Meetings" }),
-    ).toHaveAttribute("href", "/meetings/mine");
+    expect(screen.getByRole("link", { name: "Open calendar" })).toHaveAttribute(
+      "href",
+      "/meetings/calendar",
+    );
+    expect(screen.getByRole("link", { name: "My Meetings" })).toHaveAttribute(
+      "href",
+      "/meetings/mine",
+    );
   });
 
   it("shows an error state when the meetings API fails", async () => {
@@ -679,12 +625,19 @@ describe("my meetings", () => {
         "When you create a meeting, it will appear here with its agenda and attachments.",
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Participant-only meeting")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Participant-only meeting"),
+    ).not.toBeInTheDocument();
   });
 
   it("separates past meetings from the upcoming agenda", async () => {
     state.getMeetings.mockResolvedValue([
-      makeMeeting({ _id: "old", title: "Old sync", startAt: "2020-01-10T09:00:00.000Z", endAt: "2020-01-10T10:00:00.000Z" }),
+      makeMeeting({
+        _id: "old",
+        title: "Old sync",
+        startAt: "2020-01-10T09:00:00.000Z",
+        endAt: "2020-01-10T10:00:00.000Z",
+      }),
     ]);
 
     render(<MyMeetings />);
@@ -692,9 +645,7 @@ describe("my meetings", () => {
     await waitFor(() =>
       expect(screen.getByText("Old sync")).toBeInTheDocument(),
     );
-    expect(
-      screen.getByRole("heading", { name: "Past" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Past" })).toBeInTheDocument();
     expect(screen.getByText(/No upcoming meetings/)).toBeInTheDocument();
   });
 
@@ -789,16 +740,18 @@ describe("my meetings", () => {
 
     const busyItem = screen.getByText("Busy").closest("li") as HTMLElement;
     expect(busyItem).not.toBeNull();
-    expect(within(busyItem).queryByText("Private planning")).not.toBeInTheDocument();
-    expect(within(busyItem).queryByText("Secret Client")).not.toBeInTheDocument();
+    expect(
+      within(busyItem).queryByText("Private planning"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(busyItem).queryByText("Secret Client"),
+    ).not.toBeInTheDocument();
     expect(
       within(busyItem).queryByLabelText(
         /Online meeting|Offline meeting|Meeting mode not specified/,
       ),
     ).not.toBeInTheDocument();
-    expect(
-      within(busyItem).queryByRole("link"),
-    ).not.toBeInTheDocument();
+    expect(within(busyItem).queryByRole("link")).not.toBeInTheDocument();
     expect(screen.queryByText("Secret Client")).not.toBeInTheDocument();
   });
 
@@ -914,9 +867,7 @@ describe("my meetings", () => {
 
   it("serves My Meetings at /meetings/mine", async () => {
     render(<MeetingsMinePage />);
-    expect(
-      await screen.findByText("No meetings yet"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("No meetings yet")).toBeInTheDocument();
   });
 
   it("keeps the dashboard meetings route wired to the existing page", async () => {
@@ -935,41 +886,4 @@ describe("my meetings", () => {
     );
   });
 
-  it("keeps the shared calendar read-only for students without agenda.manage", async () => {
-    state.user = {
-      id: "student-1",
-      email: "student@example.com",
-      role: "STUDENT",
-      isActive: true,
-      permissions: [],
-    };
-
-    render(<MeetingsCalendarPage />);
-
-    expect(
-      await screen.findByRole("heading", { name: "Calendar" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Schedule meeting" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("shows shared calendar create controls to agenda coordinators", async () => {
-    state.user = {
-      id: "student-1",
-      email: "student@example.com",
-      role: "STUDENT",
-      isActive: true,
-      permissions: ["agenda.manage"],
-    };
-
-    render(<MeetingsCalendarPage />);
-
-    expect(
-      await screen.findByRole("link", { name: "Schedule meeting" }),
-    ).toHaveAttribute(
-      "href",
-      expect.stringMatching(/^\/meetings\/new/),
-    );
-  });
 });

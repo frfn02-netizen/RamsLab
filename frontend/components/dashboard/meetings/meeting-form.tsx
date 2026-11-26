@@ -2,22 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
 import { useToast } from "@/components/providers/toast-providers";
 import { Initials } from "@/components/meetings-workspace/day-chip";
-import {
-  Badge,
-  Button,
-  ErrorState,
-  Field,
-  inputClass,
-} from "@/components/ui";
+import { Badge, Button, ErrorState, Field, inputClass } from "@/components/ui";
 import { FormSkeleton } from "@/components/skeletons";
 import { getUserFacingError } from "@/lib/api/errors";
 import {
@@ -38,6 +27,7 @@ import {
 } from "@/lib/meetings/calendar";
 import { safeHttpUrl } from "@/lib/safe-url";
 import { canManageOwnMeetings } from "@/lib/authz";
+import { meetingCopy } from "@/lib/meeting-copy";
 import type {
   Meeting,
   MeetingConflict,
@@ -128,7 +118,9 @@ function roleTone(role: UserDirectoryEntry["role"]) {
 }
 
 function directoryDisplayName(entry: UserDirectoryEntry) {
-  return entry.displayName?.trim() || entry.email.split("@", 1)[0] || entry.email;
+  return (
+    entry.displayName?.trim() || entry.email.split("@", 1)[0] || entry.email
+  );
 }
 
 const PANEL = "rounded-lg border border-[#E7E2D8] bg-white";
@@ -163,11 +155,9 @@ export default function MeetingForm({
 }) {
   const router = useRouter();
   const { user } = useAuth();
+  const copy = meetingCopy();
   const { success, error: notifyError } = useToast();
-  const canCreatePrivate = canManageOwnMeetings(
-    user?.role,
-    user?.permissions ?? [],
-  );
+  const canCreatePrivate = canManageOwnMeetings(user?.role);
 
   const [form, setForm] = useState<FormState>(() => initialForm(initialDate));
   const [initialFormState, setInitialFormState] = useState<FormState | null>(
@@ -232,6 +222,7 @@ export default function MeetingForm({
   useEffect(() => {
     let cancelled = false;
     let debounceTimer: number | undefined;
+    const conflictPicIds = picKey ? picKey.split(",").filter(Boolean) : [];
 
     const kickoff = window.setTimeout(() => {
       if (cancelled) return;
@@ -246,9 +237,7 @@ export default function MeetingForm({
         checkMeetingConflicts({
           startAt: startIso,
           endAt: endIso,
-          picIds: form.primaryPicId
-            ? [form.primaryPicId, ...form.additionalPicIds]
-            : [],
+          picIds: conflictPicIds,
           participantIds: participantKey ? participantKey.split(",") : [],
           ...(id ? { excludeId: id } : {}),
         })
@@ -293,13 +282,14 @@ export default function MeetingForm({
     }));
   }
 
-  const picDirectory = users.filter((entry) =>
+  const internalUsers = users.filter((entry) => entry.role !== "ALUMNI");
+  const picDirectory = internalUsers.filter((entry) =>
     [directoryDisplayName(entry), entry.email, entry.role]
       .join(" ")
       .toLowerCase()
       .includes(userQuery.trim().toLowerCase()),
   );
-  const participantDirectory = users.filter(
+  const participantDirectory = internalUsers.filter(
     (entry) =>
       entry.id !== user?.id &&
       [directoryDisplayName(entry), entry.email, entry.role]
@@ -311,7 +301,7 @@ export default function MeetingForm({
   const existingAttachmentCount = meeting?.attachments.length ?? 0;
   const canManageAttachments =
     user?.role === "ADMIN" ||
-    (canManageOwnMeetings(user?.role, user?.permissions ?? []) &&
+    (canManageOwnMeetings(user?.role) &&
       (!meeting || meeting.isOrganizer !== false));
 
   function chooseFiles(event: ChangeEvent<HTMLInputElement>) {
@@ -422,14 +412,17 @@ export default function MeetingForm({
       : [];
     const hasExistingPicAssignment = Boolean(
       initialFormState?.primaryPicId ||
-        initialFormState?.additionalPicIds.length,
+      initialFormState?.additionalPicIds.length,
     );
     const picAssignmentChanged =
       !id ||
       form.primaryPicId !== (initialFormState?.primaryPicId ?? "") ||
       form.additionalPicIds.join(",") !==
         (initialFormState?.additionalPicIds ?? []).join(",");
-    if ((!id || hasExistingPicAssignment || picAssignmentChanged) && !form.primaryPicId) {
+    if (
+      (!id || hasExistingPicAssignment || picAssignmentChanged) &&
+      !form.primaryPicId
+    ) {
       notifyError("Select a primary PIC.");
       return;
     }
@@ -492,7 +485,10 @@ export default function MeetingForm({
           "Meeting saved, but one or more attachments could not be uploaded.",
         );
       } else {
-        success(id ? "Meeting updated." : "Meeting scheduled.");
+        success(id ? copy.updated : copy.created);
+      }
+      if (!id && result.notification && !result.notification.sent) {
+        notifyError(copy.notificationFailed);
       }
       router.push(`${basePath}/${savedId}`);
     } catch (reason) {
@@ -523,7 +519,9 @@ export default function MeetingForm({
   }
 
   const backHref = id ? `${basePath}/${id}` : basePath;
-  const allowLegacyMode = Boolean(id && initialFormState && !initialFormState.mode);
+  const allowLegacyMode = Boolean(
+    id && initialFormState && !initialFormState.mode,
+  );
   const clientNameRequired = !id || Boolean(initialFormState?.clientName);
   const modeRequired = !id || Boolean(initialFormState?.mode);
 
@@ -555,8 +553,8 @@ export default function MeetingForm({
               </h2>
               <p className="mt-1 text-xs leading-5 text-[#6B6A64]">
                 Choose one primary PIC and, when needed, additional active
-                internal PICs. PIC assignments do not add participants or
-                change meeting ownership.
+                internal PICs. PIC assignments do not add participants or change
+                meeting ownership.
               </p>
             </div>
 
@@ -603,7 +601,9 @@ export default function MeetingForm({
                   Optional active internal accounts who share responsibility.
                 </p>
                 <div className="mt-3 max-h-48 overflow-y-auto rounded-lg border border-[#E7E2D8]">
-                  {picDirectory.filter((entry) => entry.id !== form.primaryPicId).length === 0 ? (
+                  {picDirectory.filter(
+                    (entry) => entry.id !== form.primaryPicId,
+                  ).length === 0 ? (
                     <p className="px-4 py-4 text-sm text-[#6B6A64]">
                       No additional PICs match this search.
                     </p>
@@ -612,11 +612,14 @@ export default function MeetingForm({
                       {picDirectory
                         .filter((entry) => entry.id !== form.primaryPicId)
                         .map((entry) => {
-                          const checked = form.additionalPicIds.includes(entry.id);
+                          const checked = form.additionalPicIds.includes(
+                            entry.id,
+                          );
                           return (
                             <li key={entry.id}>
                               <label className="flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-[#FBFAF7]">
                                 <input
+                                  aria-label={`Additional PIC: ${entry.email}`}
                                   type="checkbox"
                                   checked={checked}
                                   onChange={() => toggleAdditionalPic(entry.id)}
@@ -634,7 +637,9 @@ export default function MeetingForm({
                                     {entry.email}
                                   </span>
                                 </span>
-                                <Badge tone={roleTone(entry.role)}>{entry.role}</Badge>
+                                <Badge tone={roleTone(entry.role)}>
+                                  {entry.role}
+                                </Badge>
                               </label>
                             </li>
                           );
@@ -658,7 +663,11 @@ export default function MeetingForm({
             </div>
 
             <div className="mt-5 grid gap-5 sm:grid-cols-2">
-              <Field label="Title" htmlFor="meeting-title" className="sm:col-span-2">
+              <Field
+                label="Title"
+                htmlFor="meeting-title"
+                className="sm:col-span-2"
+              >
                 <input
                   id="meeting-title"
                   required
@@ -680,9 +689,7 @@ export default function MeetingForm({
                   maxLength={200}
                   className={inputClass}
                   value={form.clientName}
-                  onChange={(event) =>
-                    update("clientName", event.target.value)
-                  }
+                  onChange={(event) => update("clientName", event.target.value)}
                   aria-describedby="meeting-client-name-help"
                 />
                 <p
@@ -719,9 +726,7 @@ export default function MeetingForm({
                   }
                 >
                   <option value="INTERNAL">Internal calendar</option>
-                  {canCreatePrivate && (
-                    <option value="PRIVATE">Private</option>
-                  )}
+                  {canCreatePrivate && <option value="PRIVATE">Private</option>}
                 </select>
                 <p
                   id="meeting-visibility-help"
@@ -729,7 +734,7 @@ export default function MeetingForm({
                 >
                   {canCreatePrivate
                     ? "Internal shows the agenda to RAMS accounts. Private shows others only a Busy block and time."
-                    : "Agenda coordinators create shared internal meetings. Private meetings remain limited to their creator and participants."}
+                    : "Administrators and lecturers create shared internal meetings. Private meetings remain limited to their creator and participants."}
                 </p>
               </Field>
 
@@ -741,10 +746,7 @@ export default function MeetingForm({
                   value={form.mode}
                   aria-describedby="meeting-mode-help"
                   onChange={(event) =>
-                    update(
-                      "mode",
-                      event.target.value as MeetingMode | "",
-                    )
+                    update("mode", event.target.value as MeetingMode | "")
                   }
                 >
                   {!id || allowLegacyMode ? (
@@ -771,9 +773,7 @@ export default function MeetingForm({
                     maxLength={300}
                     className={inputClass}
                     value={form.location}
-                    onChange={(event) =>
-                      update("location", event.target.value)
-                    }
+                    onChange={(event) => update("location", event.target.value)}
                     aria-describedby="meeting-location-help"
                   />
                   <p
@@ -885,7 +885,8 @@ export default function MeetingForm({
                   Internal participants
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-[#6B6A64]">
-                  Active staff and schedule-access accounts are available. Each selection is stored by userId.
+                  Active staff accounts are available. Each selection is stored
+                  by userId.
                 </p>
               </div>
               <input
@@ -896,7 +897,7 @@ export default function MeetingForm({
                 value={userQuery}
                 onChange={(event) => setUserQuery(event.target.value)}
               />
-                  {participantDirectory.length === 0 ? (
+              {participantDirectory.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-[#DDD6C9] px-4 py-5 text-sm text-[#6B6A64]">
                   No registered accounts match this search.
                 </p>
@@ -908,6 +909,7 @@ export default function MeetingForm({
                       <li key={entry.id}>
                         <label className="flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-[#FBFAF7]">
                           <input
+                            aria-label={`Participant: ${entry.email}`}
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleParticipant(entry.id)}
@@ -925,7 +927,9 @@ export default function MeetingForm({
                               {entry.email}
                             </span>
                           </span>
-                          <Badge tone={roleTone(entry.role)}>{entry.role}</Badge>
+                          <Badge tone={roleTone(entry.role)}>
+                            {entry.role}
+                          </Badge>
                         </label>
                       </li>
                     );
@@ -933,136 +937,140 @@ export default function MeetingForm({
                 </ul>
               )}
             </div>
-
           </section>
 
           {canManageAttachments && (
-          <section className={`${PANEL} px-6 py-6`}>
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#F0ECE4] pb-4">
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-[var(--rams-charcoal)]">
-                  Attachments
-                </h2>
-                <p className="mt-1 text-xs leading-5 text-[#6B6A64]">
-                  PDF, PowerPoint, or Word. Maximum 20 MB per file and 10 files
-                  per meeting.
-                </p>
+            <section className={`${PANEL} px-6 py-6`}>
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#F0ECE4] pb-4">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-[var(--rams-charcoal)]">
+                    Attachments
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-[#6B6A64]">
+                    PDF, PowerPoint, or Word. Maximum 20 MB per file and 10
+                    files per meeting.
+                  </p>
+                </div>
+                {existingAttachmentCount > 0 && (
+                  <span className="rounded-full border border-[#E7E2D8] px-2.5 py-1 text-[0.66rem] font-semibold text-[#6B6A64]">
+                    {existingAttachmentCount} attached
+                  </span>
+                )}
               </div>
-              {existingAttachmentCount > 0 && (
-                <span className="rounded-full border border-[#E7E2D8] px-2.5 py-1 text-[0.66rem] font-semibold text-[#6B6A64]">
-                  {existingAttachmentCount} attached
-                </span>
-              )}
-            </div>
 
-            <div className="mt-5 space-y-4">
-              {meeting && meeting.attachments.length > 0 && (
-                <ul className="divide-y divide-[#F0ECE4] rounded-lg border border-[#E7E2D8]">
-                  {meeting.attachments.map((attachment) => (
-                    <li
-                      key={attachment.id}
-                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <FileIcon />
-                        <div className="min-w-0">
-                          <a
-                            href={attachment.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="break-all text-sm font-semibold text-[var(--rams-charcoal)] hover:text-[var(--rams-red)]"
-                          >
-                            {attachment.filename}
-                          </a>
-                          <p className="mt-0.5 text-xs text-[#6B6A64]">
-                            {formatBytes(attachment.size)}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="min-h-9 px-3 py-1.5 text-xs"
-                        disabled={removingAttachmentId === attachment.id}
-                        onClick={() =>
-                          void removeExistingAttachment(attachment.id)
-                        }
+              <div className="mt-5 space-y-4">
+                {meeting && meeting.attachments.length > 0 && (
+                  <ul className="divide-y divide-[#F0ECE4] rounded-lg border border-[#E7E2D8]">
+                    {meeting.attachments.map((attachment) => (
+                      <li
+                        key={attachment.id}
+                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
                       >
-                        {removingAttachmentId === attachment.id
-                          ? "Removing..."
-                          : "Remove"}
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <Field
-                label={
-                  existingAttachmentCount > 0
-                    ? "Add more documents"
-                    : "Add documents"
-                }
-                htmlFor="meeting-files"
-              >
-                <input
-                  id="meeting-files"
-                  type="file"
-                  multiple
-                  accept=".pdf,.ppt,.pptx,.doc,.docx"
-                  className="block w-full rounded-lg border border-dashed border-[#DDD6C9] bg-[#FBFAF7] px-4 py-4 text-sm text-[#6B6A64] transition file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--rams-red)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:border-[var(--rams-red)]/35 hover:file:bg-[var(--rams-red-dark)]"
-                  onChange={chooseFiles}
-                  disabled={saving}
-                  aria-describedby="meeting-files-help"
-                />
-              </Field>
-              <p id="meeting-files-help" className="text-xs text-[#6B6A64]">
-                Files are uploaded after the meeting is saved.
-              </p>
-
-              {files.length > 0 && (
-                <ul className="divide-y divide-[#F0ECE4] rounded-lg border border-[#E7E2D8]">
-                  {files.map(({ key, file }, index) => (
-                    <li
-                      key={key}
-                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <FileIcon />
-                        <div className="min-w-0">
-                          <p className="break-all text-sm font-semibold text-[var(--rams-charcoal)]">
-                            {file.name}
-                          </p>
-                          <p className="mt-0.5 text-xs text-[#6B6A64]">
-                            {formatBytes(file.size)}
-                          </p>
+                        <div className="flex min-w-0 items-center gap-3">
+                          <FileIcon />
+                          <div className="min-w-0">
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="break-all text-sm font-semibold text-[var(--rams-charcoal)] hover:text-[var(--rams-red)]"
+                            >
+                              {attachment.filename}
+                            </a>
+                            <p className="mt-0.5 text-xs text-[#6B6A64]">
+                              {formatBytes(attachment.size)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="min-h-9 px-3 py-1.5 text-xs"
-                        disabled={saving}
-                        onClick={() =>
-                          setFiles((current) =>
-                            current.filter((_, itemIndex) => itemIndex !== index),
-                          )
-                        }
-                      >
-                        Remove
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="min-h-9 px-3 py-1.5 text-xs"
+                          disabled={removingAttachmentId === attachment.id}
+                          onClick={() =>
+                            void removeExistingAttachment(attachment.id)
+                          }
+                        >
+                          {removingAttachmentId === attachment.id
+                            ? "Removing..."
+                            : "Remove"}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-              {fileError && (
-                <p className="text-sm font-semibold text-red-700" role="alert">
-                  {fileError}
+                <Field
+                  label={
+                    existingAttachmentCount > 0
+                      ? "Add more documents"
+                      : "Add documents"
+                  }
+                  htmlFor="meeting-files"
+                >
+                  <input
+                    id="meeting-files"
+                    type="file"
+                    multiple
+                    accept=".pdf,.ppt,.pptx,.doc,.docx"
+                    className="block w-full rounded-lg border border-dashed border-[#DDD6C9] bg-[#FBFAF7] px-4 py-4 text-sm text-[#6B6A64] transition file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--rams-red)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:border-[var(--rams-red)]/35 hover:file:bg-[var(--rams-red-dark)]"
+                    onChange={chooseFiles}
+                    disabled={saving}
+                    aria-describedby="meeting-files-help"
+                  />
+                </Field>
+                <p id="meeting-files-help" className="text-xs text-[#6B6A64]">
+                  Files are uploaded after the meeting is saved.
                 </p>
-              )}
-            </div>
-          </section>
+
+                {files.length > 0 && (
+                  <ul className="divide-y divide-[#F0ECE4] rounded-lg border border-[#E7E2D8]">
+                    {files.map(({ key, file }, index) => (
+                      <li
+                        key={key}
+                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <FileIcon />
+                          <div className="min-w-0">
+                            <p className="break-all text-sm font-semibold text-[var(--rams-charcoal)]">
+                              {file.name}
+                            </p>
+                            <p className="mt-0.5 text-xs text-[#6B6A64]">
+                              {formatBytes(file.size)}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="min-h-9 px-3 py-1.5 text-xs"
+                          disabled={saving}
+                          onClick={() =>
+                            setFiles((current) =>
+                              current.filter(
+                                (_, itemIndex) => itemIndex !== index,
+                              ),
+                            )
+                          }
+                        >
+                          Remove
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {fileError && (
+                  <p
+                    className="text-sm font-semibold text-red-700"
+                    role="alert"
+                  >
+                    {fileError}
+                  </p>
+                )}
+              </div>
+            </section>
           )}
 
           {(checkingConflicts || conflicts.length > 0) && (
@@ -1088,7 +1096,9 @@ export default function MeetingForm({
                         className="text-xs text-amber-900"
                       >
                         <span className="font-semibold">
-                          {conflict.busy ? "Busy" : conflict.title ?? "Meeting conflict"}
+                          {conflict.busy
+                            ? "Busy"
+                            : (conflict.title ?? "Meeting conflict")}
                         </span>
                         {!conflict.busy &&
                           conflict.startAt &&

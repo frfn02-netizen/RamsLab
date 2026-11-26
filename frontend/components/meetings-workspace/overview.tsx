@@ -218,8 +218,7 @@ export default function MeetingsOverview({
 }) {
   const { user } = useAuth();
   const canCreate =
-    canCreateOverride ??
-    canCreateMeetings(user?.role, user?.permissions ?? []);
+    canCreateOverride ?? canCreateMeetings(user?.role);
   const canViewMine = user?.role === "ADMIN" || user?.role === "DOSEN";
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [loading, setLoading] = useState(true);
@@ -273,7 +272,9 @@ export default function MeetingsOverview({
               ),
             thisMonth: data.filter((meeting) => {
               const start = new Date(meeting.startAt).getTime();
-              return start >= monthStart.getTime() && start < monthEnd.getTime();
+              return (
+                start >= monthStart.getTime() && start < monthEnd.getTime()
+              );
             }).length,
             agendaCount: data.length,
             todayKey: dayKey(now),
@@ -319,7 +320,10 @@ export default function MeetingsOverview({
               href={`${basePath}/new`}
               className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[var(--rams-red)] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(181,18,27,0.16)] transition hover:bg-[var(--rams-red-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2"
             >
-              <span className="text-lg font-normal leading-none" aria-hidden="true">
+              <span
+                className="text-lg font-normal leading-none"
+                aria-hidden="true"
+              >
                 +
               </span>
               Schedule meeting
@@ -448,8 +452,8 @@ export default function MeetingsOverview({
                   No upcoming meetings
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-[#C9C1BA]">
-                  The agenda is clear. Schedule a session or use the calendar
-                  to choose a date.
+                  The agenda is clear. Schedule a session or use the calendar to
+                  choose a date.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2.5">
                   {canCreate && (
@@ -666,7 +670,11 @@ export default function MeetingsOverview({
                         <span className="block text-[0.64rem] font-medium text-[#8A867D]">
                           {new Date(meeting.startAt).toLocaleDateString(
                             undefined,
-                            { weekday: "short", month: "short", day: "numeric" },
+                            {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            },
                           )}
                         </span>
                         <span className="mt-0.5 block text-[0.95rem] font-semibold tabular-nums text-[var(--rams-charcoal)]">

@@ -1,9 +1,5 @@
 import { Router, raw } from "express";
 import { authenticate } from "../../middlewares/auth.middlewares.js";
-import {
-  PERMISSIONS,
-  requirePermission,
-} from "../../middlewares/permission.middlewares.js";
 import { requireRole } from "../../middlewares/role.middlewares.js";
 import {
   checkConflictsController,
@@ -23,83 +19,49 @@ import {
 const router = Router();
 
 router.use(authenticate);
+router.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  next();
+});
 
-router.get(
-  "/agenda",
-  requireRole("ADMIN", "DOSEN", "STUDENT"),
-  getMeetingAgendaController,
-);
-router.get(
-  "/calendar",
-  requireRole("ADMIN", "DOSEN", "STUDENT"),
-  getMeetingCalendarController,
-);
-router.get(
-  "/",
-  requirePermission(
-    PERMISSIONS.MEETINGS_READ,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-  ),
-  getMeetingListController,
-);
-router.post(
-  "/conflicts/check",
-  requirePermission(
-    PERMISSIONS.MEETINGS_READ,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-    PERMISSIONS.AGENDA_MANAGE,
-  ),
-  checkConflictsController,
-);
-router.get("/:id/audit", getMeetingAuditController);
-router.get("/:id", getMeetingController);
+const internalOnly = requireRole("ADMIN", "DOSEN");
+const meetingMutator = requireRole("ADMIN", "DOSEN");
+
+router.get("/agenda", internalOnly, getMeetingAgendaController);
+router.get("/calendar", internalOnly, getMeetingCalendarController);
+router.get("/", internalOnly, getMeetingListController);
+router.post("/conflicts/check", internalOnly, checkConflictsController);
+router.get("/:id/audit", internalOnly, getMeetingAuditController);
+router.get("/:id", internalOnly, getMeetingController);
 router.post(
   "/",
-  requirePermission(
-    PERMISSIONS.MEETINGS_CREATE,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-    PERMISSIONS.AGENDA_MANAGE,
-  ),
+  meetingMutator,
   createMeetingController,
 );
 router.patch(
   "/:id",
-  requirePermission(
-    PERMISSIONS.MEETINGS_MANAGE_OWN,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-    PERMISSIONS.AGENDA_MANAGE,
-  ),
+  meetingMutator,
   updateMeetingController,
 );
 router.post(
   "/:id/cancel",
-  requirePermission(
-    PERMISSIONS.MEETINGS_MANAGE_OWN,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-    PERMISSIONS.AGENDA_MANAGE,
-  ),
+  meetingMutator,
   cancelMeetingController,
 );
 router.delete(
   "/:id",
-  requirePermission(PERMISSIONS.MEETINGS_MANAGE_OWN),
+  meetingMutator,
   deleteMeetingController,
 );
 router.post(
   "/:id/attachments",
-  requirePermission(
-    PERMISSIONS.MEETINGS_MANAGE_OWN,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-  ),
+  meetingMutator,
   raw({ type: "*/*", limit: "20mb" }),
   uploadAttachmentController,
 );
 router.delete(
   "/:id/attachments/:attachmentId",
-  requirePermission(
-    PERMISSIONS.MEETINGS_MANAGE_OWN,
-    PERMISSIONS.SCHEDULE_PORTAL_ACCESS,
-  ),
+  meetingMutator,
   deleteAttachmentController,
 );
 

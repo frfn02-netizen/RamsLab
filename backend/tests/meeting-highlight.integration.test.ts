@@ -4,7 +4,6 @@ import { ObjectId } from "mongodb";
 
 import { getMeetingsCollection } from "../src/modules/meetings/meeting.repository.js";
 import { getUsersCollection } from "../src/modules/users/user.repository.js";
-import { getLabMembershipsCollection } from "../src/modules/lab-memberships/lab-membership.repository.js";
 import {
   ensureTestUsers,
   signTestToken,
@@ -24,16 +23,12 @@ let otherDosenToken: string;
 let adminToken: string;
 let publicMeetingId = "";
 let privateMeetingId = "";
-let membershipIds: ObjectId[] = [];
 
 async function cleanup() {
   await getMeetingsCollection().deleteMany({
     title: { $regex: `^${TITLE_PREFIX}` },
   });
   await getUsersCollection().deleteMany({ _id: new ObjectId(OTHER_DOSEN_ID) });
-  await getLabMembershipsCollection().deleteMany({
-    _id: { $in: membershipIds },
-  });
 }
 
 beforeAll(async () => {
@@ -64,28 +59,6 @@ beforeAll(async () => {
     { upsert: true },
   );
 
-  const memberships = await getLabMembershipsCollection().insertMany([
-    {
-      labId: "rams",
-      userId: new ObjectId(TEST_DOSEN_USER_ID),
-      status: "ACTIVE",
-      joinedAt: now,
-      updatedAt: now,
-      createdBy: new ObjectId(TEST_ADMIN_USER_ID),
-      updatedBy: new ObjectId(TEST_ADMIN_USER_ID),
-    },
-    {
-      labId: "rams",
-      userId: new ObjectId(OTHER_DOSEN_ID),
-      status: "ACTIVE",
-      joinedAt: now,
-      updatedAt: now,
-      createdBy: new ObjectId(TEST_ADMIN_USER_ID),
-      updatedBy: new ObjectId(TEST_ADMIN_USER_ID),
-    },
-  ]);
-  membershipIds = Object.values(memberships.insertedIds);
-
   highlightedToken = signTestToken(TEST_DOSEN_USER_ID, "DOSEN");
   otherDosenToken = signTestToken(OTHER_DOSEN_ID, "DOSEN");
   adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
@@ -98,6 +71,8 @@ beforeAll(async () => {
       clientName: "Highlight Client",
       mode: "ONLINE",
       meetingLink: "https://meet.google.com/highlight-public",
+      primaryPicId: TEST_DOSEN_USER_ID,
+      picIds: [TEST_DOSEN_USER_ID],
       startAt: "2033-01-01T09:00:00.000Z",
       endAt: "2033-01-01T10:00:00.000Z",
       participantIds: [OTHER_DOSEN_ID],
@@ -113,6 +88,8 @@ beforeAll(async () => {
       clientName: "Private Highlight Client",
       mode: "ONLINE",
       meetingLink: "https://meet.google.com/highlight-private",
+      primaryPicId: TEST_DOSEN_USER_ID,
+      picIds: [TEST_DOSEN_USER_ID],
       startAt: "2033-01-02T09:00:00.000Z",
       endAt: "2033-01-02T10:00:00.000Z",
       participantIds: [TEST_DOSEN_USER_ID],
@@ -179,29 +156,5 @@ describe("meeting highlight involvement", () => {
       canViewDetails: false,
     });
     expect(busy).not.toHaveProperty("involvesHighlightedUser");
-  });
-
-  it("never exposes involvement through public endpoints", async () => {
-    const list = await request(app)
-      .get("/api/public/schedule")
-      .query({ q: TITLE_PREFIX, limit: 100 });
-    expect(list.status).toBe(200);
-    expect(JSON.stringify(list.body)).not.toContain("involvesHighlightedUser");
-    expect(
-      list.body.data.some(
-        (meeting: { _id: string }) => meeting._id === privateMeetingId,
-      ),
-    ).toBe(false);
-
-    const publicDetail = await request(app).get(
-      `/api/public/schedule/${publicMeetingId}`,
-    );
-    expect(publicDetail.status).toBe(200);
-    expect(publicDetail.body.data).not.toHaveProperty("involvesHighlightedUser");
-
-    const privateDetail = await request(app).get(
-      `/api/public/schedule/${privateMeetingId}`,
-    );
-    expect(privateDetail.status).toBe(404);
   });
 });
