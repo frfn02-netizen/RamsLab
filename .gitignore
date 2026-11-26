@@ -2,3 +2,8 @@
 !*.env.example
 *_cookies.txt
 node_modules/
+
+# Local agent tooling
+/.opencode/
+/opencode.json
+/AGENTS.md

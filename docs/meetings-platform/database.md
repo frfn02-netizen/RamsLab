@@ -66,9 +66,7 @@ The meeting index unit tests verify idempotent creation, incompatible-index dete
 
 ## Legacy compatibility
 
-Legacy documents may still contain `visibility` or `auditHistory` fields from earlier versions. Meeting reads ignore them, and writes remove them with `$unset`. They have no effect on access checks or serialization.
-
-Legacy documents can also lack PIC fields. The internal serializer returns empty/absent PIC collections for those records. New create requests require PIC data, so old data remains readable while new writes follow the multiple-PIC contract.
+Legacy documents can lack PIC fields. The internal serializer returns empty/absent PIC collections for those records. New create requests require PIC data, so old data remains readable while new writes follow the multiple-PIC contract.
 
 ## Data mutation behavior
 

@@ -101,4 +101,4 @@ Check `CRON_SECRET`, Mailjet configuration diagnostics, the cron response counts
 
 ### Meeting access or missing records
 
-Check the access token, role (`ADMIN` or `DOSEN`), persisted `cancelledAt`, and the authenticated meeting serializer. Legacy `visibility` values are ignored and do not affect access.
+Check the access token, role (`ADMIN` or `DOSEN`), persisted `cancelledAt`, and the authenticated meeting serializer.

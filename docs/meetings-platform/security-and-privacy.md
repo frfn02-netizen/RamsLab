@@ -19,9 +19,7 @@ This means a PIC reference is not itself an access grant. Detail access is avail
 
 ## Internal meeting access
 
-All meeting routes require an authenticated `ADMIN` or `DOSEN` account. There is no per-meeting visibility flag, so every internal account receives the full internal detail and calendar serialization. Mutation is limited to `ADMIN` accounts and the meeting creator.
-
-Legacy `visibility` and `auditHistory` values on stored documents are ignored by reads and stripped by writes. They do not grant or restrict access.
+All meeting routes require an authenticated `ADMIN` or `DOSEN` account. Every internal account receives the full internal detail and calendar serialization. Mutation is limited to `ADMIN` accounts and the meeting creator.
 
 ## Serializer boundary
 
