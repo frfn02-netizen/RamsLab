@@ -133,7 +133,7 @@ export default function StudentsPage() {
           action={
             user?.role === "ADMIN" ? (
               <LinkButton href="/dashboard/students/new">
-                Add student
+                Add public profile
               </LinkButton>
             ) : undefined
           }

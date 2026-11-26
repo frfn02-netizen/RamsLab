@@ -25,12 +25,7 @@ router.get(
   getTrackingByAlumniId,
 );
 
-router.get(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  getTrackingById,
-);
+router.get("/:id", authenticate, requireRole("ADMIN"), getTrackingById);
 
 // ========================================
 // ADMIN

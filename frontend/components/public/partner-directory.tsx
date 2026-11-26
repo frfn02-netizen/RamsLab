@@ -1,65 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getPublicPartners } from "@/lib/api/modules";
 import type { Partner } from "@/types/modules";
 import PartnerCard from "./partner-card";
 import RevealOnScroll from "./reveal-on-scroll";
-import { PublicError, PublicLoading } from "./public-states";
 
 const FEATURED_UNIVERSITY = 6;
 const FEATURED_INDUSTRIAL = 3;
 
-export default function PartnerDirectory() {
+export default function PartnerDirectory({
+  initialAcademic,
+  initialIndustrial,
+}: {
+  initialAcademic: Partner[];
+  initialIndustrial: Partner[];
+}) {
   const t = useTranslations("partners");
-  const [academic, setAcademic] = useState<Partner[]>([]);
-  const [industrial, setIndustrial] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    Promise.all([
-      getPublicPartners("UNIVERSITY"),
-      getPublicPartners("INDUSTRIAL"),
-    ])
-      .then(([uni, ind]) => {
-        setAcademic(uni);
-        setIndustrial(ind);
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, []);
-
+  const academic = initialAcademic;
+  const industrial = initialIndustrial;
   const totalPublished = academic.length + industrial.length;
   const featuredAcademic = academic.slice(0, FEATURED_UNIVERSITY);
   const featuredIndustrial = industrial.slice(0, FEATURED_INDUSTRIAL);
 
   return (
     <div>
-      <RevealOnScroll className="flex items-end justify-between gap-4 border-b border-[var(--border)] pb-4">
+      <RevealOnScroll className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-4">
         <div>
           <p className="eyebrow text-[var(--gray)]">{t("directory")}</p>
-          <h2 className="mt-2 font-display text-3xl font-semibold text-[var(--navy)]">
+          <h2 className="public-section-title mt-2 text-[var(--navy)]">
             {t("selected")}
           </h2>
         </div>
         <span className="text-sm text-[var(--gray)]">
-          {loading ? t("loading") : `${totalPublished} ${t("directory")}`}
+          {`${totalPublished} ${t("directory")}`}
         </span>
       </RevealOnScroll>
 
       <div className="mt-6">
-        {loading ? (
-          <PublicLoading label={t("loading")} variant="partners" />
-        ) : error ? (
-          <PublicError message={t("noDescription")} />
-        ) : totalPublished > 0 ? (
+        {totalPublished > 0 ? (
           <>
             {featuredAcademic.length > 0 && (
               <RevealOnScroll
-                className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
                 stagger={100}
               >
                 {featuredAcademic.map((partner) => (
@@ -70,7 +53,7 @@ export default function PartnerDirectory() {
 
             {featuredIndustrial.length > 0 && (
               <RevealOnScroll
-                className={`grid gap-5 sm:grid-cols-2 lg:grid-cols-3${featuredAcademic.length > 0 ? " mt-8" : ""}`}
+                className={`grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4${featuredAcademic.length > 0 ? " mt-8" : ""}`}
                 stagger={100}
               >
                 {featuredIndustrial.map((partner) => (

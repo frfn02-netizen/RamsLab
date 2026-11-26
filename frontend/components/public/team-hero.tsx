@@ -80,7 +80,11 @@ function MaritimeBlueprint({ label }: { label: string }) {
           strokeDasharray="2 8"
         />
         <path d="M220 34 A138 138 0 0 1 358 172" strokeWidth="1.4" />
-        <path d="M220 73 A99 99 0 0 0 121 172" strokeWidth="1.1" opacity="0.7" />
+        <path
+          d="M220 73 A99 99 0 0 0 121 172"
+          strokeWidth="1.1"
+          opacity="0.7"
+        />
       </g>
 
       <g fill="#1769AA" opacity="0.55">
@@ -170,7 +174,10 @@ function MaritimeBlueprint({ label }: { label: string }) {
         <path d="M652 196 H668" strokeWidth="0.7" />
         <path d="M660 186 V174" strokeWidth="0.7" />
 
-        <path d="M560 216 Q572 208 586 216 Q572 222 560 216 Z" strokeWidth="0.8" />
+        <path
+          d="M560 216 Q572 208 586 216 Q572 222 560 216 Z"
+          strokeWidth="0.8"
+        />
       </g>
 
       <g
@@ -306,11 +313,11 @@ export default function TeamHero() {
               {t("heroEyebrow")}
             </p>
 
-            <h1 className="mt-3 font-display text-[2.35rem] font-semibold leading-[1.05] tracking-[-0.04em] text-[var(--team-navy)] sm:text-[2.9rem] md:text-[2.5rem] lg:text-[3.4rem]">
+            <h1 className="public-page-title mt-3 text-[var(--team-navy)]">
               {t("heroTitle")}
             </h1>
 
-            <p className="mt-5 max-w-lg text-[0.98rem] leading-7 text-[var(--team-text)] sm:text-base">
+            <p className="public-lead mt-5 max-w-lg text-[var(--team-text)]">
               {t("heroDescription")}
             </p>
 

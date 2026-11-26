@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import AlumniPage from "@/app/dashboard/alumni/page";
+import AlumniPage from "@/app/(internal)/dashboard/alumni/page";
 import type { Alumni } from "@/types/alumni";
 
 const { getAlumniList, getAlumniStats, deleteAlumni } = vi.hoisted(() => ({

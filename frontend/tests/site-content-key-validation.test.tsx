@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import DashboardContentEditorPage from "@/app/dashboard/content/[key]/page";
+import DashboardContentEditorPage from "@/app/(internal)/dashboard/content/[key]/page";
 import SiteContentEditor from "@/components/dashboard/site-content-editor";
 import { isSiteContentKey, SITE_CONTENT_KEYS } from "@/types/site-content";
 

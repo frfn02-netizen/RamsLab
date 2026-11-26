@@ -14,8 +14,8 @@ export default function AnalyticsGate() {
     usePathname() ??
     (typeof window === "undefined" ? "" : window.location.pathname);
   const normalized = pathname.replace(/\/+$/, "") || "/";
-  const disabled = DISABLED_PREFIXES.some((prefix) =>
-    normalized === prefix || normalized.includes(prefix),
+  const disabled = DISABLED_PREFIXES.some(
+    (prefix) => normalized === prefix || normalized.includes(prefix),
   );
 
   if (disabled) return null;

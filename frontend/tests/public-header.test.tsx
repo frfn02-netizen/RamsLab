@@ -107,11 +107,11 @@ describe("public mobile header", () => {
     );
     expect(itsLogo).toBeInTheDocument();
     expect(ramsLogo).toBeInTheDocument();
-    expect(itsLogo?.parentElement).toHaveClass("h-8", "w-[50px]");
-    expect(ramsLogo?.parentElement).toHaveClass("h-10", "w-10");
+    expect(itsLogo?.parentElement).toHaveClass("h-10", "w-[62px]");
+    expect(ramsLogo?.parentElement).toHaveClass("h-12", "w-12");
     expect(
       within(mobileHeader).getByTestId("mobile-logo-separator"),
-    ).toHaveClass("h-8", "w-px", "bg-[var(--border)]");
+    ).toHaveClass("h-10", "w-px", "bg-[var(--border)]");
     expect(itsLogo?.compareDocumentPosition(ramsLogo!)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
@@ -144,7 +144,7 @@ describe("public mobile header", () => {
       drawer.querySelector('img[src="/assets/RamsLogoFIX.png"]'),
     ).toBeInTheDocument();
     expect(within(drawer).getByTestId("mobile-logo-separator")).toHaveClass(
-      "h-8",
+      "h-10",
       "w-px",
       "bg-[var(--border)]",
     );
@@ -210,7 +210,7 @@ describe("public mobile header", () => {
     const desktopNavigation = screen.getByRole("navigation", {
       name: "Primary navigation",
     });
-    expect(desktopNavigation.className).toContain("lg:flex");
+    expect(desktopNavigation.className).toContain("xl:flex");
     expect(
       within(desktopNavigation).getByRole("link", { name: "Events" }),
     ).toBeInTheDocument();
@@ -238,10 +238,10 @@ describe("public mobile header", () => {
     expect(
       desktopHeader.querySelector('img[src="/assets/RamsLogoFIX.png"]')
         ?.parentElement,
-    ).toHaveClass("h-[72px]", "w-[72px]");
+    ).toHaveClass("h-16", "w-16");
     expect(
       within(desktopHeader).getByTestId("desktop-logo-separator"),
     ).toHaveClass("h-14", "w-px", "bg-[var(--border)]");
-    expect(desktopHeader).toHaveClass("h-20");
+    expect(desktopHeader).toHaveClass("h-[4.5rem]");
   });
 });

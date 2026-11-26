@@ -47,8 +47,10 @@ export default function StudentDetail({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: "",
+    nim: "",
     studentType: "PHD_STUDENT" as StudentType,
     program: "",
+    department: "",
     specialization: "",
     bio: "",
     linkedin: "",
@@ -67,8 +69,10 @@ export default function StudentDetail({ id }: { id: string }) {
           setStudent(safeResult);
           setForm({
             fullName: result.fullName,
+            nim: result.nim ?? "",
             studentType: result.studentType,
             program: result.program ?? "",
+            department: result.department ?? "",
             specialization: result.specialization.join(", "),
             bio: result.bio ?? "",
             linkedin: safeLinkedin ?? "",
@@ -98,8 +102,10 @@ export default function StudentDetail({ id }: { id: string }) {
     try {
       const result = await updateStudent(id, {
         fullName: form.fullName,
+        nim: form.nim || undefined,
         studentType: form.studentType,
         program: form.program || undefined,
+        department: form.department || undefined,
         specialization: form.specialization
           .split(",")
           .map((item) => item.trim())
@@ -229,11 +235,32 @@ export default function StudentDetail({ id }: { id: string }) {
                     ]}
                   />
                 </Field>
-                <Field label="Program">
+                <Field label="Program" htmlFor="student-detail-program">
                   <input
+                    id="student-detail-program"
                     className={inputClass}
                     value={form.program}
                     onChange={(event) => update("program", event.target.value)}
+                  />
+                </Field>
+
+                <Field label="Student ID / NIM" htmlFor="student-detail-nim">
+                  <input
+                    id="student-detail-nim"
+                    className={inputClass}
+                    value={form.nim}
+                    onChange={(event) => update("nim", event.target.value)}
+                  />
+                </Field>
+
+                <Field label="Department" htmlFor="student-detail-department">
+                  <input
+                    id="student-detail-department"
+                    className={inputClass}
+                    value={form.department}
+                    onChange={(event) =>
+                      update("department", event.target.value)
+                    }
                   />
                 </Field>
                 <Field label="Profile photo" className="sm:col-span-2">

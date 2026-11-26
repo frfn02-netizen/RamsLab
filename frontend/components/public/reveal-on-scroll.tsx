@@ -16,6 +16,8 @@ type RevealOnScrollProps = {
   threshold?: number;
 };
 
+type RevealPhase = "idle" | "pending" | "visible";
+
 export default function RevealOnScroll({
   children,
   className = "",
@@ -24,18 +26,26 @@ export default function RevealOnScroll({
   threshold = 0.1,
 }: RevealOnScrollProps) {
   const nodeRef = useRef<HTMLDivElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [phase, setPhase] = useState<RevealPhase>("idle");
 
   useEffect(() => {
     const node = nodeRef.current;
     if (!node || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
       return;
 
+    // Server-rendered content is visible by default. Only defer content that
+    // starts below the viewport, so a failed hydration never hides the page.
+    if (node.getBoundingClientRect().top <= window.innerHeight * 0.95) {
+      return;
+    }
+
+    setPhase("pending");
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
 
-        setIsVisible(true);
+        setPhase("visible");
         observer.disconnect();
       },
       { threshold },
@@ -50,10 +60,11 @@ export default function RevealOnScroll({
     "--reveal-delay": `${delay}ms`,
     "--reveal-stagger": `${stagger}ms`,
   } as CSSProperties;
+
   return (
     <div
       ref={nodeRef}
-      className={`reveal-on-scroll ${isVisible ? "is-visible" : ""} ${className}`.trim()}
+      className={`reveal-on-scroll ${phase === "pending" ? "reveal-pending" : ""} ${phase === "visible" ? "is-visible" : ""} ${className}`.trim()}
       data-reveal-children={stagger > 0 ? "true" : undefined}
       style={style}
     >

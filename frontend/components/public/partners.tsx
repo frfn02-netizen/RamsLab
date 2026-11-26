@@ -1,31 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getPublicPartners } from "@/lib/api/modules";
 import type { Partner, PartnerType } from "@/types/modules";
 import PageHero from "./page-hero";
 import PublicContainer from "./public-container";
 import PartnerCard from "./partner-card";
 import RevealOnScroll from "./reveal-on-scroll";
-import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
+import { PublicEmpty } from "./public-states";
 
-export default function PublicPartners({ type }: { type: PartnerType }) {
+export default function PublicPartners({
+  type,
+  initialPartners,
+}: {
+  type: PartnerType;
+  initialPartners: Partner[];
+}) {
   const t = useTranslations("partners");
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const partners = initialPartners;
   const university = type === "UNIVERSITY";
-
-  useEffect(() => {
-    setLoading(true);
-    setError(false);
-    getPublicPartners(type)
-      .then(setPartners)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [type]);
 
   return (
     <>
@@ -41,12 +34,12 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
         <PublicContainer className="py-10 sm:py-14">
           <RevealOnScroll className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-4">
             <div>
-              <h2 className="font-display text-3xl font-semibold text-[var(--navy)]">
+              <h2 className="public-section-title text-[var(--navy)]">
                 {university ? t("universityTitle") : t("industrialTitle")}
               </h2>
             </div>
             <span className="text-sm text-[var(--gray)]">
-              {loading ? t("loading") : `${partners.length} ${t("directory")}`}
+              {`${partners.length} ${t("directory")}`}
             </span>
           </RevealOnScroll>
 
@@ -71,18 +64,14 @@ export default function PublicPartners({ type }: { type: PartnerType }) {
             )}
           </RevealOnScroll>
 
-          {loading ? (
-            <PublicLoading label={t("loading")} variant="partners" />
-          ) : error ? (
-            <PublicError message={t("noDescription")} onRetry={() => {}} />
-          ) : partners.length === 0 ? (
+          {partners.length === 0 ? (
             <PublicEmpty
               title={university ? t("noUniversity") : t("noIndustrial")}
               description={t("noDescription")}
             />
           ) : (
             <RevealOnScroll
-              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
               stagger={100}
             >
               {partners.map((partner) => (

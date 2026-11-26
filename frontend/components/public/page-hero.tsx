@@ -27,11 +27,11 @@ export default function PageHero({
           </div>
           {eyebrow ? <p className="eyebrow mt-5">{eyebrow}</p> : null}
           <h1
-            className={`${eyebrow ? "mt-3" : "mt-5"} max-w-3xl font-display text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-[var(--navy)] sm:text-5xl lg:text-[3.8rem]`}
+            className={`${eyebrow ? "mt-3" : "mt-5"} public-page-title max-w-3xl text-[var(--navy)]`}
           >
             {title}
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--slate)] sm:text-lg">
+          <p className="public-lead mt-4 max-w-2xl text-[var(--slate)]">
             {description}
           </p>
         </div>

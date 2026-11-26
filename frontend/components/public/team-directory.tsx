@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { formatAlumniClassLabel } from "@/lib/alumni-label";
@@ -80,7 +79,7 @@ const graduateStudentCategories: Array<{
 }> = [{ key: "MAHASISWA" }, { key: "MASTER" }];
 
 const PROFILE_GRID_CLASS =
-  "grid grid-cols-1 auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3";
+  "grid grid-cols-1 auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
 
 function getInitials(name: string) {
   return name
@@ -381,7 +380,7 @@ function DirectorySkeleton({ label }: { label: string }) {
     <div role="status" aria-label={label}>
       <span className="sr-only">{label}</span>
       <div
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
         aria-hidden="true"
       >
         {Array.from({ length: 6 }).map((_, index) => (
@@ -458,32 +457,44 @@ function DirectoryError({
   );
 }
 
-export default function TeamDirectory() {
+export default function TeamDirectory({
+  initialPeople,
+  initialCategory,
+}: {
+  initialPeople: PublicPeopleResponse;
+  initialCategory?: string;
+}) {
   const t = useTranslations("team");
   const common = useTranslations("common");
-  const searchParams = useSearchParams();
-  const [people, setPeople] = useState<PublicPeopleResponse>({
-    DOSEN: [],
-    MAHASISWA: [],
-    MASTER: [],
-    UNDERGRADUATE: [],
-    INTERNSHIP: [],
-    ALUMNI: [],
-  });
-  const [activeCategory, setActiveCategory] = useState<PeopleTab>(() => {
-    const param = searchParams.get("category");
-    return param && categoryOrder.includes(param as PeopleTab)
-      ? (param as PeopleTab)
-      : "DOSEN";
-  });
+  const [people, setPeople] = useState<PublicPeopleResponse>(initialPeople);
+  const [activeCategory, setActiveCategory] = useState<PeopleTab>(() =>
+    initialCategory && categoryOrder.includes(initialCategory as PeopleTab)
+      ? (initialCategory as PeopleTab)
+      : "DOSEN",
+  );
   const [search, setSearch] = useState("");
   const [activeArea, setActiveArea] = useState<AreaFilter>("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("default");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
+    const category = new URLSearchParams(window.location.search).get(
+      "category",
+    );
+
+    if (!category || !categoryOrder.includes(category as PeopleTab)) return;
+
+    const frame = window.requestAnimationFrame(() =>
+      setActiveCategory(category as PeopleTab),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (reloadToken === 0) return;
+
     let cancelled = false;
 
     getPublicPeopleList()
@@ -548,7 +559,7 @@ export default function TeamDirectory() {
   return (
     <section
       id="people-directory"
-      className="team-page scroll-mt-24 bg-[var(--team-bg-soft)] py-12 sm:py-14"
+      className="team-page scroll-mt-24 bg-[var(--team-bg-soft)] py-12 sm:py-14 lg:py-16 min-[2000px]:py-24"
     >
       <PublicContainer>
         <nav
@@ -592,7 +603,7 @@ export default function TeamDirectory() {
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--team-blue)]">
               {meta.eyebrow}
             </p>
-            <h2 className="mt-2 font-display text-[2rem] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--team-navy)] sm:text-[2.35rem]">
+            <h2 className="public-section-title mt-2 text-[var(--team-navy)]">
               {meta.title}
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--team-text)] sm:text-[0.95rem]">

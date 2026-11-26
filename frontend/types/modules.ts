@@ -209,6 +209,8 @@ export interface Dosen {
   projectCount?: number;
   awardCount?: number;
   isPublic: boolean;
+  /** Mirrors the linked user's isActive; present on admin detail responses. */
+  accountActive?: boolean;
   publicationIds?: string[];
   createdAt: string;
   updatedAt: string;
@@ -221,7 +223,22 @@ export interface DosenEducation {
   endYear?: number;
 }
 export type DosenInput = Omit<Dosen, "_id" | "createdAt" | "updatedAt">;
-export type DosenUpdateInput = Partial<Omit<DosenInput, "userId">>;
+/** Provisions the auth account and profile in one request. */
+export type DosenCreateInput = Omit<
+  DosenInput,
+  "userId" | "email" | "accountActive"
+> & {
+  email: string;
+  password?: string;
+};
+export type DosenCreationResult = {
+  dosen: Dosen;
+  notification?: { sent: boolean; warning?: string };
+  temporaryPassword?: string;
+};
+export type DosenUpdateInput = Partial<
+  Omit<DosenInput, "userId" | "accountActive">
+>;
 
 export type StudentType =
   | "PHD_STUDENT"

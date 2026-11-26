@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { Locale } from "@/i18n/routing";
+import { assetPath } from "@/lib/asset-path";
 
 export function localizedMetadata({
   locale,
@@ -25,9 +26,16 @@ export function localizedMetadata({
     openGraph: {
       title,
       description,
+      url: canonical,
       locale,
       alternateLocale: locale === "en" ? ["id"] : ["en"],
       type: "website",
+      images: [
+        {
+          url: assetPath("/assets/RamsLogoFIX.png"),
+          alt: "RAMS Laboratory",
+        },
+      ],
     },
   };
 }

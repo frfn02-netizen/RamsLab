@@ -21,16 +21,14 @@ function cloudinaryDownloadUrl(url: string, filename: string): string {
   );
 }
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 function ResearchAreaImage({
   area,
   title,
-  index,
 }: {
   area: PublicResearchArea;
   title: string;
-  index: number;
 }) {
   const { aspectRatio, objectPosition, fit, scale } =
     getResearchImageStyles(area);
@@ -86,7 +84,7 @@ export default async function ResearchPage({
   let researchUnavailable = false;
 
   try {
-    researchAreas = await getPublicResearch();
+    researchAreas = await getPublicResearch({ next: { revalidate: 300 } });
   } catch {
     researchUnavailable = true;
   }
@@ -110,10 +108,10 @@ export default async function ResearchPage({
             <p className="eyebrow mt-10 text-[var(--rams-red)]">
               {t("heroEyebrow")}
             </p>
-            <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-[var(--navy)] sm:text-5xl lg:text-[3.8rem]">
+            <h1 className="public-page-title mt-4 max-w-3xl text-[var(--navy)]">
               {t("heroTitle")}
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-[var(--slate)] sm:text-lg">
+            <p className="public-lead mt-6 max-w-2xl text-[var(--slate)]">
               {t("heroDescription")}
             </p>
           </div>
@@ -157,11 +155,7 @@ export default async function ResearchPage({
                       className={`${isEven ? "order-1" : "order-1 lg:order-2"}`}
                     >
                       {area.downloadablePng ? (
-                        <ResearchAreaImage
-                          area={area}
-                          title={title}
-                          index={index}
-                        />
+                        <ResearchAreaImage area={area} title={title} />
                       ) : (
                         <div className="mx-auto flex aspect-[3/4] w-full max-w-[280px] items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background-light)] sm:max-w-[300px]">
                           <span className="font-display text-7xl font-bold tracking-tight text-[var(--navy)]/10">
@@ -179,11 +173,11 @@ export default async function ResearchPage({
                         0{index + 1}
                       </span>
 
-                      <h2 className="mt-4 font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-[var(--navy)] sm:text-4xl">
+                      <h2 className="public-section-title mt-4 text-[var(--navy)]">
                         {title}
                       </h2>
 
-                      <p className="mt-6 max-w-xl text-base leading-7 text-[var(--gray)] sm:text-lg">
+                      <p className="public-lead mt-6 max-w-xl text-[var(--gray)]">
                         {description}
                       </p>
 

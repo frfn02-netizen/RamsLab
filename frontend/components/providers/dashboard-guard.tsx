@@ -25,12 +25,7 @@ export default function DashboardGuard({ children }: { children: ReactNode }) {
     }
   }, [allowed, pathname, router, status, user]);
 
-  if (
-    status === "loading" ||
-    !user ||
-    user.mustChangePassword ||
-    !allowed
-  ) {
+  if (status === "loading" || !user || user.mustChangePassword || !allowed) {
     return (
       <AuthLoadingSkeleton
         label="Checking your session"

@@ -209,7 +209,7 @@ export default function PublicExpertProfile({ id }: { id: string }) {
   ];
 
   return (
-    <main className="bg-[var(--paper)]">
+    <div className="bg-[var(--paper)]">
       <PublicContainer className="py-10 sm:py-16 lg:py-24">
         <Link
           href="/public-service"
@@ -247,7 +247,7 @@ export default function PublicExpertProfile({ id }: { id: string }) {
               <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
                 Academic Profile · Expert
               </p>
-              <h1 className="mt-4 max-w-[650px] break-words font-display text-[3.25rem] font-bold leading-[1.02] tracking-[-0.04em] text-[var(--navy)] sm:text-[3.75rem] lg:text-[4rem]">
+              <h1 className="public-hero-title mt-4 max-w-[650px] break-words text-[var(--navy)]">
                 {profile.name}
               </h1>
               {profile.specialization.length > 0 && (
@@ -305,6 +305,6 @@ export default function PublicExpertProfile({ id }: { id: string }) {
           diizinkan.
         </aside>
       </PublicContainer>
-    </main>
+    </div>
   );
 }

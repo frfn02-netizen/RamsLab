@@ -1,16 +1,17 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import DashboardPage from "@/app/dashboard/page";
+import DashboardPage from "@/app/(internal)/dashboard/page";
 import type { DashboardStats } from "@/types/dashboard";
 import type { MeetingCalendarEvent } from "@/types/meetings";
 import type { Publication } from "@/types/modules";
 
-const { getDashboardStats, getMeetingAgenda, getPartners, getPublications } = vi.hoisted(() => ({
-  getDashboardStats: vi.fn(),
-  getMeetingAgenda: vi.fn(),
-  getPartners: vi.fn(),
-  getPublications: vi.fn(),
-}));
+const { getDashboardStats, getMeetingAgenda, getPartners, getPublications } =
+  vi.hoisted(() => ({
+    getDashboardStats: vi.fn(),
+    getMeetingAgenda: vi.fn(),
+    getPartners: vi.fn(),
+    getPublications: vi.fn(),
+  }));
 vi.mock("@/lib/api/dashboard", () => ({ getDashboardStats }));
 vi.mock("@/lib/api/meetings", () => ({ getMeetingAgenda }));
 vi.mock("@/lib/api/modules", () => ({ getPartners, getPublications }));
@@ -39,7 +40,10 @@ const stats: DashboardStats = {
 describe("dashboard overview", () => {
   it("renders CMS overview values from the dashboard API", async () => {
     getDashboardStats.mockResolvedValue(stats);
-    getMeetingAgenda.mockResolvedValue({ items: [], pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null } });
+    getMeetingAgenda.mockResolvedValue({
+      items: [],
+      pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null },
+    });
     getPartners.mockResolvedValue([]);
     getPublications.mockResolvedValue({
       success: true,
@@ -54,9 +58,7 @@ describe("dashboard overview", () => {
       expect(screen.getByText("Published Research")).toBeInTheDocument(),
     );
     expect(screen.getByText("Unpublished Research")).toBeInTheDocument();
-    expect(
-      screen.getByText("Site content updated"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Site content updated")).toBeInTheDocument();
     expect(screen.getByText("Homepage")).toBeInTheDocument();
   });
 
@@ -85,7 +87,10 @@ describe("dashboard overview", () => {
     };
 
     getDashboardStats.mockResolvedValue({ ...stats, publications: 1 });
-    getMeetingAgenda.mockResolvedValue({ items: [meeting], pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null } });
+    getMeetingAgenda.mockResolvedValue({
+      items: [meeting],
+      pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null },
+    });
     getPartners.mockResolvedValue([]);
     getPublications.mockResolvedValue({
       success: true,

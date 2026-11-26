@@ -6,7 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import AlumniPage from "@/app/dashboard/alumni/page";
+import AlumniPage from "@/app/(internal)/dashboard/alumni/page";
 import { ToastProvider } from "@/components/providers/toast-providers";
 import type { Alumni } from "@/types/alumni";
 

@@ -1,9 +1,24 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { Suspense } from "react";
+
 import Publications from "@/components/public/publications";
+import {
+  getPublications,
+  type PublicationListResponse,
+} from "@/lib/api/modules";
 import { localizedMetadata } from "@/lib/i18n/metadata";
 import type { Locale } from "@/i18n/routing";
+
+export const revalidate = 300;
+
+const EMPTY_PUBLICATIONS: PublicationListResponse = {
+  success: false,
+  data: [],
+  total: 0,
+  page: 1,
+  limit: 0,
+  facets: { years: [], topics: [], methods: [] },
+};
 
 export async function generateMetadata({
   params,
@@ -24,19 +39,14 @@ export async function generateMetadata({
   });
 }
 
-function PublicationsFallback() {
-  return (
-    <section
-      className="min-h-[42rem] bg-[var(--background-light)]"
-      aria-busy="true"
-    />
-  );
-}
+export default async function PublicationsPage() {
+  let initialData = EMPTY_PUBLICATIONS;
 
-export default function PublicationsPage() {
-  return (
-    <Suspense fallback={<PublicationsFallback />}>
-      <Publications />
-    </Suspense>
-  );
+  try {
+    initialData = await getPublications({}, { next: { revalidate: 300 } });
+  } catch {
+    initialData = EMPTY_PUBLICATIONS;
+  }
+
+  return <Publications initialData={initialData} initialQuery="" />;
 }

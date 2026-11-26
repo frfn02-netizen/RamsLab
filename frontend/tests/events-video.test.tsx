@@ -1,10 +1,7 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublicEvent } from "@/types/modules";
 
-const { getPublicEvents } = vi.hoisted(() => ({ getPublicEvents: vi.fn() }));
-
-vi.mock("@/lib/api/modules", () => ({ getPublicEvents }));
 vi.mock("next-intl", () => ({
   useLocale: () => "en",
   useTranslations: () => (key: string) => key,
@@ -41,43 +38,43 @@ const event: PublicEvent = {
   order: 1,
 };
 
+beforeEach(() => {
+  HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+  HTMLMediaElement.prototype.pause = vi.fn();
+});
+
 describe("public events page video", () => {
-  it("renders exactly one local video above the existing event cards", async () => {
-    getPublicEvents.mockResolvedValue([event]);
+  it("renders one click-to-play local video above the event cards", () => {
+    const { container } = render(<PublicEventsPage initialEvents={[event]} />);
 
-    const { container } = render(<PublicEventsPage />);
-
-    await waitFor(() =>
-      expect(screen.getByText("Ocean Engineering Summit")).toBeInTheDocument(),
-    );
+    expect(screen.getByText("Ocean Engineering Summit")).toBeInTheDocument();
 
     const videos = container.querySelectorAll("video");
     expect(videos).toHaveLength(1);
     const video = videos[0]!;
 
-    // Local hardcoded asset, no API/database involved.
     expect(video).toHaveAttribute("src", "/assets/0722.mp4");
-    expect(video).toHaveAttribute("autoplay");
+    expect(video).toHaveAttribute("poster", "/assets/engineers.jpg");
+    expect(video).toHaveAttribute("preload", "none");
+    expect(video).not.toHaveAttribute("autoplay");
     expect(video).toHaveAttribute("loop");
     expect(video).toHaveAttribute("playsinline");
-    expect(video).toHaveAttribute("preload", "metadata");
     expect(video.muted).toBe(true);
     expect(
-      screen.getByRole("button", { name: "Unmute video" }),
+      screen.getByRole("button", { name: "Play video" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Unmute video" }),
+    ).not.toBeInTheDocument();
     expect(video.className).toContain("object-cover");
     expect(video.className).toContain("w-full");
 
-    // Stable aspect ratio, overflow hidden, spacing before the cards.
     const frame = video.parentElement!;
     expect(frame.className).toContain("aspect-video");
     expect(frame.className).toContain("overflow-hidden");
     expect(frame.className).toContain("border");
     expect(frame.className).toContain("mb-10");
-    // No dedicated heading for the video.
-    expect(frame.querySelector("h1, h2, h3")).toBeNull();
 
-    // Layout order: header -> video -> cards grid.
     const heading = container.querySelector("h1")!;
     const grid = container.querySelector(".grid")!;
     expect(
@@ -86,17 +83,12 @@ describe("public events page video", () => {
     expect(
       video.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-
-    // Same content container as the event cards.
     expect(frame.parentElement).toBe(grid.parentElement);
   });
 
-  it("toggles video audio without interrupting playback", () => {
-    getPublicEvents.mockReturnValue(new Promise(() => {}));
-
-    const { container } = render(<PublicEventsPage />);
+  it("toggles video audio after explicit playback", () => {
+    const { container } = render(<PublicEventsPage initialEvents={[event]} />);
     const video = container.querySelector("video")!;
-    const unmuteButton = screen.getByRole("button", { name: "Unmute video" });
 
     Object.defineProperty(video, "paused", {
       configurable: true,
@@ -107,6 +99,10 @@ describe("public events page video", () => {
       value: 12,
     });
 
+    fireEvent.click(screen.getByRole("button", { name: "Play video" }));
+    expect(video.play).toHaveBeenCalled();
+
+    const unmuteButton = screen.getByRole("button", { name: "Unmute video" });
     expect(video.muted).toBe(true);
     fireEvent.click(unmuteButton);
 
@@ -116,31 +112,10 @@ describe("public events page video", () => {
     ).toBeInTheDocument();
     expect(video.paused).toBe(false);
     expect(video.currentTime).toBe(12);
-
-    fireEvent.click(screen.getByRole("button", { name: "Mute video" }));
-
-    expect(video.muted).toBe(true);
-    expect(
-      screen.getByRole("button", { name: "Unmute video" }),
-    ).toBeInTheDocument();
-    expect(video.paused).toBe(false);
-    expect(video.currentTime).toBe(12);
   });
 
-  it("keeps the existing event data fetching unchanged", async () => {
-    getPublicEvents.mockClear();
-    getPublicEvents.mockResolvedValue([event]);
-
-    render(<PublicEventsPage />);
-
-    await waitFor(() => expect(getPublicEvents).toHaveBeenCalledTimes(1));
-    expect(screen.getByText("Ocean Engineering Summit")).toBeInTheDocument();
-  });
-
-  it("shows the video even while events are still loading", () => {
-    getPublicEvents.mockReturnValue(new Promise(() => {}));
-
-    const { container } = render(<PublicEventsPage />);
+  it("keeps the video visible with an empty event list", () => {
+    const { container } = render(<PublicEventsPage initialEvents={[]} />);
 
     expect(container.querySelectorAll("video")).toHaveLength(1);
     expect(container.querySelector("video")).toHaveAttribute(

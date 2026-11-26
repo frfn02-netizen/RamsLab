@@ -40,8 +40,7 @@ function supportsRequiredMongoVersion(version) {
 
   return (
     major > REQUIRED_MONGODB_MAJOR ||
-    (major === REQUIRED_MONGODB_MAJOR &&
-      minor >= REQUIRED_MONGODB_MINOR)
+    (major === REQUIRED_MONGODB_MAJOR && minor >= REQUIRED_MONGODB_MINOR)
   );
 }
 
@@ -205,11 +204,7 @@ function printCategory(category, result, description) {
   });
 }
 
-async function printOwnershipCategory(
-  category,
-  additionalStages,
-  description,
-) {
+async function printOwnershipCategory(category, additionalStages, description) {
   const result = await getCategoryResult([
     ...ownershipStateStages(),
     ...additionalStages,
@@ -232,11 +227,7 @@ function participantIdsContainsField(fieldName) {
           $in: [
             `$${fieldName}`,
             {
-              $cond: [
-                { $isArray: "$participantIds" },
-                "$participantIds",
-                [],
-              ],
+              $cond: [{ $isArray: "$participantIds" }, "$participantIds", []],
             },
           ],
         },
@@ -310,11 +301,7 @@ function normalizedParticipantIdsExpression() {
         convertedParticipantIds: {
           $map: {
             input: {
-              $cond: [
-                { $isArray: "$participantIds" },
-                "$participantIds",
-                [],
-              ],
+              $cond: [{ $isArray: "$participantIds" }, "$participantIds", []],
             },
             as: "participantId",
             in: {
@@ -338,10 +325,7 @@ function normalizedParticipantIdsExpression() {
                     input: "$$convertedParticipantIds",
                     as: "participantId",
                     cond: {
-                      $eq: [
-                        { $type: "$$participantId" },
-                        "objectId",
-                      ],
+                      $eq: [{ $type: "$$participantId" }, "objectId"],
                     },
                   },
                 },
@@ -432,8 +416,7 @@ function duplicateCandidateStages() {
           ],
         },
 
-        duplicateCandidateParticipantIds:
-          normalizedParticipantIdsExpression(),
+        duplicateCandidateParticipantIds: normalizedParticipantIdsExpression(),
       },
     },
     {
@@ -502,10 +485,7 @@ async function printDuplicateCandidateGroups() {
     groups: groups.map((group, index) => ({
       groupNumber: index + 1,
       candidateCount: group.candidateCount,
-      sampleMeetingIds: (group.sampleMeetingIds ?? []).slice(
-        0,
-        MAX_SAMPLES,
-      ),
+      sampleMeetingIds: (group.sampleMeetingIds ?? []).slice(0, MAX_SAMPLES),
     })),
   });
 }
@@ -524,8 +504,7 @@ async function printDuplicateCandidateGroups() {
 
   printjson({
     category: "totalMeetings",
-    description:
-      "Total number of documents in the meetings collection.",
+    description: "Total number of documents in the meetings collection.",
     count: totalMeetings,
   });
 

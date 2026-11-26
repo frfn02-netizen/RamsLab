@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Suspense, useEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { assetPath } from "@/lib/asset-path";
@@ -36,12 +42,12 @@ function MobileBrand({
   return (
     <>
       <div className="flex shrink-0 items-center gap-2">
-        <div className="relative h-8 w-[50px] shrink-0">
+        <div className="relative h-10 w-[62px] shrink-0">
           <Image
             src={assetPath("/assets/ITSLogoFIX.png")}
             alt=""
             fill
-            sizes="50px"
+            sizes="62px"
             className="object-contain"
             priority
           />
@@ -49,18 +55,18 @@ function MobileBrand({
         <span
           data-testid="mobile-logo-separator"
           aria-hidden="true"
-          className={`h-8 w-px shrink-0 ${
+          className={`h-10 w-px shrink-0 ${
             darkHero
               ? "bg-white/70 shadow-[0_0_1px_rgba(255,255,255,0.35)]"
               : "bg-[var(--border)]"
           }`}
         />
-        <div className="relative h-10 w-10 shrink-0">
+        <div className="relative h-12 w-12 shrink-0">
           <Image
             src={assetPath("/assets/RamsLogoFIX.png")}
             alt=""
             fill
-            sizes="40px"
+            sizes="48px"
             className="object-contain"
             priority
           />
@@ -84,18 +90,51 @@ export default function PublicHeader() {
   const a11y = useTranslations("a11y");
   const [open, setOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+
+  const keepFocusInDrawer = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Tab") return;
+    const focusables = drawerRef.current?.querySelectorAll<HTMLElement>(
+      "a[href], button:not([disabled])",
+    );
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
   const { isAtTop, heroTone } = useHeroContext();
   const isDarkHero = isAtTop && heroTone === "dark";
 
   useEffect(() => {
     if (!open) return;
 
+    // Focus immediately for the common case, then retry on the next frame
+    // after the drawer's visibility class applies; focusing a still-hidden
+    // element is ignored by some browsers.
     closeButtonRef.current?.focus();
+    const frame = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus();
+    });
+    // The drawer fades/slides in; retry after the visibility transition so
+    // browsers that ignore focus on hidden elements still land in the dialog.
+    const focusTimer = window.setTimeout(() => {
+      closeButtonRef.current?.focus();
+    }, 220);
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(focusTimer);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
   }, [open]);
 
   return (
@@ -108,7 +147,7 @@ export default function PublicHeader() {
           : "border-[#E1E7EE] bg-white/95 text-[var(--charcoal)] shadow-[0_6px_24px_rgba(11,32,56,0.08)] backdrop-blur-[14px]"
       }`}
     >
-      <div className="mx-auto hidden h-20 max-w-[1440px] items-center justify-between gap-8 px-4 sm:px-6 lg:flex lg:px-8">
+      <div className="public-shell hidden h-[4.5rem] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10 min-[1920px]:px-14 xl:flex">
         <Link
           href="/"
           className="flex items-center gap-3"
@@ -133,7 +172,7 @@ export default function PublicHeader() {
                 : "bg-[var(--border)]"
             }`}
           />
-          <div className="relative h-[72px] w-[72px] shrink-0">
+          <div className="relative h-16 w-16 shrink-0">
             <Image
               src={assetPath("/assets/RamsLogoFIX.png")}
               alt=""
@@ -150,7 +189,7 @@ export default function PublicHeader() {
               {brand("laboratory")}
             </span>
             <span
-              className={`mt-1 text-[0.7rem] font-medium tracking-[0.01em] transition-[color] duration-300 ${isDarkHero ? "text-white/70" : "text-[var(--gray)]"}`}
+              className={`mt-1 hidden text-[0.7rem] font-medium tracking-[0.01em] transition-[color] duration-300 2xl:block ${isDarkHero ? "text-white/70" : "text-[var(--gray)]"}`}
             >
               {brand("technicalLine")}
             </span>
@@ -158,7 +197,7 @@ export default function PublicHeader() {
         </Link>
 
         <nav
-          className="hidden h-full items-center gap-5 xl:gap-6 lg:flex"
+          className="hidden h-full items-center gap-5 xl:flex xl:gap-6"
           aria-label={a11y("primaryNav")}
         >
           {links.map(([key, href]) => (
@@ -166,7 +205,7 @@ export default function PublicHeader() {
               key={key}
               href={href}
               aria-current={isActive(pathname, href) ? "page" : undefined}
-              className={`relative flex h-full items-center text-[0.9rem] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:bottom-6 after:left-1/2 after:h-0.5 after:w-7 after:-translate-x-1/2 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, href) ? "text-[var(--rams-red)] after:scale-x-100" : isDarkHero ? "text-white hover:text-white/80" : isAtTop ? "text-[var(--navy)] hover:text-[var(--rams-red)]" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
+              className={`relative flex h-full items-center whitespace-nowrap text-[0.9rem] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:bottom-6 after:left-1/2 after:h-0.5 after:w-7 after:-translate-x-1/2 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, href) ? "text-[var(--rams-red)] after:scale-x-100" : isDarkHero ? "text-white hover:text-white/80" : isAtTop ? "text-[var(--navy)] hover:text-[var(--rams-red)]" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
             >
               {t(key)}
             </Link>
@@ -177,7 +216,7 @@ export default function PublicHeader() {
             aria-current={
               isActive(pathname, contactLink[1]) ? "page" : undefined
             }
-            className={`relative flex h-full items-center px-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:bottom-6 after:left-1/2 after:h-0.5 after:w-7 after:-translate-x-1/2 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, contactLink[1]) ? "text-[var(--maroon)] after:scale-x-100" : isDarkHero ? "text-white hover:text-white/80" : "text-[var(--maroon)] hover:text-[var(--maroon)]"}`}
+            className={`relative flex h-full items-center whitespace-nowrap px-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-[var(--rams-red)] after:absolute after:bottom-6 after:left-1/2 after:h-0.5 after:w-7 after:-translate-x-1/2 after:origin-center after:scale-x-0 after:bg-[var(--rams-red)] after:transition-transform after:duration-200 hover:after:scale-x-100 ${isActive(pathname, contactLink[1]) ? "text-[var(--maroon)] after:scale-x-100" : isDarkHero ? "text-white hover:text-white/80" : "text-[var(--maroon)] hover:text-[var(--maroon)]"}`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -211,21 +250,18 @@ export default function PublicHeader() {
 
       <div
         data-testid="mobile-header"
-        className="flex h-16 items-center justify-between gap-3 px-4 lg:hidden"
+        className="flex h-16 items-center justify-between gap-3 px-5 sm:px-8 lg:px-10 xl:hidden"
       >
         <Link
           href="/"
           className="flex min-w-0 items-center gap-2"
           aria-label={a11y("home")}
         >
-          <MobileBrand
-            laboratory={brand("laboratory")}
-            darkHero={isDarkHero}
-          />
+          <MobileBrand laboratory={brand("laboratory")} darkHero={isDarkHero} />
         </Link>
         <button
           type="button"
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-md border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)] ${
+          className={`grid h-11 w-11 shrink-0 place-items-center rounded-md border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)] ${
             isDarkHero
               ? "border-white/60 bg-white/10 text-white hover:border-white hover:text-white"
               : "border-[var(--border)] bg-white/70 text-[var(--navy)] hover:border-[var(--rams-red)] hover:text-[var(--rams-red)]"
@@ -247,11 +283,13 @@ export default function PublicHeader() {
       </div>
 
       <nav
+        ref={drawerRef}
         id="mobile-public-navigation"
         data-testid="mobile-public-navigation"
-        className={`fixed inset-x-0 top-0 flex h-dvh flex-col bg-white px-5 text-[var(--charcoal)] transition-[transform,visibility] duration-200 ease-out lg:hidden ${open ? "visible translate-x-0" : "invisible pointer-events-none translate-x-full"}`}
+        className={`fixed inset-x-0 top-0 flex h-dvh flex-col bg-white px-5 text-[var(--charcoal)] transition-[transform,visibility] duration-200 ease-out xl:hidden ${open ? "visible translate-x-0" : "invisible pointer-events-none translate-x-full"}`}
         aria-label={a11y("mobileNav")}
         aria-hidden={!open}
+        onKeyDown={keepFocusInDrawer}
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--border)]">
           <Link
@@ -265,7 +303,7 @@ export default function PublicHeader() {
           <button
             ref={closeButtonRef}
             type="button"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[var(--border)] text-[var(--charcoal)] transition-colors hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[var(--border)] text-[var(--charcoal)] transition-colors hover:border-[var(--rams-red)] hover:text-[var(--rams-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
             aria-label={a11y("closeMenu")}
             onClick={() => setOpen(false)}
           >

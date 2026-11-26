@@ -1,25 +1,25 @@
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
 import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
 
 export default function CtaSection({
+  eyebrow,
   title,
   description,
   primary,
   primaryHref = "/contact",
   centered = false,
 }: {
+  eyebrow: string;
   title: string;
   description: string;
   primary: string;
   primaryHref?: string;
   centered?: boolean;
 }) {
-  const common = useTranslations("common");
   return (
     <section className="bg-[var(--navy)] text-white">
-      <PublicContainer className="py-10 sm:py-14">
+      <PublicContainer className="py-12 sm:py-14 lg:py-16">
         <RevealOnScroll
           className={
             centered
@@ -30,12 +30,10 @@ export default function CtaSection({
         >
           <div className={centered ? "" : "max-w-2xl"}>
             <p className="text-sm font-semibold text-[var(--ais-blue-light)]">
-              {common("nextConversation")}
+              {eyebrow}
             </p>
-            <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
-              {title}
-            </h2>
-            <p className="mt-4 max-w-xl leading-7 text-white/70">
+            <h2 className="public-section-title mt-3 max-w-2xl">{title}</h2>
+            <p className="public-lead mt-4 max-w-xl text-white/75">
               {description}
             </p>
           </div>

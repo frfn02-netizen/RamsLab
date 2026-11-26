@@ -92,6 +92,7 @@ function makePublication(
 
 function makeResponse(records: Publication[]) {
   return {
+    success: true,
     data: records,
     total: records.length,
     page: 1,
@@ -117,6 +118,12 @@ function nodeTopValue(index: number) {
     "[data-publication-id]",
   );
   return rows[index]!.style.getPropertyValue("--node-top");
+}
+
+function renderPublications(records: Publication[]) {
+  return render(
+    <Publications initialData={makeResponse(records)} initialQuery="" />,
+  );
 }
 
 async function waitForTimeline(count: number) {
@@ -181,7 +188,7 @@ describe("publications timeline scroll synchronization", () => {
     layout.containerHeight = 40 + 47 * 120 + 100;
     getPublications.mockResolvedValue(makeResponse(records));
 
-    const { container } = render(<Publications />);
+    const { container } = renderPublications(records);
     await waitForTimeline(48);
 
     expect(screen.getAllByTestId("publications-timeline-line")).toHaveLength(1);
@@ -214,7 +221,7 @@ describe("publications timeline scroll synchronization", () => {
     layout.containerHeight = 1400;
     getPublications.mockResolvedValue(makeResponse(records));
 
-    render(<Publications />);
+    renderPublications(records);
     await waitForTimeline(3);
 
     expect(nodeTopValue(0)).toBe("60px");
@@ -235,7 +242,7 @@ describe("publications timeline scroll synchronization", () => {
     layout.containerHeight = 2000;
     getPublications.mockResolvedValue(makeResponse(records));
 
-    render(<Publications />);
+    renderPublications(records);
     await waitForTimeline(4);
 
     // At the reading line, progress equals the reading offset, not a node edge.
@@ -272,7 +279,7 @@ describe("publications timeline scroll synchronization", () => {
     layout.containerHeight = 1200;
     getPublications.mockResolvedValue(makeResponse(records));
 
-    render(<Publications />);
+    renderPublications(records);
     await waitForTimeline(3);
     expect(nodeTopValue(0)).toBe("50px");
 
@@ -297,7 +304,7 @@ describe("publications timeline scroll synchronization", () => {
         makeResponse(params?.search ? filtered : all),
     );
 
-    const { container } = render(<Publications />);
+    const { container } = renderPublications(all);
     await waitForTimeline(6);
 
     layout.nodeOffsets = { "pub-9": 120, "pub-10": 460 };

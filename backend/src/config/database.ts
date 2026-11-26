@@ -1,4 +1,3 @@
-
 import "dotenv/config";
 import { MongoClient, Db } from "mongodb";
 

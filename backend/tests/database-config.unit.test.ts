@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  getTestDatabaseConfig,
-  TEST_DATABASE_NAME,
-} from "./setup.js";
+import { getTestDatabaseConfig, TEST_DATABASE_NAME } from "./setup.js";
 
 const originalEnvironment = {
   NODE_ENV: process.env.NODE_ENV,
@@ -18,10 +15,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
-async function loadDatabaseModule(options: {
-  dbName: string;
-  uri?: string;
-}) {
+async function loadDatabaseModule(options: { dbName: string; uri?: string }) {
   process.env.NODE_ENV = "test";
   process.env.MONGODB_URI = options.uri ?? "mongodb://127.0.0.1:27017";
   process.env.DB_NAME = options.dbName;
@@ -44,8 +38,7 @@ describe("integration test database configuration", () => {
   it("uses the explicit Meetings test URI override", () => {
     expect(
       getTestDatabaseConfig({
-        MEETINGS_TEST_MONGODB_URI:
-          "mongodb+srv://test-cluster.example.invalid",
+        MEETINGS_TEST_MONGODB_URI: "mongodb+srv://test-cluster.example.invalid",
         MONGODB_URI: "mongodb://development.example.invalid",
       }),
     ).toEqual({
@@ -72,15 +65,14 @@ describe("integration test database configuration", () => {
     ).toThrow("production database");
   });
 
-  it.each([
-    "rams_platform_dev",
-    "rams_platform",
-    "another_database",
-  ])("rejects %s in test mode before connection", async (dbName) => {
-    await expect(loadDatabaseModule({ dbName })).rejects.toThrow(
-      "test mode requires the dedicated test database",
-    );
-  });
+  it.each(["rams_platform_dev", "rams_platform", "another_database"])(
+    "rejects %s in test mode before connection",
+    async (dbName) => {
+      await expect(loadDatabaseModule({ dbName })).rejects.toThrow(
+        "test mode requires the dedicated test database",
+      );
+    },
+  );
 
   it("does not include URI credentials in a rejected configuration error", async () => {
     const sensitiveUri =

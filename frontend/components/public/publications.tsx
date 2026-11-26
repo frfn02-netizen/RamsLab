@@ -1,10 +1,20 @@
 "use client";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { useSearchParams } from "next/navigation";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { getPublications, getPublicPublicationPdfUrl } from "@/lib/api/modules";
+import {
+  getPublications,
+  getPublicPublicationPdfUrl,
+  type PublicationListResponse,
+} from "@/lib/api/modules";
+import {
+  isActive,
+  readFilters,
+  writeFilters,
+  type PublicationFilters,
+  type SortOrder,
+} from "@/lib/public/publication-filters";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import Select from "@/components/select";
 import type { Publication, PublicationFacets } from "@/types/modules";
@@ -13,56 +23,12 @@ import { PublicError, PublicLoading } from "./public-states";
 
 type PublicationProject = Publication;
 
-type SortOrder = "newest" | "oldest";
-type PublicationFilters = {
-  search: string;
-  year: string;
-  topics: string[];
-  methods: string[];
-  sort: SortOrder;
-};
-type QueryParams = {
-  get(name: string): string | null;
-  getAll(name: string): string[];
-};
-
-function readFilters(params: QueryParams): PublicationFilters {
-  const sort = params.get("sort");
-  return {
-    search: params.get("search") ?? "",
-    year: params.get("year") ?? "",
-    topics: params.getAll("topic"),
-    methods: params.getAll("method"),
-    sort: sort === "oldest" ? "oldest" : "newest",
-  };
-}
-
-function writeFilters(filters: PublicationFilters) {
-  const query = new URLSearchParams();
-  if (filters.search) query.set("search", filters.search);
-  if (filters.year) query.set("year", filters.year);
-  filters.topics.forEach((topic) => query.append("topic", topic));
-  filters.methods.forEach((method) => query.append("method", method));
-  if (filters.sort === "oldest") query.set("sort", filters.sort);
-  return query.toString();
-}
-
 function slug(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
-function isActive(filters: PublicationFilters) {
-  return Boolean(
-    filters.search ||
-    filters.year ||
-    filters.topics.length ||
-    filters.methods.length ||
-    filters.sort === "oldest",
-  );
-}
-
 const FILTER_LABEL =
-  "text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[var(--gray)]";
+  "text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gray)] 2xl:text-[0.8125rem]";
 const FIELD_CLASS =
   "w-full rounded-[3px] border border-[var(--border)] bg-white px-3.5 py-2.5 text-sm text-[var(--navy)] outline-none transition-colors placeholder:text-[var(--gray)] focus:border-[var(--navy)] focus:ring-1 focus:ring-[var(--navy)]/15";
 
@@ -111,6 +77,7 @@ function PublicationFiltersPanel({
           id={`${prefix}-year`}
           ariaLabel={t("year")}
           className="mt-2.5"
+          size="lg"
           value={filters.year}
           onChange={(next) => onChange({ year: next })}
           options={[
@@ -230,10 +197,10 @@ const PublicationCard = memo(function PublicationCard({
         data-testid="publication-node-active"
         className="publication-timeline-progress-node pointer-events-none absolute -left-10 top-8 h-3.5 w-3.5 rounded-full bg-[var(--charcoal)] ring-2 ring-white sm:-left-12"
       />
-      <h3 className="min-w-0 pr-16 font-display text-lg font-bold leading-snug text-[var(--navy)] sm:text-xl">
+      <h3 className="public-card-title min-w-0 break-words pr-16 text-[var(--navy)]">
         {project.title}
       </h3>
-      <span className="absolute right-0 top-0 rounded-bl-[3px] rounded-tr-[3px] bg-[var(--rams-red)] px-2.5 py-1 font-mono text-[0.7rem] font-semibold leading-4 text-white">
+      <span className="absolute right-0 top-0 rounded-bl-[3px] rounded-tr-[3px] bg-[var(--rams-red)] px-2.5 py-1 font-mono text-xs font-semibold leading-4 text-white 2xl:text-[0.8125rem]">
         {project.year}
       </span>
       <p className="mt-3 text-sm leading-6 text-[var(--charcoal)]">
@@ -268,7 +235,7 @@ const PublicationCard = memo(function PublicationCard({
           </a>
         )}
         {project.doi && (
-          <span className="font-mono text-xs text-[var(--gray)]">
+          <span className="min-w-0 break-words font-mono text-xs text-[var(--gray)]">
             DOI: {project.doi}
           </span>
         )}
@@ -412,25 +379,43 @@ function PublicationTimeline({
   );
 }
 
-export default function Publications() {
+export default function Publications({
+  initialData,
+  initialQuery,
+}: {
+  initialData: PublicationListResponse;
+  initialQuery: string;
+}) {
   const t = useTranslations("publications");
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryString = searchParams.toString();
-  const [records, setRecords] = useState<PublicationProject[]>([]);
-  const [facets, setFacets] = useState<PublicationFacets>({
-    years: [],
-    topics: [],
-    methods: [],
-  });
-  const [loading, setLoading] = useState(true);
+  const [queryString, setQueryString] = useState(initialQuery);
+  const [records, setRecords] = useState<PublicationProject[]>(
+    initialData.data ?? [],
+  );
+  const [facets, setFacets] = useState<PublicationFacets>(
+    initialData.facets ?? {
+      years: [],
+      topics: [],
+      methods: [],
+    },
+  );
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedPublicationId, setSelectedPublicationId] = useState<
     string | null
   >(null);
+  const initialLoadRef = useRef(true);
+
+  useEffect(() => {
+    const current = window.location.search.replace(/^\?/, "");
+    if (!current) return;
+
+    const frame = window.requestAnimationFrame(() => setQueryString(current));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   const filters = useMemo(
     () => readFilters(new URLSearchParams(queryString)),
@@ -447,6 +432,11 @@ export default function Publications() {
   }, [filters.search]);
 
   useEffect(() => {
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+
     let active = true;
     async function loadPublications() {
       setLoading(true);
@@ -484,6 +474,7 @@ export default function Publications() {
   const updateFilters = (next: Partial<PublicationFilters>) => {
     const updated = { ...filters, search: searchInput, ...next };
     const query = writeFilters(updated);
+    setQueryString(query);
     router.replace(query ? `${pathname}?${query}` : pathname, {
       scroll: false,
     });
@@ -491,6 +482,7 @@ export default function Publications() {
 
   const clearFilters = () => {
     setSearchInput("");
+    setQueryString("");
     router.replace(pathname, { scroll: false });
   };
 
@@ -523,20 +515,20 @@ export default function Publications() {
 
   return (
     <section className="bg-[var(--background-light)]">
-      <PublicContainer className="py-10 sm:py-12 lg:py-14">
+      <PublicContainer className="py-10 sm:py-12 lg:py-14 min-[2000px]:py-20">
         <header className="max-w-3xl border-b border-[var(--border)] pb-8">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[var(--gray)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gray)] 2xl:text-[0.8125rem]">
             {t("heroEyebrow")}
           </p>
-          <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-[-0.02em] text-[var(--navy)] sm:text-4xl">
+          <h1 className="public-page-title mt-3 text-[var(--navy)]">
             {t("heroTitle")}
           </h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--gray)]">
+          <p className="public-lead mt-3 max-w-2xl text-[var(--gray)]">
             {t("heroDescription")}
           </p>
         </header>
 
-        <div className="pt-8 lg:grid lg:grid-cols-[26%_minmax(0,1fr)] lg:items-start lg:gap-12">
+        <div className="pt-8 lg:grid lg:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-10 xl:gap-12">
           <div className="lg:hidden">
             <button
               type="button"
@@ -549,10 +541,10 @@ export default function Publications() {
           </div>
 
           <aside
-            className="hidden lg:sticky lg:top-[5.5rem] lg:block lg:self-start"
+            className="hidden lg:sticky lg:top-24 lg:block lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
             aria-label={t("filterPublications")}
           >
-            <div className="lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
+            <div className="lg:pr-1">
               <label htmlFor="publication-search-desktop" className="sr-only">
                 {t("search")}
               </label>
@@ -579,7 +571,7 @@ export default function Publications() {
             </div>
           </aside>
 
-          <main className="relative mt-6 min-w-0 lg:mt-0">
+          <div className="relative mx-auto mt-6 w-full min-w-0 max-w-[60rem] lg:mt-0">
             <div className="flex items-center justify-end gap-4 border-b border-[var(--border)] pb-4">
               <label className="flex items-center gap-2 text-sm text-[var(--gray)]">
                 {t("sort")}
@@ -587,6 +579,7 @@ export default function Publications() {
                   ariaLabel={t("sort")}
                   className="w-[8.5rem] shrink-0"
                   size="sm"
+                  triggerClassName="min-h-11"
                   value={filters.sort}
                   onChange={(next) =>
                     updateFilters({ sort: next as SortOrder })
@@ -650,7 +643,7 @@ export default function Publications() {
                 onSelectPublication={setSelectedPublicationId}
               />
             )}
-          </main>
+          </div>
         </div>
       </PublicContainer>
 
@@ -678,7 +671,7 @@ export default function Publications() {
               <button
                 type="button"
                 onClick={() => setMobileFiltersOpen(false)}
-                className="text-2xl leading-none text-[var(--gray)] focus:outline-none focus:ring-2 focus:ring-[var(--navy)]/20"
+                className="grid h-11 w-11 place-items-center rounded text-2xl leading-none text-[var(--gray)] focus:outline-none focus:ring-2 focus:ring-[var(--navy)]/20"
                 aria-label={t("closeFilters")}
               >
                 ×

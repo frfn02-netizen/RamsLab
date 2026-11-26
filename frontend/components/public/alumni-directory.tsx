@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { formatAlumniClassLabel } from "@/lib/alumni-label";
@@ -79,11 +79,15 @@ export function AlumniCard({ member }: { member: PublicPerson }) {
   );
 }
 
-export default function AlumniDirectory() {
+export default function AlumniDirectory({
+  initialRecords,
+}: {
+  initialRecords: PublicPerson[];
+}) {
   const t = useTranslations("alumni");
-  const [records, setRecords] = useState<PublicPerson[]>([]);
+  const [records, setRecords] = useState<PublicPerson[]>(initialRecords);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const load = useCallback(() => {
@@ -96,25 +100,6 @@ export default function AlumniDirectory() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    getPublicAlumniList()
-      .then((items) => {
-        if (!cancelled) setRecords(items);
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const filteredRecords = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
@@ -125,14 +110,14 @@ export default function AlumniDirectory() {
 
   return (
     <section className="bg-[var(--paper)]">
-      <PublicContainer className="py-14 sm:py-16">
+      <PublicContainer className="py-14 sm:py-16 lg:py-20 min-[2000px]:py-24">
         <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy)] sm:text-4xl">
+            <h2 className="public-section-title text-[var(--navy)]">
               {t("directoryTitle")}
             </h2>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--slate)]">
+            <p className="public-lead mt-3 max-w-2xl text-[var(--slate)]">
               {t("directoryDescription")}
             </p>
           </div>

@@ -17,10 +17,7 @@ import { formatTimeRange } from "@/lib/meetings/calendar";
 import type { DashboardStats } from "@/types/dashboard";
 import type { MeetingCalendarEvent } from "@/types/meetings";
 import type { UserRole } from "@/types/auth";
-import type {
-  Partner,
-  PublicationListResponse,
-} from "@/types/modules";
+import type { Partner, PublicationListResponse } from "@/types/modules";
 
 type DashboardErrors = {
   stats: string | null;
@@ -87,10 +84,14 @@ function formatDateParts(timestamp: string) {
 }
 
 function getSettledError<T>(result: PromiseSettledResult<T>) {
-  return result.status === "rejected" ? getUserFacingError(result.reason) : null;
+  return result.status === "rejected"
+    ? getUserFacingError(result.reason)
+    : null;
 }
 
-async function settle<T>(promise: Promise<T>): Promise<PromiseSettledResult<T>> {
+async function settle<T>(
+  promise: Promise<T>,
+): Promise<PromiseSettledResult<T>> {
   try {
     return { status: "fulfilled", value: await promise };
   } catch (reason) {
@@ -98,7 +99,13 @@ async function settle<T>(promise: Promise<T>): Promise<PromiseSettledResult<T>> 
   }
 }
 
-function Icon({ children, className = "" }: { children: ReactNode; className?: string }) {
+function Icon({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <svg
       aria-hidden="true"
@@ -213,7 +220,11 @@ function PlusIcon() {
   );
 }
 
-function MetricIcon({ kind }: { kind: "users" | "alumni" | "dosen" | "publication" | "project" | "partner" }) {
+function MetricIcon({
+  kind,
+}: {
+  kind: "users" | "alumni" | "dosen" | "publication" | "project" | "partner";
+}) {
   const icons = {
     users: <UsersIcon />,
     alumni: <AlumniIcon />,
@@ -263,7 +274,13 @@ function Panel({
   );
 }
 
-function SectionLink({ href, children }: { href: string; children: ReactNode }) {
+function SectionLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
   return (
     <Link
       href={href}
@@ -275,7 +292,13 @@ function SectionLink({ href, children }: { href: string; children: ReactNode }) 
   );
 }
 
-function InlineError({ message, onRetry }: { message: string; onRetry: () => void }) {
+function InlineError({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
   return (
     <div className="rounded-xl border border-[#f1c9c0] bg-[#fff6f3] p-4 text-sm text-[#8f211d]">
       <p>{message}</p>
@@ -296,7 +319,10 @@ function DashboardLoadingState() {
       <Skeleton className="h-64 w-full rounded-2xl" />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="rounded-2xl border border-[#e5dfd8] bg-white p-4">
+          <div
+            key={index}
+            className="rounded-2xl border border-[#e5dfd8] bg-white p-4"
+          >
             <Skeleton className="h-10 w-10 rounded-full" />
             <Skeleton className="mt-5 h-8 w-16" />
             <Skeleton className="mt-2 h-3 w-24" />
@@ -329,9 +355,12 @@ function Hero({ role }: { role: string | undefined }) {
           Welcome back to your research workspace.
         </h1>
         <p className="mt-4 max-w-lg text-base leading-7 text-[#514b47] sm:text-lg">
-          Manage research, publications, people, and partnerships in one integrated platform.
+          Manage research, publications, people, and partnerships in one
+          integrated platform.
         </p>
-        <p className="mt-5 text-sm font-semibold text-[#6d625c]">{formatRole(role)}</p>
+        <p className="mt-5 text-sm font-semibold text-[#6d625c]">
+          {formatRole(role)}
+        </p>
       </div>
     </section>
   );
@@ -380,8 +409,7 @@ function UpcomingMeetings({
           new Date(meeting.endAt).getTime() >= now,
       )
       .sort(
-        (a, b) =>
-          new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+        (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
       )
       .slice(0, 3);
   }, [meetings, now]);
@@ -390,13 +418,19 @@ function UpcomingMeetings({
     <Panel
       eyebrow="Workspace"
       title="Upcoming Meetings"
-      action={<SectionLink href="/meetings/calendar">View calendar</SectionLink>}
+      action={
+        <SectionLink href="/meetings/calendar">View calendar</SectionLink>
+      }
       className="lg:col-span-7"
     >
       {error ? (
         <InlineError message={error} onRetry={onRetry} />
       ) : meetings === null ? (
-        <div className="space-y-3" aria-label="Loading meetings" aria-busy="true">
+        <div
+          className="space-y-3"
+          aria-label="Loading meetings"
+          aria-busy="true"
+        >
           {Array.from({ length: 3 }).map((_, index) => (
             <Skeleton key={index} className="h-20 w-full rounded-xl" />
           ))}
@@ -404,8 +438,12 @@ function UpcomingMeetings({
       ) : upcomingMeetings.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[#ded7d0] bg-[#fffaf6] p-6 text-center">
           <CalendarIcon className="mx-auto text-[var(--rams-red)]" />
-          <p className="mt-3 font-semibold text-[#26211f]">No upcoming meetings</p>
-          <p className="mt-1 text-sm text-[#766e68]">Schedule the next research conversation when you are ready.</p>
+          <p className="mt-3 font-semibold text-[#26211f]">
+            No upcoming meetings
+          </p>
+          <p className="mt-1 text-sm text-[#766e68]">
+            Schedule the next research conversation when you are ready.
+          </p>
           <div className="mt-4 flex justify-center gap-2">
             <SectionLink href="/meetings/new">Schedule meeting</SectionLink>
             <SectionLink href="/meetings/calendar">Open calendar</SectionLink>
@@ -427,9 +465,15 @@ function UpcomingMeetings({
                 className="group flex gap-4 py-3.5 first:pt-0 last:pb-0 focus-visible:outline-none"
               >
                 <span className="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#fff1ed] px-2 py-2 text-center text-[var(--rams-red)] transition-colors group-hover:bg-[#ffe5df]">
-                  <span className="text-[0.65rem] font-bold tracking-[0.12em]">{date.day}</span>
-                  <span className="mt-0.5 font-display text-2xl font-semibold leading-none">{date.number}</span>
-                  <span className="mt-1 text-[0.65rem] font-bold tracking-[0.12em]">{date.month}</span>
+                  <span className="text-[0.65rem] font-bold tracking-[0.12em]">
+                    {date.day}
+                  </span>
+                  <span className="mt-0.5 font-display text-2xl font-semibold leading-none">
+                    {date.number}
+                  </span>
+                  <span className="mt-1 text-[0.65rem] font-bold tracking-[0.12em]">
+                    {date.month}
+                  </span>
                 </span>
                 <span className="min-w-0 flex-1 self-center">
                   <span className="block truncate font-semibold text-[#211d1b] group-hover:text-[var(--rams-red)]">
@@ -521,8 +565,12 @@ function QuickActions({ role }: { role: UserRole | undefined }) {
             <span className="text-[var(--rams-red)] transition-transform group-hover:-translate-y-0.5">
               {action.icon}
             </span>
-            <span className="mt-3 text-sm font-semibold text-[#211d1b]">{action.label}</span>
-            <span className="mt-1 text-[0.68rem] text-[#8a817a]">{action.detail}</span>
+            <span className="mt-3 text-sm font-semibold text-[#211d1b]">
+              {action.label}
+            </span>
+            <span className="mt-1 text-[0.68rem] text-[#8a817a]">
+              {action.detail}
+            </span>
           </Link>
         ))}
       </div>
@@ -561,13 +609,21 @@ function ResearchPublications({
     <Panel
       eyebrow="Research"
       title="Research Publications"
-      action={<SectionLink href="/dashboard/publications">View publications</SectionLink>}
+      action={
+        <SectionLink href="/dashboard/publications">
+          View publications
+        </SectionLink>
+      }
       className="lg:col-span-7"
     >
       {error ? (
         <InlineError message={error} onRetry={onRetry} />
       ) : data === null ? (
-        <div className="space-y-4" aria-label="Loading publications" aria-busy="true">
+        <div
+          className="space-y-4"
+          aria-label="Loading publications"
+          aria-busy="true"
+        >
           <Skeleton className="h-10 w-28" />
           <Skeleton className="h-44 w-full rounded-xl" />
         </div>
@@ -578,15 +634,21 @@ function ResearchPublications({
               <p className="font-display text-4xl font-semibold leading-none tracking-[-0.06em] text-[#171717]">
                 {formatNumber(total)}
               </p>
-              <p className="mt-2 text-sm text-[#766e68]">Total publication records</p>
+              <p className="mt-2 text-sm text-[#766e68]">
+                Total publication records
+              </p>
             </div>
             <div className="flex gap-4 text-xs text-[#766e68]">
               <div>
-                <p className="font-display text-lg font-semibold text-[#211d1b]">{formatNumber(stats.publishedResearchAreas)}</p>
+                <p className="font-display text-lg font-semibold text-[#211d1b]">
+                  {formatNumber(stats.publishedResearchAreas)}
+                </p>
                 <p>Published Research</p>
               </div>
               <div>
-                <p className="font-display text-lg font-semibold text-[#211d1b]">{formatNumber(stats.unpublishedResearchAreas)}</p>
+                <p className="font-display text-lg font-semibold text-[#211d1b]">
+                  {formatNumber(stats.unpublishedResearchAreas)}
+                </p>
                 <p>Unpublished Research</p>
               </div>
             </div>
@@ -600,8 +662,13 @@ function ResearchPublications({
             <div className="mt-7">
               <div className="flex h-44 items-end gap-2 border-b border-[#ded7d0] px-1 sm:gap-4">
                 {yearCounts.map((item) => (
-                  <div key={item.year} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
-                    <span className="text-xs font-semibold text-[#4f4742]">{item.count}</span>
+                  <div
+                    key={item.year}
+                    className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"
+                  >
+                    <span className="text-xs font-semibold text-[#4f4742]">
+                      {item.count}
+                    </span>
                     <div
                       className="w-full max-w-10 rounded-t-md bg-[#e9aaa0] transition-colors hover:bg-[var(--rams-red)]"
                       style={{ height: `${(item.count / maxCount) * 72}%` }}
@@ -609,7 +676,9 @@ function ResearchPublications({
                       role="img"
                       aria-label={`${item.count} publications in ${item.year}`}
                     />
-                    <span className="text-[0.68rem] text-[#766e68]">{item.year}</span>
+                    <span className="text-[0.68rem] text-[#766e68]">
+                      {item.year}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -653,7 +722,8 @@ function RecentActivity({
     }
 
     const latestPublication = [...(publications?.data ?? [])].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     )[0];
     if (latestPublication) {
       result.push({
@@ -666,7 +736,8 @@ function RecentActivity({
     }
 
     const latestPartner = [...partners].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     )[0];
     if (latestPartner) {
       result.push({
@@ -685,7 +756,11 @@ function RecentActivity({
   }, [partners, publications, stats]);
 
   return (
-    <Panel eyebrow="Workspace history" title="Recent Activity" className="lg:col-span-5">
+    <Panel
+      eyebrow="Workspace history"
+      title="Recent Activity"
+      className="lg:col-span-5"
+    >
       {error && activities.length === 0 ? (
         <InlineError message={error} onRetry={onRetry} />
       ) : activities.length === 0 ? (
@@ -696,7 +771,8 @@ function RecentActivity({
         <div>
           {error ? (
             <p className="mb-4 rounded-lg bg-[#fff7f4] px-3 py-2 text-xs text-[#8f211d]">
-              Some activity sources could not be loaded. Showing the records that are available.
+              Some activity sources could not be loaded. Showing the records
+              that are available.
             </p>
           ) : null}
           <div className="relative space-y-0 before:absolute before:bottom-4 before:left-[9px] before:top-4 before:w-px before:bg-[#e7d9d3]">
@@ -712,9 +788,13 @@ function RecentActivity({
                     <span className="text-sm font-semibold text-[#211d1b] group-hover:text-[var(--rams-red)]">
                       {activity.label}
                     </span>
-                    <span className="text-[0.68rem] text-[#8a817a]">{formatDate(activity.date)}</span>
+                    <span className="text-[0.68rem] text-[#8a817a]">
+                      {formatDate(activity.date)}
+                    </span>
                   </span>
-                  <span className="mt-1 block truncate text-xs text-[#766e68]">{activity.title}</span>
+                  <span className="mt-1 block truncate text-xs text-[#766e68]">
+                    {activity.title}
+                  </span>
                 </span>
               </Link>
             ))}
@@ -729,7 +809,8 @@ export default function DashboardPage() {
   const { user, status } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [meetings, setMeetings] = useState<MeetingCalendarEvent[] | null>(null);
-  const [publications, setPublications] = useState<PublicationListResponse | null>(null);
+  const [publications, setPublications] =
+    useState<PublicationListResponse | null>(null);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [errors, setErrors] = useState<DashboardErrors>({
     stats: null,
@@ -757,13 +838,20 @@ export default function DashboardPage() {
       settle(universityPartnersRequest),
       settle(industrialPartnersRequest),
     ]).then(
-      ([statsResult, meetingsResult, publicationsResult, universityResult, industrialResult]) => {
+      ([
+        statsResult,
+        meetingsResult,
+        publicationsResult,
+        universityResult,
+        industrialResult,
+      ]) => {
         if (cancelled) return;
 
         if (statsResult.status === "fulfilled") setStats(statsResult.value);
         if (meetingsResult.status === "fulfilled")
           setMeetings(meetingsResult.value.items);
-        if (publicationsResult.status === "fulfilled") setPublications(publicationsResult.value);
+        if (publicationsResult.status === "fulfilled")
+          setPublications(publicationsResult.value);
 
         const partnerLists: Partner[] = [];
         if (universityResult.status === "fulfilled" && universityResult.value) {
@@ -778,7 +866,8 @@ export default function DashboardPage() {
           meetings: getSettledError(meetingsResult),
           publications: getSettledError(publicationsResult),
           partners:
-            getSettledError(universityResult) ?? getSettledError(industrialResult),
+            getSettledError(universityResult) ??
+            getSettledError(industrialResult),
         });
         setLoading(false);
       },
@@ -798,15 +887,24 @@ export default function DashboardPage() {
     setMeetings(null);
     setPublications(null);
     setPartners([]);
-    setErrors({ stats: null, meetings: null, publications: null, partners: null });
+    setErrors({
+      stats: null,
+      meetings: null,
+      publications: null,
+      partners: null,
+    });
     setReloadKey((value) => value + 1);
   };
 
   if (!stats) {
     return (
       <div className="rounded-2xl border border-[#f1c9c0] bg-[#fff6f3] p-6 text-[#8f211d]">
-        <h1 className="font-display text-2xl font-semibold text-[#5f1915]">Dashboard unavailable</h1>
-        <p className="mt-2 text-sm">{errors.stats ?? "The dashboard data could not be loaded."}</p>
+        <h1 className="font-display text-2xl font-semibold text-[#5f1915]">
+          Dashboard unavailable
+        </h1>
+        <p className="mt-2 text-sm">
+          {errors.stats ?? "The dashboard data could not be loaded."}
+        </p>
         <button
           type="button"
           onClick={reload}
@@ -822,12 +920,40 @@ export default function DashboardPage() {
     <div className="dashboard-overview w-full space-y-6 p-4 pb-8 sm:p-6 lg:p-8">
       <Hero role={user.role} />
 
-      <section aria-label="Workspace metrics" className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <MetricCard label="Users" value={stats.users} detail="Registered accounts" kind="users" />
-        <MetricCard label="Alumni" value={stats.alumni} detail="Alumni records" kind="alumni" />
-        <MetricCard label="Dosen" value={stats.dosen} detail="Lecturer profiles" kind="dosen" />
-        <MetricCard label="Publications" value={stats.publications} detail="Research records" kind="publication" />
-        <MetricCard label="Projects" value={stats.projects} detail="Research projects" kind="project" />
+      <section
+        aria-label="Workspace metrics"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6"
+      >
+        <MetricCard
+          label="Users"
+          value={stats.users}
+          detail="Registered accounts"
+          kind="users"
+        />
+        <MetricCard
+          label="Alumni"
+          value={stats.alumni}
+          detail="Alumni records"
+          kind="alumni"
+        />
+        <MetricCard
+          label="Dosen"
+          value={stats.dosen}
+          detail="Lecturer profiles"
+          kind="dosen"
+        />
+        <MetricCard
+          label="Publications"
+          value={stats.publications}
+          detail="Research records"
+          kind="publication"
+        />
+        <MetricCard
+          label="Projects"
+          value={stats.projects}
+          detail="Research projects"
+          kind="project"
+        />
         <MetricCard
           label="Partners"
           value={stats.universityPartners + stats.industrialPartners}
@@ -836,10 +962,16 @@ export default function DashboardPage() {
         />
       </section>
 
-      {errors.stats ? <InlineError message={errors.stats} onRetry={reload} /> : null}
+      {errors.stats ? (
+        <InlineError message={errors.stats} onRetry={reload} />
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-12">
-        <UpcomingMeetings meetings={meetings} error={errors.meetings} onRetry={reload} />
+        <UpcomingMeetings
+          meetings={meetings}
+          error={errors.meetings}
+          onRetry={reload}
+        />
         <QuickActions role={user.role} />
         <ResearchPublications
           stats={stats}

@@ -24,12 +24,7 @@ const router = Router();
 // ADMIN
 // ========================================
 
-router.get(
-  "/",
-  authenticate,
-  requireRole("ADMIN"),
-  getAlumniListController,
-);
+router.get("/", authenticate, requireRole("ADMIN"), getAlumniListController);
 
 // ========================================
 // ALUMNI
@@ -77,12 +72,7 @@ router.post(
 // ADMIN
 // ========================================
 
-router.get(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  getAlumniController,
-);
+router.get("/:id", authenticate, requireRole("ADMIN"), getAlumniController);
 
 router.get(
   "/:id/history",

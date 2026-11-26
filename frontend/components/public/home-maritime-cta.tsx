@@ -1,12 +1,11 @@
-"use client";
+import { getTranslations } from "next-intl/server";
 
-import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
 
-export default function HomeMaritimeCta() {
-  const t = useTranslations("home");
+export default async function HomeMaritimeCta() {
+  const t = await getTranslations("home");
 
   return (
     <section className="maritime-cta maritime-cta-horizon bg-[var(--navy)] text-white">
@@ -88,28 +87,20 @@ export default function HomeMaritimeCta() {
           strokeWidth="0.35"
         />
         <polygon points="60,8 64,52 60,48 56,52" fill="white" opacity="0.6" />
-        <text
-          x="60"
-          y="6"
-          textAnchor="middle"
-          fill="white"
-          fontSize="7"
-          opacity="0.5"
-        >
-          N
-        </text>
       </svg>
 
       {/* Content */}
-      <PublicContainer className="relative z-10 py-14 sm:py-16 lg:py-20">
+      <PublicContainer className="relative z-10 py-14 sm:py-16 lg:py-20 min-[2000px]:py-28">
         <RevealOnScroll className="text-center">
-          <p className="eyebrow text-[var(--rams-red)]">{t("ctaEyebrow")}</p>
+          <p className="eyebrow text-[var(--rams-red-on-dark)]">
+            {t("ctaEyebrow")}
+          </p>
 
-          <h2 className="mx-auto mt-3 max-w-3xl whitespace-pre-line font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="public-section-title mx-auto mt-3 max-w-3xl whitespace-pre-line">
             {t("ctaTitle")}
           </h2>
 
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+          <p className="public-lead mx-auto mt-4 max-w-xl text-white/75">
             {t("ctaDescription")}
           </p>
 
@@ -117,7 +108,7 @@ export default function HomeMaritimeCta() {
             href="/contact"
             className="mt-8 inline-block rounded bg-[var(--rams-red)] px-8 py-3.5 text-sm font-semibold tracking-wide text-white shadow-lg shadow-[var(--rams-red)]/20 transition hover:bg-[var(--rams-red-dark)] hover:shadow-xl hover:shadow-[var(--rams-red)]/30"
           >
-            Discuss a collaboration →
+            {t("ctaButton")} →
           </Link>
         </RevealOnScroll>
       </PublicContainer>

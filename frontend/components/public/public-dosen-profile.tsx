@@ -248,8 +248,11 @@ function LecturerPublications({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(false);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(false);
+    });
 
     (async () => {
       try {
@@ -425,7 +428,7 @@ function PublicStudentProfile({ profile }: { profile: PublicPerson }) {
   const hasPklPeriod = pklStartDate || pklEndDate;
 
   return (
-    <main className="bg-[var(--paper)]">
+    <div className="bg-[var(--paper)]">
       <PublicContainer className="py-10 sm:py-16 lg:py-24">
         <div className="mx-auto max-w-4xl">
           <Link
@@ -458,7 +461,7 @@ function PublicStudentProfile({ profile }: { profile: PublicPerson }) {
                 <p className="font-mono text-sm font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
                   {category}
                 </p>
-                <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--navy)] sm:text-6xl">
+                <h1 className="public-page-title mt-5 break-words text-[var(--navy)]">
                   {profile.fullName}
                 </h1>
                 {profile.title && (
@@ -506,7 +509,7 @@ function PublicStudentProfile({ profile }: { profile: PublicPerson }) {
           </article>
         </div>
       </PublicContainer>
-    </main>
+    </div>
   );
 }
 
@@ -568,7 +571,7 @@ export default function PublicDosenProfile({ id }: { id: string }) {
   ];
 
   return (
-    <main className="bg-[var(--paper)]">
+    <div className="bg-[var(--paper)]">
       <PublicContainer className="py-10 sm:py-16 lg:py-24">
         <Link
           href="/team"
@@ -606,7 +609,7 @@ export default function PublicDosenProfile({ id }: { id: string }) {
               <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[var(--rams-red)]">
                 Academic Profile · Expert
               </p>
-              <h1 className="mt-4 max-w-[650px] break-words font-display text-[3.25rem] font-bold leading-[1.02] tracking-[-0.04em] text-[var(--navy)] sm:text-[3.75rem] lg:text-[4rem]">
+              <h1 className="public-hero-title mt-4 max-w-[650px] break-words text-[var(--navy)]">
                 {profile.fullName}
               </h1>
               {profile.specialization.length > 0 && (
@@ -660,6 +663,6 @@ export default function PublicDosenProfile({ id }: { id: string }) {
           jika diizinkan.
         </aside>
       </PublicContainer>
-    </main>
+    </div>
   );
 }

@@ -17,12 +17,7 @@ const router = Router();
 // ADMIN
 // ========================================
 
-router.get(
-  "/",
-  authenticate,
-  requireRole("ADMIN"),
-  getProjectListController,
-);
+router.get("/", authenticate, requireRole("ADMIN"), getProjectListController);
 
 router.get(
   "/slug/:slug",
@@ -31,12 +26,7 @@ router.get(
   getProjectBySlugController,
 );
 
-router.get(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  getProjectController,
-);
+router.get("/:id", authenticate, requireRole("ADMIN"), getProjectController);
 
 // ========================================
 // ADMIN

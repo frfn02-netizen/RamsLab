@@ -1,10 +1,9 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl/middleware", () => ({
   default: () => {
-    const { NextResponse } = require("next/server");
-    return (_request: any) => {
+    return () => {
       const response = NextResponse.next();
       response.headers.set("x-intl-middleware", "true");
       return response;
@@ -94,6 +93,28 @@ describe("proxy middleware – alumni detail IDs go through i18n", () => {
     const request = makeRequest(pathname);
     const response = proxy(request);
     expect(response.headers.get("x-intl-middleware")).toBe("true");
+  });
+});
+
+describe("proxy middleware – private meetings", () => {
+  it("redirects unauthenticated meetings requests to login with a safe callback", () => {
+    const response = proxy(makeRequest("/meetings/calendar"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain(
+      "/login?callbackUrl=%2Fmeetings%2Fcalendar",
+    );
+  });
+
+  it("rewrites authenticated localized meetings URLs to the private workspace", () => {
+    const request = makeRequest("/id/meetings/calendar");
+    request.cookies.set("rams_access_token", "token");
+
+    const response = proxy(request);
+
+    expect(response.headers.get("x-middleware-rewrite")).toContain(
+      "/meetings/calendar",
+    );
   });
 });
 

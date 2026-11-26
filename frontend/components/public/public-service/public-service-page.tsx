@@ -3,101 +3,63 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
-import {
-  getPublicPartners,
-  getPublicServiceProjectsList,
-} from "@/lib/api/modules";
-import {
-  MediaCardsSkeleton,
-  SkeletonGroup,
-  TableSkeleton,
-} from "@/components/skeletons";
+import { getPublicServiceProjectsList } from "@/lib/api/modules";
+import { SkeletonGroup, TableSkeleton } from "@/components/skeletons";
 import type {
   Partner,
   PublicServiceProjectPageItem,
   PublicServiceProjectFacets,
+  PublicServiceProjectListResponse,
 } from "@/types/modules";
 import Select from "@/components/select";
 import PageHero from "../page-hero";
 import PublicContainer from "../public-container";
 
-export default function PublicServicePage() {
+export default function PublicServicePage({
+  initialIndustrialPartners,
+  initialProjects,
+}: {
+  initialIndustrialPartners: Partner[];
+  initialProjects: PublicServiceProjectListResponse;
+}) {
   const locale = useLocale() === "id" ? "id" : "en";
   const t = useTranslations("publicService");
-  const common = useTranslations("common");
-  const [industrialPartners, setIndustrialPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const industrialPartners = initialIndustrialPartners;
 
   const [row1, row2] = useMemo(() => {
     const mid = Math.ceil(industrialPartners.length / 2);
     return [industrialPartners.slice(0, mid), industrialPartners.slice(mid)];
   }, [industrialPartners]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    getPublicPartners("INDUSTRIAL")
-      .then((result) => {
-        if (!cancelled) setIndustrialPartners(result);
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
-    <main>
+    <div>
       <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="space-y-16 py-16 sm:py-20">
-        {loading ? (
-          <SkeletonGroup label={common("loading")}>
-            <MediaCardsSkeleton
-              count={6}
-              columns="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-            />
-          </SkeletonGroup>
-        ) : error ? (
-          <p className="text-sm font-semibold text-red-700">
-            {common("requestUnavailable")}
-          </p>
-        ) : (
-          <>
-            {industrialPartners.length > 0 && (
-              <section>
-                <SectionTitle eyebrow="" title={t("industrialPartnersTitle")} />
-                <div className="space-y-10">
-                  {row1.length > 0 && (
-                    <MarqueeRow
-                      partners={row1}
-                      direction="left"
-                      ariaLabel={t("industrialPartnersTitle")}
-                    />
-                  )}
-                  {row2.length > 0 && (
-                    <MarqueeRow
-                      partners={row2}
-                      direction="right"
-                      ariaLabel={t("industrialPartnersTitle")}
-                    />
-                  )}
-                </div>
-              </section>
-            )}
-          </>
+        {industrialPartners.length > 0 && (
+          <section>
+            <SectionTitle eyebrow="" title={t("industrialPartnersTitle")} />
+            <div className="space-y-10">
+              {row1.length > 0 && (
+                <MarqueeRow
+                  partners={row1}
+                  direction="left"
+                  ariaLabel={t("industrialPartnersTitle")}
+                />
+              )}
+              {row2.length > 0 && (
+                <MarqueeRow
+                  partners={row2}
+                  direction="right"
+                  ariaLabel={t("industrialPartnersTitle")}
+                />
+              )}
+            </div>
+          </section>
         )}
 
-        <ProjectsSection locale={locale} />
+        <ProjectsSection locale={locale} initialData={initialProjects} />
       </PublicContainer>
-    </main>
+    </div>
   );
 }
 
@@ -110,7 +72,7 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
         </p>
       ) : null}
       <h2
-        className={`${eyebrow ? "mt-3" : ""} text-3xl font-bold text-[var(--navy)]`}
+        className={`${eyebrow ? "mt-3" : ""} public-section-title text-[var(--navy)]`}
       >
         {title}
       </h2>
@@ -215,7 +177,7 @@ function MarqueeRow({
   return (
     <div
       className="partner-marquee-row group relative mt-8"
-      role="region"
+      role="group"
       aria-label={ariaLabel}
       onMouseEnter={() => (pausedRef.current = true)}
       onMouseLeave={() => (pausedRef.current = false)}
@@ -259,7 +221,7 @@ function MarqueeItem({ partner }: { partner: Partner }) {
     <div className="flex flex-col items-center gap-2">
       <Image
         src={partner.logo}
-        alt={partner.name}
+        alt=""
         width={200}
         height={80}
         className="h-10 w-auto object-contain sm:h-14 md:h-16 lg:h-20 xl:h-24"
@@ -296,16 +258,18 @@ function MarqueeItem({ partner }: { partner: Partner }) {
     );
   }
 
-  return (
-    <div className={sharedClass} aria-label={partner.name}>
-      {inner}
-    </div>
-  );
+  return <div className={sharedClass}>{inner}</div>;
 }
 
 const PROJECTS_PER_PAGE = 10;
 
-function ProjectsSection({ locale }: { locale: "en" | "id" }) {
+function ProjectsSection({
+  locale,
+  initialData,
+}: {
+  locale: "en" | "id";
+  initialData: PublicServiceProjectListResponse;
+}) {
   const t = useTranslations("publicService");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -313,12 +277,17 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
   const [client, setClient] = useState<string | undefined>();
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [page, setPage] = useState(1);
-  const [items, setItems] = useState<PublicServiceProjectPageItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [facets, setFacets] = useState<PublicServiceProjectFacets | null>(null);
+  const [items, setItems] = useState<PublicServiceProjectPageItem[]>(
+    initialData.data ?? [],
+  );
+  const [total, setTotal] = useState(initialData.total ?? 0);
+  const [loading, setLoading] = useState(false);
+  const [facets, setFacets] = useState<PublicServiceProjectFacets | null>(
+    initialData.facets ?? null,
+  );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryRef = useRef({ search, yearGroup, client, sort, page });
+  const initialLoadRef = useRef(true);
   const localized = (value?: { en: string; id: string }) =>
     value?.[locale] || value?.en || value?.id || "";
 
@@ -327,6 +296,11 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
   });
 
   useEffect(() => {
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+
     let cancelled = false;
     async function run() {
       setLoading(true);
@@ -386,6 +360,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
           <Select
             ariaLabel={t("projectsSort")}
             className="w-full sm:w-[10rem] sm:shrink-0"
+            size="lg"
             value={sort}
             onChange={(next) => {
               setSort(next as "newest" | "oldest");
@@ -403,6 +378,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
             <Select
               ariaLabel={t("projectsFilterYear")}
               className="w-full sm:w-[10rem]"
+              size="lg"
               value={yearGroup ?? ""}
               onChange={(next) => {
                 setYearGroup(next || undefined);
@@ -421,6 +397,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
             <Select
               ariaLabel={t("projectsFilterClient")}
               className="w-full sm:w-[14rem]"
+              size="lg"
               value={client ?? ""}
               onChange={(next) => {
                 setClient(next || undefined);
@@ -533,7 +510,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
                     type="button"
                     disabled={page === 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)] disabled:opacity-40"
+                    className="min-h-11 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)] disabled:opacity-40"
                   >
                     {t("projectsPrev")}
                   </button>
@@ -541,7 +518,7 @@ function ProjectsSection({ locale }: { locale: "en" | "id" }) {
                     type="button"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    className="rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)] disabled:opacity-40"
+                    className="min-h-11 rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--background-light)] disabled:opacity-40"
                   >
                     {t("projectsNext")}
                   </button>

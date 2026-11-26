@@ -7,8 +7,8 @@ import {
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import DosenPage from "@/app/dashboard/dosen/page";
-import StudentsPage from "@/app/dashboard/students/page";
+import DosenPage from "@/app/(internal)/dashboard/dosen/page";
+import StudentsPage from "@/app/(internal)/dashboard/students/page";
 import { ToastProvider } from "@/components/providers/toast-providers";
 
 const mocks = vi.hoisted(() => ({

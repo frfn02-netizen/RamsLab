@@ -77,7 +77,7 @@ export function PublicError({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-5 border border-[var(--rams-red)] px-4 py-2 text-sm font-semibold text-[var(--rams-red)] hover:bg-white"
+          className="mt-5 min-h-11 border border-[var(--rams-red)] px-4 py-2 text-sm font-semibold text-[var(--rams-red)] hover:bg-white"
         >
           {common("tryAgain")}
         </button>

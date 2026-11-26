@@ -1,18 +1,17 @@
-"use client";
-
 import Image from "next/image";
-import { useLocale, useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { HomepageContent } from "@/types/site-content";
 import PublicContainer from "./public-container";
 import RevealOnScroll from "./reveal-on-scroll";
 
-export default function HomeIntroduction() {
-  const t = useTranslations("home");
+export default async function HomeIntroduction() {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: "home" });
 
   return (
     <section
-      className="flex items-center bg-white py-14 sm:py-16 lg:py-20"
+      className="flex items-center bg-white py-14 sm:py-16 lg:py-20 min-[2000px]:py-28"
       aria-labelledby="welcome-title"
     >
       <PublicContainer className="w-full">
@@ -34,11 +33,11 @@ export default function HomeIntroduction() {
           </p>
           <h2
             id="welcome-title"
-            className="mx-auto mt-3 max-w-[74rem] font-display text-4xl font-bold leading-[1.08] text-[var(--rams-red)] sm:text-5xl lg:text-[3.25rem] xl:whitespace-nowrap xl:text-[2.75rem] 2xl:text-[3rem]"
+            className="public-section-title mx-auto mt-3 max-w-[74rem] text-[var(--rams-red)]"
           >
             {t("welcome.title")}
           </h2>
-          <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-black sm:text-lg lg:text-xl lg:leading-9">
+          <p className="public-lead mx-auto mt-5 max-w-[70ch] text-black">
             {t("welcome.description")}
           </p>
           <Link
@@ -53,13 +52,13 @@ export default function HomeIntroduction() {
   );
 }
 
-export function HeadOfLaboratorySection({
+export async function HeadOfLaboratorySection({
   content,
 }: {
   content: HomepageContent;
 }) {
-  const t = useTranslations("home");
-  const locale = useLocale() === "id" ? "id" : "en";
+  const locale = (await getLocale()) === "id" ? "id" : "en";
+  const t = await getTranslations({ locale, namespace: "home" });
   const localized = (value: { en: string; id: string }) => value[locale];
   const head = content.headOfLaboratory;
 
@@ -69,7 +68,7 @@ export function HeadOfLaboratorySection({
 
   return (
     <section
-      className="border-y border-[var(--border)] bg-[var(--background-light)] py-14 sm:py-16 lg:py-20"
+      className="border-y border-[var(--border)] bg-[var(--background-light)] py-14 sm:py-16 lg:py-20 min-[2000px]:py-28"
       aria-labelledby="head-of-laboratory-title"
     >
       <PublicContainer>
@@ -104,7 +103,7 @@ export function HeadOfLaboratorySection({
             </p>
             <h2
               id="head-of-laboratory-title"
-              className="mt-2 font-display text-3xl font-bold leading-tight text-[var(--navy)] sm:text-4xl lg:text-5xl"
+              className="public-section-title mt-2 text-[var(--navy)]"
             >
               {head.name}
             </h2>

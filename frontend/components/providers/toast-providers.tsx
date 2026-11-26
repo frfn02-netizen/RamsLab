@@ -174,6 +174,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {isClient &&
         createPortal(
           <div
+            role="region"
             aria-label="Notifications"
             className="pointer-events-none fixed"
             style={{

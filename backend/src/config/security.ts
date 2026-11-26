@@ -104,16 +104,17 @@ export function getPrimaryFrontendOrigin(): string {
 }
 
 export function getFrontendBasePath(): string {
-  const raw = (process.env.FRONTEND_BASE_PATH ?? process.env.BASE_PATH ?? "").trim();
+  const raw = (
+    process.env.FRONTEND_BASE_PATH ??
+    process.env.BASE_PATH ??
+    ""
+  ).trim();
   if (!raw || raw === "/") return "";
   const withLeadingSlash = raw.startsWith("/") ? raw : `/${raw}`;
   return withLeadingSlash.replace(/\/+$/, "");
 }
 
-const DEVELOPMENT_ORIGINS = [
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-];
+const DEVELOPMENT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"];
 
 export function getAllowedOrigins(): string[] {
   const configured = process.env.FRONTEND_URL ?? "http://localhost:3000";

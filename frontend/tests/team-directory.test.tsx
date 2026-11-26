@@ -10,7 +10,7 @@ const { getPublicPeopleList } = vi.hoisted(() => ({
 vi.mock("@/lib/api/modules", () => ({ getPublicPeopleList }));
 
 const messages: Record<string, string> = {
-  "categoriesLabel": "People categories",
+  categoriesLabel: "People categories",
   "categories.DOSEN": "Lecturers",
   "categories.STUDENTS": "Graduate Students",
   "categories.UNDERGRADUATE": "Undergraduate Students",
@@ -44,33 +44,33 @@ const messages: Record<string, string> = {
   "roleBadges.ALUMNI": "Alumni",
   "graduateGroups.MAHASISWA": "PhD",
   "graduateGroups.MASTER": "Master's",
-  "profileLink": "View profile",
-  "roleFallback": "Role not listed",
-  "searchLabel": "Search people",
-  "searchPlaceholder": "Search people, research interest, or keyword...",
-  "filterLabel": "Filter by research area",
-  "filterAll": "All Research Areas",
-  "filterReliability": "Reliability",
-  "filterSafety": "Safety",
-  "filterMaintenance": "Maintenance",
-  "filterMaritime": "Maritime Systems",
-  "filterAis": "AIS",
-  "filterSimulation": "Simulation",
-  "sortLabel": "Sort",
-  "sortDefault": "Default order",
-  "sortName": "Name (A-Z)",
-  "loading": "Loading team profiles",
-  "error": "Team profiles are temporarily unavailable.",
-  "noResultsTitle": "No people match this search",
-  "noResultsDescription":
+  profileLink: "View profile",
+  roleFallback: "Role not listed",
+  searchLabel: "Search people",
+  searchPlaceholder: "Search people, research interest, or keyword...",
+  filterLabel: "Filter by research area",
+  filterAll: "All Research Areas",
+  filterReliability: "Reliability",
+  filterSafety: "Safety",
+  filterMaintenance: "Maintenance",
+  filterMaritime: "Maritime Systems",
+  filterAis: "AIS",
+  filterSimulation: "Simulation",
+  sortLabel: "Sort",
+  sortDefault: "Default order",
+  sortName: "Name (A-Z)",
+  loading: "Loading team profiles",
+  error: "Team profiles are temporarily unavailable.",
+  noResultsTitle: "No people match this search",
+  noResultsDescription:
     "Adjust the search terms or choose a different research area.",
-  "noProfilesTitle": "No profiles published",
-  "noProfilesDescription":
+  noProfilesTitle: "No profiles published",
+  noProfilesDescription:
     "Profiles in this category will appear here when available.",
-  "studentGroupEmpty": "No profiles published in this category.",
-  "classOf": "classOf",
-  "requestUnavailable": "Request unavailable",
-  "tryAgain": "Try again",
+  studentGroupEmpty: "No profiles published in this category.",
+  classOf: "classOf",
+  requestUnavailable: "Request unavailable",
+  tryAgain: "Try again",
 };
 
 vi.mock("next-intl", () => ({
@@ -198,7 +198,8 @@ function basePeople(): PublicPeopleResponse {
 }
 
 async function renderDirectory() {
-  const utils = render(<TeamDirectory />);
+  const people = await getPublicPeopleList();
+  const utils = render(<TeamDirectory initialPeople={people} />);
   await waitFor(() =>
     expect(
       screen.queryByRole("heading", { name: "Our Lecturers" }),
@@ -236,12 +237,14 @@ describe("People directory – categories and switching", () => {
   it("marks the active category with aria-pressed", async () => {
     await renderDirectory();
 
-    expect(
-      screen.getByRole("button", { name: "Lecturers" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(
-      screen.getByRole("button", { name: "Alumni" }),
-    ).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Lecturers" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Alumni" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it("shows the section header for the active category", async () => {
@@ -386,17 +389,13 @@ describe("People directory – research area filters", () => {
       screen.getByRole("button", { name: "Undergraduate Students" }),
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Maritime Systems" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Maritime Systems" }));
 
     expect(screen.getByText("Undergraduate Student")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Simulation" }));
 
-    expect(
-      screen.getByText("No people match this search"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("No people match this search")).toBeInTheDocument();
   });
 
   it("resets the research area when switching categories", async () => {
@@ -568,48 +567,16 @@ describe("People directory – cards", () => {
   });
 });
 
-describe("People directory – states", () => {
-  it("shows a loading state while profiles are loading", async () => {
-    let resolvePeople: (value: PublicPeopleResponse) => void = () => {};
-    getPublicPeopleList.mockReturnValue(
-      new Promise<PublicPeopleResponse>((resolve) => {
-        resolvePeople = resolve;
-      }),
-    );
-
-    render(<TeamDirectory />);
+describe("People directory – server data", () => {
+  it("renders the server-provided directory without an initial loading state", () => {
+    render(<TeamDirectory initialPeople={basePeople()} />);
 
     expect(
-      screen.getByRole("status", { name: "Loading team profiles" }),
+      screen.getByRole("heading", { name: "Our Lecturers" }),
     ).toBeInTheDocument();
-
-    resolvePeople(basePeople());
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("heading", { name: "Our Lecturers" }),
-      ).toBeInTheDocument(),
-    );
-  });
-
-  it("shows an error state and retries", async () => {
-    getPublicPeopleList
-      .mockRejectedValueOnce(new Error("network"))
-      .mockResolvedValueOnce(basePeople());
-
-    render(<TeamDirectory />);
-
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(
-      screen.getByText("Team profiles are temporarily unavailable."),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("heading", { name: "Our Lecturers" }),
-      ).toBeInTheDocument(),
-    );
+      screen.queryByRole("status", { name: "Loading team profiles" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

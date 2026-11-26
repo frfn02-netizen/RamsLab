@@ -1,13 +1,31 @@
 import type { MetadataRoute } from "next";
 
+import { getSiteUrl } from "@/lib/site-url";
+
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = getSiteUrl();
+
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/id"],
-        disallow: ["/dashboard", "/profile", "/login"],
+        allow: "/",
+        disallow: [
+          "/admin",
+          "/dashboard",
+          "/profile",
+          "/meetings",
+          "/alumni/dashboard",
+          "/alumni/history",
+          "/alumni/login",
+          "/alumni/register",
+          "/login",
+          "/forgot-password",
+          "/reset-password",
+          "/change-password",
+        ],
       },
     ],
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

@@ -82,7 +82,7 @@ export default function AlumniProfile({ id }: { id: string }) {
   const linkedin = profile.linkedin?.trim();
 
   return (
-    <main className="bg-[var(--paper)]">
+    <div className="bg-[var(--paper)]">
       <PublicContainer className="py-10 sm:py-16 lg:py-24">
         <div className="mx-auto max-w-4xl">
           <Link
@@ -118,7 +118,7 @@ export default function AlumniProfile({ id }: { id: string }) {
                   {t("detailCategory")}
                 </p>
 
-                <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--navy)] sm:text-6xl">
+                <h1 className="public-page-title mt-5 break-words text-[var(--navy)]">
                   {profile.fullName}
                 </h1>
 
@@ -176,6 +176,6 @@ export default function AlumniProfile({ id }: { id: string }) {
           </article>
         </div>
       </PublicContainer>
-    </main>
+    </div>
   );
 }

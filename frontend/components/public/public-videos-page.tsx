@@ -1,48 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { getPublicHomepageVideos } from "@/lib/api/modules";
 import type { PublicHomepageVideo } from "@/types/modules";
 import PublicContainer from "./public-container";
 import PageHero from "./page-hero";
-import { MediaCardsSkeleton, SkeletonGroup } from "@/components/skeletons";
 
-export default function PublicVideosPage() {
+export default function PublicVideosPage({
+  initialVideos,
+}: {
+  initialVideos: PublicHomepageVideo[];
+}) {
   const t = useTranslations("videos");
   const common = useTranslations("common");
-  const [videos, setVideos] = useState<PublicHomepageVideo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    getPublicHomepageVideos()
-      .then(setVideos)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, []);
+  const videos = initialVideos;
 
   return (
-    <main>
+    <div>
       <PageHero eyebrow="" title={t("title")} description={t("description")} />
       <PublicContainer className="py-10 sm:py-14">
-        {loading ? (
-          <SkeletonGroup label={common("loading")}>
-            <MediaCardsSkeleton
-              count={6}
-              columns="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-            />
-          </SkeletonGroup>
-        ) : error ? (
-          <p className="text-sm font-semibold text-red-700">
-            {common("requestUnavailable")}
-          </p>
-        ) : videos.length === 0 ? (
+        {videos.length === 0 ? (
           <p className="text-sm font-semibold text-[var(--gray)]">
             {common("noPublishedRecords")}
           </p>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {videos.map((video) => (
               <a
                 key={video.id}
@@ -56,7 +37,7 @@ export default function PublicVideosPage() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={video.thumbnailUrl}
-                      alt={video.title || "YouTube video"}
+                      alt=""
                       className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                     />
                   ) : (
@@ -83,9 +64,9 @@ export default function PublicVideosPage() {
                 </div>
                 {video.title && (
                   <div className="px-4 py-3.5">
-                    <h3 className="text-sm font-semibold leading-snug text-[var(--navy)] line-clamp-2">
+                    <h2 className="text-sm font-semibold leading-snug text-[var(--navy)] line-clamp-2">
                       {video.title}
-                    </h3>
+                    </h2>
                   </div>
                 )}
               </a>
@@ -93,6 +74,6 @@ export default function PublicVideosPage() {
           </div>
         )}
       </PublicContainer>
-    </main>
+    </div>
   );
 }

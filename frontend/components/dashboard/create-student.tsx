@@ -17,8 +17,10 @@ export default function CreateStudent() {
 
   const [form, setForm] = useState({
     fullName: "",
+    nim: "",
     studentType: "PHD_STUDENT" as StudentType,
     program: "",
+    department: "",
     specialization: "",
     bio: "",
     linkedin: "",
@@ -45,8 +47,10 @@ export default function CreateStudent() {
     try {
       const student = await createStudent({
         fullName: form.fullName,
+        nim: form.nim || undefined,
         studentType: form.studentType,
         program: form.program || undefined,
+        department: form.department || undefined,
         specialization: form.specialization
           .split(",")
           .map((item) => item.trim())
@@ -121,12 +125,31 @@ export default function CreateStudent() {
                 />
               </Field>
 
-              <Field label="Program">
+              <Field label="Program" htmlFor="student-program">
                 <input
+                  id="student-program"
                   className={inputClass}
                   placeholder="Marine Engineering"
                   value={form.program}
                   onChange={(event) => update("program", event.target.value)}
+                />
+              </Field>
+
+              <Field label="Student ID / NIM" htmlFor="student-nim">
+                <input
+                  id="student-nim"
+                  className={inputClass}
+                  value={form.nim}
+                  onChange={(event) => update("nim", event.target.value)}
+                />
+              </Field>
+
+              <Field label="Department" htmlFor="student-department">
+                <input
+                  id="student-department"
+                  className={inputClass}
+                  value={form.department}
+                  onChange={(event) => update("department", event.target.value)}
                 />
               </Field>
 

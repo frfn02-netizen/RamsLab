@@ -1,11 +1,44 @@
 import { ApiError, type ApiErrorDetails } from "./errors";
+import { getSiteUrl } from "@/lib/site-url";
 
-const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"
-).replace(/\/$/, "");
+const LOCAL_API_URL = "http://localhost:5000/api";
+
+function requiredPublicUrl(value: string | undefined, name: string) {
+  const configured = value?.trim();
+  if (!configured && process.env.NODE_ENV === "production") {
+    throw new Error(
+      `${name} is required in production. Set it to the deployed public URL, not localhost.`,
+    );
+  }
+  return configured;
+}
+
+const publicApiUrl = requiredPublicUrl(
+  process.env.NEXT_PUBLIC_API_URL,
+  "NEXT_PUBLIC_API_URL",
+);
+
+// Validate the public site origin in the same shared boundary as the API.
+// This makes a missing production value fail loudly instead of producing
+// localhost canonical URLs.
+if (process.env.NODE_ENV === "production") {
+  getSiteUrl();
+}
+
+const PUBLIC_API_URL = (publicApiUrl ?? LOCAL_API_URL).replace(/\/+$/, "");
+const INTERNAL_API_URL =
+  typeof window === "undefined"
+    ? process.env.INTERNAL_API_URL?.trim().replace(/\/+$/, "") || undefined
+    : undefined;
+
+const REQUEST_API_URL = INTERNAL_API_URL ?? PUBLIC_API_URL;
 
 export function apiUrl(path: string) {
-  return `${API_URL}${path}`;
+  return `${PUBLIC_API_URL}${path}`;
+}
+
+function requestUrl(path: string) {
+  return `${REQUEST_API_URL}${path}`;
 }
 const CSRF_COOKIE = "rams_csrf_token";
 const CSRF_STORAGE_KEY = "rams_csrf_token";
@@ -26,26 +59,21 @@ export type ApiResponse<T> = {
   errors?: unknown;
   code?: string;
   reauthenticate?: boolean;
+  notification?: { sent: boolean; warning?: string };
+  temporaryPassword?: string;
 };
 
-export type ApiRequestOptions = RequestInit & { timeoutMs?: number };
+export type ApiRequestOptions = RequestInit & {
+  timeoutMs?: number;
+  next?: { revalidate?: number; tags?: string[] };
+};
 
 let unauthorizedHandler: (() => void) | null = null;
-let labMembershipRequiredHandler: (() => void) | null = null;
 
 export function onUnauthorized(handler: (() => void) | null) {
   unauthorizedHandler = handler;
   return () => {
     if (unauthorizedHandler === handler) unauthorizedHandler = null;
-  };
-}
-
-export function onLabMembershipRequired(handler: (() => void) | null) {
-  labMembershipRequiredHandler = handler;
-  return () => {
-    if (labMembershipRequiredHandler === handler) {
-      labMembershipRequiredHandler = null;
-    }
   };
 }
 
@@ -128,7 +156,7 @@ async function refreshCsrfTokenForRetry(timeoutMs: number) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${API_URL}/auth/csrf`, {
+    const response = await fetch(`${REQUEST_API_URL}/auth/csrf`, {
       method: "GET",
       credentials: "include",
       headers: { Accept: "application/json" },
@@ -151,7 +179,7 @@ async function requestEnvelope<T>(
   options: ApiRequestOptions = {},
   csrfRetried = false,
 ) {
-  const { timeoutMs = 15000, ...fetchOptions } = options;
+  const { timeoutMs = 15000, next, ...fetchOptions } = options;
   const method = (fetchOptions.method ?? "GET").toUpperCase();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -174,11 +202,14 @@ async function requestEnvelope<T>(
 
   let response: Response;
   try {
-    response = await fetch(apiUrl(path), {
+    response = await fetch(requestUrl(path), {
       ...fetchOptions,
+      ...(next ? { next } : {}),
       credentials: "include",
       headers,
       signal: controller.signal,
+    } as RequestInit & {
+      next?: { revalidate?: number; tags?: string[] };
     });
   } catch (error) {
     const isTimeout =
@@ -206,21 +237,10 @@ async function requestEnvelope<T>(
   if (!response.ok || body.success === false) {
     if (response.status === 401 && !path.startsWith("/auth/"))
       unauthorizedHandler?.();
-    if (
-      response.status === 403 &&
-      body.code === "LAB_MEMBERSHIP_REQUIRED" &&
-      !path.startsWith("/auth/")
-    ) {
-      labMembershipRequiredHandler?.();
-    }
-    throw new ApiError(
-      body.message ?? "Request failed",
-      response.status,
-      {
-        ...getErrorDetails(body.errors),
-        ...(body.code ? { code: body.code } : {}),
-      },
-    );
+    throw new ApiError(body.message ?? "Request failed", response.status, {
+      ...getErrorDetails(body.errors),
+      ...(body.code ? { code: body.code } : {}),
+    });
   }
   return body;
 }

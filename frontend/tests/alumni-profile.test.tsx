@@ -1,12 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+
+type LinkProps = {
+  href?: string;
+  children?: ReactNode;
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
 vi.mock("@/i18n/navigation", () => ({
-  Link: ({ href, children, ...props }: any) => (
+  Link: ({ href, children, ...props }: LinkProps) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -21,14 +27,20 @@ vi.mock("@/lib/api/modules", () => ({
 }));
 
 vi.mock("@/components/public/public-container", () => ({
-  default: ({ children, className }: any) => (
+  default: ({
+    children,
+    className,
+  }: {
+    children?: ReactNode;
+    className?: string;
+  }) => (
     <div className={className}>{children}</div>
   ),
 }));
 
 vi.mock("@/components/public/public-states", () => ({
-  PublicLoading: ({ label }: any) => <div role="status">{label}</div>,
-  PublicError: ({ message }: any) => <div role="alert">{message}</div>,
+  PublicLoading: ({ label }: { label: string }) => <div role="status">{label}</div>,
+  PublicError: ({ message }: { message: string }) => <div role="alert">{message}</div>,
 }));
 
 import AlumniProfile from "@/components/public/alumni-profile";

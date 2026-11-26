@@ -66,7 +66,6 @@ beforeAll(async () => {
   });
 
   adminToken = signTestToken(TEST_ADMIN_USER_ID, "ADMIN");
-
 });
 
 afterAll(async () => {

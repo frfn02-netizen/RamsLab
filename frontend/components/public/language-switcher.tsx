@@ -22,7 +22,7 @@ export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
       <button
         type="button"
         onClick={() => switchLocale("en")}
-        className={`px-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${locale === "en" ? "text-[var(--rams-red)]" : dark ? "text-white/70 hover:text-white" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
+        className={`inline-flex min-h-11 min-w-11 items-center justify-center px-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${locale === "en" ? "text-[var(--rams-red)]" : dark ? "text-white/70 hover:text-white" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
       >
         EN
       </button>
@@ -30,7 +30,7 @@ export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
       <button
         type="button"
         onClick={() => switchLocale("id")}
-        className={`px-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${locale === "id" ? "text-[var(--rams-red)]" : dark ? "text-white/70 hover:text-white" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
+        className={`inline-flex min-h-11 min-w-11 items-center justify-center px-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--rams-red)] ${locale === "id" ? "text-[var(--rams-red)]" : dark ? "text-white/70 hover:text-white" : "text-[var(--charcoal)] hover:text-[var(--rams-red)]"}`}
       >
         ID
       </button>

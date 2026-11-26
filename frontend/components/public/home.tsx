@@ -1,23 +1,19 @@
-"use client";
-
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
+
 import { Link } from "@/i18n/navigation";
-import { getPublicResearch, getPublicSiteContent } from "@/lib/api/modules";
 import { assetPath } from "@/lib/asset-path";
-import type { PublicResearchArea } from "@/types/modules";
-import type { HomepageContent } from "@/types/site-content";
+import type { HomePageData } from "@/lib/public/server-data";
 import { getResearchImageStyles } from "@/lib/research-image";
-import PublicContainer from "./public-container";
-import RevealOnScroll from "./reveal-on-scroll";
-import { PublicEmpty, PublicError, PublicLoading } from "./public-states";
-import HomePartnersSection from "./home-partners";
-import HomeMaritimeCta from "./home-maritime-cta";
-import HomeVideoSection from "./home-video-section";
-import ResearchHighlights from "./research-highlights";
+import EcosystemCarousel from "./ecosystem-carousel";
 import HomeIntroduction, { HeadOfLaboratorySection } from "./home-introduction";
+import HomeMaritimeCta from "./home-maritime-cta";
+import HomePartnersSection from "./home-partners";
 import HomePeopleSection from "./home-people";
+import HomeVideoSection from "./home-video-section";
+import PublicContainer from "./public-container";
+import ResearchHighlights from "./research-highlights";
+import RevealOnScroll from "./reveal-on-scroll";
 
 const researchImages = [
   assetPath("/assets/offshore.jpg"),
@@ -26,320 +22,56 @@ const researchImages = [
   assetPath("/assets/upscalemedia-transformed.jpeg"),
 ] as const;
 
-type EcosystemCard = {
-  key: string;
-  logo: string;
-  logoAlt: string;
-  name: string;
-  description: string;
-  href: string | null;
-};
-
-function EcosystemCarousel({ cards }: { cards: EcosystemCard[] }) {
-  const count = cards.length;
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const touchStartRef = useRef({ x: 0, y: 0 });
-  const swipedRef = useRef(false);
-  const pausedByInteraction = useRef(false);
-  const hasMounted = useRef(false);
-  const prefersReducedMotion = useRef(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    prefersReducedMotion.current = mq.matches;
-    const handler = (e: MediaQueryListEvent) => {
-      prefersReducedMotion.current = e.matches;
-    };
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  const navigate = useCallback(
-    (next: number) => {
-      const target = ((next % count) + count) % count;
-      if (target === activeIndex) return;
-      setActiveIndex(target);
-    },
-    [activeIndex, count],
-  );
-
-  const goNext = useCallback(
-    () => navigate(activeIndex + 1),
-    [navigate, activeIndex],
-  );
-  const goPrev = useCallback(
-    () => navigate(activeIndex - 1),
-    [navigate, activeIndex],
-  );
-
-  useEffect(() => {
-    if (isPaused || prefersReducedMotion.current) return;
-    const id = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % count);
-    }, 6000);
-    return () => clearInterval(id);
-  }, [isPaused, count]);
-
-  useEffect(() => {
-    const onVis = () => {
-      if (document.hidden) {
-        pausedByInteraction.current = true;
-        setIsPaused(true);
-      } else if (pausedByInteraction.current) {
-        pausedByInteraction.current = false;
-        setIsPaused(false);
-      }
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, []);
-
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      hasMounted.current = true;
-    });
-  }, []);
-
-  const handlePointerEnter = useCallback(() => setIsPaused(true), []);
-  const handlePointerLeave = useCallback(() => setIsPaused(false), []);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartRef.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-    swipedRef.current = false;
-    setIsPaused(true);
-  }, []);
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (swipedRef.current) return;
-      const dx = e.touches[0].clientX - touchStartRef.current.x;
-      const dy = e.touches[0].clientY - touchStartRef.current.y;
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
-        swipedRef.current = true;
-        if (dx > 0) goPrev();
-        else goNext();
-      }
-    },
-    [goNext, goPrev],
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    setTimeout(() => setIsPaused(false), 3000);
-  }, []);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        goPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        goNext();
-      }
-    },
-    [goNext, goPrev],
-  );
-
-  return (
-    <div
-      className="ecosystem-carousel-shell mt-8"
-      role="region"
-      aria-label="Research ecosystem carousel"
-      onKeyDown={handleKeyDown}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
-    >
-      <button
-        type="button"
-        onClick={goPrev}
-        className="ecosystem-carousel-btn ecosystem-carousel-btn--prev"
-        aria-label="Previous ecosystem partner"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-5 w-5"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
-
-      <div className="ecosystem-carousel-viewport">
-        {cards.map((card, i) => {
-          let rel = (((i - activeIndex) % count) + count) % count;
-          if (rel > count / 2) rel -= count;
-          const pos = rel === 0 ? "center" : rel < 0 ? "left" : "right";
-
-          const inner = (
-            <div className="ecosystem-card-inner">
-              <div className="ecosystem-card-logo-wrap">
-                <Image
-                  src={card.logo}
-                  alt={card.logoAlt}
-                  fill
-                  sizes="180px"
-                  className="object-contain"
-                />
-              </div>
-              <div className="ecosystem-card-divider" />
-              <div className="ecosystem-card-text">
-                <p className="ecosystem-card-name">{card.name}</p>
-                <p className="ecosystem-card-desc">{card.description}</p>
-              </div>
-            </div>
-          );
-
-          return (
-            <div
-              key={card.key}
-              className={`ecosystem-carousel-card${!hasMounted.current ? " no-transition" : ""}${pos === "center" ? "" : " cursor-pointer"}`}
-              data-pos={pos}
-              onClick={() => {
-                if (pos !== "center") navigate(i);
-              }}
-              role="group"
-              aria-roledescription="slide"
-              aria-label={`${card.name} — ${pos === "center" ? "current slide" : pos === "left" ? "previous slide" : "next slide"}`}
-            >
-              <div className="ecosystem-card-frame">
-                {card.href ? (
-                  <a
-                    href={card.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block h-full"
-                    tabIndex={pos === "center" ? 0 : -1}
-                    aria-label={card.logoAlt}
-                  >
-                    {inner}
-                  </a>
-                ) : (
-                  <div className="h-full">{inner}</div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <button
-        type="button"
-        onClick={goNext}
-        className="ecosystem-carousel-btn ecosystem-carousel-btn--next"
-        aria-label="Next ecosystem partner"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-5 w-5"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-      </button>
-
-      <div
-        className="ecosystem-carousel-dots"
-        role="tablist"
-        aria-label="Carousel navigation"
-      >
-        {cards.map((card, i) => (
-          <button
-            key={card.key}
-            type="button"
-            role="tab"
-            aria-selected={i === activeIndex}
-            aria-current={i === activeIndex ? "true" : undefined}
-            aria-label={`Go to ${card.name}`}
-            className="ecosystem-carousel-dot"
-            data-active={i === activeIndex}
-            onClick={() => navigate(i)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export default function PublicHome() {
-  const locale = useLocale() === "id" ? "id" : "en";
-  const brand = useTranslations("brand");
-  const common = useTranslations("common");
-  const research = useTranslations("home.research");
-  const [content, setContent] = useState<HomepageContent | null>(null);
-  const [contentLoading, setContentLoading] = useState(true);
-  const [contentError, setContentError] = useState(false);
-  const [researchAreas, setResearchAreas] = useState<PublicResearchArea[]>([]);
-  const [researchLoading, setResearchLoading] = useState(true);
-  const [researchError, setResearchError] = useState(false);
-
-  useEffect(() => {
-    getPublicSiteContent("homepage")
-      .then(setContent)
-      .catch(() => setContentError(true))
-      .finally(() => setContentLoading(false));
-    getPublicResearch()
-      .then(setResearchAreas)
-      .catch(() => setResearchError(true))
-      .finally(() => setResearchLoading(false));
-  }, []);
-
+export default async function PublicHome({
+  content,
+  researchAreas,
+  researchHighlights,
+  videos,
+  partners,
+  people,
+}: HomePageData) {
+  const locale = (await getLocale()) === "id" ? "id" : "en";
+  const brand = await getTranslations({ locale, namespace: "brand" });
+  const common = await getTranslations({ locale, namespace: "common" });
+  const research = await getTranslations({
+    locale,
+    namespace: "home.research",
+  });
   const localized = (value: { en: string; id: string }) => value[locale];
+  const principles = content?.principles ?? [];
 
   return (
     <>
-      <ResearchHighlights />
+      <ResearchHighlights items={researchHighlights} />
 
-      {content && !contentLoading && !contentError && <HomeIntroduction />}
+      <HomeIntroduction />
 
-      <HomeVideoSection />
+      <HomeVideoSection videos={videos} />
 
-      {content &&
-        !contentLoading &&
-        !contentError &&
-        content.showHeadOfLaboratoryOnHomepage && (
-          <HeadOfLaboratorySection content={content} />
-        )}
+      {content?.showHeadOfLaboratoryOnHomepage && content.headOfLaboratory ? (
+        <HeadOfLaboratorySection content={content} />
+      ) : null}
 
-      {content &&
-        !contentLoading &&
-        !contentError &&
-        content.showWhoWeAreOnHomepage && (
-          <HomePeopleSection headOfLaboratory={content?.headOfLaboratory} />
-        )}
+      {content?.showWhoWeAreOnHomepage !== false ? (
+        <HomePeopleSection
+          headOfLaboratory={content?.headOfLaboratory}
+          people={people}
+        />
+      ) : null}
 
-      {/* PRINCIPLES */}
-      <section className="bg-white py-14">
+      <section className="bg-white py-14 sm:py-16 lg:py-20 min-[2000px]:py-28">
         <PublicContainer>
           <RevealOnScroll className="mb-6 max-w-2xl">
-            <h2 className="font-display text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl">
+            <h2 className="public-section-title text-[var(--navy)]">
               {common("principlesTitle")}
             </h2>
           </RevealOnScroll>
-          {contentLoading ? (
-            <PublicLoading label={common("loading")} />
-          ) : contentError || !content ? (
-            <PublicError message={common("requestUnavailable")} />
-          ) : (
+          {principles.length > 0 ? (
             <RevealOnScroll
               className="rams-principles grid grid-cols-1 border-t border-b border-[var(--border)] sm:grid-cols-2 lg:grid-cols-4"
               stagger={120}
             >
-              {content.principles.map((item) => (
+              {principles.map((item) => (
                 <article
                   key={item.key}
                   className="rams-item relative overflow-hidden p-8 lg:p-10"
@@ -360,160 +92,157 @@ export default function PublicHome() {
                 </article>
               ))}
             </RevealOnScroll>
-          )}
-        </PublicContainer>
-      </section>
-
-      {/* ECOSYSTEM */}
-      {content &&
-        !contentLoading &&
-        !contentError &&
-        content.showEcosystemOnHomepage !== false && (
-          <section className="ecosystem-section bg-[var(--background-light)] py-14 sm:py-16">
-            <PublicContainer>
-              {contentLoading ? (
-                <PublicLoading label={common("loading")} />
-              ) : contentError || !content ? (
-                <PublicError message={common("requestUnavailable")} />
-              ) : (
-                <>
-                  <RevealOnScroll className="text-center">
-                    <div className="ecosystem-heading-wrap">
-                      <h2 className="font-display text-3xl font-bold text-[var(--navy)] sm:text-4xl">
-                        {localized(content.ecosystem.title)}
-                      </h2>
-                    </div>
-                  </RevealOnScroll>
-                  <EcosystemCarousel
-                    cards={[
-                      {
-                        key: "rams",
-                        logo: assetPath("/assets/RamsLogoFIX.png"),
-                        logoAlt: brand("laboratory"),
-                        name: brand("laboratory"),
-                        description: localized(
-                          content.ecosystem.ramsDescription ?? {
-                            en: brand("technicalLine"),
-                            id: brand("technicalLine"),
-                          },
-                        ),
-                        href: "https://rams.co.id/",
-                      },
-                      {
-                        key: "ais",
-                        logo: assetPath("/assets/logo ais part2.png"),
-                        logoAlt: brand("ais"),
-                        name: brand("ais"),
-                        description: localized(
-                          content.ecosystem.aisDescription,
-                        ),
-                        href: "https://aisits.vercel.app/",
-                      },
-                      {
-                        key: "pui",
-                        logo: assetPath("/assets/logo pu-kekal part2.png"),
-                        logoAlt: brand("pui"),
-                        name: brand("pui"),
-                        description: localized(
-                          content.ecosystem.puiKekalDescription ?? {
-                            en: "",
-                            id: "",
-                          },
-                        ),
-                        href: "https://www.youtube.com/watch?v=9ry3kKPBAyg&t=72s",
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </PublicContainer>
-          </section>
-        )}
-
-      {/* RESEARCH AREAS */}
-      <section className="bg-white py-14">
-        <PublicContainer>
-          {contentLoading || researchLoading ? (
-            <PublicLoading label={common("loading")} />
-          ) : contentError || !content ? (
-            <PublicError message={common("requestUnavailable")} />
-          ) : researchError ? (
-            <PublicError message={common("requestUnavailable")} />
-          ) : researchAreas.length === 0 ? (
-            <PublicEmpty
-              title={common("noPublishedRecords")}
-              description={common("noPublishedRecords")}
-            />
           ) : (
-            <>
-              <RevealOnScroll className="flex items-end justify-between">
-                <div className="max-w-2xl">
-                  <h2 className="font-display text-4xl font-bold text-[var(--navy)]">
-                    {research("title")}
-                  </h2>
-                  <p className="mt-3 text-lg text-[var(--gray)]">
-                    {research("description")}
-                  </p>
-                </div>
-                <Link
-                  href="/research"
-                  className="text-sm font-semibold text-[var(--rams-red)]"
-                >
-                  {research("linkLabel")} →
-                </Link>
-              </RevealOnScroll>
-              <RevealOnScroll
-                className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
-                stagger={100}
+            <RevealOnScroll className="border border-dashed border-[var(--border)] bg-white p-8">
+              <p className="text-sm leading-6 text-[var(--gray)]">
+                {common("requestUnavailable")}
+              </p>
+              <Link
+                href="/about"
+                className="mt-4 inline-block text-sm font-semibold text-[var(--rams-red)] underline-offset-4 hover:underline"
               >
-                {researchAreas.slice(0, 4).map((area, index) => {
-                  const imageStyles = getResearchImageStyles(area);
-                  return (
-                    <div
-                      key={area.code}
-                      className="public-card-interaction group border border-[var(--border)] bg-white p-1 hover:border-[var(--rams-red)]"
-                    >
-                      <div
-                        className="relative w-full overflow-hidden"
-                        style={{ aspectRatio: imageStyles.aspectRatio }}
-                      >
-                        <Image
-                          src={area.downloadablePng ?? researchImages[index]}
-                          alt={localized(area.title)}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          className={
-                            imageStyles.fit === "contain"
-                              ? "object-contain public-image-zoom"
-                              : "public-image-zoom object-cover"
-                          }
-                          style={{
-                            objectPosition: imageStyles.objectPosition,
-                            transform: `scale(${imageStyles.scale})`,
-                          }}
-                        />
-                      </div>
-                      <div className="p-6">
-                        <h3 className="public-card-title font-bold text-[var(--navy)]">
-                          {localized(area.title)}
-                        </h3>
-                        <Link
-                          href={`/research#${area.code.toLowerCase()}`}
-                          className="public-card-arrow mt-4 inline-block text-sm font-semibold text-[var(--rams-red)]"
-                        >
-                          {common("explore")} →
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
-              </RevealOnScroll>
-            </>
+                {common("readMore")}
+              </Link>
+            </RevealOnScroll>
           )}
         </PublicContainer>
       </section>
 
-      <HomePartnersSection />
+      {content?.showEcosystemOnHomepage !== false && content?.ecosystem ? (
+        <section className="ecosystem-section bg-[var(--background-light)] py-14 sm:py-16 lg:py-20 min-[2000px]:py-28">
+          <PublicContainer>
+            <RevealOnScroll className="text-center">
+              <div className="ecosystem-heading-wrap">
+                <h2 className="public-section-title text-[var(--navy)]">
+                  {localized(content.ecosystem.title)}
+                </h2>
+              </div>
+            </RevealOnScroll>
+            <EcosystemCarousel
+              cards={[
+                {
+                  key: "rams",
+                  logo: assetPath("/assets/RamsLogoFIX.png"),
+                  logoAlt: brand("laboratory"),
+                  name: brand("laboratory"),
+                  description: localized(
+                    content.ecosystem.ramsDescription ?? {
+                      en: brand("technicalLine"),
+                      id: brand("technicalLine"),
+                    },
+                  ),
+                  href: "https://rams.co.id/",
+                },
+                {
+                  key: "ais",
+                  logo: assetPath("/assets/logo ais part2.png"),
+                  logoAlt: brand("ais"),
+                  name: brand("ais"),
+                  description: localized(content.ecosystem.aisDescription),
+                  href: "https://aisits.vercel.app/",
+                },
+                {
+                  key: "pui",
+                  logo: assetPath("/assets/logo pu-kekal part2.png"),
+                  logoAlt: brand("pui"),
+                  name: brand("pui"),
+                  description: localized(
+                    content.ecosystem.puiKekalDescription ?? {
+                      en: "",
+                      id: "",
+                    },
+                  ),
+                  href: "https://www.youtube.com/watch?v=9ry3kKPBAyg&t=72s",
+                },
+              ]}
+            />
+          </PublicContainer>
+        </section>
+      ) : null}
+
+      <section className="bg-white py-14 sm:py-16 lg:py-20 min-[2000px]:py-28">
+        <PublicContainer>
+          <RevealOnScroll className="flex flex-wrap items-end justify-between gap-4">
+            <div className="max-w-2xl">
+              <h2 className="public-section-title text-[var(--navy)]">
+                {research("title")}
+              </h2>
+              <p className="public-lead mt-3 text-[var(--gray)]">
+                {research("description")}
+              </p>
+            </div>
+            <Link
+              href="/research"
+              className="public-meta shrink-0 font-semibold text-[var(--rams-red)]"
+            >
+              {research("linkLabel")} →
+            </Link>
+          </RevealOnScroll>
+
+          {researchAreas.length > 0 ? (
+            <RevealOnScroll
+              className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 min-[2000px]:gap-10"
+              stagger={100}
+            >
+              {researchAreas.slice(0, 4).map((area, index) => {
+                const imageStyles = getResearchImageStyles(area);
+                return (
+                  <div
+                    key={area.code}
+                    className="public-card-interaction group border border-[var(--border)] bg-white p-1 hover:border-[var(--rams-red)]"
+                  >
+                    <div
+                      className="relative w-full overflow-hidden"
+                      style={{ aspectRatio: imageStyles.aspectRatio }}
+                    >
+                      <Image
+                        src={area.downloadablePng ?? researchImages[index]}
+                        alt={localized(area.title)}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className={
+                          imageStyles.fit === "contain"
+                            ? "object-contain public-image-zoom"
+                            : "public-image-zoom object-cover"
+                        }
+                        style={{
+                          objectPosition: imageStyles.objectPosition,
+                          transform: `scale(${imageStyles.scale})`,
+                        }}
+                      />
+                    </div>
+                    <div className="p-6">
+                      <h3 className="public-card-title text-[var(--navy)]">
+                        {localized(area.title)}
+                      </h3>
+                      <Link
+                        href={`/research#${area.code.toLowerCase()}`}
+                        className="public-card-arrow mt-4 inline-block text-sm font-semibold text-[var(--rams-red)]"
+                      >
+                        {common("explore")} →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </RevealOnScroll>
+          ) : (
+            <RevealOnScroll className="mt-8 border border-dashed border-[var(--border)] bg-white p-8 text-center">
+              <p className="text-sm leading-6 text-[var(--gray)]">
+                {common("noPublishedRecords")}
+              </p>
+              <Link
+                href="/research"
+                className="mt-4 inline-block text-sm font-semibold text-[var(--rams-red)] underline-offset-4 hover:underline"
+              >
+                {research("linkLabel")}
+              </Link>
+            </RevealOnScroll>
+          )}
+        </PublicContainer>
+      </section>
+
+      <HomePartnersSection partners={partners} />
 
       <HomeMaritimeCta />
     </>

@@ -1,15 +1,16 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { PublicHomepageVideo } from "@/types/modules";
 
-const { getPublicHomepageVideos } = vi.hoisted(() => ({
-  getPublicHomepageVideos: vi.fn(),
-}));
-
-vi.mock("@/lib/api/modules", () => ({ getPublicHomepageVideos }));
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
+
 vi.mock("@/i18n/navigation", () => ({
   Link: ({
     href,
@@ -26,19 +27,21 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
-import HomeVideoSection from "@/components/public/home-video-section";
+import VideoCarousel, {
+  type CmsVideoItem,
+} from "@/components/public/video-carousel";
 
-function video(
-  overrides: Partial<PublicHomepageVideo> = {},
-): PublicHomepageVideo {
+const WATCH_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+function video(overrides: Partial<CmsVideoItem> = {}): CmsVideoItem {
   return {
     id: "v1",
+    youtubeUrl: WATCH_URL,
     title: "Video One",
-    youtubeUrl: "https://youtube.com/watch?v=test",
-    youtubeVideoId: "test",
-    thumbnailUrl: "https://img.youtube.com/vi/test/0.jpg",
-    isFeatured: false,
-    order: 0,
+    thumbnailUrl: null,
+    displayOrder: 0,
+    featured: false,
+    published: true,
     ...overrides,
   };
 }
@@ -48,31 +51,21 @@ function activeTitle() {
   return active?.textContent ?? "";
 }
 
-beforeEach(() => {
-  getPublicHomepageVideos.mockReset();
-  const matchMedia = ((query: string) => ({
-    matches: false,
-    media: query,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })) as unknown as typeof window.matchMedia;
-  vi.stubGlobal("matchMedia", matchMedia);
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    writable: true,
-    value: matchMedia,
-  });
-  vi.stubGlobal(
-    "IntersectionObserver",
-    class {
-      observe = vi.fn();
-      unobserve = vi.fn();
-      disconnect = vi.fn();
-    },
+function middleCards() {
+  return Array.from(
+    document.querySelectorAll<HTMLElement>('[data-copy="middle"]'),
   );
+}
+
+function middleCardByTitle(title: string) {
+  const card = middleCards().find(
+    (candidate) => candidate.querySelector("h3")?.textContent?.trim() === title,
+  );
+  if (!card) throw new Error(`Middle card not found: ${title}`);
+  return card;
+}
+
+beforeEach(() => {
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -81,102 +74,270 @@ beforeEach(() => {
       disconnect = vi.fn();
     },
   );
-  Element.prototype.scrollTo = vi.fn();
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  delete (window as unknown as { matchMedia?: typeof window.matchMedia })
-    .matchMedia;
   vi.restoreAllMocks();
 });
 
 describe("homepage video carousel", () => {
-  it("renders each video once in a single carousel row", async () => {
-    getPublicHomepageVideos.mockResolvedValue([
-      video({ id: "v1", title: "Video One" }),
-      video({ id: "v2", title: "Video Two" }),
-      video({ id: "v3", title: "Video Three" }),
-    ]);
+  it("renders each video in the middle track copy and links to the archive", async () => {
+    const videos = [
+      video({ id: "v1", title: "Video One", youtubeUrl: WATCH_URL }),
+      video({
+        id: "v2",
+        title: "Video Two",
+        youtubeUrl: "https://youtu.be/abcdefghijk",
+      }),
+      video({
+        id: "v3",
+        title: "Video Three",
+        youtubeUrl: "https://www.youtube.com/embed/lmnopqrstuv",
+      }),
+    ];
 
-    render(<HomeVideoSection />);
+    render(<VideoCarousel videos={videos} />);
 
-    expect(await screen.findByText("Video One")).toBeInTheDocument();
-    expect(screen.getByText("Video Two")).toBeInTheDocument();
-    expect(screen.getByText("Video Three")).toBeInTheDocument();
-    expect(document.querySelectorAll('[data-active]')).toHaveLength(3);
-    expect(screen.getAllByText("Video One")).toHaveLength(1);
+    const middle = middleCards();
+    expect(middle).toHaveLength(3);
+    expect(within(middle[0]).getByText("Video One")).toBeInTheDocument();
+    expect(within(middle[1]).getByText("Video Two")).toBeInTheDocument();
+    expect(within(middle[2]).getByText("Video Three")).toBeInTheDocument();
+    expect(
+      document.querySelectorAll('[data-copy="left"], [data-copy="right"]'),
+    ).toHaveLength(6);
     expect(screen.getByRole("link", { name: "allVideos" })).toHaveAttribute(
       "href",
       "/videos",
     );
   });
 
-  it("starts on the first card and marks the featured record", async () => {
-    getPublicHomepageVideos.mockResolvedValue([
-      video({ id: "v1", title: "First Video" }),
-      video({ id: "v2", title: "Featured Choice", isFeatured: true }),
-      video({ id: "v3", title: "Third Video" }),
-    ]);
+  it("starts on the first featured record after display order sorting", async () => {
+    const videos = [
+      video({ id: "v1", title: "First Video", displayOrder: 0 }),
+      video({
+        id: "v2",
+        title: "Featured Choice",
+        displayOrder: 2,
+        featured: true,
+      }),
+      video({ id: "v3", title: "Third Video", displayOrder: 1 }),
+    ];
 
-    render(<HomeVideoSection />);
+    render(<VideoCarousel videos={videos} />);
 
-    expect(await screen.findByText("First Video")).toBeInTheDocument();
-    expect(activeTitle()).toContain("First Video");
-    expect(screen.getByText("featured")).toBeInTheDocument();
+    expect(
+      within(middleCardByTitle("Featured Choice")).getByText("Featured Choice"),
+    ).toBeInTheDocument();
+    expect(activeTitle()).toContain("Featured Choice");
   });
 
-  it("synchronizes arrow navigation and pagination indicators", async () => {
-    getPublicHomepageVideos.mockResolvedValue([
-      video({ id: "v1", title: "Video One" }),
-      video({ id: "v2", title: "Video Two" }),
-      video({ id: "v3", title: "Video Three" }),
-    ]);
+  it("filters unpublished records and invalid YouTube URLs", async () => {
+    const videos = [
+      video({ id: "v1", title: "Published Video" }),
+      video({ id: "v2", title: "Draft Video", published: false }),
+      video({
+        id: "v3",
+        title: "Invalid URL",
+        youtubeUrl: "https://example.com/watch?v=dQw4w9WgXcQ",
+      }),
+    ];
 
-    render(<HomeVideoSection />);
-    await screen.findByText("Video One");
+    render(<VideoCarousel videos={videos} />);
+
+    expect(await screen.findByText("Published Video")).toBeInTheDocument();
+    expect(screen.queryByText("Draft Video")).not.toBeInTheDocument();
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument();
+    expect(document.querySelectorAll("[data-active]")).toHaveLength(1);
+  });
+
+  it("uses a stable fallback title when the CMS title is empty", async () => {
+    render(
+      <VideoCarousel
+        videos={[video({ id: "v1", title: "   ", youtubeUrl: WATCH_URL })]}
+      />,
+    );
+
+    expect(await screen.findByText("titleFallback")).toBeInTheDocument();
+  });
+
+  it("supports one and two record edge cases without duplicate cards", async () => {
+    const { rerender } = render(
+      <VideoCarousel videos={[video({ id: "v1", title: "Only Video" })]} />,
+    );
+
+    expect(await screen.findByText("Only Video")).toBeInTheDocument();
+    expect(document.querySelectorAll("[data-active]")).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "previousVideo" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "nextVideo" })).toBeDisabled();
+
+    rerender(
+      <VideoCarousel
+        videos={[
+          video({ id: "v1", title: "First Video" }),
+          video({
+            id: "v2",
+            title: "Second Video",
+            youtubeUrl: "https://youtu.be/abcdefghijk",
+          }),
+        ]}
+      />,
+    );
+
+    expect(await screen.findByText("Second Video")).toBeInTheDocument();
+    expect(document.querySelectorAll("[data-active]")).toHaveLength(2);
+    expect(screen.getAllByText("First Video")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "nextVideo" }));
+    expect(activeTitle()).toContain("Second Video");
+  });
+
+  it("synchronizes arrow navigation, wrapping, and pagination indicators", async () => {
+    const videos = [
+      video({ id: "v1", title: "Video One", displayOrder: 0 }),
+      video({
+        id: "v2",
+        title: "Video Two",
+        displayOrder: 1,
+        youtubeUrl: "https://youtu.be/abcdefghijk",
+      }),
+      video({
+        id: "v3",
+        title: "Video Three",
+        displayOrder: 2,
+        youtubeUrl: "https://www.youtube.com/embed/lmnopqrstuv",
+      }),
+    ];
+
+    render(<VideoCarousel videos={videos} />);
+    expect(
+      within(middleCardByTitle("Video One")).getByText("Video One"),
+    ).toBeInTheDocument();
 
     const previous = screen.getByRole("button", { name: "previousVideo" });
     const next = screen.getByRole("button", { name: "nextVideo" });
-    expect(previous).toBeDisabled();
+    expect(previous).not.toBeDisabled();
     expect(activeTitle()).toContain("Video One");
 
     fireEvent.click(next);
     expect(activeTitle()).toContain("Video Two");
-    expect(previous).not.toBeDisabled();
+
+    fireEvent.click(previous);
+    expect(activeTitle()).toContain("Video One");
 
     fireEvent.click(screen.getByRole("button", { name: "goToVideo 3" }));
     expect(activeTitle()).toContain("Video Three");
-    expect(next).toBeDisabled();
+
+    fireEvent.click(next);
+    expect(activeTitle()).toContain("Video One");
   });
 
-  it("opens the YouTube player modal from a video card", async () => {
-    getPublicHomepageVideos.mockResolvedValue([
-      video({ id: "v1", title: "Video One", youtubeVideoId: "abc123" }),
-    ]);
+  it("centers an inactive side card without opening the modal", async () => {
+    const videos = [
+      video({ id: "v1", title: "Video One", displayOrder: 0 }),
+      video({
+        id: "v2",
+        title: "Video Two",
+        displayOrder: 1,
+        youtubeUrl: "https://youtu.be/abcdefghijk",
+      }),
+      video({
+        id: "v3",
+        title: "Video Three",
+        displayOrder: 2,
+        youtubeUrl: "https://www.youtube.com/embed/lmnopqrstuv",
+      }),
+    ];
 
-    render(<HomeVideoSection />);
+    render(<VideoCarousel videos={videos} />);
+    const sideVideoCard = middleCardByTitle("Video Two");
+    expect(within(sideVideoCard).getByText("Video Two")).toBeInTheDocument();
+
+    const sideCard = within(sideVideoCard)
+      .getByText("Video Two")
+      .closest("[data-active]");
+    expect(sideCard).not.toBeNull();
+    fireEvent.click(
+      within(sideCard as HTMLElement).getByRole("button", {
+        name: "watchVideo: Video Two",
+      }),
+    );
+
+    expect(activeTitle()).toContain("Video Two");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("walks the thumbnail waterfall from CMS image to maxres, hq, then branded fallback", async () => {
+    const { container } = render(
+      <VideoCarousel
+        videos={[
+          video({
+            id: "v1",
+            title: "Waterfall Video",
+            thumbnailUrl: "https://example.com/broken-thumbnail.jpg",
+          }),
+        ]}
+      />,
+    );
+
+    expect(container.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://example.com/broken-thumbnail.jpg",
+    );
+
+    fireEvent.error(container.querySelector("img")!);
+    await waitFor(() =>
+      expect(container.querySelector("img")).toHaveAttribute(
+        "src",
+        "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+      ),
+    );
+
+    fireEvent.error(container.querySelector("img")!);
+    await waitFor(() =>
+      expect(container.querySelector("img")).toHaveAttribute(
+        "src",
+        "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      ),
+    );
+
+    fireEvent.error(container.querySelector("img")!);
+    await waitFor(() => expect(container.querySelector("img")).toBeNull());
+    expect(
+      screen.getByText("RAMS Laboratory", { exact: true }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the YouTube player from the active card and closes it", async () => {
+    render(
+      <VideoCarousel
+        videos={[
+          video({
+            id: "v1",
+            title: "Video One",
+            youtubeUrl: "https://www.youtube.com/watch?v=abc123def45",
+          }),
+        ]}
+      />,
+    );
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "playVideo: Video One" }),
+      await screen.findByRole("button", {
+        name: "watchVideo: Video One",
+      }),
     );
 
     const dialog = screen.getByRole("dialog", { name: "Video One" });
     const iframe = dialog.querySelector("iframe");
     expect(iframe?.getAttribute("src")).toContain(
-      "youtube-nocookie.com/embed/abc123",
+      "youtube-nocookie.com/embed/abc123def45",
     );
     expect(iframe?.getAttribute("src")).toContain("autoplay=1");
 
     fireEvent.click(within(dialog).getByRole("button", { name: "closeVideo" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("shows a graceful error state when videos cannot load", async () => {
-    getPublicHomepageVideos.mockRejectedValue(new Error("failed"));
-
-    render(<HomeVideoSection />);
-
-    expect(await screen.findByText("error")).toBeInTheDocument();
   });
 });

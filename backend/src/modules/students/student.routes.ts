@@ -12,18 +12,8 @@ import {
 
 const router = Router();
 
-router.get(
-  "/",
-  authenticate,
-  requireRole("ADMIN"),
-  getStudentListController,
-);
-router.get(
-  "/:id",
-  authenticate,
-  requireRole("ADMIN"),
-  getStudentController,
-);
+router.get("/", authenticate, requireRole("ADMIN"), getStudentListController);
+router.get("/:id", authenticate, requireRole("ADMIN"), getStudentController);
 router.post("/", authenticate, requireRole("ADMIN"), createStudentController);
 router.patch(
   "/:id",

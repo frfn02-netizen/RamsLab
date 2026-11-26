@@ -6,7 +6,6 @@ const PRIVATE_PREFIXES = [
   "/api",
   "/dashboard",
   "/meetings",
-  "/schedule",
   "/admin",
   "/login",
   "/forgot-password",
@@ -25,6 +24,7 @@ const PRIVATE_ALUMNI_PATHS = [
 
 const RAMS_LAB_PREFIX = "/rams-lab";
 const BASE_PATH = process.env.BASE_PATH || "";
+const AUTH_COOKIE_NAME = "rams_access_token";
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -32,12 +32,21 @@ function hasPrefix(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
-// With `trailingSlash: true` (used by the /rams-lab deployment) Next.js hands
-// the proxy "/alumni/register/", which must still match "/alumni/register".
 function stripTrailingSlash(pathname: string) {
   return pathname.length > 1 && pathname.endsWith("/")
     ? pathname.slice(0, -1)
     : pathname;
+}
+
+function isMeetingsPath(pathname: string) {
+  return (
+    hasPrefix(pathname, "/meetings") ||
+    /^\/(en|id)\/meetings(?:\/|$)/.test(pathname)
+  );
+}
+
+function meetingsCallbackPath(pathname: string) {
+  return pathname.replace(/^\/(en|id)(?=\/meetings(?:\/|$))/, "");
 }
 
 function rewriteRamsLab(request: NextRequest) {
@@ -71,24 +80,35 @@ function rewriteRamsLab(request: NextRequest) {
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const normalizedPathname = stripTrailingSlash(pathname);
-
-  /*
-   * When Next.js is built with:
-   *
-   *   BASE_PATH=/rams-lab
-   *
-   * Next.js natively owns the /rams-lab prefix.
-   *
-   * Do NOT manually rewrite /rams-lab -> /en here.
-   */
   const isNativeRamsLabMode = BASE_PATH === RAMS_LAB_PREFIX;
 
   if (!isNativeRamsLabMode && hasPrefix(pathname, RAMS_LAB_PREFIX)) {
     return rewriteRamsLab(request);
   }
 
+  if (isMeetingsPath(pathname) && !request.cookies.has(AUTH_COOKIE_NAME)) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.search = `?callbackUrl=${encodeURIComponent(
+      `${meetingsCallbackPath(pathname)}${request.nextUrl.search}`,
+    )}`;
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (/^\/(en|id)\/meetings(?:\/|$)/.test(pathname)) {
+    const meetingsUrl = request.nextUrl.clone();
+    meetingsUrl.pathname = meetingsCallbackPath(pathname);
+    const response = NextResponse.rewrite(meetingsUrl);
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
+
   if (PRIVATE_PREFIXES.some((prefix) => hasPrefix(pathname, prefix))) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    if (isMeetingsPath(pathname)) {
+      response.headers.set("Cache-Control", "private, no-store");
+    }
+    return response;
   }
 
   if (PRIVATE_ALUMNI_PATHS.includes(normalizedPathname)) {

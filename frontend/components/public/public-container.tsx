@@ -9,7 +9,7 @@ export default function PublicContainer({
 }) {
   return (
     <div
-      className={`mx-auto w-full max-w-[1240px] px-5 sm:px-8 lg:px-10 ${className}`}
+      className={`public-shell px-5 sm:px-8 lg:px-10 min-[1920px]:px-14 ${className}`}
     >
       {children}
     </div>

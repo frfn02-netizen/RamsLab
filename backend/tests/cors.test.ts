@@ -36,9 +36,7 @@ describe("CORS preflight", () => {
         FRONTEND_ORIGIN,
       );
       expect(response.headers["access-control-allow-origin"]).not.toBe("*");
-      expect(response.headers["access-control-allow-credentials"]).toBe(
-        "true",
-      );
+      expect(response.headers["access-control-allow-credentials"]).toBe("true");
       expect(
         splitHeader(response.headers["access-control-allow-methods"]),
       ).toEqual(expect.arrayContaining(["post", "options"]));

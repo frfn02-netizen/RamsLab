@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import PublicHome from "@/components/public/home";
 import { localizedMetadata } from "@/lib/i18n/metadata";
+import { getHomePageData } from "@/lib/public/server-data";
 import type { Locale } from "@/i18n/routing";
+
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -24,6 +27,8 @@ export async function generateMetadata({
   });
 }
 
-export default function HomePage() {
-  return <PublicHome />;
+export default async function HomePage() {
+  const data = await getHomePageData();
+
+  return <PublicHome {...data} />;
 }

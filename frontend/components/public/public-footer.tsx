@@ -1,13 +1,13 @@
-"use client";
-
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
+
 import { Link } from "@/i18n/navigation";
-import { getPublicSiteContent } from "@/lib/api/modules";
 import { assetPath } from "@/lib/asset-path";
 import type { FooterContent } from "@/types/site-content";
 import PublicContainer from "./public-container";
+
+const RAMS_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4cTDB4Ng2qMJ71nr6";
+const FALLBACK_EMAIL = "jtsp@its.ac.id";
 
 const socialLinks = [
   {
@@ -71,35 +71,30 @@ const navigation = [
   ["publicService", "/public-service"],
   ["contactUs", "/contact"],
 ] as const;
-const RAMS_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4cTDB4Ng2qMJ71nr6";
 
-export default function PublicFooter() {
-  const locale = useLocale() === "id" ? "id" : "en";
-  const t = useTranslations("footer");
-  const nav = useTranslations("nav");
-  const brand = useTranslations("brand");
-  const common = useTranslations("common");
-  const [content, setContent] = useState<FooterContent | null>(null);
-  const [error, setError] = useState(false);
-  useEffect(() => {
-    getPublicSiteContent("footer")
-      .then(setContent)
-      .catch(() => setError(true));
-  }, []);
+export default async function PublicFooter({
+  content,
+}: {
+  content: FooterContent | null;
+}) {
+  const locale = (await getLocale()) === "id" ? "id" : "en";
+  const t = await getTranslations({ locale, namespace: "footer" });
+  const nav = await getTranslations({ locale, namespace: "nav" });
+  const brand = await getTranslations({ locale, namespace: "brand" });
+
   const localized = (value: { en: string; id: string }) => value[locale];
-
-  const fallbackDescription = t("description");
-  const footerDescription = content
+  const description = content
     ? localized(content.description)
-    : error
-      ? common("requestUnavailable")
-      : common("loading");
-  const footerCopyright = content
-    ? localized(content.copyright)
-    : t("copyright");
-  const footerInstitution = content
+    : t("description");
+  const email = content ? localized(content.email) : FALLBACK_EMAIL;
+  const addressLines = content
+    ? content.addressLines.map(localized)
+    : [t("address1"), t("address2"), t("address3"), t("address4")];
+  const socialText = content ? localized(content.socialText) : t("instagram");
+  const copyright = content ? localized(content.copyright) : t("copyright");
+  const institution = content
     ? localized(content.institution)
-    : brand("institution");
+    : t("institution");
 
   return (
     <footer className="rams-footer relative overflow-hidden bg-[var(--navy)] text-white">
@@ -107,7 +102,7 @@ export default function PublicFooter() {
         className="rams-footer-grid pointer-events-none absolute inset-0"
         aria-hidden="true"
       />
-      <PublicContainer className="relative py-16 sm:py-20 lg:py-24">
+      <PublicContainer className="relative py-16 sm:py-20 lg:py-24 min-[2000px]:py-28">
         <section
           className="rams-footer-closing border-b border-white/15 pb-14 sm:pb-16"
           aria-labelledby="footer-closing-title"
@@ -123,9 +118,9 @@ export default function PublicFooter() {
           </div>
           <h2
             id="footer-closing-title"
-            className="mt-7 max-w-4xl font-display text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-5xl lg:text-6xl"
+            className="public-footer-title mt-7 max-w-4xl text-white"
           >
-            {fallbackDescription}
+            {description}
           </h2>
         </section>
 
@@ -158,7 +153,7 @@ export default function PublicFooter() {
               aria-hidden="true"
             />
             <p className="mt-6 text-sm leading-7 text-white/65">
-              {footerDescription}
+              {description}
             </p>
           </div>
 
@@ -179,41 +174,27 @@ export default function PublicFooter() {
           <div>
             <p className="rams-footer-label">{t("contact")}</p>
             <div className="mt-5 grid gap-4 text-sm text-white/65">
-              {content ? (
-                <a
-                  href={`mailto:${localized(content.email)}`}
-                  className="rams-footer-link w-fit font-medium"
-                >
-                  {localized(content.email)}
-                </a>
-              ) : (
-                <span>{footerDescription}</span>
-              )}
+              <a
+                href={`mailto:${email}`}
+                className="rams-footer-link w-fit max-w-full break-words font-medium"
+              >
+                {email}
+              </a>
               <address className="not-italic leading-7">
-                {content ? (
-                  <a
-                    href={RAMS_GOOGLE_MAPS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block underline-offset-4 transition-colors hover:text-[var(--rams-red)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
-                  >
-                    {content.addressLines.map((line) => (
-                      <span key={line.en} className="block">
-                        {localized(line)}
-                      </span>
-                    ))}
-                  </a>
-                ) : error ? (
-                  common("requestUnavailable")
-                ) : (
-                  common("loading")
-                )}
+                <a
+                  href={RAMS_GOOGLE_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block underline-offset-4 transition-colors hover:text-[var(--rams-red)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--rams-red)]"
+                >
+                  {addressLines.map((line, index) => (
+                    <span key={`${line}-${index}`} className="block">
+                      {line}
+                    </span>
+                  ))}
+                </a>
               </address>
-              {content && (
-                <p className="max-w-xs leading-6 text-white/45">
-                  {localized(content.socialText)}
-                </p>
-              )}
+              <p className="max-w-xs leading-6 text-white/45">{socialText}</p>
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <span className="text-xs uppercase tracking-[0.12em] text-white/45">
                   {t("findUs")}
@@ -243,9 +224,9 @@ export default function PublicFooter() {
 
         <div className="flex flex-col gap-4 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <span>
-            © {new Date().getFullYear()} {footerCopyright}
+            © {new Date().getFullYear()} {copyright}
           </span>
-          <span className="lg:text-center">{footerInstitution}</span>
+          <span className="lg:text-center">{institution}</span>
         </div>
       </PublicContainer>
     </footer>

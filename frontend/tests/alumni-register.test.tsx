@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import AlumniRegisterPage from "@/app/alumni/register/page";
+import AlumniRegisterPage from "@/app/(internal)/alumni/register/page";
 
 const { replace, register } = vi.hoisted(() => ({
   replace: vi.fn(),

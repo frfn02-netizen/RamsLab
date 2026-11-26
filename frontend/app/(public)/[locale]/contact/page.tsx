@@ -11,7 +11,7 @@ import { getPublicSiteContent } from "@/lib/api/modules";
 import { localizedMetadata } from "@/lib/i18n/metadata";
 import type { Locale } from "@/i18n/routing";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const RAMS_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4cTDB4Ng2qMJ71nr6";
 
@@ -64,7 +64,9 @@ export default async function ContactPage({
   let content;
 
   try {
-    content = await getPublicSiteContent("contact");
+    content = await getPublicSiteContent("contact", {
+      next: { revalidate: 300 },
+    });
   } catch {
     return (
       <section className="bg-white py-20">
@@ -99,15 +101,15 @@ export default async function ContactPage({
               <span className="text-white">{nav("contact")}</span>
             </nav>
 
-            <p className="mt-10 text-[0.75rem] font-bold uppercase tracking-[0.1em] text-[var(--rams-red)]">
+            <p className="mt-10 text-[0.75rem] font-bold uppercase tracking-[0.1em] text-[var(--rams-red-on-dark)]">
               {localized(content.hero.eyebrow)}
             </p>
 
-            <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-[-0.02em] sm:text-5xl">
+            <h1 className="public-page-title mt-4">
               {localized(content.hero.title)}
             </h1>
 
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/70">
+            <p className="public-lead mt-5 max-w-2xl text-white/75">
               {localized(content.hero.description)}
             </p>
           </div>
@@ -121,7 +123,7 @@ export default async function ContactPage({
             className="grid items-start gap-10 lg:grid-cols-[3fr_2fr] lg:gap-16"
             stagger={120}
           >
-            <ContactForm />
+            <ContactForm className="w-full max-w-[56rem]" />
 
             <aside className="space-y-10">
               <div className="border border-[#D9E0E6] bg-white">

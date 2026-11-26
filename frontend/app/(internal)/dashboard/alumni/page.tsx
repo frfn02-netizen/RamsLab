@@ -457,11 +457,10 @@ export default function AlumniPage() {
                         focus-visible:ring-2 
                         focus-visible:ring-[var(--rams-red)] 
                         focus-visible:ring-offset-2 ${
-                          
-                        active
-                          ? "bg-[var(--rams-red)] text-white"
-                          : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
-                      }`}
+                          active
+                            ? "bg-[var(--rams-red)] text-white"
+                            : "border border-black/10 bg-white text-[var(--rams-charcoal)] hover:bg-[var(--rams-gray-light)]"
+                        }`}
                     >
                       {option.label}
                     </button>

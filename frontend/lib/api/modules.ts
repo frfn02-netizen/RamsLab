@@ -1,7 +1,14 @@
-import { apiRequest, apiRequestWithMeta, apiUrl } from "./client";
+import {
+  apiRequest,
+  apiRequestWithMeta,
+  apiUrl,
+  type ApiRequestOptions,
+} from "./client";
+import { ApiError } from "./errors";
 import type {
   Dosen,
-  DosenInput,
+  DosenCreateInput,
+  DosenCreationResult,
   DosenUpdateInput,
   Partner,
   PartnerInput,
@@ -50,7 +57,9 @@ import type {
   HomepageVideoUpdateInput,
   PublicHomepageVideo,
 } from "@/types/modules";
-import type { AdminPasswordResetResult, ManagedAccount } from "@/types/auth";
+import type {
+  AdminPasswordResetResult,
+} from "@/types/auth";
 import type {
   SiteContentAdminEnvelope,
   SiteContentKey,
@@ -65,18 +74,40 @@ import type {
 export const getDosenList = () => apiRequest<Dosen[]>("/dosen");
 export const getPublicDosenList = () =>
   apiRequest<PublicPerson[]>("/public/dosen");
-export const getPublicPeopleList = () =>
-  apiRequest<PublicPeopleResponse>("/public/people");
+export const getPublicPeopleList = (options?: ApiRequestOptions) =>
+  apiRequest<PublicPeopleResponse>("/public/people", options);
 export const getPublicDosenById = (id: string) =>
   apiRequest<PublicPerson>(`/public/people/${encodeURIComponent(id)}`);
-export const getPublicAlumniList = () =>
-  apiRequest<PublicAlumniResponse>("/public/alumni");
+export const getPublicAlumniList = (options?: ApiRequestOptions) =>
+  apiRequest<PublicAlumniResponse>("/public/alumni", options);
 export const getPublicAlumniById = (id: string) =>
   apiRequest<PublicPerson>(`/public/alumni/${encodeURIComponent(id)}`);
 export const getDosenById = (id: string) =>
   apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`);
-export const createDosen = (input: DosenInput) =>
-  apiRequest<Dosen>("/dosen", { method: "POST", body: JSON.stringify(input) });
+export const createDosen = async (
+  input: DosenCreateInput,
+): Promise<DosenCreationResult> => {
+  const response = await apiRequestWithMeta<Dosen>("/dosen", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (!response.data) {
+    throw new ApiError("Server response did not contain data", 502);
+  }
+  return {
+    dosen: response.data,
+    notification: response.notification,
+    temporaryPassword: response.temporaryPassword,
+  };
+};
+export const setDosenAccountActive = (id: string, isActive: boolean) =>
+  apiRequest<{ isActive: boolean }>(
+    `/dosen/${encodeURIComponent(id)}/access`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ isActive }),
+    },
+  );
 export const updateDosen = (id: string, input: DosenUpdateInput) =>
   apiRequest<Dosen>(`/dosen/${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -94,15 +125,6 @@ export const deleteDosen = async (id: string) => {
     method: "DELETE",
   });
 };
-export const createDosenAccount = (input: {
-  email: string;
-  password?: string;
-}) =>
-  apiRequest<ManagedAccount>("/users/dosen", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-
 export const resetUserPassword = (userId: string) =>
   apiRequest<AdminPasswordResetResult>(
     `/users/${encodeURIComponent(userId)}/password-reset`,
@@ -198,6 +220,7 @@ export interface PublicationListResponse {
 
 export const getPublications = async (
   params: PublicationQuery = {},
+  options?: ApiRequestOptions,
 ): Promise<PublicationListResponse> => {
   const query = new URLSearchParams();
 
@@ -211,6 +234,7 @@ export const getPublications = async (
 
   const response = await apiRequestWithMeta<Publication[]>(
     `/publications${query.size ? `?${query}` : ""}`,
+    options,
   );
 
   return response as unknown as PublicationListResponse;
@@ -438,6 +462,7 @@ export type PublicProjectQuery = {
 
 export const getPublicServiceProjectsList = (
   params: PublicProjectQuery = {},
+  options?: ApiRequestOptions,
 ): Promise<PublicServiceProjectListResponse> => {
   const query = new URLSearchParams();
   if (params.search) query.set("search", params.search);
@@ -449,6 +474,7 @@ export const getPublicServiceProjectsList = (
   const qs = query.toString();
   return apiRequestWithMeta(
     `/public/public-service-projects${qs ? `?${qs}` : ""}`,
+    options,
   ) as unknown as Promise<PublicServiceProjectListResponse>;
 };
 
@@ -566,33 +592,39 @@ export const getPublicProjects = (options?: {
   );
 export const getPublicProject = (slug: string) =>
   apiRequest<Project>(`/public/projects/${encodeURIComponent(slug)}`);
-export const getPublicPartners = (type: PartnerType) =>
-  apiRequest<Partner[]>(`/public/partners/${type.toLowerCase()}`);
-export const getPublicHomepagePartners = () =>
-  apiRequest<Partner[]>("/public/partners/homepage");
+export const getPublicPartners = (
+  type: PartnerType,
+  options?: ApiRequestOptions,
+) => apiRequest<Partner[]>(`/public/partners/${type.toLowerCase()}`, options);
+export const getPublicHomepagePartners = (options?: ApiRequestOptions) =>
+  apiRequest<Partner[]>("/public/partners/homepage", options);
 export const getPublicExperts = () => apiRequest<Expert[]>("/public/experts");
 export const getPublicExpertById = (id: string) =>
   apiRequest<Expert>(`/public/experts/${encodeURIComponent(id)}`);
-export const getPublicResearch = () =>
-  apiRequest<PublicResearchArea[]>("/public/research");
+export const getPublicResearch = (options?: ApiRequestOptions) =>
+  apiRequest<PublicResearchArea[]>("/public/research", options);
 export const getPublicResearchArea = (slug: string) =>
   apiRequest<PublicResearchArea>(
     `/public/research/${encodeURIComponent(slug)}`,
   );
-export const getPublicResearchHighlights = () =>
-  apiRequest<ResearchHighlight[]>("/public/research-highlights");
-export const getPublicEvents = () =>
-  apiRequest<PublicEvent[]>("/public/events");
-export const getPublicServicePage = () =>
-  apiRequest<PublicServicePageData>("/public/public-services");
+export const getPublicResearchHighlights = (options?: ApiRequestOptions) =>
+  apiRequest<ResearchHighlight[]>("/public/research-highlights", options);
+export const getPublicEvents = (options?: ApiRequestOptions) =>
+  apiRequest<PublicEvent[]>("/public/events", options);
+export const getPublicServicePage = (options?: ApiRequestOptions) =>
+  apiRequest<PublicServicePageData>("/public/public-services", options);
 export const getPublicServiceDetail = (id: string) =>
   apiRequest<PublicServiceDetail>(
     `/public/public-services/${encodeURIComponent(id)}`,
   );
 
-export const getPublicSiteContent = <K extends SiteContentKey>(key: K) =>
+export const getPublicSiteContent = <K extends SiteContentKey>(
+  key: K,
+  options?: ApiRequestOptions,
+) =>
   apiRequest<SiteContentMap[K]>(
     `/public/site-content/${encodeURIComponent(key)}`,
+    options,
   );
 export const getAdminSiteContentList = () =>
   apiRequest<SiteContentAdminEnvelope[]>("/admin/site-content");
@@ -665,5 +697,5 @@ export const deleteVideo = async (id: string) => {
   });
 };
 
-export const getPublicHomepageVideos = () =>
-  apiRequest<PublicHomepageVideo[]>("/public/homepage-videos");
+export const getPublicHomepageVideos = (options?: ApiRequestOptions) =>
+  apiRequest<PublicHomepageVideo[]>("/public/homepage-videos", options);

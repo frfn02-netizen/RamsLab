@@ -62,7 +62,9 @@ describe("trust proxy configuration", () => {
 
   it("requires an explicit setting in production", () => {
     process.env.NODE_ENV = "production";
-    expect(() => getTrustProxySetting()).toThrow(/Production requires TRUST_PROXY/);
+    expect(() => getTrustProxySetting()).toThrow(
+      /Production requires TRUST_PROXY/,
+    );
     process.env.TRUST_PROXY = "1";
     expect(getTrustProxySetting()).toBe(1);
   });
