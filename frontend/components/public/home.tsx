@@ -96,24 +96,19 @@ export default async function PublicHome({
         />
       ) : null}
 
-      <section className="bg-white pt-14 pb-10 sm:pt-16 sm:pb-12 lg:pt-20 lg:pb-14 min-[2000px]:pt-28 min-[2000px]:pb-20">
+      <section className="bg-white pt-12 pb-8 sm:pt-14 sm:pb-10 lg:pt-16 lg:pb-12 min-[2000px]:pt-24 min-[2000px]:pb-16">
         <PublicContainer>
-          <RevealOnScroll className="grid gap-6 lg:grid-cols-12 lg:items-end">
-            <div className="lg:col-span-7">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-red-700">
-                {framework("eyebrow")}
-              </p>
-              <h2 className="public-section-title mt-3 text-[var(--navy)]">
-                {common("principlesTitle")}
-              </h2>
-            </div>
+          <RevealOnScroll className="grid gap-5 lg:grid-cols-12 lg:items-end">
+            <h2 className="public-section-title text-[var(--navy)] lg:col-span-7">
+              {common("principlesTitle")}
+            </h2>
             <p className="max-w-md text-sm leading-6 text-stone-600 lg:col-span-5 lg:justify-self-end lg:text-right">
               {framework("subtitle")}
             </p>
           </RevealOnScroll>
           {principles.length > 0 ? (
-            <RevealOnScroll className="mt-8 grid grid-cols-1 divide-y divide-stone-200 border-y border-stone-200 md:grid-cols-4 md:divide-x md:divide-y-0">
-              {principles.map((item, index) => {
+            <RevealOnScroll className="mt-6 grid grid-cols-1 divide-y divide-stone-200 border-y border-stone-200 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+              {principles.map((item) => {
                 const slug = principleSlugs[item.key];
                 const legacy = legacyPrincipleCopy[slug];
                 const title = localized(item.title);
@@ -128,51 +123,30 @@ export default async function PublicHome({
                     : description;
 
                 return (
-                  <Link
+                  <article
                     key={item.key}
-                    href="/research"
-                    className="group relative block overflow-hidden p-6 pb-20 transition-colors hover:bg-stone-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-700 lg:p-7 lg:pb-24"
+                    className="group flex items-center justify-between gap-3 p-4 transition-colors duration-200 hover:bg-stone-50/90 sm:p-5"
                   >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute -bottom-2 right-3 select-none font-bold text-7xl leading-none text-stone-200/70 transition-colors group-hover:text-red-700/15"
-                    >
-                      {item.key}
-                    </span>
-                    <div className="relative z-10">
-                      <div className="flex items-start justify-between gap-4">
-                        <span
-                          aria-hidden="true"
-                          className="font-mono text-xs font-semibold tracking-[0.18em] text-red-700"
-                        >
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <svg
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4 shrink-0 text-stone-500 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-red-700"
-                          aria-hidden="true"
-                        >
-                          <path d="M6.5 13.5 13.5 6.5M8 6.5h5.5V12" />
-                        </svg>
-                      </div>
-                      <h3 className="mt-8 font-display text-xl font-semibold tracking-tight text-stone-900 transition-colors group-hover:text-red-700">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-semibold text-stone-900">
                         {titleText}
                       </h3>
-                      <p className="mt-3 max-w-[30ch] text-sm leading-6 text-stone-600">
+                      <p className="mt-1 text-xs leading-relaxed text-stone-600">
                         {descriptionText}
                       </p>
                     </div>
-                  </Link>
+                    <span
+                      aria-hidden="true"
+                      className="shrink-0 select-none font-bold text-4xl leading-none tracking-tight text-stone-200 transition-colors duration-200 group-hover:text-red-700 sm:text-5xl"
+                    >
+                      {item.key}
+                    </span>
+                  </article>
                 );
               })}
             </RevealOnScroll>
           ) : (
-            <RevealOnScroll className="mt-8 border border-dashed border-[var(--border)] bg-white p-8">
+            <RevealOnScroll className="mt-6 border border-dashed border-[var(--border)] bg-white p-8">
               <p className="text-sm leading-6 text-[var(--gray)]">
                 {common("requestUnavailable")}
               </p>
@@ -239,7 +213,7 @@ export default async function PublicHome({
         </section>
       ) : null}
 
-      <section className="bg-white pt-10 pb-14 sm:pt-12 sm:pb-16 lg:pt-14 lg:pb-20 min-[2000px]:pt-20 min-[2000px]:pb-28">
+      <section className="bg-white pt-8 pb-14 sm:pt-10 sm:pb-16 lg:pt-12 lg:pb-20 min-[2000px]:pt-16 min-[2000px]:pb-28">
         <PublicContainer>
           <RevealOnScroll className="flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-2xl">
