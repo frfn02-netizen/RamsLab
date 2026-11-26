@@ -1,12 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { assetPath } from "@/lib/asset-path";
 import type { PublicEvent } from "@/types/modules";
-import PublicContainer from "../public-container";
-import PageHero from "../page-hero";
 
 export default function PublicEventsPage({
   initialEvents,
@@ -18,142 +16,177 @@ export default function PublicEventsPage({
   const common = useTranslations("common");
   const events = initialEvents;
   const [isVideoMuted, setIsVideoMuted] = useState(true);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const localized = (value?: { en: string; id: string }) =>
     value?.[locale] || value?.en || value?.id || "";
 
-  const playVideo = () => {
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = isVideoMuted;
-    void video.play();
-    setIsVideoPlaying(true);
+    video.defaultMuted = true;
+    video.muted = true;
+
+    const prefersReducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) {
+      video.autoplay = false;
+      video.pause();
+      return;
+    }
+
+    void video.play().catch(() => {});
+  }, []);
+
+  const toggleMuted = () => {
+    const video = videoRef.current;
+    const nextMuted = !isVideoMuted;
+    setIsVideoMuted(nextMuted);
+    if (video) {
+      video.muted = nextMuted;
+      video.defaultMuted = nextMuted;
+    }
   };
 
   return (
-    <div>
-      <PageHero eyebrow="" title={t("title")} description={t("description")} />
-      <PublicContainer className="max-w-4xl py-16 sm:py-20 lg:py-24">
-        <div className="relative mb-10 aspect-video w-full overflow-hidden border border-[var(--border)] bg-[var(--rams-gray-light)] shadow-[0_8px_24px_rgba(11,32,56,0.05)]">
+    <div className="bg-stone-50">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <header className="grid grid-cols-1 gap-6 border-b border-stone-200 py-8 lg:grid-cols-12 lg:items-end lg:py-10">
+          <div className="lg:col-span-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-red-700">
+              {t("eyebrow")}
+            </p>
+            <h1 className="mt-2 text-3xl font-bold leading-[1.12] tracking-tight text-stone-900 sm:text-4xl">
+              {t("title")}
+            </h1>
+          </div>
+          <div className="lg:col-span-6">
+            <p className="max-w-xl text-sm leading-relaxed text-stone-600 sm:text-base lg:ml-auto">
+              {t("description")}
+            </p>
+          </div>
+        </header>
+
+        <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-stone-200 bg-stone-950 lg:aspect-[21/9]">
           <video
             ref={videoRef}
             className="h-full w-full object-cover"
             src={assetPath("/assets/0722.mp4")}
             poster={assetPath("/assets/engineers.jpg")}
-            muted={isVideoMuted}
+            autoPlay
+            muted
             loop
             playsInline
-            preload="none"
-            controls={isVideoPlaying}
-            onPlay={() => setIsVideoPlaying(true)}
+            preload="metadata"
           />
-          {!isVideoPlaying && (
-            <button
-              type="button"
-              onClick={playVideo}
-              aria-label="Play video"
-              className="absolute inset-0 flex items-center justify-center bg-[var(--navy)]/25 text-white transition-colors hover:bg-[var(--navy)]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-            >
-              <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/60 bg-[var(--navy)]/80 shadow-lg">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="ml-1 h-7 w-7"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </span>
-            </button>
-          )}
-          {isVideoPlaying && (
-            <button
-              type="button"
-              onClick={() => setIsVideoMuted((muted) => !muted)}
-              aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
-              className="absolute bottom-3 right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-[var(--navy)]/85 text-white shadow-sm transition-colors hover:bg-[var(--navy)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              {isVideoMuted ? (
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-                  <path d="m16 9 5 5m0-5-5 5" />
-                </svg>
-              ) : (
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-                  <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-                  <path d="M18 6a8 8 0 0 1 0 12" />
-                </svg>
-              )}
-            </button>
-          )}
-        </div>
-        {events.length === 0 ? (
-          <p className="text-sm font-semibold text-[var(--rams-gray)]">
-            {common("noPublishedRecords")}
-          </p>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {events.map((event) => (
-              <article
-                key={event.id}
-                className="border border-[var(--border)] bg-white p-4 shadow-[0_8px_24px_rgba(11,32,56,0.05)]"
+          <button
+            type="button"
+            onClick={toggleMuted}
+            aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
+            className="absolute bottom-3 right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-stone-950/80 text-white shadow-sm transition-colors hover:bg-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            {isVideoMuted ? (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                {event.image?.url && (
-                  <div className="relative mb-4 aspect-[16/9] overflow-hidden bg-[var(--rams-gray-light)]">
-                    <Image
-                      src={event.image.url}
-                      alt={localized(event.image.alt) || localized(event.title)}
-                      fill
-                      sizes="(min-width: 768px) 50vw, 100vw"
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--rams-red)]">
-                  {event.eventDate && (
-                    <time dateTime={event.eventDate}>
-                      {new Intl.DateTimeFormat(locale, {
-                        dateStyle: "medium",
-                      }).format(new Date(event.eventDate))}
-                    </time>
-                  )}
-                  {localized(event.location) && (
-                    <span>{localized(event.location)}</span>
-                  )}
-                </div>
-                <h2 className="mt-2 text-xl font-bold text-[var(--navy)]">
-                  {localized(event.title)}
-                </h2>
-                {localized(event.description) && (
-                  <p className="mt-2 text-sm leading-6 text-[var(--rams-gray)]">
-                    {localized(event.description)}
-                  </p>
-                )}
-              </article>
-            ))}
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                <path d="m16 9 5 5m0-5-5 5" />
+              </svg>
+            ) : (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path d="M18 6a8 8 0 0 1 0 12" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {events.length === 0 ? (
+          <div className="mt-10 pb-16">
+            <p className="rounded-xl border border-dashed border-stone-200 bg-white px-6 py-12 text-center text-sm font-semibold text-stone-500">
+              {common("noPublishedRecords")}
+            </p>
           </div>
+        ) : (
+          <section className="mt-10 pb-16" aria-label={t("title")}>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => {
+                const title = localized(event.title);
+                const location = localized(event.location);
+                const dateLabel = event.eventDate
+                  ? new Intl.DateTimeFormat(locale, {
+                      dateStyle: "medium",
+                    }).format(new Date(event.eventDate))
+                  : "";
+                const description = localized(event.description);
+
+                return (
+                  <article
+                    key={event.id}
+                    className="group flex flex-col overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:border-stone-300 hover:shadow-sm"
+                  >
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-stone-100">
+                      {event.image?.url ? (
+                        <Image
+                          src={event.image.url}
+                          alt={localized(event.image.alt) || title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover"
+                        />
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-4">
+                      {(dateLabel || location) && (
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-red-700">
+                          {dateLabel ? (
+                            <time dateTime={event.eventDate ?? undefined}>
+                              {dateLabel}
+                            </time>
+                          ) : null}
+                          {dateLabel && location ? (
+                            <span aria-hidden="true"> · </span>
+                          ) : null}
+                          {location ? <span>{location}</span> : null}
+                        </p>
+                      )}
+
+                      <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-snug text-stone-900 transition-colors group-hover:text-red-700">
+                        {title}
+                      </h2>
+
+                      {description ? (
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">
+                          {description}
+                        </p>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
         )}
-      </PublicContainer>
+      </div>
     </div>
   );
 }
