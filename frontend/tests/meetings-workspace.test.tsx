@@ -201,6 +201,29 @@ describe("meetings workspace shell", () => {
     );
   });
 
+  it("keeps DOSEN on the standalone /meetings workspace with its greeting", async () => {
+    render(
+      <MeetingsWorkspaceShell>
+        <MeetingsOverview />
+      </MeetingsWorkspaceShell>,
+    );
+
+    expect(
+      await screen.findByText(
+        /^Good (morning|afternoon|evening), Budi Santoso\.$/,
+      ),
+    ).toBeInTheDocument();
+
+    const hrefs = navLinks().map((anchor) => anchor.getAttribute("href"));
+    expect(new Set(hrefs)).toEqual(
+      new Set(["/meetings", "/meetings/calendar", "/meetings/mine"]),
+    );
+    expect(hrefs).not.toContain("/dashboard/meetings");
+    expect(
+      screen.getByRole("link", { name: /^Overview/ }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
   it("shows the dashboard exit only for administrators", () => {
     state.user = {
       id: "admin-1",

@@ -67,36 +67,6 @@ const nextConfig: NextConfig = {
         destination: "/:locale/meetings",
         permanent: true,
       },
-      {
-        source: "/meetings",
-        destination: "/dashboard/meetings",
-        permanent: true,
-      },
-      {
-        source: "/meetings/:path*",
-        destination: "/dashboard/meetings/:path*",
-        permanent: true,
-      },
-      {
-        source: "/en/meetings",
-        destination: "/dashboard/meetings",
-        permanent: true,
-      },
-      {
-        source: "/en/meetings/:path*",
-        destination: "/dashboard/meetings/:path*",
-        permanent: true,
-      },
-      {
-        source: "/id/meetings",
-        destination: "/dashboard/meetings",
-        permanent: true,
-      },
-      {
-        source: "/id/meetings/:path*",
-        destination: "/dashboard/meetings/:path*",
-        permanent: true,
-      },
     ];
   },
 
