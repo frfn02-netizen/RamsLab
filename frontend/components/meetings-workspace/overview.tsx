@@ -12,44 +12,23 @@ import { getMeetingAgenda, getMeetings } from "@/lib/api/meetings";
 import { assetPath } from "@/lib/asset-path";
 import { meetingGreeting } from "@/lib/meetings/greeting";
 import { meetingToCalendarEvent } from "@/lib/meetings/calendar-event";
-import {
-  buildMonthGrid,
-  dayKey,
-  formatMonthYear,
-  formatTime,
-  formatTimeRange,
-  type CalendarDay,
-} from "@/lib/meetings/calendar";
-import {
-  meetingModeAriaLabel,
-  meetingModeLabel,
-  type MeetingModeView,
-} from "@/lib/meetings/mode";
+import { formatTimeRange } from "@/lib/meetings/calendar";
+import { meetingModeLabel } from "@/lib/meetings/mode";
 import type { MeetingCalendarEvent } from "@/types/meetings";
 import { getMeetingStatus } from "@/lib/meetings/status";
 import { canCreateMeetings } from "@/lib/authz";
 
 type Summary = {
   upcoming: MeetingCalendarEvent[];
+  recent: MeetingCalendarEvent[];
   thisMonth: number;
-  agendaCount: number;
-  todayKey: string;
-  monthLabel: string;
-  monthDays: CalendarDay[];
-  meetingsByDay: Record<string, MeetingCalendarEvent[]>;
 };
 
 const EMPTY_SUMMARY: Summary = {
   upcoming: [],
+  recent: [],
   thisMonth: 0,
-  agendaCount: 0,
-  todayKey: "",
-  monthLabel: "",
-  monthDays: [],
-  meetingsByDay: {},
 };
-
-const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function formatMeetingDate(value: string) {
   return new Date(value).toLocaleDateString(undefined, {
@@ -62,26 +41,6 @@ function formatMeetingDate(value: string) {
 
 function meetingGroupLabel(meeting: MeetingCalendarEvent) {
   return meeting.createdBy?.displayName ?? "Lab agenda";
-}
-
-function ModeGlyph({ mode }: { mode: MeetingModeView | undefined }) {
-  const shape =
-    mode === undefined
-      ? "rounded-full border border-dashed border-current bg-transparent"
-      : mode === "ONLINE"
-        ? "rounded-full border border-current bg-transparent"
-        : mode === "OFFLINE"
-          ? "rounded-full bg-current"
-          : "rounded-[1px] bg-current";
-
-  return (
-    <span
-      className={`inline-block h-2 w-2 shrink-0 ${
-        mode ? "text-[var(--rams-red)]" : "text-[#B8B1A8]"
-      } ${shape}`}
-      aria-hidden="true"
-    />
-  );
 }
 
 function CalendarIcon({ className = "h-5 w-5" }: { className?: string }) {
@@ -184,10 +143,10 @@ export default function MeetingsOverview({
   basePath = "/meetings",
   source = "agenda",
   canCreateOverride,
-  intro = "Coordinate lab sessions, keep the monthly agenda in view, and follow the meetings on your agenda.",
+  intro = "Coordinate lab sessions, keep the agenda in view, and follow the meetings on your agenda.",
   mineLabel = "My Meetings",
   calendarCopy = "See the monthly agenda",
-  upcomingLabel = "Upcoming agenda",
+  upcomingLabel = "Upcoming meetings",
   emptyAgendaLabel = "Agenda clear",
 }: {
   basePath?: string;
@@ -228,42 +187,37 @@ export default function MeetingsOverview({
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
           const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-          const meetingsByDay: Record<string, MeetingCalendarEvent[]> = {};
-          for (const meeting of data) {
-            const key = dayKey(new Date(meeting.startAt));
-            const bucket = meetingsByDay[key];
-            if (bucket) bucket.push(meeting);
-            else meetingsByDay[key] = [meeting];
-          }
-          for (const bucket of Object.values(meetingsByDay)) {
-            bucket.sort(
+          const upcoming = data
+            .filter((meeting) => {
+              const status =
+                meeting.status ?? getMeetingStatus(meeting, current);
+              return status === "UPCOMING" || status === "ONGOING";
+            })
+            .sort(
               (a, b) =>
                 new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
             );
-          }
+
+          const recent = data
+            .filter((meeting) => {
+              const status =
+                meeting.status ?? getMeetingStatus(meeting, current);
+              return status === "PAST";
+            })
+            .sort(
+              (a, b) =>
+                new Date(b.startAt).getTime() - new Date(a.startAt).getTime(),
+            );
 
           setSummary({
-            upcoming: data
-              .filter((meeting) => {
-                const status =
-                  meeting.status ?? getMeetingStatus(meeting, current);
-                return status === "UPCOMING" || status === "ONGOING";
-              })
-              .sort(
-                (a, b) =>
-                  new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
-              ),
+            upcoming,
+            recent,
             thisMonth: data.filter((meeting) => {
               const start = new Date(meeting.startAt).getTime();
               return (
                 start >= monthStart.getTime() && start < monthEnd.getTime()
               );
             }).length,
-            agendaCount: data.length,
-            todayKey: dayKey(now),
-            monthLabel: formatMonthYear(now),
-            monthDays: buildMonthGrid(now.getFullYear(), now.getMonth()),
-            meetingsByDay,
           });
         })
         .catch((reason) => {
@@ -282,9 +236,6 @@ export default function MeetingsOverview({
 
   const [next, ...rest] = summary.upcoming;
   const agenda = rest;
-  const monthMeetingDays = summary.monthDays.filter(
-    (day) => day.inMonth && (summary.meetingsByDay[day.key]?.length ?? 0) > 0,
-  ).length;
 
   return (
     <div className="min-h-full bg-[#F8F6F3]">
@@ -517,25 +468,27 @@ export default function MeetingsOverview({
           </section>
         </div>
 
-        <div className="mt-6 grid gap-6 2xl:grid-cols-[minmax(0,1.35fr)_minmax(390px,0.95fr)]">
+        <div className="mt-6 grid gap-6 lg:grid-cols-12">
           <section
-            aria-labelledby="month-calendar-heading"
-            className="min-w-0 overflow-hidden rounded-xl border border-[#E4DFD8] bg-white shadow-[0_8px_20px_rgba(31,35,40,0.025)]"
+            aria-labelledby="upcoming-meetings-heading"
+            className="min-w-0 overflow-hidden rounded-xl border border-[#E4DFD8] bg-white shadow-[0_8px_20px_rgba(31,35,40,0.025)] lg:col-span-8"
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEEAE4] px-5 py-4 sm:px-6">
               <div className="flex items-center gap-3">
                 <span className="text-[var(--rams-red)]">
-                  <CalendarIcon className="h-6 w-6" />
+                  <ListIcon className="h-5 w-5" />
                 </span>
                 <h2
-                  id="month-calendar-heading"
+                  id="upcoming-meetings-heading"
                   className="font-display text-[1.12rem] font-semibold tracking-[-0.02em] text-[var(--rams-charcoal)]"
                 >
-                  {summary.monthLabel || "This month"}
+                  {upcomingLabel}
                 </h2>
-                <span className="text-[0.72rem] tabular-nums text-[#8A867D]">
-                  {loading ? "" : `${summary.thisMonth} scheduled`}
-                </span>
+                {!loading && agenda.length > 0 && (
+                  <span className="rounded-full bg-[#F3F1EC] px-2 py-0.5 text-[0.68rem] font-semibold tabular-nums text-[#6B6A64]">
+                    {agenda.length}
+                  </span>
+                )}
               </div>
               <Link
                 href={`${basePath}/calendar`}
@@ -546,222 +499,110 @@ export default function MeetingsOverview({
               </Link>
             </div>
 
-            <div className="grid grid-cols-7 border-b border-[#EEEAE4] bg-[#FBFAF8]">
-              {WEEKDAY_LABELS.map((label) => (
-                <div
-                  key={label}
-                  className="py-2.5 text-center text-[0.56rem] font-bold uppercase tracking-[0.12em] text-[#7D7972]"
-                >
-                  <span className="hidden sm:inline">{label}</span>
-                  <span className="sm:hidden">{label.slice(0, 1)}</span>
-                </div>
-              ))}
-            </div>
+            {loading ? (
+              <div className="space-y-3 px-5 py-5 sm:px-6">
+                <div className="h-16 rounded-lg bg-[#F5F0EB]" />
+                <div className="h-16 rounded-lg bg-[#F5F0EB]" />
+                <div className="h-16 rounded-lg bg-[#F5F0EB]" />
+              </div>
+            ) : agenda.length > 0 ? (
+              <div>
+                {agenda.slice(0, 6).map((meeting) => {
+                  const startsAt = new Date(meeting.startAt);
+                  const weekday = startsAt.toLocaleDateString(undefined, {
+                    weekday: "short",
+                  });
+                  const dayLabel = startsAt.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  });
 
-            <div className="grid grid-cols-7 gap-px bg-[#EEEAE4]">
-              {loading
-                ? Array.from({ length: 42 }).map((_, index) => (
-                    <div key={index} className="min-h-[5.4rem] bg-white" />
-                  ))
-                : summary.monthDays.map((day) => {
-                    const dayMeetings = summary.meetingsByDay[day.key] ?? [];
-                    const isToday = day.key === summary.todayKey;
-                    return (
-                      <div
-                        key={day.key}
-                        className={`min-h-[5.4rem] bg-white p-1.5 sm:min-h-[5.8rem] sm:p-2 ${
-                          day.inMonth ? "" : "bg-[#FBFAF8]"
-                        }`}
-                      >
+                  return (
+                    <Link
+                      key={meeting._id}
+                      href={`${basePath}/${meeting._id}`}
+                      className="group flex items-start gap-4 border-b border-[#EEEAE4] px-5 py-4 last:border-b-0 hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] sm:px-6"
+                    >
+                      <span className="flex w-16 shrink-0 flex-col items-center rounded-lg bg-[#FBFAF8] px-2 py-2 ring-1 ring-inset ring-[#EEEAE4]">
+                        <span className="text-[0.54rem] font-bold uppercase tracking-[0.12em] text-[#8A867D]">
+                          {weekday}
+                        </span>
+                        <span className="mt-0.5 font-display text-[1rem] font-semibold leading-none text-[var(--rams-charcoal)]">
+                          {dayLabel}
+                        </span>
+                      </span>
+                      <span className="min-w-0 flex-1 pt-0.5">
                         <span
-                          className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[0.66rem] font-semibold tabular-nums ${
-                            isToday
-                              ? "bg-[var(--rams-red)] text-white"
-                              : day.inMonth
-                                ? "text-[#4B4A45]"
-                                : "text-[#C9C3B8]"
+                          className={`block text-[0.86rem] font-semibold leading-5 ${
+                            meeting.involvesHighlightedUser
+                              ? "text-[var(--rams-red)]"
+                              : "text-[var(--rams-charcoal)]"
                           }`}
                         >
-                          {day.date.getDate()}
+                          {meeting.title}
                         </span>
-
-                        <div className="mt-1 space-y-1">
-                          {dayMeetings.slice(0, 2).map((meeting) => (
-                            <Link
-                              key={meeting._id}
-                              href={`${basePath}/${meeting._id}`}
-                              className="flex items-center gap-1 truncate rounded bg-[#F5F0EB] px-1.5 py-0.5 text-[0.55rem] font-medium leading-4 text-[#4B4A45] transition hover:bg-[#EDE4DA]"
-                            >
-                              {meeting.canViewDetails ? (
-                                <>
-                                  <ModeGlyph mode={meeting.mode} />
-                                  <span className="sr-only">
-                                    {meetingModeAriaLabel(meeting.mode)}{" "}
-                                  </span>
-                                </>
-                              ) : (
-                                <span
-                                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#B8B1A8]"
-                                  aria-hidden="true"
-                                />
+                        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.66rem] text-[#7D7972]">
+                          <span className="inline-flex items-center gap-1 font-medium tabular-nums text-[#5D5A55]">
+                            {formatTimeRange(meeting.startAt, meeting.endAt)}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <PeopleIcon className="h-3.5 w-3.5 shrink-0" />
+                            {meetingGroupLabel(meeting)}
+                          </span>
+                          {meeting.canViewDetails && (
+                            <>
+                              <MeetingModeBadge mode={meeting.mode} />
+                              {meeting.clientName?.trim() && (
+                                <span className="truncate">
+                                  {meeting.clientName}
+                                </span>
                               )}
-                              <span
-                                className={`truncate ${
-                                  meeting.involvesHighlightedUser
-                                    ? "text-[var(--rams-red)]"
-                                    : ""
-                                }`}
-                              >
-                                {formatTime(meeting.startAt)} {meeting.title}
-                              </span>
-                            </Link>
-                          ))}
-                          {dayMeetings.length > 2 && (
-                            <span className="block px-1 text-[0.56rem] text-[#A8A399]">
-                              +{dayMeetings.length - 2} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-            </div>
-
-            <div className="flex items-center justify-between px-5 py-3 text-[0.62rem] text-[#A8A399] sm:px-6">
-              <span className="inline-flex items-center gap-1.5">
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-[var(--rams-red)]"
-                  aria-hidden="true"
-                />
-                Scheduled meeting
-              </span>
-              <span className="tabular-nums">
-                {loading ? "" : `${summary.thisMonth} this month`}
-              </span>
-            </div>
-          </section>
-
-          <aside className="min-w-0 space-y-6" aria-label="Workspace shortcuts">
-            <section className="overflow-hidden rounded-xl border border-[#E4DFD8] bg-white shadow-[0_8px_20px_rgba(31,35,40,0.025)]">
-              <div className="flex items-center justify-between gap-3 border-b border-[#EEEAE4] px-5 py-4 sm:px-6">
-                <div className="flex items-center gap-3">
-                  <span className="text-[var(--rams-red)]">
-                    <ListIcon className="h-6 w-6" />
-                  </span>
-                  <h2 className="font-display text-[1.12rem] font-semibold tracking-[-0.02em] text-[var(--rams-charcoal)]">
-                    {upcomingLabel}
-                  </h2>
-                </div>
-                {canViewMine && (
-                  <Link
-                    href={`${basePath}/mine`}
-                    className="inline-flex items-center gap-1.5 text-[0.7rem] font-semibold text-[var(--rams-red)] underline-offset-4 transition hover:underline"
-                  >
-                    View all
-                    <ArrowIcon />
-                  </Link>
-                )}
-              </div>
-
-              {loading ? (
-                <div className="space-y-3 px-5 py-5 sm:px-6">
-                  <div className="h-14 rounded-md bg-[#F5F0EB]" />
-                  <div className="h-14 rounded-md bg-[#F5F0EB]" />
-                </div>
-              ) : agenda.length > 0 ? (
-                <div>
-                  {agenda.slice(0, 5).map((meeting) => {
-                    const startsAt = new Date(meeting.startAt);
-                    const weekday = startsAt.toLocaleDateString(undefined, {
-                      weekday: "short",
-                    });
-                    const dayLabel = startsAt.toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    });
-
-                    return (
-                      <Link
-                        key={meeting._id}
-                        href={`${basePath}/${meeting._id}`}
-                        className="group flex items-start gap-3.5 border-b border-[#EEEAE4] px-5 py-4 last:border-b-0 hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] sm:px-6"
-                      >
-                        <span className="flex w-16 shrink-0 flex-col items-center rounded-lg bg-[#FBFAF8] px-2 py-2 ring-1 ring-inset ring-[#EEEAE4]">
-                          <span className="text-[0.54rem] font-bold uppercase tracking-[0.12em] text-[#8A867D]">
-                            {weekday}
-                          </span>
-                          <span className="mt-0.5 font-display text-[1rem] font-semibold leading-none text-[var(--rams-charcoal)]">
-                            {dayLabel}
-                          </span>
-                          <span className="mt-1 text-[0.62rem] font-semibold tabular-nums text-[#6B6A64]">
-                            {formatTime(meeting.startAt)}
-                          </span>
-                        </span>
-                        <span className="min-w-0 flex-1 pt-0.5">
-                          <span
-                            className={`block text-[0.84rem] font-semibold leading-5 ${
-                              meeting.involvesHighlightedUser
-                                ? "text-[var(--rams-red)]"
-                                : "text-[var(--rams-charcoal)]"
-                            }`}
-                          >
-                            {meeting.title}
-                          </span>
-                          <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[0.65rem] text-[#7D7972]">
-                            <span className="inline-flex items-center gap-1">
-                              <PeopleIcon className="h-3.5 w-3.5 shrink-0" />
-                              {meetingGroupLabel(meeting)}
-                            </span>
-                            {meeting.canViewDetails && (
-                              <>
-                                <MeetingModeBadge mode={meeting.mode} />
-                                {meeting.clientName?.trim() && (
+                              {meeting.mode === "OFFLINE" &&
+                                meeting.location?.trim() && (
                                   <span className="truncate">
-                                    {meeting.clientName}
+                                    {meeting.location}
                                   </span>
                                 )}
-                                {meeting.mode === "OFFLINE" &&
-                                  meeting.location?.trim() && (
-                                    <span className="truncate">
-                                      {meeting.location}
-                                    </span>
-                                  )}
-                                <MeetingHighlightBadge
-                                  involvesHighlightedUser={
-                                    meeting.involvesHighlightedUser
-                                  }
-                                />
-                              </>
-                            )}
-                          </span>
+                              <MeetingHighlightBadge
+                                involvesHighlightedUser={
+                                  meeting.involvesHighlightedUser
+                                }
+                              />
+                            </>
+                          )}
                         </span>
-                        <span
-                          className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#A8A399] transition group-hover:bg-white group-hover:text-[var(--rams-red)]"
-                          aria-hidden="true"
-                        >
-                          <ArrowIcon className="h-4 w-4" />
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="px-5 py-7 sm:px-6">
-                  <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
-                    {next ? "No later meetings" : emptyAgendaLabel}
-                  </p>
-                  <p className="mt-1.5 text-[0.7rem] leading-5 text-[#6B6A64]">
-                    {next
-                      ? "The featured session is the only meeting ahead."
-                      : "Use the calendar to choose a date for the next session."}
-                  </p>
-                </div>
-              )}
-            </section>
+                      </span>
+                      <span
+                        className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#A8A399] transition group-hover:bg-white group-hover:text-[var(--rams-red)]"
+                        aria-hidden="true"
+                      >
+                        <ArrowIcon className="h-4 w-4" />
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="px-5 py-8 sm:px-6">
+                <p className="text-sm font-semibold text-[var(--rams-charcoal)]">
+                  {next ? "No later meetings" : emptyAgendaLabel}
+                </p>
+                <p className="mt-1.5 max-w-md text-[0.72rem] leading-5 text-[#6B6A64]">
+                  {next
+                    ? "The featured session is the only meeting ahead."
+                    : "Use the calendar to choose a date for the next session."}
+                </p>
+              </div>
+            )}
+          </section>
 
+          <aside
+            className="min-w-0 space-y-4 lg:col-span-4"
+            aria-label="Workspace shortcuts"
+          >
             <section
               aria-label="Quick access"
-              className={`grid gap-3 ${canViewMine ? "sm:grid-cols-2" : ""}`}
+              className={`grid gap-3 ${canViewMine ? "sm:grid-cols-2 lg:grid-cols-1" : ""}`}
             >
               <Link
                 href={`${basePath}/calendar`}
@@ -802,13 +643,76 @@ export default function MeetingsOverview({
                 </Link>
               )}
             </section>
-          </aside>
-        </div>
 
-        <div className="mt-5 text-right text-[0.62rem] text-[#A8A399]">
-          {loading
-            ? ""
-            : `${monthMeetingDays} active day${monthMeetingDays === 1 ? "" : "s"} this month`}
+            <section
+              aria-labelledby="recent-meetings-heading"
+              className="overflow-hidden rounded-xl border border-[#E4DFD8] bg-white shadow-[0_8px_20px_rgba(31,35,40,0.025)]"
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-[#EEEAE4] px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[#8A867D]">
+                    <CalendarIcon className="h-5 w-5" />
+                  </span>
+                  <h2
+                    id="recent-meetings-heading"
+                    className="font-display text-[1.02rem] font-semibold tracking-[-0.02em] text-[var(--rams-charcoal)]"
+                  >
+                    Recent meetings
+                  </h2>
+                </div>
+                {canViewMine && (
+                  <Link
+                    href={`${basePath}/mine`}
+                    className="inline-flex items-center gap-1 text-[0.68rem] font-semibold text-[var(--rams-red)] underline-offset-4 transition hover:underline"
+                  >
+                    View all
+                    <ArrowIcon className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="space-y-2 px-5 py-4">
+                  <div className="h-10 rounded-md bg-[#F5F0EB]" />
+                  <div className="h-10 rounded-md bg-[#F5F0EB]" />
+                </div>
+              ) : summary.recent.length > 0 ? (
+                <ul>
+                  {summary.recent.slice(0, 3).map((meeting) => (
+                    <li
+                      key={meeting._id}
+                      className="border-b border-[#EEEAE4] last:border-b-0"
+                    >
+                      <Link
+                        href={`${basePath}/${meeting._id}`}
+                        className="group flex items-center justify-between gap-3 px-5 py-3 transition hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)]"
+                      >
+                        <span className="min-w-0">
+                          <span
+                            className={`block truncate text-[0.78rem] font-semibold ${
+                              meeting.involvesHighlightedUser
+                                ? "text-[var(--rams-red)]"
+                                : "text-[var(--rams-charcoal)]"
+                            }`}
+                          >
+                            {meeting.title}
+                          </span>
+                          <span className="mt-0.5 block text-[0.64rem] text-[#8A867D]">
+                            {formatMeetingDate(meeting.startAt)}
+                          </span>
+                        </span>
+                        <ArrowIcon className="h-4 w-4 shrink-0 text-[#B8B1A8] transition group-hover:text-[var(--rams-red)]" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-5 py-5 text-[0.72rem] leading-5 text-[#6B6A64]">
+                  Past meetings will appear here once they wrap up.
+                </p>
+              )}
+            </section>
+          </aside>
         </div>
       </div>
     </div>

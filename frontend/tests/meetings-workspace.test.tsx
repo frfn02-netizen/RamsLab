@@ -534,10 +534,64 @@ describe("meetings workspace overview", () => {
     ).not.toBeInTheDocument();
 
     expect(screen.getByText("Design review")).toBeInTheDocument();
-    expect(screen.queryByText("Kickoff")).not.toBeInTheDocument();
+    const recent = screen.getByRole("region", { name: "Recent meetings" });
+    expect(within(recent).getByText("Kickoff")).toBeInTheDocument();
+    expect(within(recent).queryByText("Weekly sync")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open meeting" })).toHaveAttribute(
       "href",
       "/meetings/next",
+    );
+  });
+
+  it("replaces the monthly calendar grid with a structured agenda", async () => {
+    state.getMeetingAgenda.mockResolvedValue({
+      items: [
+        makeMeeting({
+          _id: "next",
+          title: "Weekly sync",
+          startAt: "2031-03-01T09:00:00.000Z",
+          endAt: "2031-03-01T10:00:00.000Z",
+        }),
+        makeMeeting({
+          _id: "later",
+          title: "Design review",
+          startAt: "2031-03-05T09:00:00.000Z",
+          endAt: "2031-03-05T10:00:00.000Z",
+        }),
+      ],
+      pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null },
+    });
+
+    render(<MeetingsOverview />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Upcoming meetings" }),
+    ).toBeInTheDocument();
+
+    expect(
+      document.querySelector('[aria-labelledby="month-calendar-heading"]'),
+    ).toBeNull();
+    expect(
+      screen.queryByText(/active days? this month/),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ scheduled$/)).not.toBeInTheDocument();
+
+    const upcoming = screen.getByRole("region", {
+      name: "Upcoming meetings",
+    });
+    expect(
+      await within(upcoming).findByRole("link", { name: /Design review/ }),
+    ).toHaveAttribute("href", "/meetings/later");
+    expect(
+      within(upcoming).getByRole("link", { name: /View full calendar/ }),
+    ).toHaveAttribute("href", "/meetings/calendar");
+
+    expect(
+      screen.getByRole("link", { name: "Open monthly calendar" }),
+    ).toHaveAttribute("href", "/meetings/calendar");
+    expect(screen.getByRole("link", { name: "My Meetings" })).toHaveAttribute(
+      "href",
+      "/meetings/mine",
     );
   });
 
