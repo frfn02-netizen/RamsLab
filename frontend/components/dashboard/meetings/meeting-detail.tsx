@@ -166,6 +166,24 @@ function picDisplayName(pic: MeetingUserSummary) {
   return pic.displayName?.trim() || pic.email;
 }
 
+/**
+ * The calendar endpoint lives at GET /api/meetings/calendar, so a request for
+ * a meeting id of "calendar" can resolve to that list payload. Validate the
+ * shape before rendering instead of calling array methods on a non-meeting.
+ */
+function isMeetingRecord(value: unknown): value is Meeting {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+
+  const candidate = value as Partial<Meeting>;
+  return (
+    typeof candidate._id === "string" &&
+    candidate._id.length > 0 &&
+    typeof candidate.title === "string" &&
+    typeof candidate.startAt === "string" &&
+    typeof candidate.endAt === "string"
+  );
+}
+
 export default function MeetingDetail({
   id,
   basePath = "/dashboard/meetings",
@@ -197,6 +215,11 @@ export default function MeetingDetail({
       getMeeting(id)
         .then((data) => {
           if (cancelled) return;
+          if (!isMeetingRecord(data)) {
+            setMeeting(null);
+            setError("Meeting not found");
+            return;
+          }
           setMeeting(data);
         })
         .catch((reason) => {
@@ -281,6 +304,16 @@ export default function MeetingDetail({
 
   const status = getMeetingStatus(meeting);
   const statusLabel = meetingStatusLabel(status);
+  const attachments = Array.isArray(meeting.attachments)
+    ? meeting.attachments
+    : [];
+  const participants = Array.isArray(meeting.participants)
+    ? meeting.participants
+    : [];
+  const pics = Array.isArray(meeting.pics) ? meeting.pics : [];
+  const additionalPics = Array.isArray(meeting.additionalPics)
+    ? meeting.additionalPics
+    : [];
   const canCancel =
     (meeting.canCancel ?? meeting.canEdit) &&
     status !== "PAST" &&
@@ -421,18 +454,18 @@ export default function MeetingDetail({
                     <h2 className="font-display text-[1.05rem] font-semibold text-[var(--rams-charcoal)]">
                       Attachments
                       <span className="ml-1 font-normal text-[#6B6A64]">
-                        ({meeting.attachments.length})
+                        ({attachments.length})
                       </span>
                     </h2>
                   </div>
                 </div>
-                {meeting.attachments.length === 0 ? (
+                {attachments.length === 0 ? (
                   <p className="mt-4 rounded-lg border border-dashed border-[#DCD6CE] px-4 py-5 text-sm text-[#6B6A64]">
                     No attachments were added to this meeting.
                   </p>
                 ) : (
                   <ul className="mt-4 space-y-2">
-                    {meeting.attachments.map((attachment) => (
+                    {attachments.map((attachment) => (
                       <li
                         key={attachment.id}
                         className="flex items-center gap-3 rounded-lg px-1 py-2"
@@ -491,17 +524,17 @@ export default function MeetingDetail({
                   <h2 className="font-display text-[1.05rem] font-semibold text-[var(--rams-charcoal)]">
                     Internal participants
                     <span className="ml-1 font-normal text-[#6B6A64]">
-                      ({meeting.participants.length})
+                      ({participants.length})
                     </span>
                   </h2>
                 </div>
-                {meeting.participants.length === 0 ? (
+                {participants.length === 0 ? (
                   <p className="mt-4 text-sm text-[#6B6A64]">
                     No participants were added.
                   </p>
                 ) : (
                   <ul className="mt-2 divide-y divide-stone-200">
-                    {meeting.participants.map((participant) => (
+                    {participants.map((participant) => (
                       <li
                         key={participant.id}
                         className="flex items-center gap-3 py-3"
@@ -669,7 +702,7 @@ export default function MeetingDetail({
                   People in charge
                 </h2>
               </div>
-              {meeting.primaryPic || meeting.pics?.length ? (
+              {meeting.primaryPic || pics.length ? (
                 <div className="mt-2 space-y-4">
                   {meeting.primaryPic && (
                     <div>
@@ -701,42 +734,41 @@ export default function MeetingDetail({
                       </div>
                     </div>
                   )}
-                  {meeting.additionalPics &&
-                    meeting.additionalPics.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
-                          Additional PICs
-                        </p>
-                        <ul className="mt-2 divide-y divide-stone-200">
-                          {meeting.additionalPics.map((pic) => (
-                            <li
-                              key={pic.id}
-                              className="flex items-center gap-3 py-3"
-                            >
-                              <Initials
-                                value={picDisplayName(pic)}
-                                className="h-9 w-9 shrink-0"
-                              />
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
-                                  {picDisplayName(pic)}
-                                </span>
-                                <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
-                                  {pic.email}
-                                </span>
+                  {additionalPics.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A867D]">
+                        Additional PICs
+                      </p>
+                      <ul className="mt-2 divide-y divide-stone-200">
+                        {additionalPics.map((pic) => (
+                          <li
+                            key={pic.id}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <Initials
+                              value={picDisplayName(pic)}
+                              className="h-9 w-9 shrink-0"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-semibold text-[var(--rams-charcoal)]">
+                                {picDisplayName(pic)}
                               </span>
-                              <Badge
-                                tone={
-                                  pic.role === "ADMIN" ? "red" : "neutral"
-                                }
-                              >
-                                {pic.role}
-                              </Badge>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                              <span className="mt-0.5 block truncate text-xs text-[#6B6A64]">
+                                {pic.email}
+                              </span>
+                            </span>
+                            <Badge
+                              tone={
+                                pic.role === "ADMIN" ? "red" : "neutral"
+                              }
+                            >
+                              {pic.role}
+                            </Badge>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="mt-4 text-sm text-[#6B6A64]">

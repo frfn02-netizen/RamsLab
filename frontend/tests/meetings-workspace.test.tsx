@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import MeetingsCalendarPage from "@/app/(internal)/meetings/calendar/page";
 import MeetingsMinePage from "@/app/(internal)/meetings/mine/page";
 import DashboardMeetingsPage from "@/app/(internal)/dashboard/meetings/page";
+import DashboardMeetingsCalendarPage from "@/app/(internal)/dashboard/meetings/calendar/page";
 import MeetingsOverview from "@/components/meetings-workspace/overview";
 import MyMeetings from "@/components/meetings-workspace/my-meetings";
 import MeetingsWorkspaceGuard from "@/components/meetings-workspace/workspace-guard";
@@ -38,6 +39,7 @@ const state = vi.hoisted(() => ({
   getMeetings: vi.fn(),
   getMeetingAgenda: vi.fn(),
   getMeetingCalendar: vi.fn(),
+  getMeeting: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -74,7 +76,7 @@ vi.mock("@/lib/api/meetings", () => ({
   getMeetings: state.getMeetings,
   getMeetingAgenda: state.getMeetingAgenda,
   getMeetingCalendar: state.getMeetingCalendar,
-  getMeeting: vi.fn(),
+  getMeeting: state.getMeeting,
   createMeeting: vi.fn(),
   updateMeeting: vi.fn(),
   deleteMeeting: vi.fn(),
@@ -868,6 +870,22 @@ describe("my meetings", () => {
   it("serves My Meetings at /meetings/mine", async () => {
     render(<MeetingsMinePage />);
     expect(await screen.findByText("No meetings yet")).toBeInTheDocument();
+  });
+
+  it("serves the dashboard meetings calendar without resolving it as a meeting id", async () => {
+    render(<DashboardMeetingsCalendarPage />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Calendar" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByLabelText("Month calendar")).toBeInTheDocument();
+    expect(state.getMeeting).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("link", { name: "Schedule meeting" }),
+    ).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/dashboard\/meetings\/new/),
+    );
   });
 
   it("keeps the dashboard meetings route wired to the existing page", async () => {

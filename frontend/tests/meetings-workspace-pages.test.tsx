@@ -1147,4 +1147,42 @@ describe("legacy dashboard meeting routes", () => {
       "/dashboard/meetings/m1/edit",
     );
   });
+
+  it("renders a meeting whose optional list fields are missing", async () => {
+    state.getMeeting.mockResolvedValue({
+      ...makeMeeting(),
+      attachments: undefined,
+      participants: undefined,
+    } as unknown as Meeting);
+
+    render(
+      await DashboardMeetingDetailPage({
+        params: Promise.resolve({ id: "m1" }),
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Weekly sync" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No attachments were added to this meeting."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No participants were added."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a not-found state when the API returns a calendar list for a meeting id", async () => {
+    state.getMeeting.mockResolvedValue([] as unknown as Meeting);
+
+    render(
+      await DashboardMeetingDetailPage({
+        params: Promise.resolve({ id: "calendar" }),
+      }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Meeting not found",
+    );
+  });
 });
