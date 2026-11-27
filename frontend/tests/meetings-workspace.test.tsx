@@ -541,6 +541,33 @@ describe("meetings workspace overview", () => {
     );
   });
 
+  it("shows two distinct summary metrics instead of duplicate counters", async () => {
+    state.getMeetingAgenda.mockResolvedValue({
+      items: [
+        makeMeeting({
+          _id: "past",
+          title: "Kickoff",
+          startAt: "2020-01-10T09:00:00.000Z",
+          endAt: "2020-01-10T10:00:00.000Z",
+        }),
+        makeMeeting({ _id: "next", title: "Weekly sync" }),
+      ],
+      pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null },
+    });
+
+    render(<MeetingsOverview />);
+
+    expect(await screen.findByText("Meetings this month")).toBeInTheDocument();
+    expect(screen.getByText("Still upcoming")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Scheduled this month"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("On the agenda")).not.toBeInTheDocument();
+
+    const summary = screen.getByLabelText("Meeting summary");
+    expect(within(summary).getAllByRole("article")).toHaveLength(2);
+  });
+
   it("renders a clear empty state when nothing is scheduled", async () => {
     render(<MeetingsOverview />);
 

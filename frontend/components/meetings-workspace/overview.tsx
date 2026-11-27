@@ -102,24 +102,6 @@ function CalendarIcon({ className = "h-5 w-5" }: { className?: string }) {
   );
 }
 
-function ClockIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 7.7v4.8l3.1 1.8" />
-    </svg>
-  );
-}
-
 function PeopleIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg
@@ -190,9 +172,12 @@ function ExternalIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
-function MetricIcon({ index }: { index: number }) {
-  if (index === 1) return <PeopleIcon className="h-6 w-6" />;
-  return <CalendarIcon className="h-6 w-6" />;
+function heroPlaceLabel(meeting: MeetingCalendarEvent) {
+  if (meeting.mode === "OFFLINE") {
+    return meeting.location?.trim() || "Offline";
+  }
+  if (meeting.mode === "ONLINE") return meetingModeLabel(meeting.mode);
+  return "Mode unavailable";
 }
 
 export default function MeetingsOverview({
@@ -202,7 +187,6 @@ export default function MeetingsOverview({
   intro = "Coordinate lab sessions, keep the monthly agenda in view, and follow the meetings on your agenda.",
   mineLabel = "My Meetings",
   calendarCopy = "See the monthly agenda",
-  agendaCountLabel = "On the agenda",
   upcomingLabel = "Upcoming agenda",
   emptyAgendaLabel = "Agenda clear",
 }: {
@@ -212,7 +196,6 @@ export default function MeetingsOverview({
   intro?: string;
   mineLabel?: string;
   calendarCopy?: string;
-  agendaCountLabel?: string;
   upcomingLabel?: string;
   emptyAgendaLabel?: string;
 }) {
@@ -305,13 +288,13 @@ export default function MeetingsOverview({
 
   return (
     <div className="min-h-full bg-[#F8F6F3]">
-      <section className="px-5 pb-5 pt-7 sm:px-7 lg:px-10 lg:pb-6 lg:pt-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <section className="px-5 pb-4 pt-6 sm:px-7 lg:px-10 lg:pb-5 lg:pt-7">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <h1 className="mt-2 font-display text-[2.15rem] font-semibold leading-[1.08] tracking-[-0.035em] text-[var(--rams-charcoal)] sm:text-[2.55rem]">
+            <h1 className="font-display text-[1.85rem] font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--rams-charcoal)] sm:text-[2.2rem]">
               {meetingGreeting(user?.fullName)}
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6B6A64]">
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#6B6A64]">
               {intro}
             </p>
           </div>
@@ -361,7 +344,7 @@ export default function MeetingsOverview({
             />
 
             {loading ? (
-              <div className="relative z-10 flex min-h-[13.5rem] flex-col justify-between px-5 py-6 sm:px-7 lg:px-8">
+              <div className="relative z-10 flex min-h-[13.5rem] flex-col justify-between px-5 py-5 sm:px-7 lg:px-8">
                 <div className="space-y-4">
                   <div className="h-3 w-28 rounded bg-white/15" />
                   <div className="h-9 max-w-md rounded bg-white/15" />
@@ -370,17 +353,17 @@ export default function MeetingsOverview({
                 <div className="h-10 w-44 rounded bg-white/10" />
               </div>
             ) : next ? (
-              <article className="relative z-10 flex min-h-[13.5rem] flex-col justify-between px-5 py-6 sm:px-7 lg:px-8">
+              <article className="relative z-10 flex min-h-[13.5rem] flex-col justify-between gap-5 px-5 py-5 sm:px-7 lg:px-8">
                 <div className="min-w-0">
                   <p
                     id="next-meeting-heading"
-                    className="flex items-center gap-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#F1B9BB]"
+                    className="flex items-center gap-2 text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#F1B9BB]"
                   >
-                    <CalendarIcon className="h-4 w-4 text-[var(--rams-red)]" />
+                    <CalendarIcon className="h-3.5 w-3.5 text-[var(--rams-red-on-dark)]" />
                     Next meeting
                   </p>
                   <h2
-                    className={`mt-2.5 max-w-3xl font-display text-[1.8rem] font-semibold leading-[1.08] tracking-[-0.025em] sm:text-[2.2rem] ${
+                    className={`mt-2 max-w-3xl font-display text-[1.7rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-[2rem] ${
                       next.involvesHighlightedUser
                         ? "text-[#FFB4B8]"
                         : "text-white"
@@ -388,52 +371,77 @@ export default function MeetingsOverview({
                   >
                     {next.title}
                   </h2>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.72rem] font-medium text-[#E3DEDA]">
-                    <span className="inline-flex items-center gap-1.5">
-                      <CalendarIcon className="h-4 w-4 text-[#BEB7B0]" />
-                      {formatMeetingDate(next.startAt)}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <ClockIcon className="h-4 w-4 text-[#BEB7B0]" />
-                      {formatTimeRange(next.startAt, next.endAt)}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <PeopleIcon className="h-4 w-4 text-[#BEB7B0]" />
-                      {meetingGroupLabel(next)}
-                    </span>
+
+                  <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-white/15 pt-4 sm:grid-cols-3 lg:grid-cols-5">
+                    <div className="min-w-0">
+                      <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                        Date
+                      </dt>
+                      <dd className="mt-1 text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                        {formatMeetingDate(next.startAt)}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                        Time
+                      </dt>
+                      <dd className="mt-1 text-[0.78rem] font-medium leading-5 tabular-nums text-[#F1EDE9]">
+                        {formatTimeRange(next.startAt, next.endAt)}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                        PIC
+                      </dt>
+                      <dd className="mt-1 truncate text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                        {meetingGroupLabel(next)}
+                      </dd>
+                    </div>
                     {next.canViewDetails && (
                       <>
-                        <span className="inline-flex items-center gap-1.5">
-                          <ModeGlyph mode={next.mode} />
-                          {next.mode === undefined
-                            ? "Mode unavailable"
-                            : meetingModeLabel(next.mode)}
-                        </span>
+                        <div className="min-w-0">
+                          <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                            Location / mode
+                          </dt>
+                          <dd className="mt-1 truncate text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                            {heroPlaceLabel(next)}
+                          </dd>
+                        </div>
                         {next.clientName?.trim() && (
-                          <span className="inline-flex items-center gap-1.5">
-                            Client: {next.clientName}
-                          </span>
+                          <div className="min-w-0">
+                            <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                              Client
+                            </dt>
+                            <dd className="mt-1 truncate text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                              {next.clientName}
+                            </dd>
+                          </div>
                         )}
-                        <MeetingHighlightBadge
-                          involvesHighlightedUser={next.involvesHighlightedUser}
-                        />
                       </>
                     )}
-                  </div>
+                  </dl>
+
+                  {next.canViewDetails && next.involvesHighlightedUser && (
+                    <div className="mt-3">
+                      <MeetingHighlightBadge
+                        involvesHighlightedUser={next.involvesHighlightedUser}
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2.5">
                   <Link
                     href={`${basePath}/${next._id}`}
                     aria-label="Open meeting"
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-[var(--rams-red)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--rams-red-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[var(--rams-red)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--rams-red-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
                   >
                     View details
                     <ArrowIcon />
                   </Link>
                   <Link
                     href={`${basePath}/calendar`}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/35 px-4 py-2 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 px-4 py-2 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
                   >
                     Open in calendar
                     <ExternalIcon />
@@ -441,32 +449,32 @@ export default function MeetingsOverview({
                 </div>
               </article>
             ) : (
-              <div className="relative z-10 flex min-h-[13.5rem] flex-col justify-center px-5 py-7 sm:px-7 lg:px-8">
+              <div className="relative z-10 flex min-h-[13.5rem] flex-col justify-center px-5 py-6 sm:px-7 lg:px-8">
                 <p
                   id="next-meeting-heading"
-                  className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#F1B9BB]"
+                  className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#F1B9BB]"
                 >
                   Next meeting
                 </p>
-                <h2 className="mt-2.5 font-display text-[1.8rem] font-semibold tracking-[-0.025em] text-white">
+                <h2 className="mt-2 font-display text-[1.7rem] font-semibold tracking-[-0.02em] text-white">
                   No upcoming meetings
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-[#C9C1BA]">
                   The agenda is clear. Schedule a session or use the calendar to
                   choose a date.
                 </p>
-                <div className="mt-5 flex flex-wrap gap-2.5">
+                <div className="mt-4 flex flex-wrap gap-2.5">
                   {canCreate && (
                     <Link
                       href={`${basePath}/new`}
-                      className="inline-flex min-h-10 items-center justify-center rounded-md bg-white px-4 py-2 text-xs font-semibold text-[#272421] transition hover:bg-[#F3ECE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
+                      className="inline-flex min-h-11 items-center justify-center rounded-md bg-white px-4 py-2 text-xs font-semibold text-[#272421] transition hover:bg-[#F3ECE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
                     >
                       Schedule meeting
                     </Link>
                   )}
                   <Link
                     href={`${basePath}/calendar`}
-                    className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/35 px-4 py-2 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
+                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-white/35 px-4 py-2 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#25272C]"
                   >
                     Open calendar
                   </Link>
@@ -477,33 +485,35 @@ export default function MeetingsOverview({
 
           <section
             aria-label="Meeting summary"
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-1 2xl:gap-4"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-1 2xl:grid-rows-2 2xl:gap-4"
           >
-            {[
-              { label: "Scheduled this month", value: summary.thisMonth },
-              { label: agendaCountLabel, value: summary.agendaCount },
-            ].map((metric, index) => (
-              <article
-                key={metric.label}
-                className="relative overflow-hidden rounded-xl border border-[#E4DFD8] bg-white px-5 py-4 shadow-[0_8px_20px_rgba(31,35,40,0.035)] 2xl:flex 2xl:min-h-[6.5rem] 2xl:items-center 2xl:gap-5"
-              >
-                <div className="text-[var(--rams-red)]">
-                  <MetricIcon index={index} />
-                </div>
-                <div className="mt-2 2xl:mt-0">
-                  <p className="font-display text-[1.9rem] font-semibold leading-none tracking-[-0.04em] text-[var(--rams-charcoal)]">
-                    {loading ? "…" : metric.value}
-                  </p>
-                  <p className="mt-1.5 max-w-[11rem] text-[0.78rem] font-semibold leading-5 text-[#6B6A64]">
-                    {metric.label}
-                  </p>
-                </div>
-                <span
-                  className="absolute bottom-3 left-5 h-0.5 w-14 bg-[var(--rams-red)] 2xl:bottom-auto 2xl:left-auto 2xl:right-5 2xl:top-1/2 2xl:w-12"
-                  aria-hidden="true"
-                />
-              </article>
-            ))}
+            <article className="flex items-center gap-4 rounded-xl border border-[#E4DFD8] bg-white px-5 py-4 shadow-[0_8px_20px_rgba(31,35,40,0.035)] 2xl:min-h-0">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#FBF1F1] text-[var(--rams-red)]">
+                <CalendarIcon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-display text-[1.85rem] font-semibold leading-none tracking-[-0.04em] text-[var(--rams-charcoal)]">
+                  {loading ? "…" : summary.thisMonth}
+                </p>
+                <p className="mt-1 text-[0.76rem] font-semibold leading-5 text-[#6B6A64]">
+                  Meetings this month
+                </p>
+              </div>
+            </article>
+
+            <article className="flex items-center gap-4 rounded-xl border border-[#E4DFD8] bg-white px-5 py-4 shadow-[0_8px_20px_rgba(31,35,40,0.035)] 2xl:min-h-0">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#F3F1EC] text-[#6B6A64]">
+                <PeopleIcon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-display text-[1.85rem] font-semibold leading-none tracking-[-0.04em] text-[var(--rams-charcoal)]">
+                  {loading ? "…" : summary.upcoming.length}
+                </p>
+                <p className="mt-1 text-[0.76rem] font-semibold leading-5 text-[#6B6A64]">
+                  Still upcoming
+                </p>
+              </div>
+            </article>
           </section>
         </div>
 
@@ -660,70 +670,80 @@ export default function MeetingsOverview({
                 </div>
               ) : agenda.length > 0 ? (
                 <div>
-                  {agenda.slice(0, 5).map((meeting) => (
-                    <Link
-                      key={meeting._id}
-                      href={`${basePath}/${meeting._id}`}
-                      className="group grid grid-cols-[5.5rem_minmax(0,1fr)_2.25rem] items-center gap-3 border-b border-[#EEEAE4] px-5 py-3.5 last:border-b-0 hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] sm:px-6"
-                    >
-                      <span className="border-l-[3px] border-[var(--rams-red)] pl-3">
-                        <span className="block text-[0.64rem] font-medium text-[#8A867D]">
-                          {new Date(meeting.startAt).toLocaleDateString(
-                            undefined,
-                            {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            },
-                          )}
-                        </span>
-                        <span className="mt-0.5 block text-[0.95rem] font-semibold tabular-nums text-[var(--rams-charcoal)]">
-                          {formatTime(meeting.startAt)}
-                        </span>
-                      </span>
-                      <span className="min-w-0">
-                        <span
-                          className={`block truncate text-[0.8rem] font-semibold ${
-                            meeting.involvesHighlightedUser
-                              ? "text-[var(--rams-red)]"
-                              : "text-[var(--rams-charcoal)]"
-                          }`}
-                        >
-                          {meeting.title}
-                        </span>
-                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.66rem] text-[#7D7972]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <PeopleIcon className="h-3.5 w-3.5 shrink-0" />
-                            {meetingGroupLabel(meeting)}
+                  {agenda.slice(0, 5).map((meeting) => {
+                    const startsAt = new Date(meeting.startAt);
+                    const weekday = startsAt.toLocaleDateString(undefined, {
+                      weekday: "short",
+                    });
+                    const dayLabel = startsAt.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    });
+
+                    return (
+                      <Link
+                        key={meeting._id}
+                        href={`${basePath}/${meeting._id}`}
+                        className="group flex items-start gap-3.5 border-b border-[#EEEAE4] px-5 py-4 last:border-b-0 hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] sm:px-6"
+                      >
+                        <span className="flex w-16 shrink-0 flex-col items-center rounded-lg bg-[#FBFAF8] px-2 py-2 ring-1 ring-inset ring-[#EEEAE4]">
+                          <span className="text-[0.54rem] font-bold uppercase tracking-[0.12em] text-[#8A867D]">
+                            {weekday}
                           </span>
-                          {meeting.canViewDetails && (
-                            <>
-                              <MeetingModeBadge mode={meeting.mode} />
-                              {meeting.clientName?.trim() && (
-                                <span className="truncate">
-                                  {meeting.clientName}
-                                </span>
-                              )}
-                              {meeting.mode === "OFFLINE" &&
-                                meeting.location?.trim() && (
+                          <span className="mt-0.5 font-display text-[1rem] font-semibold leading-none text-[var(--rams-charcoal)]">
+                            {dayLabel}
+                          </span>
+                          <span className="mt-1 text-[0.62rem] font-semibold tabular-nums text-[#6B6A64]">
+                            {formatTime(meeting.startAt)}
+                          </span>
+                        </span>
+                        <span className="min-w-0 flex-1 pt-0.5">
+                          <span
+                            className={`block text-[0.84rem] font-semibold leading-5 ${
+                              meeting.involvesHighlightedUser
+                                ? "text-[var(--rams-red)]"
+                                : "text-[var(--rams-charcoal)]"
+                            }`}
+                          >
+                            {meeting.title}
+                          </span>
+                          <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[0.65rem] text-[#7D7972]">
+                            <span className="inline-flex items-center gap-1">
+                              <PeopleIcon className="h-3.5 w-3.5 shrink-0" />
+                              {meetingGroupLabel(meeting)}
+                            </span>
+                            {meeting.canViewDetails && (
+                              <>
+                                <MeetingModeBadge mode={meeting.mode} />
+                                {meeting.clientName?.trim() && (
                                   <span className="truncate">
-                                    {meeting.location}
+                                    {meeting.clientName}
                                   </span>
                                 )}
-                              <MeetingHighlightBadge
-                                involvesHighlightedUser={
-                                  meeting.involvesHighlightedUser
-                                }
-                              />
-                            </>
-                          )}
+                                {meeting.mode === "OFFLINE" &&
+                                  meeting.location?.trim() && (
+                                    <span className="truncate">
+                                      {meeting.location}
+                                    </span>
+                                  )}
+                                <MeetingHighlightBadge
+                                  involvesHighlightedUser={
+                                    meeting.involvesHighlightedUser
+                                  }
+                                />
+                              </>
+                            )}
+                          </span>
                         </span>
-                      </span>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-md border border-[#E4DFD8] text-[#5D5A55] transition group-hover:border-[#C9C0B6] group-hover:text-[var(--rams-red)]">
-                        <ArrowIcon className="h-4 w-4 -rotate-45" />
-                      </span>
-                    </Link>
-                  ))}
+                        <span
+                          className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#A8A399] transition group-hover:bg-white group-hover:text-[var(--rams-red)]"
+                          aria-hidden="true"
+                        >
+                          <ArrowIcon className="h-4 w-4" />
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="px-5 py-7 sm:px-6">
@@ -741,44 +761,44 @@ export default function MeetingsOverview({
 
             <section
               aria-label="Quick access"
-              className={`grid overflow-hidden rounded-xl bg-[#25272C] text-white shadow-[0_12px_30px_rgba(31,35,40,0.08)] ${
-                canViewMine ? "sm:grid-cols-2" : ""
-              }`}
+              className={`grid gap-3 ${canViewMine ? "sm:grid-cols-2" : ""}`}
             >
               <Link
                 href={`${basePath}/calendar`}
                 aria-label="Open monthly calendar"
-                className={`group flex min-h-[6.8rem] items-center gap-4 border-b border-white/15 px-5 py-4 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white sm:border-b-0 sm:px-6 ${
-                  canViewMine ? "sm:border-r" : ""
-                }`}
+                className="group flex min-h-[5.5rem] items-center gap-4 rounded-xl border border-[#E4DFD8] bg-white px-5 py-4 shadow-[0_8px_20px_rgba(31,35,40,0.025)] transition hover:border-[#D6CEC4] hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2"
               >
-                <CalendarIcon className="h-6 w-6 shrink-0 text-white" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FBF1F1] text-[var(--rams-red)]">
+                  <CalendarIcon className="h-5 w-5" />
+                </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-white">
+                  <span className="block text-sm font-semibold text-[var(--rams-charcoal)]">
                     Open calendar
                   </span>
-                  <span className="mt-1 block text-[0.68rem] leading-5 text-[#C9C1BA]">
+                  <span className="mt-0.5 block text-[0.7rem] leading-5 text-[#6B6A64]">
                     {calendarCopy}
                   </span>
                 </span>
-                <ArrowIcon className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                <ArrowIcon className="h-4 w-4 shrink-0 text-[#A8A399] transition group-hover:translate-x-0.5 group-hover:text-[var(--rams-red)]" />
               </Link>
               {canViewMine && (
                 <Link
                   href={`${basePath}/mine`}
                   aria-label={mineLabel}
-                  className="group flex min-h-[6.8rem] items-center gap-4 px-5 py-4 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white sm:px-6"
+                  className="group flex min-h-[5.5rem] items-center gap-4 rounded-xl border border-[#E4DFD8] bg-white px-5 py-4 shadow-[0_8px_20px_rgba(31,35,40,0.025)] transition hover:border-[#D6CEC4] hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rams-red)] focus-visible:ring-offset-2"
                 >
-                  <PeopleIcon className="h-6 w-6 shrink-0 text-white" />
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F3F1EC] text-[#6B6A64]">
+                    <PeopleIcon className="h-5 w-5" />
+                  </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-white">
+                    <span className="block text-sm font-semibold text-[var(--rams-charcoal)]">
                       {mineLabel}
                     </span>
-                    <span className="mt-1 block text-[0.68rem] leading-5 text-[#C9C1BA]">
+                    <span className="mt-0.5 block text-[0.7rem] leading-5 text-[#6B6A64]">
                       Your meetings and participation
                     </span>
                   </span>
-                  <ArrowIcon className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowIcon className="h-4 w-4 shrink-0 text-[#A8A399] transition group-hover:translate-x-0.5 group-hover:text-[var(--rams-red)]" />
                 </Link>
               )}
             </section>
