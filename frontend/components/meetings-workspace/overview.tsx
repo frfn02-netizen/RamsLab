@@ -285,7 +285,7 @@ export default function MeetingsOverview({
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{
-                backgroundImage: `linear-gradient(90deg, rgba(37,39,44,0.98) 0%, rgba(37,39,44,0.92) 44%, rgba(37,39,44,0.48) 100%), url("${assetPath("/assets/upscalemedia-transformed.jpeg")}")`,
+                backgroundImage: `linear-gradient(90deg, rgba(37,39,44,0.98) 0%, rgba(37,39,44,0.95) 52%, rgba(37,39,44,0.68) 100%), url("${assetPath("/assets/upscalemedia-transformed.jpeg")}")`,
               }}
               aria-hidden="true"
             />
@@ -325,45 +325,45 @@ export default function MeetingsOverview({
 
                   <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-white/15 pt-4 sm:grid-cols-3 lg:grid-cols-5">
                     <div className="min-w-0">
-                      <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wider text-white/75">
                         Date
                       </dt>
-                      <dd className="mt-1 text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                      <dd className="mt-1 text-sm font-medium leading-5 text-white/95">
                         {formatMeetingDate(next.startAt)}
                       </dd>
                     </div>
                     <div className="min-w-0">
-                      <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wider text-white/75">
                         Time
                       </dt>
-                      <dd className="mt-1 text-[0.78rem] font-medium leading-5 tabular-nums text-[#F1EDE9]">
+                      <dd className="mt-1 text-sm font-medium leading-5 tabular-nums text-white/95">
                         {formatTimeRange(next.startAt, next.endAt)}
                       </dd>
                     </div>
                     <div className="min-w-0">
-                      <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wider text-white/75">
                         PIC
                       </dt>
-                      <dd className="mt-1 truncate text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                      <dd className="mt-1 truncate text-sm font-medium leading-5 text-white/95">
                         {meetingGroupLabel(next)}
                       </dd>
                     </div>
                     {next.canViewDetails && (
                       <>
                         <div className="min-w-0">
-                          <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                          <dt className="text-[11px] font-semibold uppercase tracking-wider text-white/75">
                             Location / mode
                           </dt>
-                          <dd className="mt-1 truncate text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                          <dd className="mt-1 truncate text-sm font-medium leading-5 text-white/95">
                             {heroPlaceLabel(next)}
                           </dd>
                         </div>
                         {next.clientName?.trim() && (
                           <div className="min-w-0">
-                            <dt className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-[#B7B0A9]">
+                            <dt className="text-[11px] font-semibold uppercase tracking-wider text-white/75">
                               Client
                             </dt>
-                            <dd className="mt-1 truncate text-[0.78rem] font-medium leading-5 text-[#F1EDE9]">
+                            <dd className="mt-1 truncate text-sm font-bold leading-5 text-white sm:text-base">
                               {next.clientName}
                             </dd>
                           </div>
@@ -524,39 +524,40 @@ export default function MeetingsOverview({
                       className="group flex items-start gap-4 border-b border-[#EEEAE4] px-5 py-4 last:border-b-0 hover:bg-[#FBFAF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--rams-red)] sm:px-6"
                     >
                       <span className="flex w-16 shrink-0 flex-col items-center rounded-lg bg-[#FBFAF8] px-2 py-2 ring-1 ring-inset ring-[#EEEAE4]">
-                        <span className="text-[0.54rem] font-bold uppercase tracking-[0.12em] text-[#8A867D]">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-700">
                           {weekday}
                         </span>
-                        <span className="mt-0.5 font-display text-[1rem] font-semibold leading-none text-[var(--rams-charcoal)]">
+                        <span className="mt-0.5 font-display text-sm font-semibold leading-none text-neutral-900 sm:text-base">
                           {dayLabel}
                         </span>
                       </span>
                       <span className="min-w-0 flex-1 pt-0.5">
                         <span
-                          className={`block text-[0.86rem] font-semibold leading-5 ${
+                          className={`block text-sm font-semibold leading-5 ${
                             meeting.involvesHighlightedUser
                               ? "text-[var(--rams-red)]"
-                              : "text-[var(--rams-charcoal)]"
+                              : "text-neutral-900"
                           }`}
                         >
                           {meeting.title}
                         </span>
-                        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.66rem] text-[#7D7972]">
-                          <span className="inline-flex items-center gap-1 font-medium tabular-nums text-[#5D5A55]">
+                        {meeting.canViewDetails &&
+                          meeting.clientName?.trim() && (
+                            <span className="mt-0.5 block truncate text-xs font-bold text-neutral-900 sm:text-sm">
+                              {meeting.clientName}
+                            </span>
+                          )}
+                        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-neutral-700 sm:text-sm">
+                          <span className="inline-flex items-center gap-1 font-medium tabular-nums text-neutral-700">
                             {formatTimeRange(meeting.startAt, meeting.endAt)}
                           </span>
                           <span className="inline-flex items-center gap-1">
-                            <PeopleIcon className="h-3.5 w-3.5 shrink-0" />
+                            <PeopleIcon className="h-4 w-4 shrink-0" />
                             {meetingGroupLabel(meeting)}
                           </span>
                           {meeting.canViewDetails && (
                             <>
                               <MeetingModeBadge mode={meeting.mode} />
-                              {meeting.clientName?.trim() && (
-                                <span className="truncate">
-                                  {meeting.clientName}
-                                </span>
-                              )}
                               {meeting.mode === "OFFLINE" &&
                                 meeting.location?.trim() && (
                                   <span className="truncate">
@@ -689,15 +690,21 @@ export default function MeetingsOverview({
                       >
                         <span className="min-w-0">
                           <span
-                            className={`block truncate text-[0.78rem] font-semibold ${
+                            className={`block truncate text-sm font-semibold ${
                               meeting.involvesHighlightedUser
                                 ? "text-[var(--rams-red)]"
-                                : "text-[var(--rams-charcoal)]"
+                                : "text-neutral-900"
                             }`}
                           >
                             {meeting.title}
                           </span>
-                          <span className="mt-0.5 block text-[0.64rem] text-[#8A867D]">
+                          {meeting.canViewDetails &&
+                            meeting.clientName?.trim() && (
+                              <span className="mt-0.5 block truncate text-xs font-bold text-neutral-900 sm:text-sm">
+                                {meeting.clientName}
+                              </span>
+                            )}
+                          <span className="mt-0.5 block text-xs text-neutral-700 sm:text-sm">
                             {formatMeetingDate(meeting.startAt)}
                           </span>
                         </span>

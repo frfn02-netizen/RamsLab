@@ -86,7 +86,9 @@ vi.mock("@/lib/api/meetings", () => ({
   getUserDirectory: vi.fn(),
 }));
 
-function makeMeeting(overrides: Partial<Meeting>): Meeting {
+function makeMeeting(
+  overrides: Partial<Meeting> & { canViewDetails?: boolean },
+): Meeting {
   return {
     _id: "meeting-1",
     title: "Weekly sync",
@@ -501,16 +503,22 @@ describe("meetings workspace overview", () => {
         makeMeeting({
           _id: "past",
           title: "Kickoff",
+          canViewDetails: true,
           startAt: "2020-01-10T09:00:00.000Z",
           endAt: "2020-01-10T10:00:00.000Z",
         }),
         makeMeeting({
           _id: "later",
           title: "Design review",
+          canViewDetails: true,
           startAt: "2031-03-05T09:00:00.000Z",
           endAt: "2031-03-05T10:00:00.000Z",
         }),
-        makeMeeting({ _id: "next", title: "Weekly sync" }),
+        makeMeeting({
+          _id: "next",
+          title: "Weekly sync",
+          canViewDetails: true,
+        }),
       ],
       pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null },
     });
@@ -536,7 +544,14 @@ describe("meetings workspace overview", () => {
     expect(screen.getByText("Design review")).toBeInTheDocument();
     const recent = screen.getByRole("region", { name: "Recent meetings" });
     expect(within(recent).getByText("Kickoff")).toBeInTheDocument();
+    expect(within(recent).getByText("RAMS Test Client")).toHaveClass(
+      "font-bold",
+      "text-neutral-900",
+    );
     expect(within(recent).queryByText("Weekly sync")).not.toBeInTheDocument();
+    expect(
+      within(featured as HTMLElement).getByText("RAMS Test Client"),
+    ).toHaveClass("font-bold", "text-white");
     expect(screen.getByRole("link", { name: "Open meeting" })).toHaveAttribute(
       "href",
       "/meetings/next",
@@ -549,12 +564,14 @@ describe("meetings workspace overview", () => {
         makeMeeting({
           _id: "next",
           title: "Weekly sync",
+          canViewDetails: true,
           startAt: "2031-03-01T09:00:00.000Z",
           endAt: "2031-03-01T10:00:00.000Z",
         }),
         makeMeeting({
           _id: "later",
           title: "Design review",
+          canViewDetails: true,
           startAt: "2031-03-05T09:00:00.000Z",
           endAt: "2031-03-05T10:00:00.000Z",
         }),
@@ -582,6 +599,10 @@ describe("meetings workspace overview", () => {
     expect(
       await within(upcoming).findByRole("link", { name: /Design review/ }),
     ).toHaveAttribute("href", "/meetings/later");
+    expect(within(upcoming).getByText("RAMS Test Client")).toHaveClass(
+      "font-bold",
+      "text-neutral-900",
+    );
     expect(
       within(upcoming).getByRole("link", { name: /View full calendar/ }),
     ).toHaveAttribute("href", "/meetings/calendar");

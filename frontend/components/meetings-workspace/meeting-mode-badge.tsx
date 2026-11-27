@@ -74,7 +74,7 @@ export default function MeetingModeBadge({
   return (
     <span
       role="img"
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] font-semibold leading-none ${tone} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold leading-none ${tone} ${className}`}
       aria-label={meetingModeAriaLabel(mode)}
     >
       <ModeIcon mode={mode} />
