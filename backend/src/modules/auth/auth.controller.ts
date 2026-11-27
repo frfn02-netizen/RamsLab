@@ -25,11 +25,17 @@ import {
 } from "../../config/security.js";
 import { HttpError } from "../../middlewares/error.middleware.js";
 
-function cookieSecurityOptions() {
+function cookieDomain() {
+  const domain = process.env.AUTH_COOKIE_DOMAIN?.trim();
+  return domain ? { domain } : {};
+}
+
+export function cookieSecurityOptions() {
   return {
     secure: isProduction(),
     sameSite: (isProduction() ? "none" : "lax") as "none" | "lax",
     path: "/",
+    ...cookieDomain(),
   };
 }
 

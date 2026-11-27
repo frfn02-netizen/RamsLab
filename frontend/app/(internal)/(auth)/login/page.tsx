@@ -21,18 +21,18 @@ function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const next = searchParams.get("callbackUrl") ?? searchParams.get("next");
   useEffect(() => {
     if (status === "authenticated" && user) {
-      router.replace(authorizedLoginDestination(user, null));
+      router.replace(authorizedLoginDestination(user, next));
     }
-  }, [router, status, user]);
+  }, [router, status, user, next]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     try {
       const authenticatedUser = await login({ email, password });
-      const next = searchParams.get("callbackUrl") ?? searchParams.get("next");
       router.replace(authorizedLoginDestination(authenticatedUser, next));
     } catch (reason) {
       notifyError(getUserFacingError(reason));
