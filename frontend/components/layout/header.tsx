@@ -4,7 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/providers/auth-providers";
-import { visibleDashboardNavigationItems } from "./dashboard-navigation";
+import {
+  isDashboardNavItemActive,
+  visibleDashboardNavigationItems,
+} from "./dashboard-navigation";
 
 export default function Header() {
   const pathname = usePathname();
@@ -12,9 +15,9 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const navigation = visibleDashboardNavigationItems(user?.role);
   const currentPage =
-    navigation.find(
-      ({ href }) => pathname === href || pathname.startsWith(`${href}/`),
-    )?.label ?? "Dashboard";
+    navigation
+      .filter(({ href }) => isDashboardNavItemActive(pathname, href))
+      .sort((a, b) => b.href.length - a.href.length)[0]?.label ?? "Dashboard";
   const profileInitial = user?.email?.charAt(0).toUpperCase() ?? "R";
 
   return (

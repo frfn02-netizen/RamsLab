@@ -419,7 +419,7 @@ function UpcomingMeetings({
       eyebrow="Workspace"
       title="Upcoming Meetings"
       action={
-        <SectionLink href="/meetings/calendar">View calendar</SectionLink>
+        <SectionLink href="/dashboard/meetings/calendar">View calendar</SectionLink>
       }
       className="lg:col-span-7"
     >
@@ -445,8 +445,8 @@ function UpcomingMeetings({
             Schedule the next research conversation when you are ready.
           </p>
           <div className="mt-4 flex justify-center gap-2">
-            <SectionLink href="/meetings/new">Schedule meeting</SectionLink>
-            <SectionLink href="/meetings/calendar">Open calendar</SectionLink>
+            <SectionLink href="/dashboard/meetings/new">Schedule meeting</SectionLink>
+            <SectionLink href="/dashboard/meetings/calendar">Open calendar</SectionLink>
           </div>
         </div>
       ) : (
@@ -461,7 +461,7 @@ function UpcomingMeetings({
             return (
               <Link
                 key={meeting._id}
-                href={`/meetings/${encodeURIComponent(meeting._id)}`}
+                href={`/dashboard/meetings/${encodeURIComponent(meeting._id)}`}
                 className="group flex gap-4 py-3.5 first:pt-0 last:pb-0 focus-visible:outline-none"
               >
                 <span className="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#fff1ed] px-2 py-2 text-center text-[var(--rams-red)] transition-colors group-hover:bg-[#ffe5df]">
@@ -515,7 +515,7 @@ function QuickActions({ role }: { role: UserRole | undefined }) {
     {
       label: "Schedule meeting",
       detail: "Create a new meeting",
-      href: "/meetings/new",
+      href: "/dashboard/meetings/new",
       icon: <CalendarIcon />,
     },
     ...(hasPermission(role, "publication.create")

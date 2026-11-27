@@ -6,7 +6,10 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-providers";
 import { assetPath } from "@/lib/asset-path";
 import type { ReactNode } from "react";
-import { visibleDashboardNavigation } from "./dashboard-navigation";
+import {
+  isDashboardNavItemActive,
+  visibleDashboardNavigation,
+} from "./dashboard-navigation";
 
 function Icon({ d, className = "" }: { d: string; className?: string }) {
   return (
@@ -118,12 +121,12 @@ export default function Sidebar() {
               </p>
               <div className="space-y-0.5">
                 {group.items.map(([label, href, icon]) => {
-                  const active =
-                    pathname === href || pathname.startsWith(`${href}/`);
+                  const active = isDashboardNavItemActive(pathname, href);
                   return (
                     <Link
                       key={href}
                       href={href}
+                      aria-current={active ? "page" : undefined}
                       className={`group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ${
                         active
                           ? "bg-white/10 text-white"

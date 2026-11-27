@@ -12,7 +12,7 @@ export const dashboardNavigationGroups: readonly DashboardNavGroup[] = [
   { label: "Overview", items: [["Dashboard", "/dashboard", "dashboard"]] },
   {
     label: "Workspace",
-    items: [["Meetings", "/meetings", "meetings"]],
+    items: [["Meetings", "/dashboard/meetings", "meetings"]],
   },
   {
     label: "Content",
@@ -54,6 +54,20 @@ export const dashboardNavigationGroups: readonly DashboardNavGroup[] = [
     items: [["Tracking", "/dashboard/tracking", "tracking"]],
   },
 ];
+
+/**
+ * Dashboard is the only nav item that must match exactly; every other item
+ * also owns its nested routes (for example /dashboard/meetings/calendar).
+ */
+export function isDashboardNavItemActive(pathname: string, href: string) {
+  const normalized =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
+
+  if (href === "/dashboard") return normalized === "/dashboard";
+  return normalized === href || normalized.startsWith(`${href}/`);
+}
 
 export function isDashboardNavItemVisible(
   role: UserRole | undefined,

@@ -15,5 +15,11 @@ export default async function MeetingsDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <MeetingDetail id={id} basePath="/meetings" />;
+  return (
+    <MeetingDetail
+      id={id}
+      basePath="/meetings"
+      calendarPath="/meetings/calendar"
+    />
+  );
 }

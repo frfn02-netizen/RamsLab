@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import DashboardPage from "@/app/(internal)/dashboard/page";
 import type { DashboardStats } from "@/types/dashboard";
@@ -108,5 +108,55 @@ describe("dashboard overview", () => {
     );
     expect(screen.getByLabelText("1 publications in 2025")).toBeInTheDocument();
     expect(screen.getByText("Marine systems study")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /AI for Marine Research/i }),
+    ).toHaveAttribute("href", "/dashboard/meetings/meeting-1");
+  });
+
+  it("points Upcoming Meetings actions at dashboard-relative routes", async () => {
+    getDashboardStats.mockResolvedValue(stats);
+    getMeetingAgenda.mockResolvedValue({
+      items: [],
+      pagination: { limit: 200, offset: 0, hasMore: false, nextOffset: null },
+    });
+    getPartners.mockResolvedValue([]);
+    getPublications.mockResolvedValue({
+      success: true,
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 200,
+      facets: { years: [], topics: [], methods: [] },
+    });
+
+    render(<DashboardPage />);
+
+    const heading = await screen.findByRole("heading", {
+      name: "Upcoming Meetings",
+    });
+    const panel = heading.closest("section");
+    expect(panel).not.toBeNull();
+
+    expect(
+      within(panel as HTMLElement).getByRole("link", { name: /View calendar/i }),
+    ).toHaveAttribute("href", "/dashboard/meetings/calendar");
+    expect(
+      within(panel as HTMLElement).getByRole("link", {
+        name: /Schedule meeting/i,
+      }),
+    ).toHaveAttribute("href", "/dashboard/meetings/new");
+    expect(
+      within(panel as HTMLElement).getByRole("link", { name: /Open calendar/i }),
+    ).toHaveAttribute("href", "/dashboard/meetings/calendar");
+
+    const quickActions = screen
+      .getByRole("heading", { name: "Quick Actions" })
+      .closest("section");
+    expect(quickActions).not.toBeNull();
+    expect(
+      within(quickActions as HTMLElement).getByRole("link", {
+        name: /Schedule meeting/i,
+      }),
+    ).toHaveAttribute("href", "/dashboard/meetings/new");
   });
 });

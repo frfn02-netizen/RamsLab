@@ -45,7 +45,18 @@ describe("RAMS access policy", () => {
     expect(canAccessMeetingsWorkspace("DOSEN")).toBe(true);
     expect(canAccessAuthenticatedPath("DOSEN", "/meetings/mine")).toBe(true);
     expect(canAccessDashboardPath("DOSEN", "/dashboard")).toBe(false);
+    expect(canAccessDashboardPath("DOSEN", "/dashboard/dosen")).toBe(false);
     expect(canAccessAuthenticatedPath("DOSEN", "/dashboard/dosen")).toBe(false);
+    expect(canAccessDashboardPath("DOSEN", "/dashboard/meetings")).toBe(true);
+    expect(
+      canAccessDashboardPath("DOSEN", "/dashboard/meetings/calendar"),
+    ).toBe(true);
+    expect(
+      canAccessAuthenticatedPath("DOSEN", "/dashboard/meetings/calendar"),
+    ).toBe(true);
+    expect(canAccessDashboardPath("DOSEN", "/dashboard/meetings-evil")).toBe(
+      false,
+    );
     expect(defaultAuthenticatedDestination(account("DOSEN"))).toBe("/meetings");
     expect(hasPermission("DOSEN", PERMISSIONS.MEETINGS_ACCESS)).toBe(true);
     expect(hasPermission("DOSEN", PERMISSIONS.MEETINGS_CREATE)).toBe(true);

@@ -93,6 +93,13 @@ export function canAccessDashboardPath(
     return hasPathPrefix(pathname, "/dashboard");
   }
 
+  // Meetings moved under the dashboard, but remain available to lecturers.
+  // Without this allowance the /meetings -> /dashboard/meetings redirect and
+  // DashboardGuard's fallback would bounce DOSEN users in a loop.
+  if (role === "DOSEN") {
+    return hasPathPrefix(pathname, "/dashboard/meetings");
+  }
+
   // The alumni self-portal is a separate, existing flow. Keep its supported
   // profile route available without granting alumni the staff dashboard.
   return (

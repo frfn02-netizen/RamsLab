@@ -169,7 +169,7 @@ function picDisplayName(pic: MeetingUserSummary) {
 export default function MeetingDetail({
   id,
   basePath = "/dashboard/meetings",
-  calendarPath = "/meetings/calendar",
+  calendarPath = "/dashboard/meetings/calendar",
 }: {
   id: string;
   basePath?: string;
